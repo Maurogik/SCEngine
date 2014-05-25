@@ -1,0 +1,14 @@
+
+varying vec3 fragColor;
+varying vec2 fragUV;
+varying vec3 fragNormal;
+
+//uniform sampler2D myTextureSampler;
+
+void main(){
+
+    //gl_FragColor = texture2D( myTextureSampler, UV );
+    //gl_FragColor = vec4(fragColor, 1);
+    gl_FragColor = vec4(fragColor.z, fragUV.x * 0.01f, fragNormal.x * 0.01f, 1.0f);
+    //vec4(1, fragUV.x, fragNormal.x, 1);
+}
