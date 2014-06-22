@@ -48,7 +48,8 @@ include_directories(
 	external/glm-0.9.4.0/
 	external/glew-1.9.0/include/
 	external/assimp-3.0.1270/include/
-	external/bullet-2.81-rev2613/src/
+    external/bullet-2.81-rev2613/src/
+    external/rapidjson/
 	.
 )
 
@@ -102,6 +103,17 @@ add_executable(playground
 target_link_libraries(playground
 	${ALL_LIBS}
 )
+
+#add_library( libJson SHARED IMPORTED )
+
+#LINK_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/external/jsoncpp-src-0.5.0/libs/linux-gcc-4.8.2/libjson_linux-gcc-4.8.2_libmt.a)
+# You can define two import-locations: one for debug and one for release.
+#set_target_properties( libJson PROPERTIES IMPORTED_LOCATION "${CMAKE_CURRENT_SOURCE_DIR}/external/jsoncpp-src-0.5.0/libs/linux-gcc-4.8.2/libjson_linux-gcc-4.8.2_libmt.a" )
+
+#target_link_libraries(playground
+#    libjson_linux-gcc-4.8.2_libmt
+#)
+
 # Xcode and Visual working directories
 set_target_properties(playground PROPERTIES XCODE_ATTRIBUTE_CONFIGURATION_BUILD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/playground/")
 create_target_launcher(playground WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/playground/")

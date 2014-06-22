@@ -6,72 +6,66 @@
 #ifndef SCE_MATERIAL_HPP
 #define SCE_MATERIAL_HPP
 
+#include "SCEDefines.hpp"
+#include <map>
 
-//define shader
-//load material definition from text file
-//
-// Attributes : Normals, Vertex & UV are always part of the material shader
-// Uniforms : LightPos & LightColor are part of every shaders too
-//
-//Text file :
-/* MATERIAL : "exempleMat"
- *
- * Shader : "ShaderName"
- *
- * Uniforms:
- *  Name : AmbientColor -- Type : vec4, Value : vec4(r,g,b,a)
- *  Name : Outline -- Type : float, Value : 0.63f
- *  Name : Texture1 -- Type : texture, Value : "pathToText1"
- *  Name : Texture2 -- Type : texture, Value : "pathToText2"
- *
- */
-// The uniforms defined in the material file must be defined & used in the shader
-// The material file will be parsed and the shader will be compiled and linked
-// The data (uniforms, attribute) from the file will be generated, binded and linked
-
-//SHADER
-/*
- *
- * NAME{ShaderName}
- *
- * DATA
- * {
- *      Name : name -- Type : type
- *      Name : AmbientColor -- Type : vec4
- *      Name : Outline -- Type : float
- *      Name : Texture1 -- Type : texture
- * }
- *
- * Pass_1
- * {
- *      vertex shader
- *      {
- *          //shader content
- *      }
- *
- *      fragment shader
- *      {
- *          //shader content
- *      }
- * }
- *
- * Pass_2
- * {
- *      vertex shader ...
- *      fragment shader ...
- * }
- *
- * Pass_n ...
- *
- */
 
 namespace SCE {
 
+    enum LightingType {
+        LIGHTING_NONE,
+        LIGHTING_CUSTOM
+    };
+
+    enum UniformType {
+        UNIFORM_F,
+    };
+
+    struct attrib_data{
+        void* data;
+        size_t size;
+        GLuint dataID;
+    };
+
+    struct uniform_data{
+        void* data;
+        UniformType type;
+        GLuint dataID;
+    };
+
     class Material {
+
 
     public :
 
+                        Material();
+
+                        ~Material();
+
+        /**
+         * @brief Load, parse and compile the shader,
+         * initialize the appropriate uniforms and attribute.
+         */
+        void            LoadMaterial(std::string filename);
+
+        /**
+         * @brief Binds this material shader and uniforms
+         */
+        void            BindRenderData();
+
+        void            ReloadMaterial();
+
+        void            CleanMaterial();
+
+
     private :
+
+        //Lod for shader ? later ?
+
+        int                                     mProgramShaderId;
+        std::map<std::string, attrib_data>      mAttributes;
+        std::map<std::string, uniform_data>     mUniforms;
+
 
     };
 

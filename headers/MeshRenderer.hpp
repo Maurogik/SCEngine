@@ -8,7 +8,7 @@
 
 #include "SCEDefines.hpp"
 #include "Component.hpp"
-#include "Material.hpp"
+//#include "Material.hpp"
 #include "Camera.hpp"
 
 namespace SCE {
@@ -31,7 +31,7 @@ namespace SCE {
     private :
         void            initializeGLData();
 
-        Material        mMaterial;
+        //Material        mMaterial;
 
         //debug
         GLuint          mProgramID;

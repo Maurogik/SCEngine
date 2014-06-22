@@ -1,0 +1,14 @@
+{
+    "Name": "TestMaterial",
+    "Material": {
+		"Data": [
+			{"Name": "Outline", "Type": "float", "Value": "4.0f"},
+			{"Name": "NormalMap", "Type": "Texture", "Value": "path"},
+			{"Name": "RampMap", "Type": "Texture", "Value": "path"}
+		],
+		"Shader": {
+			"VertexShader": " ... ",
+			"FragmentShader": " ... "
+		}
+	}
+}

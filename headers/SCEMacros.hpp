@@ -19,8 +19,8 @@ To remove a preceding comma use [before], ## __VA_ARGS__ [after]
 ex : printf(format, ## __VA_ARGS__);
 **/
 
-#define SCE_LOG(str, ...) \
-    printf(str "\n",## __VA_ARGS__); \
+#define SCE_LOG(str) \
+    printf(str); \
     fflush(stdout); \
 
 #ifdef SCE_DEBUG_ENGINE
