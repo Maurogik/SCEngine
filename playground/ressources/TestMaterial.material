@@ -1,14 +1,13 @@
 {
     "Name": "TestMaterial",
+    "Shader": "TestShader",
     "Material": {
-		"Data": [
-			{"Name": "Outline", "Type": "float", "Value": "4.0f"},
-			{"Name": "NormalMap", "Type": "Texture", "Value": "path"},
-			{"Name": "RampMap", "Type": "Texture", "Value": "path"}
-		],
-		"Shader": {
-			"VertexShader": " ... ",
-			"FragmentShader": " ... "
-		}
+		"Data": [  
+			{"Name": "AmbientColor", "Type": "vec3", "Value": "(1.0, 0.0, 1.0)"},
+			{"Name": "NormalMap", "Type": "Texture2D", "Value": "path"},
+			{"Name": "RampMap", "Type": "Texture2D", "Value": "path"}
+		]
 	}
 }
+
+

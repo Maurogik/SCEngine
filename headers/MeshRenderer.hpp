@@ -8,13 +8,23 @@
 
 #include "SCEDefines.hpp"
 #include "Component.hpp"
-//#include "Material.hpp"
 #include "Camera.hpp"
+
+
+#define MAX_ATTRIB_ID 10000
 
 namespace SCE {
 
     REQUIRE_COMPONENT(Transform)
     REQUIRE_COMPONENT(Mesh)
+    REQUIRE_COMPONENT(Material)
+
+    struct attrib_data{
+        GLuint dataBuffer;
+        size_t size;
+        GLuint dataID;
+        int type;
+    };
 
     class Camera;
 
@@ -29,27 +39,19 @@ namespace SCE {
     protected :
 
     private :
+
         void            initializeGLData();
-
-        //Material        mMaterial;
-
-        //debug
-        GLuint          mProgramID;
 
         GLuint          mMVPMatrixID;
         GLuint          mViewMatrixID;
         GLuint          mModelMatrixID;
 
-        //Ids
-        GLuint          mVertexPosID;
-        GLuint          mUvID;
-        GLuint          mNormalID;
-
-        //Buffers
-        GLuint          mVertexBuffer;
-        GLuint          mUVBuffer;
-        GLuint          mNormalBuffer;
+        //indexation buffer
         GLuint          mIndiceBuffer;
+
+        std::vector<attrib_data>    mAttributes;
+
+        void addAttribute(std::string name, void* buffer, size_t size, int type, size_t typedSize);
 
     };
 

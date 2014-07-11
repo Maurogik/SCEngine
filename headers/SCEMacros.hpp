@@ -11,6 +11,7 @@
 #include <assert.h>
 #include <stdio.h>
 
+
 /**
 Variadic macros : macros with a variable list of argument
 ex : #define errPrint(format, ...) <- varaible list of args
@@ -19,17 +20,21 @@ To remove a preceding comma use [before], ## __VA_ARGS__ [after]
 ex : printf(format, ## __VA_ARGS__);
 **/
 
-#define SCE_LOG(str) \
-    printf(str); \
+#define SCE_LOG(...) \
+    fflush(stdout); \
+    printf(__VA_ARGS__); \
+    printf("\n");\
     fflush(stdout); \
 
 #ifdef SCE_DEBUG_ENGINE
-#define SCE_DEBUG_LOG(str, ...) \
-    printf(str "\n",## __VA_ARGS__); \
+#define SCE_DEBUG_LOG(...) \
+    fflush(stdout); \
+    printf(__VA_ARGS__); \
+    printf("\n");\
     fflush(stdout); \
 
 #else
-    #define SCE_DEBUG_LOG(str, ...) \
+    #define SCE_DEBUG_LOG(...) \
 
 #endif
 
@@ -52,15 +57,30 @@ ex : printf(format, ## __VA_ARGS__);
 
 
 #ifdef SCE_DEBUG
-    #define SCE_ASSERT(condition, str, ...) \
+    #define SCE_ASSERT(condition, ...) \
         if(!(condition)) { \
             std::cerr << "Assertion `" #condition "` failed in " << __FILE__ \
                       << " line " << __LINE__ << std::endl; \
-            printf(str "\n",## __VA_ARGS__); \
+            fflush(stdout); \
+            printf(__VA_ARGS__); \
+            printf("\n");\
+            fflush(stdout); \
             abort();\
         }
 #else
-    #define SCE_ASSERT(condition, message) do { } while (false)
+    #define SCE_ASSERT(condition,...) do { } while (false)
+#endif
+
+
+#ifdef SCE_DEBUG
+    #define SCE_ERROR(...) \
+        fflush(stdout); \
+        printf(__VA_ARGS__); \
+        printf("\n");\
+        fflush(stdout); \
+        abort();
+#else
+    #define SCE_ERROR(...) do { } while (false)
 #endif
 
 
@@ -108,5 +128,6 @@ ex : printf(format, ## __VA_ARGS__);
     Components can be accessed from outside with :
         GET_COMPONENT_FROM(objPtr, componentName)
  **/
+
 
 #endif

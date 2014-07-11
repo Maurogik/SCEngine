@@ -11,7 +11,7 @@
 
 
 # CMake entry point
-cmake_minimum_required (VERSION 2.6)
+cmake_minimum_required (VERSION 2.8)
 project (SCEngine)
 
 find_package(OpenGL REQUIRED)
@@ -21,15 +21,14 @@ if( CMAKE_BINARY_DIR STREQUAL CMAKE_SOURCE_DIR )
     message( FATAL_ERROR "Please select another Build Directory ! (and give it a clever name, like bin_Visual2012_64bits/)" )
 endif()
 if( CMAKE_SOURCE_DIR MATCHES " " )
-	message( "Your Source Directory contains spaces. If you experience problems when compiling, this can be the cause." )
+    message( "Your Source Directory contains spaces. If you experience problems when compiling, this can be the cause." )
 endif()
 if( CMAKE_BINARY_DIR MATCHES " " )
-	message( "Your Build Directory contains spaces. If you experience problems when compiling, this can be the cause." )
+    message( "Your Build Directory contains spaces. If you experience problems when compiling, this can be the cause." )
 endif()
 
 
-
-# Compile external dependencies 
+# Compile external dependencies
 add_subdirectory (external)
 
 # On Visual 2005 and above, this module can set the debug working directory
@@ -38,34 +37,36 @@ include(CreateLaunchers)
 include(MSVCMultipleProcessCompile) # /MP
 
 if(INCLUDE_DISTRIB)
-	add_subdirectory(distrib)
+    add_subdirectory(distrib)
 endif(INCLUDE_DISTRIB)
 
 
-include_directories(
-	external/AntTweakBar-1.16/include/
-	external/glfw-3.0.3/include/GLFW/
-	external/glm-0.9.4.0/
-	external/glew-1.9.0/include/
-	external/assimp-3.0.1270/include/
+include_directories(SYSTEM
+    external/AntTweakBar-1.16/include/
+    external/glfw-3.0.3/include/GLFW/
+    external/glm-0.9.4.0/
+    external/glew-1.9.0/include/
+    external/assimp-3.0.1270/include/
     external/bullet-2.81-rev2613/src/
     external/rapidjson/
-	.
+    .
 )
 
 set(ALL_LIBS
-	${OPENGL_LIBRARY}
-	GLFW_303
-	GLEW_190
+    ${OPENGL_LIBRARY}
+    GLFW_303
+    GLEW_190
 )
 
 add_definitions(
-	-DTW_STATIC
-	-DTW_NO_LIB_PRAGMA
-	-DTW_NO_DIRECT3D
-	-DGLEW_STATIC
-	-D_CRT_SECURE_NO_WARNINGS
+    -DTW_STATIC
+    -DTW_NO_LIB_PRAGMA
+    -DTW_NO_DIRECT3D
+    -DGLEW_STATIC
+    -D_CRT_SECURE_NO_WARNINGS
 )
+
+set( TARGET playground)
 
 
 set(HEADERS
@@ -78,11 +79,14 @@ set(HEADERS
         ./headers/Scene.hpp
         ./headers/SceneDescriptor.hpp
         ./headers/Transform.hpp
+        ./headers/GameObject.hpp
         ./headers/Camera.hpp
         ./headers/Container.hpp
         ./headers/Component.hpp
         ./headers/SCEMacros.hpp
         ./headers/SCEDefines.hpp
+        ./headers/SCETools.hpp
+        ./headers/SCETime.hpp
 )
 set(SHADERS
         ./shaders/Debug.fragmentshader
@@ -90,34 +94,46 @@ set(SHADERS
 )
 aux_source_directory(./sources SOURCES)
 aux_source_directory(./common COMMONS)
+aux_source_directory(${TARGET} APP_SOURCES)
 
 # User playground
-add_executable(playground 
-    playground/playground.cpp
+add_executable(${TARGET}
+    ${APP_SOURCES}
 
     ${HEADERS}
     ${SOURCES}
     ${COMMONS}
     ${SHADERS}
 )
-target_link_libraries(playground
-	${ALL_LIBS}
+target_link_libraries(${TARGET}
+    ${ALL_LIBS}
 )
 
-#add_library( libJson SHARED IMPORTED )
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-long-long -Wno-variadic-macros -Wunused-local-typedefs -pedantic")
 
-#LINK_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/external/jsoncpp-src-0.5.0/libs/linux-gcc-4.8.2/libjson_linux-gcc-4.8.2_libmt.a)
-# You can define two import-locations: one for debug and one for release.
-#set_target_properties( libJson PROPERTIES IMPORTED_LOCATION "${CMAKE_CURRENT_SOURCE_DIR}/external/jsoncpp-src-0.5.0/libs/linux-gcc-4.8.2/libjson_linux-gcc-4.8.2_libmt.a" )
+#set_source_files_properties(
+#  ${HEADERS}
+#  PROPERTIES
+#  COMPILE_FLAGS "${FLAGS}"
+#)
 
-#target_link_libraries(playground
-#    libjson_linux-gcc-4.8.2_libmt
+#set_source_files_properties(
+#  ${SOURCES}
+#  PROPERTIES
+#  COMPILE_FLAGS "${FLAGS}"
+#)
+
+#set_source_files_properties(
+#  ${APP_SOURCES}
+#  PROPERTIES
+#  COMPILE_FLAGS "${FLAGS}"
 #)
 
 # Xcode and Visual working directories
-set_target_properties(playground PROPERTIES XCODE_ATTRIBUTE_CONFIGURATION_BUILD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/playground/")
-create_target_launcher(playground WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/playground/")
+set_target_properties(${TARGET} PROPERTIES XCODE_ATTRIBUTE_CONFIGURATION_BUILD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/${TARGET}/")
+create_target_launcher(${TARGET} WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${TARGET}/")
 
+message("${CMAKE_CURRENT_SOURCE_DIR}/playground/")
 
 
 SOURCE_GROUP(common REGULAR_EXPRESSION ".*/common/.*" )
@@ -126,11 +142,38 @@ SOURCE_GROUP(shaders REGULAR_EXPRESSION ".*/.*shader*" )
 
 if (NOT ${CMAKE_GENERATOR} MATCHES "Xcode" )
 add_custom_command(
-   TARGET playground POST_BUILD
-   COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/playground${CMAKE_EXECUTABLE_SUFFIX}" "${CMAKE_CURRENT_SOURCE_DIR}/playground/"
+   TARGET ${TARGET} POST_BUILD
+   COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${TARGET}${CMAKE_EXECUTABLE_SUFFIX}" "${CMAKE_CURRENT_SOURCE_DIR}/${TARGET}/"
 )
+
 
 elseif (${CMAKE_GENERATOR} MATCHES "Xcode" )
 
 endif (NOT ${CMAKE_GENERATOR} MATCHES "Xcode" )
 
+file( COPY "${TARGET}/ressources" DESTINATION "." )
+
+
+#file(GLOB ressources "${TARGET}/ressources/*")
+
+#foreach(file ${ressources})
+
+#endforeach()
+
+#add_custom_command(TARGET ${TARGET} POST_BUILD
+#    COMMAND ${CMAKE_COMMAND} -E copy_directory
+#        "${CMAKE_CURRENT_SOURCE_DIR}/playground/ressources"
+#        "$<TARGET_FILE_DIR:playground>/ressources"
+#        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/playground/ressources ${CMAKE_CURRENT_SOURCE_DIR}/foo.hpp
+#)
+
+# ADD_CUSTOM_COMMAND(TARGET ${TARGET} POST_BUILD
+#    COMMAND ${CMAKE_COMMAND} -E copy_directory
+#        "${CMAKE_CURRENT_SOURCE_DIR}/${TARGET}/ressources"
+#        "$<TARGET_FILE_DIR:playground>/ressources"
+#    DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/${TARGET}/ressources/*"
+#)
+
+# ADD_CUSTOM_TARGET(copy_ressources
+#    DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/${TARGET}/ressources/*"
+#)

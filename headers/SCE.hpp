@@ -16,8 +16,11 @@
 #include "Container.hpp"
 #include "Component.hpp"
 #include "Material.hpp"
+#include "SCETime.hpp"
+#include "GameObject.hpp"
 
-
+#include "SCETools.hpp"
+#include "SCETime.hpp"
 #include "SCEMacros.hpp"
 
 //GLM
@@ -27,6 +30,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string>
+
+using namespace glm;
 
 #endif
 

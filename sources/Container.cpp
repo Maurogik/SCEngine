@@ -31,7 +31,7 @@ Container::~Container()
     mComponentMap.clear();
 }
 
-void Container::AddComponent(string componentName, Component *component)
+void Container::AddComponent(const string& componentName, Component *component)
 {
     SCE_ASSERT(mComponentMap.count(componentName) == 0, "Component already exists");
 
@@ -40,36 +40,56 @@ void Container::AddComponent(string componentName, Component *component)
     mComponentMap[componentName] = component;
 }
 
-Component *Container::GetComponent(string componentName)
+Component *Container::GetComponent(const string& componentName)
 {
     /*SCE_ASSERT(mComponentMap.count(componentName) != 0, "Component %s not in container"
                , componentName.c_str());*/
     return mComponentMap[componentName];
 }
 
-void Container::RemoveComponent(string componentName)
+void Container::RemoveComponent(const string& componentName)
 {
     Component * comp = mComponentMap[componentName];
     SECURE_DELETE(comp);
     mComponentMap.erase(mComponentMap.find((componentName)));
 }
 
-string Container::GetTag()
+const string& Container::GetTag()
 {
     return mTag;
 }
 
-string Container::GetLayer()
+const string& Container::GetLayer()
 {
     return mLayer;
 }
 
-void Container::SetTag(string tag)
+void Container::SetTag(const string& tag)
 {
     mTag = tag;
 }
 
-void Container::SetLayer(string layer)
+void Container::SetLayer(const string& layer)
 {
     mLayer = layer;
+}
+
+const vector<GameObject *>& Container::GetGameObjects()
+{
+    return mGameObjects;
+}
+
+void Container::AddGameObject(GameObject *go)
+{
+    if(find(mGameObjects.begin(), mGameObjects.end(), go)== mGameObjects.end()){
+        mGameObjects.push_back(go);
+    }
+}
+
+void Container::RemoveGameObject(GameObject *go)
+{
+    vector<GameObject*>::iterator it = find(mGameObjects.begin(), mGameObjects.end(), go);
+    if(it != mGameObjects.end()){
+        mGameObjects.erase(it);
+    }
 }

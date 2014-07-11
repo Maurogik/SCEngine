@@ -13,7 +13,6 @@ using namespace glm;
 
 #include "SCEMacros.hpp"
 
-
 #include <string>
 #include <iostream>
 #include <vector>
@@ -22,6 +21,11 @@ using namespace glm;
 
 #define DEFAULT_LAYER "DefaultLayer"
 #define DEFAULT_TAG "DefaultTag"
+
+#define RESSOURCE_PATH "ressources/"
+#define SHADER_PATH "ressources/"
+#define SHADER_SUFIX ".shader"
+#define MATERIAL_SUFIX ".material"
 
 
 #endif

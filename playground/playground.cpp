@@ -3,6 +3,7 @@
 #include <stdlib.h>
 
 #include "../headers/SCECore.hpp"
+#include "Rotator.hpp"
 
 using namespace SCE;
 
@@ -15,16 +16,22 @@ int main( void )
 
     Scene::CreateEmptyScene();
 
+    Material* mat = Material::LoadMaterial("TestMaterial");
+
     Container* suzanneObject    = new Container();
 
     Transform* suzanneTransform = new Transform();
     suzanneTransform->SetWorldPosition(vec3(0, 0, 0));
-    Mesh* suzanneMesh           = Mesh::LoadMesh( "./ressources/suzanne.obj" );
+    Mesh* suzanneMesh           = Mesh::LoadMesh("suzanne.obj" );
     MeshRenderer* renderer      = new MeshRenderer();
+    Rotator *rotator            = new Rotator();
 
+    ADD_COMPONENT_TO(suzanneObject, Material, mat);
     ADD_COMPONENT_TO(suzanneObject, Transform, suzanneTransform);
     ADD_COMPONENT_TO(suzanneObject, Mesh, suzanneMesh);
     ADD_COMPONENT_TO(suzanneObject, MeshRenderer, renderer);
+    ADD_COMPONENT_TO(suzanneObject, Rotator, rotator)
+
 
     Container* cameraObject     = new Container();
 

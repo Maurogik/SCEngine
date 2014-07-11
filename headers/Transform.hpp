@@ -62,8 +62,21 @@ namespace SCE {
 
         void                    SetLocalOrientation(const glm::vec3& orientation);
         void                    SetWorldOrientation(const glm::vec3& orientation);
+
+        /**
+         * @brief Rotate around the given axis for the requested angle, in local space
+         * @param axis
+         * @param angle
+         */
         void                    RotateAroundAxis(glm::vec3 axis, float angle);
-        void                    RotateAroundPivot(glm::vec3 pivot, glm::vec3 rotation);
+
+        /**
+         * @brief Rotate around a local space point for the given angle
+         * @param pivot
+         * @param axis
+         * @param angle
+         */
+        void                    RotateAroundPivot(glm::vec3 pivot, glm::vec3 axis, float angle);
         void                    LookAt(glm::vec3 target);
 
         //void                    SetLocalTransform(const glm::mat4& matrix);

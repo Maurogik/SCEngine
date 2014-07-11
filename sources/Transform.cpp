@@ -11,17 +11,17 @@ using namespace std;
 
 
 Transform::Transform()
-    : mParent(0l)
-    , mTranslation(0, 0, 0)
+    : mTranslation(0, 0, 0)
     , mScale(1.0f, 1.0f, 1.0f)
     , mOrientation(vec3(0, 0, 0))
+    , mParent(0l)
 {
     SCE_DEBUG_LOG("Transform initialized")
 }
 
 Transform::~Transform()
 {
-    for(int i = 0; i < mChildren.size(); ++i){
+    for(size_t i = 0; i < mChildren.size(); ++i){
         mChildren[i]->SetParent(0l);
     }
     SECURE_EXEC(mParent, RemoveChild(this));
@@ -195,22 +195,22 @@ void Transform::SetWorldOrientation(const vec3 &orientation)
     }
 }
 
-/**
- * @brief Rotate around the given axis for the requested angle, in local space
- * @param axis
- * @param angle
- */
+
 void Transform::RotateAroundAxis(vec3 axis, float angle)
 {
     quat rotation = angleAxis(angle, axis);
     mOrientation = mOrientation * rotation;
 }
 
-void Transform::RotateAroundPivot(vec3 pivot, vec3 rotation)
+void Transform::RotateAroundPivot(vec3 pivot, vec3 axis, float angle)
 {
     //translate to pivot, rotate, translate by inverse of 1st translation
-    //in world space ?
-    SCE_ASSERT(false, "Unimplemented");
+
+    vec3 moveToPiv = pivot - mTranslation;
+
+    mTranslation += moveToPiv;
+    RotateAroundAxis(axis, angle);
+    mTranslation -= moveToPiv;
 }
 
 //in world space
@@ -219,11 +219,11 @@ void Transform::LookAt(vec3 target)
     vec3 direction = WorldToLocalPos(target) - mTranslation;
     vec3 up = vec3(0.0f, 1.0f, 0.0f);
     quat q = QuatLookAt(direction, up);
-    vec3 v = QuatToEuler(q);
-    float x, y ,z;
+    //vec3 v = QuatToEuler(q);
+    /*float x, y ,z;
     x = v.x;
     y = v.y;
-    z = v.z;
+    z = v.z;*/
     mOrientation = q;
 }
 

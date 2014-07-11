@@ -26,13 +26,15 @@ namespace SCE {
 
         //basic scene functions
         static void     CreateEmptyScene();
-        static void     LoadScene(std::string scenePath);
+        static void     LoadScene(const std::string& scenePath);
         static void     Run();
         static void     DestroyScene();
 
         //object related functions
         static void     AddContainer(Container *obj);
         static void     RemoveContainer(Container *obj);
+        static std::vector<Container*> FindContainersWithTag(const std::string& tag);
+        static std::vector<Container*> FindContainersWithLayer(const std::string& layer);
 
     private :
 

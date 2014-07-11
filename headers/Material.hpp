@@ -7,6 +7,7 @@
 #define SCE_MATERIAL_HPP
 
 #include "SCEDefines.hpp"
+#include "Component.hpp"
 #include <map>
 
 
@@ -18,13 +19,10 @@ namespace SCE {
     };
 
     enum UniformType {
-        UNIFORM_F,
-    };
-
-    struct attrib_data{
-        void* data;
-        size_t size;
-        GLuint dataID;
+        UNIFORM_FLOAT,
+        UNIFORM_VEC4,
+        UNIFORM_VEC3,
+        UNIFORM_TEXTURE2D
     };
 
     struct uniform_data{
@@ -33,40 +31,57 @@ namespace SCE {
         GLuint dataID;
     };
 
-    class Material {
+    class Material : public Component{
 
 
     public :
 
-                        Material();
+                            Material();
 
-                        ~Material();
-
-        /**
-         * @brief Load, parse and compile the shader,
-         * initialize the appropriate uniforms and attribute.
-         */
-        void            LoadMaterial(std::string filename);
+        virtual             ~Material();
 
         /**
-         * @brief Binds this material shader and uniforms
+         * @brief Parse the material file to create a new Material object.
+         * Load the material data, compile and link the sahders and returns the material.
+         * @param filename of the material
+         * @return A new material object.
          */
-        void            BindRenderData();
+        static Material*    LoadMaterial(const std::string& filename);
 
-        void            ReloadMaterial();
+        /**
+         * @brief InitRenderData
+         */
+        void                InitRenderData();
 
-        void            CleanMaterial();
+        /**
+         * @brief BindRenderData
+         */
+        void                BindRenderData();
 
+
+        void                ReloadMaterial();
+
+        void                CleanMaterial();
+
+        void                SetUniformValue(const std::string& uniformName, void* value);
+
+        void*               GetUniformValue(const std::string& uniformName);
+
+        GLuint              GetShaderProgram();
 
     private :
 
         //Lod for shader ? later ?
-
-        int                                     mProgramShaderId;
-        std::map<std::string, attrib_data>      mAttributes;
+        std::string                             mMaterialName;
+        GLuint                                  mProgramShaderId;
         std::map<std::string, uniform_data>     mUniforms;
 
-
+        /**
+         * @brief Load the shader located in the given shader file, compiles and links them.
+         * @param filename
+         * @return the shader program ID.
+         */
+        static GLuint       loadShaders(const std::string& filename);
     };
 
 }

@@ -154,7 +154,8 @@ std::string FormatDebugOutput(
     std::cout << stringStream.str() << std::endl;
 
     if(errorMustBreak){
-        std::cout << "Breaking program here" << std::endl;
+        SCE_ERROR("Breaking program here !");
+
     }
 
     return stringStream.str();

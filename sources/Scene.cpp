@@ -8,6 +8,7 @@
 #include "../headers/MeshRenderer.hpp"
 #include "../headers/Camera.hpp"
 #include "../headers/SCECore.hpp"
+#include "../headers/GameObject.hpp"
 
 using namespace SCE;
 using namespace std;
@@ -33,7 +34,7 @@ SCE::Scene::Scene()
 
 SCE::Scene::~Scene()
 {
-    for(int i = 0; i < mContainers.size(); ++i){
+    for(size_t i = 0; i < mContainers.size(); ++i){
         SECURE_DELETE(mContainers[i]);
     }
     mContainers.clear();
@@ -46,7 +47,7 @@ void SCE::Scene::CreateEmptyScene()
     s_scene = new Scene();
 }
 
-void SCE::Scene::LoadScene(std::string scenePath)
+void SCE::Scene::LoadScene(const std::string& scenePath)
 {
     SCE_ASSERT(s_scene == 0l
                , "A scene is already loaded, destroy it befor loading a new one")
@@ -71,7 +72,7 @@ void SCE::Scene::RenderScene()
 
     //Parse cameras and render them
 
-    for(int i = 0; i < mContainers.size(); ++i){
+    for(size_t i = 0; i < mContainers.size(); ++i){
         Camera* cam = GET_COMPONENT_FROM(mContainers[i], Camera);
         if(cam) {
             renderSceneWithCamera(cam);
@@ -81,17 +82,28 @@ void SCE::Scene::RenderScene()
 
 void Scene::UpdateScene()
 {
+    //update game clock
+    SCETime::Update();
+
     //Duplicate containers before updating because
     //the list might be modified during the updates
 
+    vector<Container*> tmpContainers = s_scene->mContainers;
+
+    for(size_t i = 0; i < tmpContainers.size(); ++i){
+        const vector<GameObject*> gos = tmpContainers[i]->GetGameObjects();
+        for(size_t h = 0; h < gos.size(); ++h){
+            gos[h]->Update();
+        }
+    }
 
     /**
-     * Temporaire
+     * Temporary
      **/
     SCE_DEBUG_LOG("move control code to appropriate location");
 
     Component* comp;
-    for(int i = 0; i < mContainers.size(); ++i){
+    for(size_t i = 0; i < mContainers.size(); ++i){
         comp = GET_COMPONENT_FROM(mContainers[i], Camera);
         if(comp) {
             break;
@@ -144,6 +156,7 @@ void Scene::UpdateScene()
     }
 
     transform->SetLocalPosition(position);
+    /** End of temporary**/
 }
 
 void SCE::Scene::DestroyScene()
@@ -167,10 +180,32 @@ void Scene::RemoveContainer(Container *obj)
     }
 }
 
+std::vector<Container *> Scene::FindContainersWithTag(const string &tag)
+{
+    vector<Container*> tagged;
+    for(size_t i = 0; i < s_scene->mContainers.size(); ++i){
+        if(s_scene->mContainers[i]->GetTag() == tag){
+            tagged.push_back(s_scene->mContainers[i]);
+        }
+    }
+    return tagged;
+}
+
+std::vector<Container *> Scene::FindContainersWithLayer(const string &layer)
+{
+    vector<Container*> layered;
+    for(size_t i = 0; i < s_scene->mContainers.size(); ++i){
+        if(s_scene->mContainers[i]->GetLayer() == layer){
+            layered.push_back(s_scene->mContainers[i]);
+        }
+    }
+    return layered;
+}
+
 void Scene::renderSceneWithCamera(Camera *camera)
 {
 
-    for(int i = 0; i < mContainers.size(); ++i){
+    for(size_t i = 0; i < mContainers.size(); ++i){
         if(camera->IsLayerRendered( mContainers[i]->GetLayer() )){
             MeshRenderer* renderer = GET_COMPONENT_FROM(mContainers[i], MeshRenderer);
             if(renderer) {

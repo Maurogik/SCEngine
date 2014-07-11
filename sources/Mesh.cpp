@@ -7,6 +7,7 @@
 #include "../headers/Mesh.hpp"
 #include <common/objloader.hpp>
 #include <common/vboindexer.hpp>
+#include <common/tangentspace.hpp>
 
 using namespace std;
 
@@ -87,21 +88,28 @@ void SCE::Mesh::resetMeshData()
 
 SCE::Mesh *SCE::Mesh::LoadMesh(string filename)
 {
+    string fullPath = RESSOURCE_PATH + filename;
     vector<vec3> vertices;
     vector<vec2> uvs;
     vector<vec3> normals;
+//    vector<vec3> tangents;
+//    vector<vec3> bitangents;
 
     Mesh* mesh = 0l;
 
-    if(loadOBJ(filename.c_str()
+    if(loadOBJ(fullPath.c_str()
                , vertices
                , uvs
                , normals))
     {
+        //computeTangentBasis(vertices, uvs, normals, tangents, bitangents);
+
         vector<ushort> indices;
         vector<vec3>   out_vert;
         vector<vec2>   out_uvs;
         vector<vec3>   out_norm;
+//        vector<vec3>   out_tan;
+//        vector<vec3>   out_bitan;
 
         indexVBO(vertices
                  , uvs
@@ -119,11 +127,11 @@ SCE::Mesh *SCE::Mesh::LoadMesh(string filename)
 
 SCE::Mesh *SCE::Mesh::CreateSphere(ushort radius, ushort tesselation)
 {
-
+    return 0l;
 }
 
 SCE::Mesh *SCE::Mesh::CreateBox(ushort widthn, ushort height, ushort depth)
 {
-
+    return 0l;
 }
 
