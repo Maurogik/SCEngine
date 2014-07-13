@@ -81,6 +81,7 @@ set(HEADERS
         ./headers/Transform.hpp
         ./headers/GameObject.hpp
         ./headers/Camera.hpp
+        ./headers/Light.hpp
         ./headers/Container.hpp
         ./headers/Component.hpp
         ./headers/SCEMacros.hpp
@@ -88,10 +89,8 @@ set(HEADERS
         ./headers/SCETools.hpp
         ./headers/SCETime.hpp
 )
-set(SHADERS
-        ./shaders/Debug.fragmentshader
-        ./shaders/Debug.vertexshader
-)
+
+
 aux_source_directory(./sources SOURCES)
 aux_source_directory(./common COMMONS)
 aux_source_directory(${TARGET} APP_SOURCES)
@@ -103,13 +102,13 @@ add_executable(${TARGET}
     ${HEADERS}
     ${SOURCES}
     ${COMMONS}
-    ${SHADERS}
 )
 target_link_libraries(${TARGET}
     ${ALL_LIBS}
 )
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-long-long -Wno-variadic-macros -Wunused-local-typedefs -pedantic")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-long-long -Wno-variadic-macros -Wunused-local-typedefs -pedantic")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-long-long -Wno-variadic-macros -pedantic")
 
 #set_source_files_properties(
 #  ${HEADERS}

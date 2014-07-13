@@ -34,9 +34,9 @@ namespace SCE {
 
         /*****Static*****/
 
-        static Mesh*        LoadMesh(std::string filename);
-        static Mesh*        CreateSphere(ushort radius, ushort tesselation);
-        static Mesh*        CreateBox(ushort widthn, ushort height, ushort depth);
+        static Mesh*        LoadMesh(const std::string &filename);
+        static Mesh*        CreateSphere(const ushort &radius, const ushort &tesselation);
+        static Mesh*        CreateBox(const ushort &width, const ushort &height, const ushort &depth);
 
     protected :
 

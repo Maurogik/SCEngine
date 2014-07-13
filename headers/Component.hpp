@@ -20,7 +20,7 @@ namespace SCE {
                         Component();
         virtual         ~Component();
         Container*      GetContainer();
-        virtual void    SetContainer(Container*container);
+        virtual void    SetContainer(Container* container);
 
     private :
 

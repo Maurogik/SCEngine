@@ -51,7 +51,11 @@ namespace SCE {
 
         std::vector<attrib_data>    mAttributes;
 
-        void addAttribute(std::string name, void* buffer, size_t size, int type, size_t typedSize);
+        void addAttribute(  const std::string &name
+                          , void* buffer
+                          , const size_t &size
+                          , const int &type
+                          , const size_t &typedSize);
 
     };
 

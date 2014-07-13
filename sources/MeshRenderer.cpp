@@ -105,7 +105,11 @@ void MeshRenderer::initializeGLData()
 
 }
 
-void MeshRenderer::addAttribute(string name, void *buffer, size_t size, int type, size_t typedSize)
+void MeshRenderer::addAttribute(  const std::string &name
+                                , void* buffer
+                                , const size_t &size
+                                , const int &type
+                                , const size_t &typedSize)
 {
 
     Material * mat = GET_COMPONENT(Material);

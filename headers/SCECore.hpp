@@ -18,7 +18,7 @@ namespace SCE {
     class SCECore {
 
     public :
-        static void InitEngine(std::string windowName);
+        static void InitEngine(const std::string &windowName);
         static void RunEngine();
         static void CleanUpEngine();
         static GLFWwindow* GetWindow();

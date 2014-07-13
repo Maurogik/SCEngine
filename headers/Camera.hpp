@@ -24,31 +24,31 @@ namespace SCE {
     public :
 
         Camera();
-        Camera(  float fieldOfView
-               , float aspectRatio
-               , float nearPlane
-               , float farPlane
+        Camera(  const float &fieldOfView
+               , const float &aspectRatio
+               , const float &nearPlane
+               , const float &farPlane
         );
         Camera(
-                 float leftPlane
-               , float rightPlane
-               , float topPlane
-               , float bottomPlane
-               , float nearPlane
-               , float farPlane
+                 const float &leftPlane
+               , const float &rightPlane
+               , const float &topPlane
+               , const float &bottomPlane
+               , const float &nearPlane
+               , const float &farPlane
         );
-        virtual         ~Camera();
-        CameraType      GetType();
-        glm::mat4       GetViewMatrix();
-        glm::mat4       GetProjectionMatrix();
-        glm::mat4       GetViewProjectionMatrix();
-        bool            IsLayerRendered(std::string layer);
-        void            AddLayerToRender(std::string layer);
-        void            RemoveLayerToRender(std::string layer);
+        virtual             ~Camera();
+        const CameraType&   GetType();
+        const mat4          GetViewMatrix();
+        const glm::mat4&    GetProjectionMatrix();
+        const mat4          GetViewProjectionMatrix();
+        bool                IsLayerRendered(const std::string &layer);
+        void                AddLayerToRender(const std::string &layer);
+        void                RemoveLayerToRender(const std::string &layer);
 
     private :
 
-        void            init();
+        void                init();
 
         CameraType                  mType;
         std::vector<std::string>    mRenderedLayers;

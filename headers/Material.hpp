@@ -67,7 +67,7 @@ namespace SCE {
 
         void*               GetUniformValue(const std::string& uniformName);
 
-        GLuint              GetShaderProgram();
+        const GLuint&       GetShaderProgram();
 
     private :
 

@@ -118,7 +118,7 @@ void Material::InitRenderData()
 
         uniform.dataID = glGetUniformLocation(mProgramShaderId, name.c_str());
         if(uniform.type == UNIFORM_TEXTURE2D){
-
+            //do additional texture work (fetch sampler & stuff)
         }
 
     }
@@ -186,7 +186,7 @@ void *Material::GetUniformValue(const string &uniformName)
     return 0l;
 }
 
-GLuint Material::GetShaderProgram()
+const GLuint &Material::GetShaderProgram()
 {
     return mProgramShaderId;
 }

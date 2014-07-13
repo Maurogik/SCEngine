@@ -86,7 +86,7 @@ void SCE::Mesh::resetMeshData()
     mBitangents = 0l;
 }
 
-SCE::Mesh *SCE::Mesh::LoadMesh(string filename)
+SCE::Mesh *SCE::Mesh::LoadMesh(const string &filename)
 {
     string fullPath = RESSOURCE_PATH + filename;
     vector<vec3> vertices;
@@ -125,12 +125,12 @@ SCE::Mesh *SCE::Mesh::LoadMesh(string filename)
     return mesh;
 }
 
-SCE::Mesh *SCE::Mesh::CreateSphere(ushort radius, ushort tesselation)
+SCE::Mesh *SCE::Mesh::CreateSphere(const ushort &radius, const ushort &tesselation)
 {
     return 0l;
 }
 
-SCE::Mesh *SCE::Mesh::CreateBox(ushort widthn, ushort height, ushort depth)
+SCE::Mesh *SCE::Mesh::CreateBox(const ushort &width, const ushort &height, const ushort &depth)
 {
     return 0l;
 }

@@ -26,33 +26,33 @@ namespace SCE {
         virtual                 ~Transform();
 
 
-        glm::vec3               GetLocalPosition();
-        glm::vec3               GetWorldPosition();
+        const glm::vec3&        GetLocalPosition();
+        const glm::vec3         GetWorldPosition();
 
-        glm::vec3               GetLocalScale();
-        glm::vec3               GetWorldScale();
+        const glm::vec3&        GetLocalScale();
+        const glm::vec3         GetWorldScale();
 
-        glm::vec3               GetLocalOrientation();
-        glm::vec3               GetWorldOrientation();
-        glm::quat               GetLocalQuaternion();
-        glm::quat               GetWorldQuaternion();
+        const glm::vec3         GetLocalOrientation();
+        const glm::vec3         GetWorldOrientation();
+        const glm::quat&        GetLocalQuaternion();
+        const glm::quat         GetWorldQuaternion();
 
-        mat4                    GetLocalTransform();
-        mat4                    GetWorldTransform();
-
-
-        glm::vec3               LocalToWorldPos(glm::vec3 pos);
-        glm::vec3               LocalToWorldDir(glm::vec3 dir);
-        glm::vec3               WorldToLocalPos(glm::vec3 pos);
-        glm::vec3               WorldToLocalDir(glm::vec3 dir);
+        const mat4              GetLocalTransform();
+        const mat4              GetWorldTransform();
 
 
-        glm::vec3               Up();
-        glm::vec3               Left();
-        glm::vec3               Right();
-        glm::vec3               Down();
-        glm::vec3               Forward();
-        glm::vec3               Back();
+        const glm::vec3         LocalToWorldPos(const glm::vec3& pos);
+        const glm::vec3         LocalToWorldDir(const glm::vec3& dir);
+        const glm::vec3         WorldToLocalPos(const glm::vec3& pos);
+        const glm::vec3         WorldToLocalDir(const glm::vec3& dir);
+
+
+        const glm::vec3         Up();
+        const glm::vec3         Left();
+        const glm::vec3         Right();
+        const glm::vec3         Down();
+        const glm::vec3         Forward();
+        const glm::vec3         Back();
 
 
         void                    SetLocalPosition(const glm::vec3& position);
@@ -64,23 +64,20 @@ namespace SCE {
         void                    SetWorldOrientation(const glm::vec3& orientation);
 
         /**
-         * @brief Rotate around the given axis for the requested angle, in local space
-         * @param axis
-         * @param angle
+         * @brief Rotate around the given axis for the requested angle, in world space
+         * @param axis world space axis
+         * @param angle rotation angle (in degree)
          */
-        void                    RotateAroundAxis(glm::vec3 axis, float angle);
+        void                    RotateAroundAxis(const glm::vec3& axis, const float& angle);
 
         /**
-         * @brief Rotate around a local space point for the given angle
-         * @param pivot
-         * @param axis
-         * @param angle
+         * @brief Rotate around a world space point and axis for the given angle
+         * @param pivot world space pivot point
+         * @param axis world space rotation axis
+         * @param angle rotatio angle (in degree)
          */
-        void                    RotateAroundPivot(glm::vec3 pivot, glm::vec3 axis, float angle);
-        void                    LookAt(glm::vec3 target);
-
-        //void                    SetLocalTransform(const glm::mat4& matrix);
-        //void                    SetWorldTransform(const glm::mat4& matrix);
+        void                    RotateAroundPivot(const glm::vec3& pivot, const glm::vec3& axis, const float& angle);
+        void                    LookAt(const glm::vec3& target);
 
 
         void                    SetParent(Transform* parentPtr);
@@ -90,7 +87,7 @@ namespace SCE {
 
     private :
 
-        static glm::vec3        QuatToEuler(glm::quat q1);
+        static glm::vec3        QuatToEuler(const glm::quat& q1);
 
         //glm::mat4                   mTransformMatrix;
         glm::vec3                   mTranslation;

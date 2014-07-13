@@ -26,10 +26,10 @@ Camera::Camera()
 }
 
 Camera::Camera(
-          float fieldOfView
-        , float aspectRatio
-        , float nearPlane
-        , float farPlane)
+          const float &fieldOfView
+        , const float &aspectRatio
+        , const float &nearPlane
+        , const float &farPlane)
     : Component()
 {
     mType = PERSPECTIVE;
@@ -43,12 +43,12 @@ Camera::Camera(
 }
 
 Camera::Camera(
-          float leftPlane
-        , float rightPlane
-        , float topPlane
-        , float bottomPlane
-        , float nearPlane
-        , float farPlane)
+          const float &leftPlane
+        , const float &rightPlane
+        , const float &topPlane
+        , const float &bottomPlane
+        , const float &nearPlane
+        , const float &farPlane)
     : Component()
 {
     mType = ORTHOGRAPHIC;
@@ -82,41 +82,34 @@ glm::lookAt(
     mRenderedLayers.push_back(DEFAULT_LAYER);
 }
 
-CameraType Camera::GetType()
+const CameraType& Camera::GetType()
 {
     return mType;
 }
 
-mat4 Camera::GetViewMatrix()
+const mat4 Camera::GetViewMatrix()
 {
     Transform * transform = GET_COMPONENT(Transform);
     return mNegativeZInverter * inverse(transform->GetWorldTransform());
-    /*mat4 look = glm::lookAt(
-                glm::vec3(0,0,0), // Camera is at (4,3,-3), in World Space
-                glm::vec3(0,0,1), // and looks at the origin
-                glm::vec3(0,1,0)  // Head is up (set to 0,-1,0 to look upside-down)
-           );*/
-
-    //return mNegativeZInverter * inverse(glm::translate(mat4(1.0f), vec3(0,1,-10)));
 }
 
-mat4 Camera::GetProjectionMatrix()
+const mat4 &Camera::GetProjectionMatrix()
 {
     return mProjectionMatrix;
 }
 
-mat4 Camera::GetViewProjectionMatrix()
+const mat4 Camera::GetViewProjectionMatrix()
 {
     return mProjectionMatrix * GetViewMatrix();
 }
 
-bool Camera::IsLayerRendered(std::string layer)
+bool Camera::IsLayerRendered(const std::string &layer)
 {
     return std::find(mRenderedLayers.begin(), mRenderedLayers.end(), layer)
             != mRenderedLayers.end() ;
 }
 
-void Camera::AddLayerToRender(std::string layer)
+void Camera::AddLayerToRender(const std::string &layer)
 {
     if( std::find(mRenderedLayers.begin(), mRenderedLayers.end(), layer)
             == mRenderedLayers.end() ) {
@@ -124,7 +117,7 @@ void Camera::AddLayerToRender(std::string layer)
     }
 }
 
-void Camera::RemoveLayerToRender(std::string layer)
+void Camera::RemoveLayerToRender(const std::string &layer)
 {
     std::vector<std::string>::iterator it_layer = std::find(
                   mRenderedLayers.begin()

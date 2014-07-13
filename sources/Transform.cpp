@@ -27,13 +27,13 @@ Transform::~Transform()
     SECURE_EXEC(mParent, RemoveChild(this));
 }
 
-vec3 Transform::GetLocalPosition()
+const vec3& Transform::GetLocalPosition()
 {
     //return vec3(mTransformMatrix[3]);
     return mTranslation;
 }
 
-vec3 Transform::GetWorldPosition()
+const vec3 Transform::GetWorldPosition()
 {
     if(!mParent){
         return GetLocalPosition();
@@ -42,12 +42,12 @@ vec3 Transform::GetWorldPosition()
     return vec3(worldTrans);
 }
 
-vec3 Transform::GetLocalScale()
+const vec3& Transform::GetLocalScale()
 {
     return mScale;
 }
 
-vec3 Transform::GetWorldScale()
+const vec3 Transform::GetWorldScale()
 {
     if(!mParent){
         return GetLocalScale();
@@ -57,12 +57,12 @@ vec3 Transform::GetWorldScale()
     }
 }
 
-vec3 Transform::GetLocalOrientation()
+const vec3 Transform::GetLocalOrientation()
 {
     return QuatToEuler(mOrientation);
 }
 
-vec3 Transform::GetWorldOrientation()
+const vec3 Transform::GetWorldOrientation()
 {
     if(!mParent) {
         return GetLocalOrientation();
@@ -71,12 +71,12 @@ vec3 Transform::GetWorldOrientation()
     }
 }
 
-glm::quat Transform::GetLocalQuaternion()
+const glm::quat& Transform::GetLocalQuaternion()
 {
     return mOrientation;
 }
 
-quat Transform::GetWorldQuaternion()
+const quat Transform::GetWorldQuaternion()
 {
     if(!mParent) {
         return GetLocalQuaternion();
@@ -85,7 +85,7 @@ quat Transform::GetWorldQuaternion()
     }
 }
 
-mat4 Transform::GetLocalTransform()
+const mat4 Transform::GetLocalTransform()
 {
     //1 : scale, 2 : rotate, 3 : translate
     mat4 scaleMatrix = glm::scale(mat4(1.0f), mScale);
@@ -94,7 +94,7 @@ mat4 Transform::GetLocalTransform()
     return tranlationMatrix * rotationMatrix * scaleMatrix;
 }
 
-mat4 Transform::GetWorldTransform()
+const mat4 Transform::GetWorldTransform()
 {
     if(!mParent){
         return GetLocalTransform();
@@ -102,54 +102,54 @@ mat4 Transform::GetWorldTransform()
     return mParent->GetWorldTransform() * GetLocalTransform();
 }
 
-vec3 Transform::LocalToWorldPos(vec3 pos)
+const vec3 Transform::LocalToWorldPos(const vec3 &pos)
 {
     return vec3(GetWorldTransform() * vec4(pos, 1.0f));
 }
 
-vec3 Transform::LocalToWorldDir(vec3 dir)
+const vec3 Transform::LocalToWorldDir(const vec3 &dir)
 {
     return vec3(GetWorldTransform() * vec4(dir, 0.0f));
 }
 
-vec3 Transform::WorldToLocalPos(vec3 pos)
+const vec3 Transform::WorldToLocalPos(const vec3 &pos)
 {
     mat4 inverseTransform = inverse(GetWorldTransform());
     return vec3(inverseTransform * vec4(pos, 1.0f));
 }
 
-vec3 Transform::WorldToLocalDir(vec3 dir)
+const vec3 Transform::WorldToLocalDir(const vec3 &dir)
 {
     mat4 inverseTransform = inverse(GetWorldTransform());
     return vec3(inverseTransform * vec4(dir, 0.0f));
 }
 
-vec3 Transform::Up()
+const vec3 Transform::Up()
 {
     return LocalToWorldDir(vec3(0, 1, 0));
 }
 
-vec3 Transform::Left()
+const vec3 Transform::Left()
 {
     return LocalToWorldDir(vec3(1, 0, 0));
 }
 
-vec3 Transform::Right()
+const vec3 Transform::Right()
 {
     return LocalToWorldDir(vec3(-1, 0, 0));
 }
 
-vec3 Transform::Down()
+const vec3 Transform::Down()
 {
     return LocalToWorldDir(vec3(0, -1, 0));
 }
 
-vec3 Transform::Forward()
+const vec3 Transform::Forward()
 {
     return LocalToWorldDir(vec3(0, 0, 1));
 }
 
-vec3 Transform::Back()
+const vec3 Transform::Back()
 {
     return LocalToWorldDir(vec3(0, 0, -1));
 }
@@ -190,31 +190,41 @@ void Transform::SetWorldOrientation(const vec3 &orientation)
         quat parentQuat = mParent->GetWorldQuaternion();
         parentQuat = inverse(parentQuat);
         mOrientation = parentQuat * worldOrientation;
-// newWorldOri = ParentQuat * newLocalOri
-// newLocalOri = ParentQuat -1 * newWorldOri
+        // newWorldOri = ParentQuat * newLocalOri
+        // newLocalOri = ParentQuat -1 * newWorldOri
     }
 }
 
 
-void Transform::RotateAroundAxis(vec3 axis, float angle)
+void Transform::RotateAroundAxis(const vec3 &axis, const float &angle)
 {
-    quat rotation = angleAxis(angle, axis);
+    vec3 locAxis(axis);
+    if(mParent){
+        locAxis = mParent->WorldToLocalDir(axis);
+    }
+    quat rotation = angleAxis(angle, locAxis);
     mOrientation = mOrientation * rotation;
 }
 
-void Transform::RotateAroundPivot(vec3 pivot, vec3 axis, float angle)
+void Transform::RotateAroundPivot(const glm::vec3& pivot, const glm::vec3& axis, const float& angle)
 {
-    //translate to pivot, rotate, translate by inverse of 1st translation
+    vec3 locPivot(pivot);
+    vec3 locAxis(axis);
+    if(mParent){
+        locPivot = mParent->WorldToLocalPos(pivot);
+        locAxis = mParent->WorldToLocalDir(axis);
+    }
+    vec3 move = locPivot - mTranslation;
+    mTranslation += move;
 
-    vec3 moveToPiv = pivot - mTranslation;
-
-    mTranslation += moveToPiv;
-    RotateAroundAxis(axis, angle);
-    mTranslation -= moveToPiv;
+    quat rotation = angleAxis(angle, locAxis);
+    mOrientation = mOrientation * rotation;
+    move = rotation * move;
+    mTranslation -= move;
 }
 
 //in world space
-void Transform::LookAt(vec3 target)
+void Transform::LookAt(const glm::vec3& target)
 {
     vec3 direction = WorldToLocalPos(target) - mTranslation;
     vec3 up = vec3(0.0f, 1.0f, 0.0f);
@@ -248,7 +258,7 @@ void Transform::RemoveChild(Transform *child)
     mChildren.erase(it);
 }
 
-vec3 Transform::QuatToEuler(quat q1)
+vec3 Transform::QuatToEuler(const quat& q1)
 {
     double heading, attitude, bank;
 

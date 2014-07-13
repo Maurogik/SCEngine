@@ -11,7 +11,7 @@ using namespace SCE;
 
 GLFWwindow * SCECore::s_window = 0l;
 
-void SCECore::InitEngine(std::string windowName)
+void SCECore::InitEngine(const std::string &windowName)
 {
     SCE_DEBUG_LOG("Initializing engine");
 
@@ -92,7 +92,7 @@ void SCECore::RunEngine()
 
 void SCECore::CleanUpEngine()
 {
-    SCE_LOG("Cleaning up engine");
+    SCE_DEBUG_LOG("Cleaning up engine");
     Scene::DestroyScene();
 }
 
