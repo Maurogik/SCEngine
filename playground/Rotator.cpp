@@ -2,7 +2,7 @@
 
 using namespace SCE;
 
-Rotator::Rotator() : mSpeed(100.0f)
+Rotator::Rotator() : mSpeed(50.0f)
 {
 
 }

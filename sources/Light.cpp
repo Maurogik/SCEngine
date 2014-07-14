@@ -4,9 +4,12 @@
 /********** FILE : Light.cpp **********/
 /**************************************/
 
+#include "../headers/Container.hpp"
 #include "../headers/Light.hpp"
 #include "../headers/Container.hpp"
 #include "../headers/Transform.hpp"
+#include "../headers/Scene.hpp"
+
 
 using namespace std;
 using namespace glm;
@@ -21,34 +24,37 @@ Light::Light() :
 
 Light::~Light()
 {
+    Scene::UnregisterLight(this);
 }
 
 void Light::SetContainer(Container *cont)
 {
+    Component::SetContainer(cont);
     //register light
+    Scene::RegisterLight(this);
 }
 
-void Light::InitRenderDataForShader(const GLuint &shaderId);
+void Light::InitRenderDataForShader(const GLuint &shaderId)
 {
-    //glGetUniformLocation(mProgramShaderId, name.c_str());
+    GLuint lightposUnif = glGetUniformLocation(shaderId, LIGHT_POS_UNIFORM_STR);
+    GLuint lightcolorUnif = glGetUniformLocation(shaderId, LIGHT_COLOR_UNIFORM_STR);
+    if(mLightColorByShader.count(shaderId) == 0){
+        mLightPosByShader[shaderId] = lightposUnif;
+        mLightColorByShader[shaderId] = lightcolorUnif;
+    }
 }
 
-void Light::BindRenderDataForShader(const GLuint &shaderId);
+void Light::BindRenderDataForShader(const GLuint &shaderId)
 {
-    /*
-        case UNIFORM_VEC3 :
-        {
-            vec3 v = *(vec3*)uniform.data;
-            glUniform3f(uniform.dataID, v.x, v.y, v.z);
-            break;
-        }
-        case UNIFORM_VEC4 :
-        {
-            vec4 v = *(vec4*)uniform.data;
-            glUniform4f(uniform.dataID, v.x, v.y, v.z, v.w);
-            break;
-        }
-    */
+    GLuint lightPosUnif = mLightPosByShader[shaderId];
+    GLuint lightColorUnif = mLightColorByShader[shaderId];
+
+    Transform *transform = GET_COMPONENT(Transform);
+
+    vec3 lightPos = transform->GetWorldPosition();
+
+    glUniform3f(lightPosUnif, lightPos.x, lightPos.y, lightPos.z);
+    glUniform4f(lightColorUnif, mLightColor.r, mLightColor.g, mLightColor.b, mLightColor.a);
 }
 
 

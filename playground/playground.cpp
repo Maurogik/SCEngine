@@ -16,9 +16,23 @@ int main( void )
 
     Scene::CreateEmptyScene();
 
-    Material* mat = Material::LoadMaterial("TestMaterial");
+    //Light
+    Container* lightObject      = new Container();
 
+    Light* light                = new Light();
+    Transform* lightTransform    = new Transform();
+
+    ADD_COMPONENT_TO(lightObject, Transform, lightTransform);
+    ADD_COMPONENT_TO(lightObject, Light, light);
+
+    lightTransform->SetWorldOrientation(vec3(30, 0, 30));
+    lightTransform->SetWorldPosition(vec3(0, 10, 20));
+
+
+    //Suzanne model
     Container* suzanneObject    = new Container();
+
+    Material* mat = Material::LoadMaterial("TestMaterial");
 
     Transform* suzanneTransform = new Transform();
     suzanneTransform->SetWorldPosition(vec3(0, 0, 0));
@@ -32,7 +46,7 @@ int main( void )
     ADD_COMPONENT_TO(suzanneObject, MeshRenderer, renderer);
     ADD_COMPONENT_TO(suzanneObject, Rotator, rotator)
 
-
+    //Camera
     Container* cameraObject     = new Container();
 
     Camera* camera              = new Camera(40.0f, 4.0f/3.0f, 0.1f, 100.0f);
@@ -42,6 +56,7 @@ int main( void )
     cameraTransform->LookAt(suzanneTransform->GetWorldPosition());
     ADD_COMPONENT_TO(cameraObject, Transform, cameraTransform);
     ADD_COMPONENT_TO(cameraObject, Camera, camera);
+
 
     //load scene here
     SCECore::RunEngine();

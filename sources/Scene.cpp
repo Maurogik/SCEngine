@@ -202,9 +202,37 @@ std::vector<Container *> Scene::FindContainersWithLayer(const string &layer)
     return layered;
 }
 
+void Scene::RegisterLight(Light *light)
+{
+    if(find(s_scene->mLights.begin(), s_scene->mLights.end(), light)== s_scene->mLights.end()){
+       s_scene-> mLights.push_back(light);
+    }
+}
+
+void Scene::UnregisterLight(Light *light)
+{
+    vector<Light*>::iterator it = find(s_scene->mLights.begin(), s_scene->mLights.end(), light);
+    if(it != s_scene->mLights.end()){
+        s_scene->mLights.erase(it);
+    }
+}
+
+void Scene::InitLightRenderData(const GLuint &shaderId)
+{
+    for(size_t i = 0; i < s_scene->mLights.size(); ++i){
+        s_scene->mLights[i]->InitRenderDataForShader(shaderId);
+    }
+}
+
+void Scene::BindLightRenderData(const GLuint &shaderId)
+{
+    for(size_t i = 0; i < s_scene->mLights.size(); ++i){
+        s_scene->mLights[i]->BindRenderDataForShader(shaderId);
+    }
+}
+
 void Scene::renderSceneWithCamera(Camera *camera)
 {
-
     for(size_t i = 0; i < mContainers.size(); ++i){
         if(camera->IsLayerRendered( mContainers[i]->GetLayer() )){
             MeshRenderer* renderer = GET_COMPONENT_FROM(mContainers[i], MeshRenderer);

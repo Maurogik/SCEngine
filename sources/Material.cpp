@@ -6,6 +6,7 @@
 
 #include "../headers/Material.hpp"
 #include "../headers/SCETools.hpp"
+#include "../headers/Scene.hpp"
 
 #include "external/rapidjson/document.h" // rapidjson's DOM-style API
 #include "external/rapidjson/prettywriter.h" // for stringify JSON
@@ -122,10 +123,13 @@ void Material::InitRenderData()
         }
 
     }
+
+    Scene::InitLightRenderData(mProgramShaderId);
 }
 
 void Material::BindRenderData()
 {
+    Scene::BindLightRenderData(mProgramShaderId);
 /*
     // Send our transformation to the currently bound shader,
     // in the "MVP" uniform

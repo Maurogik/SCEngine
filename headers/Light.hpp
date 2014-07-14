@@ -8,6 +8,10 @@
 
 #include "SCEDefines.hpp"
 #include "Component.hpp"
+#include <map>
+
+#define LIGHT_POS_UNIFORM_STR "LightPos_worldspace"
+#define LIGHT_COLOR_UNIFORM_STR "LightColor"
 
 namespace SCE {
 
@@ -20,13 +24,18 @@ namespace SCE {
         Light();
         virtual             ~Light();
         virtual void        SetContainer(Container* cont);
+
         void                InitRenderDataForShader(const GLuint &shaderId);
+
         void                BindRenderDataForShader(const GLuint &shaderId);
 
     private :
 
         glm::vec4           mLightColor;
         //keep map of all shader/uniforms ID pairs ?
+        std::map<GLuint, GLuint>    mLightPosByShader;
+        std::map<GLuint, GLuint>    mLightColorByShader;
+
     };
 
 }

@@ -31,7 +31,7 @@ Container::~Container()
     mComponentMap.clear();
 }
 
-void Container::AddComponent(const string& componentName, Component *component)
+void Container::AddComponent(const string componentName, Component *component)
 {
     SCE_ASSERT(mComponentMap.count(componentName) == 0, "Component already exists");
 
@@ -40,14 +40,14 @@ void Container::AddComponent(const string& componentName, Component *component)
     mComponentMap[componentName] = component;
 }
 
-Component *Container::GetComponent(const string& componentName)
+Component *Container::GetComponent(const string componentName)
 {
     /*SCE_ASSERT(mComponentMap.count(componentName) != 0, "Component %s not in container"
                , componentName.c_str());*/
     return mComponentMap[componentName];
 }
 
-void Container::RemoveComponent(const string& componentName)
+void Container::RemoveComponent(const string componentName)
 {
     Component * comp = mComponentMap[componentName];
     SECURE_DELETE(comp);

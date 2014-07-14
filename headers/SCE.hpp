@@ -18,6 +18,7 @@
 #include "Material.hpp"
 #include "SCETime.hpp"
 #include "GameObject.hpp"
+#include "Light.hpp"
 
 #include "SCETools.hpp"
 #include "SCETime.hpp"

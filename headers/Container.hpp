@@ -21,9 +21,9 @@ namespace SCE {
 
                             Container();
         virtual             ~Container();
-        void                AddComponent(const std::string& componentName, Component* component);
-        Component*          GetComponent(const std::string& componentName);
-        void                RemoveComponent(const std::string& componentName);
+        void                AddComponent(const std::string componentName, Component* component);
+        Component*          GetComponent(const std::string componentName);
+        void                RemoveComponent(const std::string componentName);
         const std::string&  GetTag();
         const std::string&  GetLayer();
         void                SetTag(const std::string& tag);
