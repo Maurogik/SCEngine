@@ -5,18 +5,20 @@
 /**************************************/
 
 #include "../headers/Transform.hpp"
+#include "../headers/SCEInternal.hpp"
 
 using namespace SCE;
 using namespace std;
 
 
-Transform::Transform()
-    : mTranslation(0, 0, 0)
+Transform::Transform(Container &container)
+    : Component(container, "Transform"),
+      mTranslation(0, 0, 0)
     , mScale(1.0f, 1.0f, 1.0f)
     , mOrientation(vec3(0, 0, 0))
     , mParent(0l)
 {
-    SCE_DEBUG_LOG("Transform initialized")
+    SCEInternal::InternalMessage("Transform initialized");
 }
 
 Transform::~Transform()
@@ -24,16 +26,18 @@ Transform::~Transform()
     for(size_t i = 0; i < mChildren.size(); ++i){
         mChildren[i]->SetParent(0l);
     }
-    SECURE_EXEC(mParent, RemoveChild(this));
+    if(mParent){
+        mParent->RemoveChild(this);
+    }
 }
 
-const vec3& Transform::GetLocalPosition()
+const vec3& Transform::GetLocalPosition() const
 {
     //return vec3(mTransformMatrix[3]);
     return mTranslation;
 }
 
-const vec3 Transform::GetWorldPosition()
+vec3 Transform::GetWorldPosition() const
 {
     if(!mParent){
         return GetLocalPosition();
@@ -42,12 +46,12 @@ const vec3 Transform::GetWorldPosition()
     return vec3(worldTrans);
 }
 
-const vec3& Transform::GetLocalScale()
+const vec3& Transform::GetLocalScale() const
 {
     return mScale;
 }
 
-const vec3 Transform::GetWorldScale()
+vec3 Transform::GetWorldScale() const
 {
     if(!mParent){
         return GetLocalScale();
@@ -57,12 +61,12 @@ const vec3 Transform::GetWorldScale()
     }
 }
 
-const vec3 Transform::GetLocalOrientation()
+vec3 Transform::GetLocalOrientation() const
 {
     return QuatToEuler(mOrientation);
 }
 
-const vec3 Transform::GetWorldOrientation()
+vec3 Transform::GetWorldOrientation() const
 {
     if(!mParent) {
         return GetLocalOrientation();
@@ -71,12 +75,12 @@ const vec3 Transform::GetWorldOrientation()
     }
 }
 
-const glm::quat& Transform::GetLocalQuaternion()
+const glm::quat& Transform::GetLocalQuaternion() const
 {
     return mOrientation;
 }
 
-const quat Transform::GetWorldQuaternion()
+quat Transform::GetWorldQuaternion() const
 {
     if(!mParent) {
         return GetLocalQuaternion();
@@ -85,7 +89,7 @@ const quat Transform::GetWorldQuaternion()
     }
 }
 
-const mat4 Transform::GetLocalTransform()
+mat4 Transform::GetLocalTransform() const
 {
     //1 : scale, 2 : rotate, 3 : translate
     mat4 scaleMatrix = glm::scale(mat4(1.0f), mScale);
@@ -94,7 +98,7 @@ const mat4 Transform::GetLocalTransform()
     return tranlationMatrix * rotationMatrix * scaleMatrix;
 }
 
-const mat4 Transform::GetWorldTransform()
+mat4 Transform::GetWorldTransform() const
 {
     if(!mParent){
         return GetLocalTransform();
@@ -102,54 +106,54 @@ const mat4 Transform::GetWorldTransform()
     return mParent->GetWorldTransform() * GetLocalTransform();
 }
 
-const vec3 Transform::LocalToWorldPos(const vec3 &pos)
+vec3 Transform::LocalToWorldPos(const vec3 &pos) const
 {
     return vec3(GetWorldTransform() * vec4(pos, 1.0f));
 }
 
-const vec3 Transform::LocalToWorldDir(const vec3 &dir)
+vec3 Transform::LocalToWorldDir(const vec3 &dir) const
 {
     return vec3(GetWorldTransform() * vec4(dir, 0.0f));
 }
 
-const vec3 Transform::WorldToLocalPos(const vec3 &pos)
+vec3 Transform::WorldToLocalPos(const vec3 &pos) const
 {
     mat4 inverseTransform = inverse(GetWorldTransform());
     return vec3(inverseTransform * vec4(pos, 1.0f));
 }
 
-const vec3 Transform::WorldToLocalDir(const vec3 &dir)
+vec3 Transform::WorldToLocalDir(const vec3 &dir) const
 {
     mat4 inverseTransform = inverse(GetWorldTransform());
     return vec3(inverseTransform * vec4(dir, 0.0f));
 }
 
-const vec3 Transform::Up()
+vec3 Transform::Up() const
 {
     return LocalToWorldDir(vec3(0, 1, 0));
 }
 
-const vec3 Transform::Left()
+vec3 Transform::Left() const
 {
     return LocalToWorldDir(vec3(1, 0, 0));
 }
 
-const vec3 Transform::Right()
+vec3 Transform::Right() const
 {
     return LocalToWorldDir(vec3(-1, 0, 0));
 }
 
-const vec3 Transform::Down()
+vec3 Transform::Down() const
 {
     return LocalToWorldDir(vec3(0, -1, 0));
 }
 
-const vec3 Transform::Forward()
+vec3 Transform::Forward() const
 {
     return LocalToWorldDir(vec3(0, 0, 1));
 }
 
-const vec3 Transform::Back()
+vec3 Transform::Back() const
 {
     return LocalToWorldDir(vec3(0, 0, -1));
 }
@@ -245,7 +249,7 @@ void Transform::SetParent(Transform *parentPtr)
 
 void Transform::AddChild(Transform *child)
 {
-    SCE_ASSERT(find(mChildren.begin(), mChildren.end(), child) == mChildren.end()
+    Debug::Assert(find(mChildren.begin(), mChildren.end(), child) == mChildren.end()
                , "Cannont add because the child has already been added");
     mChildren.push_back(child);
 }
@@ -253,7 +257,7 @@ void Transform::AddChild(Transform *child)
 void Transform::RemoveChild(Transform *child)
 {
     vector<Transform*>::iterator it = find(mChildren.begin(), mChildren.end(), child);
-    SCE_ASSERT(it != mChildren.end()
+    Debug::Assert(it != mChildren.end()
                , "Cannont remove because the transform is not a child");
     mChildren.erase(it);
 }

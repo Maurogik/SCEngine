@@ -15,10 +15,12 @@ namespace SCE {
 
     public :
 
-                            GameObject();
         virtual             ~GameObject();
         virtual void        Update() = 0;
-        virtual void        SetContainer(Container* cont);
+
+    protected :
+
+                            GameObject(Container& container, const std::string& typeName);
 
     private :
 

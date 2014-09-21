@@ -6,6 +6,7 @@
 
 #include "../headers/Material.hpp"
 #include "../headers/SCETools.hpp"
+#include "../headers/SCEInternal.hpp"
 #include "../headers/Scene.hpp"
 
 #include "external/rapidjson/document.h" // rapidjson's DOM-style API
@@ -23,20 +24,20 @@ using namespace std;
 
 
 
-Material::Material()
+Material::Material(Container &container, const string &filename, const string &typeName)
+    : Component(container, "Material::" + typeName)
 {
-
+    LoadMaterial(filename);
 }
+
 
 Material::~Material()
 {
     //free each allocated structures
 }
 
-Material* Material::LoadMaterial(const string &filename)
+void Material::LoadMaterial(const string &filename)
 {
-    Material* material;
-
     string fullPath = RESSOURCE_PATH + filename + MATERIAL_SUFIX;
 
     rapidjson::Document root;
@@ -51,22 +52,20 @@ Material* Material::LoadMaterial(const string &filename)
         fileStream.close();
 
         if (root.Parse<0>(fileStr.c_str()).HasParseError()){
-            return 0l;
+            Debug::RaiseError("Error reading the material file : " + filename);
         }
 
         //Access values
-        SCE_ASSERT(root.IsObject(), "Malformated Json material file\n");
+        Debug::Assert(root.IsObject(), "Malformated Json material file\n");
 
         string name = root["Name"].GetString();
-        SCE_DEBUG_LOG("Parsing material : %s", name.c_str());
+        SCEInternal::InternalMessage("Parsing material : " + name);
 
         rapidjson::Value& materialRoot = root["Material"];
         rapidjson::Value& materialData = materialRoot["Data"];
         string shaderName   = root["Shader"].GetString();
 
-        material = new Material();
-
-        SCE_ASSERT(materialData.IsArray(), "Data value of Json material file should be an array");
+        Debug::Assert(materialData.IsArray(), "Data value of Json material file should be an array");
 
         for(rapidjson::SizeType i = 0; i < materialData.Size(); ++i){
             const rapidjson::Value& entry = materialData[i];
@@ -78,28 +77,26 @@ Material* Material::LoadMaterial(const string &filename)
 
             if(type == "float"){
                 unifData.type = UNIFORM_FLOAT;
-                unifData.data = new float(StringToFloat(value));
+                unifData.data = new float(Parser::StringToFloat(value));
             } else if (type == "Texture2D"){
                 unifData.type = UNIFORM_TEXTURE2D;
                 unifData.data = new string(value);
             } else if (type == "vec4"){
                 unifData.type = UNIFORM_VEC4;
-                unifData.data = new vec4(StringToVec4(value));
+                unifData.data = new vec4(Parser::StringToVec4(value));
             } else if (type == "vec3"){
                 unifData.type = UNIFORM_VEC3;
-                unifData.data = new vec3(StringToVec3(value));
+                unifData.data = new vec3(Parser::StringToVec3(value));
             }
 
-            material->mUniforms[name] = unifData;
+            mUniforms[name] = unifData;
         }
 
-        material->mProgramShaderId = loadShaders(shaderName);
+        mProgramShaderId = loadShaders(shaderName);
 
     } else {
-        SCE_ERROR("Failed to open file %s", fullPath.c_str());
+        Debug::RaiseError("Failed to open file " + fullPath);
     }
-
-    return material;
 }
 
 void Material::InitRenderData()
@@ -151,7 +148,7 @@ void Material::BindRenderData()
         }
         case UNIFORM_TEXTURE2D :
         {
-            //SCE_DEBUG_LOG("Texture uniforms not handled yet");
+            //exture uniforms not handled yet
             break;
         }
         case UNIFORM_VEC3 :
@@ -180,17 +177,7 @@ void Material::CleanMaterial()
 
 }
 
-void Material::SetUniformValue(const string &uniformName, void *value)
-{
-    mUniforms[uniformName].data = value;
-}
-
-void *Material::GetUniformValue(const string &uniformName)
-{
-    return 0l;
-}
-
-const GLuint &Material::GetShaderProgram()
+const GLuint& Material::GetShaderProgram()
 {
     return mProgramShaderId;
 }
@@ -235,7 +222,7 @@ GLuint Material::loadShaders(const string &filename)
         }
         shaderStream.close();
     }else{
-        SCE_ERROR("Failled to open file %s", fullPath.c_str());
+        Debug::RaiseError("Failled to open file " + fullPath);
         return 0;
     }
 
@@ -243,12 +230,11 @@ GLuint Material::loadShaders(const string &filename)
     int InfoLogLength;
 
 
-    //SCE_DEBUG_LOG("Shaders : \n\n%s", shaderCode.c_str());
-    SCE_DEBUG_LOG("Vertex shader : \n\n%s", vertexCode.c_str());
-    SCE_DEBUG_LOG("Fragment shader : \n\n%s", fragmentCode.c_str());
+    SCEInternal::InternalMessage("Vertex shader : \n\n" + vertexCode);
+    SCEInternal::InternalMessage("Fragment shader : \n\n" + fragmentCode);
 
 
-    SCE_DEBUG_LOG("Compiling shader at %s", fullPath.c_str());
+    SCEInternal::InternalMessage("Compiling shader at " + fullPath);
     // Compile Vertex Shader
     const char* vertexCodePointer = vertexCode.c_str();
     glShaderSource(VertexShaderID, 1, &vertexCodePointer , NULL);
@@ -260,7 +246,7 @@ GLuint Material::loadShaders(const string &filename)
     if ( InfoLogLength > 0 ){
         std::vector<char> VertexShaderErrorMessage(InfoLogLength+1);
         glGetShaderInfoLog(VertexShaderID, InfoLogLength, NULL, &VertexShaderErrorMessage[0]);
-        SCE_DEBUG_LOG("%s\n", &VertexShaderErrorMessage[0]);
+        SCEInternal::InternalMessage(string(&VertexShaderErrorMessage[0]) + "\n");
     }
 
 
@@ -276,13 +262,13 @@ GLuint Material::loadShaders(const string &filename)
     if ( InfoLogLength > 0 ){
         std::vector<char> FragmentShaderErrorMessage(InfoLogLength+1);
         glGetShaderInfoLog(FragmentShaderID, InfoLogLength, NULL, &FragmentShaderErrorMessage[0]);
-        SCE_DEBUG_LOG("%s\n", &FragmentShaderErrorMessage[0]);
+        SCEInternal::InternalMessage(string(&FragmentShaderErrorMessage[0]) + "\n");
     }
 
 
 
     // Link the program
-    SCE_DEBUG_LOG("Linking shader program\n");
+    SCEInternal::InternalMessage("Linking shader program\n");
     GLuint ProgramID = glCreateProgram();
     glAttachShader(ProgramID, VertexShaderID);
     glAttachShader(ProgramID, FragmentShaderID);
@@ -294,11 +280,23 @@ GLuint Material::loadShaders(const string &filename)
     if ( InfoLogLength > 0 ){
         std::vector<char> ProgramErrorMessage(InfoLogLength+1);
         glGetProgramInfoLog(ProgramID, InfoLogLength, NULL, &ProgramErrorMessage[0]);
-        SCE_DEBUG_LOG("%s\n", &ProgramErrorMessage[0]);
+        SCEInternal::InternalMessage(string(&ProgramErrorMessage[0]) + "\n");
     }
 
     glDeleteShader(VertexShaderID);
     glDeleteShader(FragmentShaderID);
 
     return ProgramID;
+}
+
+template<typename T>
+void                Material::SetUniformValue(const std::string& uniformName, const T& value){
+    Debug::Assert(mUniforms.count(uniformName) > 0, "ERROR : This uniform does not exist");
+    mUniforms[uniformName].data = new T(value);
+}
+
+template<typename T>
+const T&            Material::GetUniformValue(const std::string& uniformName){
+    Debug::Assert(mUniforms.count(uniformName) > 0, "ERROR : This uniform does not exist");
+    return *(T*)(mUniforms[uniformName].data);
 }

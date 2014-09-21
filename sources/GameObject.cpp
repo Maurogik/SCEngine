@@ -6,28 +6,19 @@
 
 #include "../headers/GameObject.hpp"
 #include "../headers/Container.hpp"
+#include "../headers/Scene.hpp"
 
 using namespace SCE;
 using namespace std;
 
 
-GameObject::GameObject()
+GameObject::GameObject(Container &container, const string &typeName)
+    : Component(container, "GameObject::" + typeName)
 {
-
+    Scene::RegisterGameObject(shared_ptr<GameObject>(this));
 }
 
 GameObject::~GameObject()
 {
-    if(GetContainer()){
-        GetContainer()->RemoveGameObject(this);
-    }
-}
-
-void GameObject::SetContainer(Container *cont)
-{
-    SCE_DEBUG_LOG("Setting GameObject container");
-    Component::SetContainer(cont);
-    if(GetContainer()){
-        GetContainer()->AddGameObject(this);
-    }
+    Scene::UnregisterGameObject(shared_ptr<GameObject>(this));
 }

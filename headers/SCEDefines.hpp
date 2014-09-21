@@ -7,16 +7,15 @@
 #include <glm/glm.hpp>
 using namespace glm;
 
-//define here because it is used in SCEMacros
+//define here because it is used in SCETools ans SCEInternal
 #define SCE_DEBUG
 #define SCE_DEBUG_ENGINE
-
-#include "SCEMacros.hpp"
 
 #include <string>
 #include <iostream>
 #include <vector>
 #include <algorithm>
+#include <memory>
 
 
 #define DEFAULT_LAYER "DefaultLayer"

@@ -6,62 +6,46 @@
 #include "Rotator.hpp"
 
 using namespace SCE;
+using namespace std;
 
 int main( void )
 {
-    SCECore::InitEngine("Playground scene for SCE");
-
-    SCE_DEBUG_LOG("Test logger");
-    SCE_DEBUG_LOG("Test logger %d", 2);
+    auto engine = SCECore::InitEngine("Playground scene for SCE");
 
     Scene::CreateEmptyScene();
 
     //Light
-    Container* lightObject      = new Container();
+    shared_ptr<Container> lightObject = make_shared<Container>("lightObject");
 
-    Light* light                = new Light();
-    Transform* lightTransform    = new Transform();
+    lightObject->AddComponent<Light>();
+    Transform& lightTransform = lightObject->AddComponent<Transform>();
 
-    ADD_COMPONENT_TO(lightObject, Transform, lightTransform);
-    ADD_COMPONENT_TO(lightObject, Light, light);
-
-    lightTransform->SetWorldOrientation(vec3(30, 0, 30));
-    lightTransform->SetWorldPosition(vec3(0, 10, 20));
+    lightTransform.SetWorldOrientation(vec3(30, 0, 30));
+    lightTransform.SetWorldPosition(vec3(0, 10, 20));
 
 
     //Suzanne model
-    Container* suzanneObject    = new Container();
+    shared_ptr<Container> suzanneObject = make_shared<Container>("suzanneObject");
 
-    Material* mat = Material::LoadMaterial("TestMaterial");
+    suzanneObject->AddComponent<Material>("TestMaterial");
 
-    Transform* suzanneTransform = new Transform();
-    suzanneTransform->SetWorldPosition(vec3(0, 0, 0));
-    Mesh* suzanneMesh           = Mesh::LoadMesh("suzanne.obj" );
-    MeshRenderer* renderer      = new MeshRenderer();
-    Rotator *rotator            = new Rotator();
+    Transform& suzanneTransform = suzanneObject->AddComponent<Transform>();
+    suzanneTransform.SetWorldPosition(vec3(0, 0, 0));
 
-    ADD_COMPONENT_TO(suzanneObject, Material, mat);
-    ADD_COMPONENT_TO(suzanneObject, Transform, suzanneTransform);
-    ADD_COMPONENT_TO(suzanneObject, Mesh, suzanneMesh);
-    ADD_COMPONENT_TO(suzanneObject, MeshRenderer, renderer);
-    ADD_COMPONENT_TO(suzanneObject, Rotator, rotator)
+    suzanneObject->AddComponent<Mesh>("suzanne.obj");
+    suzanneObject->AddComponent<MeshRenderer>();
+    suzanneObject->AddComponent<Rotator>();
 
     //Camera
-    Container* cameraObject     = new Container();
+    shared_ptr<Container> cameraObject = make_shared<Container>("cameraObject");
+    Transform& cameraTransform = cameraObject->AddComponent<Transform>();
+    cameraObject->AddComponent<Camera>(40.0f, 4.0f/3.0f, 0.1f, 100.0f);
 
-    Camera* camera              = new Camera(40.0f, 4.0f/3.0f, 0.1f, 100.0f);
-    Transform* cameraTransform  = new Transform();
-    cameraTransform->SetWorldPosition(vec3(0, 0, 12));
-
-    cameraTransform->LookAt(suzanneTransform->GetWorldPosition());
-    ADD_COMPONENT_TO(cameraObject, Transform, cameraTransform);
-    ADD_COMPONENT_TO(cameraObject, Camera, camera);
-
+    cameraTransform.SetWorldPosition(vec3(0, 0, 12));
+    cameraTransform.LookAt(suzanneTransform.GetWorldPosition());
 
     //load scene here
-    SCECore::RunEngine();
-
-    SCECore::CleanUpEngine();
+    engine->RunEngine();
 
     return 0;
 }

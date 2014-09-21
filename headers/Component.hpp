@@ -8,7 +8,6 @@
 
 #include "SCEDefines.hpp"
 
-
 namespace SCE {
 
     class Container;//forward declaration of container
@@ -17,14 +16,27 @@ namespace SCE {
 
     public :
 
-                        Component();
-        virtual         ~Component();
-        Container*      GetContainer();
-        virtual void    SetContainer(Container* container);
+        Component()                 = delete;
+        Component(const Component&) = delete;
+        Component(Component&& )     = delete;
+
+        virtual                     ~Component();
+
+        Container&                  GetContainer();
+
+        const Container&            GetContainer() const ;
+
+        const int&                  GetTypeHash() const;
+
+    protected :
+
+                                    Component(Container& container, const std::string& typeName);
+
 
     private :
 
-        Container*      mContainer;
+        Container&    mContainer;
+        int           mTypeHash;
 
     };
 

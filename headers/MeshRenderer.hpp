@@ -15,10 +15,6 @@
 
 namespace SCE {
 
-    REQUIRE_COMPONENT(Transform)
-    REQUIRE_COMPONENT(Mesh)
-    REQUIRE_COMPONENT(Material)
-
     struct attrib_data{
         GLuint dataBuffer;
         size_t size;
@@ -31,31 +27,34 @@ namespace SCE {
     class MeshRenderer : public Component {
 
     public :
-                        MeshRenderer();
                         ~MeshRenderer();
-        virtual void    SetContainer(Container* cont);
-        void            Render(Camera * cam);
+        void            Render(const Camera &cam);
 
     protected :
+
+                        MeshRenderer(Container& container, const std::string& typeName = "");
 
     private :
 
         void            initializeGLData();
-
-        GLuint          mMVPMatrixID;
-        GLuint          mViewMatrixID;
-        GLuint          mModelMatrixID;
-
-        //indexation buffer
-        GLuint          mIndiceBuffer;
-
-        std::vector<attrib_data>    mAttributes;
-
-        void addAttribute(  const std::string &name
+        void            addAttribute(
+                            const std::string &name
                           , void* buffer
                           , const size_t &size
                           , const int &type
-                          , const size_t &typedSize);
+                          , const size_t &typedSize
+                        );
+
+        GLuint                      mMVPMatrixID;
+        GLuint                      mViewMatrixID;
+        GLuint                      mModelMatrixID;
+
+        //indexation buffer
+        GLuint                      mIndiceBuffer;
+
+        std::vector<attrib_data>    mAttributes;
+
+
 
     };
 

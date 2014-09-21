@@ -6,11 +6,15 @@
 
 #include "../headers/Container.hpp"
 #include "../headers/Component.hpp"
+#include "../headers/SCETools.hpp"
 
 using namespace SCE;
+using namespace std;
 
 
-Component::Component()
+Component::Component(Container& container, const string &typeName)
+    : mContainer(container)
+    , mTypeHash(SCE::Tools::HashFromString( "Component::"+typeName))
 {
 
 }
@@ -20,13 +24,17 @@ Component::~Component()
 
 }
 
-Container *Component::GetContainer()
+Container &Component::GetContainer()
 {
     return mContainer;
 }
 
-void Component::SetContainer(Container * container)
+const Container &Component::GetContainer() const
 {
-    SCE_DEBUG_LOG("Setting container \n");
-    mContainer = container;
+    return mContainer;
+}
+
+const int& Component::GetTypeHash() const
+{
+    return mTypeHash;
 }

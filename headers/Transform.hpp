@@ -13,6 +13,7 @@
 #include <glm/gtx/constants.hpp>
 #include <math.h>
 #include "SCEDefines.hpp"
+#include "SCETools.hpp"
 #include "Component.hpp"
 #include "../common/quaternion_utils.hpp"
 
@@ -22,37 +23,35 @@ namespace SCE {
 
     public :
 
-                                Transform();
         virtual                 ~Transform();
 
+        const glm::vec3&        GetLocalPosition() const;
+        glm::vec3               GetWorldPosition() const;
 
-        const glm::vec3&        GetLocalPosition();
-        const glm::vec3         GetWorldPosition();
+        const glm::vec3&        GetLocalScale() const;
+        glm::vec3               GetWorldScale() const;
 
-        const glm::vec3&        GetLocalScale();
-        const glm::vec3         GetWorldScale();
+        glm::vec3               GetLocalOrientation() const;
+        glm::vec3               GetWorldOrientation() const;
+        const glm::quat&        GetLocalQuaternion() const;
+        glm::quat               GetWorldQuaternion() const;
 
-        const glm::vec3         GetLocalOrientation();
-        const glm::vec3         GetWorldOrientation();
-        const glm::quat&        GetLocalQuaternion();
-        const glm::quat         GetWorldQuaternion();
-
-        const mat4              GetLocalTransform();
-        const mat4              GetWorldTransform();
-
-
-        const glm::vec3         LocalToWorldPos(const glm::vec3& pos);
-        const glm::vec3         LocalToWorldDir(const glm::vec3& dir);
-        const glm::vec3         WorldToLocalPos(const glm::vec3& pos);
-        const glm::vec3         WorldToLocalDir(const glm::vec3& dir);
+        mat4                    GetLocalTransform() const;
+        mat4                    GetWorldTransform() const;
 
 
-        const glm::vec3         Up();
-        const glm::vec3         Left();
-        const glm::vec3         Right();
-        const glm::vec3         Down();
-        const glm::vec3         Forward();
-        const glm::vec3         Back();
+        glm::vec3               LocalToWorldPos(const glm::vec3& pos) const;
+        glm::vec3               LocalToWorldDir(const glm::vec3& dir) const;
+        glm::vec3               WorldToLocalPos(const glm::vec3& pos) const;
+        glm::vec3               WorldToLocalDir(const glm::vec3& dir) const;
+
+
+        glm::vec3               Up() const;
+        glm::vec3               Left() const;
+        glm::vec3               Right() const;
+        glm::vec3               Down() const;
+        glm::vec3               Forward() const;
+        glm::vec3               Back() const;
 
 
         void                    SetLocalPosition(const glm::vec3& position);
@@ -84,6 +83,9 @@ namespace SCE {
         void                    AddChild(Transform* child);
         void                    RemoveChild(Transform* child);
 
+    protected :
+
+                                Transform(Container &container);
 
     private :
 

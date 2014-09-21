@@ -72,7 +72,11 @@ set( TARGET playground)
 set(HEADERS
         ./headers/SCE.hpp
         ./headers/SCECore.hpp
-        ./headers/SCEDebug.hpp
+        ./headers/SCE_GLDebug.hpp
+        ./headers/SCEInternal.hpp
+        ./headers/SCEDefines.hpp
+        ./headers/SCETools.hpp
+        ./headers/SCETime.hpp
         ./headers/Material.hpp
         ./headers/Mesh.hpp
         ./headers/MeshRenderer.hpp
@@ -84,10 +88,7 @@ set(HEADERS
         ./headers/Light.hpp
         ./headers/Container.hpp
         ./headers/Component.hpp
-        ./headers/SCEMacros.hpp
-        ./headers/SCEDefines.hpp
-        ./headers/SCETools.hpp
-        ./headers/SCETime.hpp
+        ./headers/InternalComponent.hpp
 )
 
 
@@ -108,25 +109,9 @@ target_link_libraries(${TARGET}
 )
 
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-long-long -Wno-variadic-macros -Wunused-local-typedefs -pedantic")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-long-long -Wno-variadic-macros -pedantic")
-
-#set_source_files_properties(
-#  ${HEADERS}
-#  PROPERTIES
-#  COMPILE_FLAGS "${FLAGS}"
-#)
-
-#set_source_files_properties(
-#  ${SOURCES}
-#  PROPERTIES
-#  COMPILE_FLAGS "${FLAGS}"
-#)
-
-#set_source_files_properties(
-#  ${APP_SOURCES}
-#  PROPERTIES
-#  COMPILE_FLAGS "${FLAGS}"
-#)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -Wall -Wno-long-long -Wno-variadic-macros -pedantic")
+set(QMAKE_CXXFLAGS "${QMAKE_CXXFLAGS} -std=c++11")
+set(QMAKE_LFLAGS "${QMAKE_LFLAGS} -std=c++11")
 
 # Xcode and Visual working directories
 set_target_properties(${TARGET} PROPERTIES XCODE_ATTRIBUTE_CONFIGURATION_BUILD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/${TARGET}/")
@@ -151,28 +136,3 @@ elseif (${CMAKE_GENERATOR} MATCHES "Xcode" )
 endif (NOT ${CMAKE_GENERATOR} MATCHES "Xcode" )
 
 file( COPY "${TARGET}/ressources" DESTINATION "." )
-
-
-#file(GLOB ressources "${TARGET}/ressources/*")
-
-#foreach(file ${ressources})
-
-#endforeach()
-
-#add_custom_command(TARGET ${TARGET} POST_BUILD
-#    COMMAND ${CMAKE_COMMAND} -E copy_directory
-#        "${CMAKE_CURRENT_SOURCE_DIR}/playground/ressources"
-#        "$<TARGET_FILE_DIR:playground>/ressources"
-#        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/playground/ressources ${CMAKE_CURRENT_SOURCE_DIR}/foo.hpp
-#)
-
-# ADD_CUSTOM_COMMAND(TARGET ${TARGET} POST_BUILD
-#    COMMAND ${CMAKE_COMMAND} -E copy_directory
-#        "${CMAKE_CURRENT_SOURCE_DIR}/${TARGET}/ressources"
-#        "$<TARGET_FILE_DIR:playground>/ressources"
-#    DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/${TARGET}/ressources/*"
-#)
-
-# ADD_CUSTOM_TARGET(copy_ressources
-#    DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/${TARGET}/ressources/*"
-#)

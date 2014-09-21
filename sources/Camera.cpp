@@ -10,12 +10,13 @@
 #include <algorithm>
 
 using namespace SCE;
+using namespace std;
 
 
-Camera::Camera()
-    : Component()
+Camera::Camera(Container& container)
+    : Component(container, "Camera::")
+    , mType (PERSPECTIVE)
 {
-    mType = PERSPECTIVE;
     mProjectionMatrix  = glm::perspective(
                 45.0f //Fov
               , 4.0f / 3.0f //aspect ratio
@@ -26,13 +27,13 @@ Camera::Camera()
 }
 
 Camera::Camera(
-          const float &fieldOfView
+          Container& container
+        , const float &fieldOfView
         , const float &aspectRatio
-        , const float &nearPlane
-        , const float &farPlane)
-    : Component()
+        , const float &nearPlane, const float &farPlane)
+    : Component(container, "Camera::")
+    , mType (PERSPECTIVE)
 {
-    mType = PERSPECTIVE;
     mProjectionMatrix  = glm::perspective(
                   fieldOfView
                 , aspectRatio
@@ -43,15 +44,16 @@ Camera::Camera(
 }
 
 Camera::Camera(
+          Container& container,
           const float &leftPlane
         , const float &rightPlane
         , const float &topPlane
         , const float &bottomPlane
         , const float &nearPlane
         , const float &farPlane)
-    : Component()
+    : Component(container, "Camera::")
+    , mType (ORTHOGRAPHIC)
 {
-    mType = ORTHOGRAPHIC;
     mProjectionMatrix = glm::ortho(
                   leftPlane
                 , rightPlane
@@ -71,48 +73,50 @@ Camera::~Camera()
 void Camera::init()
 {
     /*
-glm::lookAt(
+    glm::lookAt(
                 glm::vec3(4,3,-3), // Camera is at (4,3,-3), in World Space
                 glm::vec3(0,0,0), // and looks at the origin
                 glm::vec3(0,1,0)  // Head is up (set to 0,-1,0 to look upside-down)
            );
      */
+
+    //Needed because opengl camera renders along the negative Z axis
     mNegativeZInverter = glm::rotate(mat4(1.0f), 180.0f, vec3(0.0f, 1.0f, 0.0f));
     //mNegativeZInverter = mat4(1.0f);
     mRenderedLayers.push_back(DEFAULT_LAYER);
 }
 
-const CameraType& Camera::GetType()
+const CameraType& Camera::GetType() const
 {
     return mType;
 }
 
-const mat4 Camera::GetViewMatrix()
+mat4 Camera::GetViewMatrix() const
 {
-    Transform * transform = GET_COMPONENT(Transform);
-    return mNegativeZInverter * inverse(transform->GetWorldTransform());
+    const Transform& transform = GetContainer().GetComponent<Transform>();
+    return mNegativeZInverter * inverse(transform.GetWorldTransform());;
 }
 
-const mat4 &Camera::GetProjectionMatrix()
+const mat4& Camera::GetProjectionMatrix() const
 {
     return mProjectionMatrix;
 }
 
-const mat4 Camera::GetViewProjectionMatrix()
+mat4 Camera::GetViewProjectionMatrix() const
 {
     return mProjectionMatrix * GetViewMatrix();
 }
 
-bool Camera::IsLayerRendered(const std::string &layer)
+bool Camera::IsLayerRendered(const std::string &layer) const
 {
-    return std::find(mRenderedLayers.begin(), mRenderedLayers.end(), layer)
-            != mRenderedLayers.end() ;
+    return std::find(begin(mRenderedLayers), end(mRenderedLayers), layer)
+            != end(mRenderedLayers) ;
 }
 
 void Camera::AddLayerToRender(const std::string &layer)
 {
-    if( std::find(mRenderedLayers.begin(), mRenderedLayers.end(), layer)
-            == mRenderedLayers.end() ) {
+    if( std::find(begin(mRenderedLayers), end(mRenderedLayers), layer)
+            == end(mRenderedLayers) ) {
         mRenderedLayers.push_back(layer);
     }
 }
@@ -120,12 +124,12 @@ void Camera::AddLayerToRender(const std::string &layer)
 void Camera::RemoveLayerToRender(const std::string &layer)
 {
     std::vector<std::string>::iterator it_layer = std::find(
-                  mRenderedLayers.begin()
-                , mRenderedLayers.end()
+                  begin(mRenderedLayers)
+                , end(mRenderedLayers)
                 , layer
             );
 
-    if(it_layer != mRenderedLayers.end() ) {
+    if(it_layer != end(mRenderedLayers) ) {
         mRenderedLayers.erase(it_layer);
     }
 }

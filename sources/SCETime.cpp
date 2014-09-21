@@ -5,7 +5,6 @@
 /**************************************/
 
 #include "../headers/SCETime.hpp"
-#include "../headers/SCEMacros.hpp"
 #include <glfw3.h>
 
 using namespace SCE;

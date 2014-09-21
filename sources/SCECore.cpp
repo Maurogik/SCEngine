@@ -5,21 +5,33 @@
 /**************************************/
 
 #include "../headers/SCECore.hpp"
-#include "../headers/SCEDebug.hpp"
+#include "../headers/SCE_GLDebug.hpp"
+#include "../headers/SCEInternal.hpp"
 
 using namespace SCE;
+using namespace std;
 
 GLFWwindow * SCECore::s_window = 0l;
 
-void SCECore::InitEngine(const std::string &windowName)
+
+SCECore::SCECore()
 {
-    SCE_DEBUG_LOG("Initializing engine");
+
+}
+
+SCECore::~SCECore()
+{
+    CleanUpEngine();
+}
+
+std::shared_ptr<SCECore> SCECore::InitEngine(const std::string &windowName)
+{
+    SCEInternal::InternalMessage("Initializing engine");
 
     // Initialise GLFW
     if( !glfwInit() )
     {
-        fprintf( stderr, "Failed to initialize GLFW\n" );
-        return;
+       Debug::RaiseError("Failed to initialize GLFW");
     }
 
     glfwWindowHint(GLFW_SAMPLES, 4);
@@ -33,19 +45,17 @@ void SCECore::InitEngine(const std::string &windowName)
 
     // Open a window and create its OpenGL context
     s_window = glfwCreateWindow( 1024, 768, windowName.c_str(), NULL, NULL);
-    SCE_DEBUG_LOG("Window created");
+    SCEInternal::InternalMessage("Window created");
 
     if( s_window == NULL ){
-        fprintf( stderr, "Failed to open GLFW window.\n" );
         glfwTerminate();
-        return;
+        Debug::RaiseError("Failed to open GLFW window.");
     }
     glfwMakeContextCurrent(s_window);
 
     // Initialize GLEW
     if (glewInit() != GLEW_OK) {
-        fprintf(stderr, "Failed to initialize GLEW\n");
-        return;
+        Debug::RaiseError("Failed to initialize GLEW.");
     }
 
     // Ensure we can capture the escape key being pressed below
@@ -56,15 +66,15 @@ void SCECore::InitEngine(const std::string &windowName)
 
 
     if(glDebugMessageCallbackAMD) {
-        SCE_DEBUG_LOG("Linking GL debug with AMD callback");
+        SCEInternal::InternalMessage("Linking GL debug with AMD callback");
         glDebugMessageCallbackAMD(DebugCallbackAMD, NULL);
     }
     else if(glDebugMessageCallbackARB) {
-        SCE_DEBUG_LOG("Linking GL debug with ARB callback");
+        SCEInternal::InternalMessage("Linking GL debug with ARB callback");
         glDebugMessageCallbackARB(DebugCallback, NULL);
     }
     else {
-        SCE_DEBUG_LOG("Linking GL debug with standard callback");
+        SCEInternal::InternalMessage("Linking GL debug with standard callback");
         glDebugMessageCallback(DebugCallback, NULL);
     }
 
@@ -72,6 +82,7 @@ void SCECore::InitEngine(const std::string &windowName)
 
 #endif
 
+    return shared_ptr<SCECore>(new SCECore());
 }
 
 void SCECore::RunEngine()
@@ -92,7 +103,7 @@ void SCECore::RunEngine()
 
 void SCECore::CleanUpEngine()
 {
-    SCE_DEBUG_LOG("Cleaning up engine");
+    SCEInternal::InternalMessage("Cleaning up engine");
     Scene::DestroyScene();
 }
 
@@ -100,3 +111,5 @@ GLFWwindow *SCECore::GetWindow()
 {
     return s_window;
 }
+
+

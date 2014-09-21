@@ -14,15 +14,8 @@ namespace SCE {
     class Mesh  : public Component {
 
     public :
-        Mesh(   std::vector<ushort> *indices,
-                std::vector<vec3> *vertices,
-                std::vector<vec3> *normals,
-                std::vector<vec2> *uvs,
-                std::vector<vec3> *tangents,
-                std::vector<vec3> *bitangents
-                );
-        ~Mesh();
 
+        ~Mesh();
 
         std::vector<ushort> *GetIndices();
         std::vector<vec3>   *GetVertices();
@@ -34,9 +27,9 @@ namespace SCE {
 
         /*****Static*****/
 
-        static Mesh*        LoadMesh(const std::string &filename);
-        static Mesh*        CreateSphere(const ushort &radius, const ushort &tesselation);
-        static Mesh*        CreateBox(const ushort &width, const ushort &height, const ushort &depth);
+        static Mesh&        AddCustomMesh(Container& container, const std::string &filename);
+        static Mesh&        AddSphereMesh(Container& container, const ushort &radius, const ushort &tesselation);
+        static Mesh&        AddCubeMesh(Container& container, const ushort &width, const ushort &height, const ushort &depth);
 
     protected :
 
@@ -48,9 +41,31 @@ namespace SCE {
         std::vector<vec3>       *mTangents;
         std::vector<vec3>       *mBitangents;
 
+    protected :
+
+        Mesh(   Container& container);
+        Mesh(   Container& container, const std::string& filename);
+        Mesh(   Container& container, const ushort &radius, const ushort &tesselation);
+        Mesh(   Container& container, const ushort &width, const ushort &height, const ushort &depth);
+        Mesh(   Container& container,
+                std::vector<ushort> *indices,
+                std::vector<vec3> *vertices,
+                std::vector<vec3> *normals,
+                std::vector<vec2> *uvs,
+                std::vector<vec3> *tangents,
+                std::vector<vec3> *bitangents
+                );
+
     private :
 
-        void resetMeshData();
+        void                initMeshData(   std::vector<ushort> *indices,
+                                            std::vector<vec3> *vertices,
+                                            std::vector<vec3> *normals,
+                                            std::vector<vec2> *uvs,
+                                            std::vector<vec3> *tangents,
+                                            std::vector<vec3> *bitangents
+                                            );
+        void                resetMeshData();
     };
 
 }

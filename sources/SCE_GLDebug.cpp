@@ -1,10 +1,11 @@
 /**********Sand Castle Engine**********/
 /**************************************/
 /******** AUTHOR : Gwenn AUBERT *******/
-/********* FILE : SCEDebug.cpp ********/
+/******* FILE : SCE_GLDebug.cpp *******/
 /**************************************/
 
-#include "../headers/SCEDebug.hpp"
+#include "../headers/SCE_GLDebug.hpp"
+#include "../headers/SCETools.hpp"
 
 #ifdef SCE_DEBUG
 
@@ -154,7 +155,7 @@ std::string FormatDebugOutput(
     std::cout << stringStream.str() << std::endl;
 
     if(errorMustBreak){
-        SCE_ERROR("Breaking program here !");
+         SCE::Debug::RaiseError("OpenGL Error raised");
 
     }
 

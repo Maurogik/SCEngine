@@ -22,7 +22,6 @@
 
 #include "SCETools.hpp"
 #include "SCETime.hpp"
-#include "SCEMacros.hpp"
 
 //GLM
 #include <glm/glm.hpp>

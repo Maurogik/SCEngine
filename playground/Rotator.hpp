@@ -7,9 +7,12 @@ class Rotator : public SCE::GameObject {
 
 public :
 
-                    Rotator();
                     ~Rotator();
     virtual void    Update();
+
+protected :
+
+                    Rotator(SCE::Container &container);
 
 private :
 

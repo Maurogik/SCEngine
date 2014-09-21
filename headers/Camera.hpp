@@ -11,8 +11,6 @@
 
 namespace SCE {
 
-    REQUIRE_COMPONENT(Transform)
-
     enum {
         PERSPECTIVE = 0,
         ORTHOGRAPHIC
@@ -23,13 +21,25 @@ namespace SCE {
 
     public :
 
-        Camera();
-        Camera(  const float &fieldOfView
+        virtual             ~Camera();
+        const CameraType&   GetType() const;
+        mat4                GetViewMatrix() const;
+        const glm::mat4&    GetProjectionMatrix() const;
+        mat4                GetViewProjectionMatrix() const;
+        bool                IsLayerRendered(const std::string &layer) const;
+        void                AddLayerToRender(const std::string &layer);
+        void                RemoveLayerToRender(const std::string &layer);
+
+    protected :
+
+        Camera(  Container &container  );
+        Camera(  Container &container,
+                 const float &fieldOfView
                , const float &aspectRatio
                , const float &nearPlane
                , const float &farPlane
         );
-        Camera(
+        Camera(  Container &container,
                  const float &leftPlane
                , const float &rightPlane
                , const float &topPlane
@@ -37,14 +47,6 @@ namespace SCE {
                , const float &nearPlane
                , const float &farPlane
         );
-        virtual             ~Camera();
-        const CameraType&   GetType();
-        const mat4          GetViewMatrix();
-        const glm::mat4&    GetProjectionMatrix();
-        const mat4          GetViewProjectionMatrix();
-        bool                IsLayerRendered(const std::string &layer);
-        void                AddLayerToRender(const std::string &layer);
-        void                RemoveLayerToRender(const std::string &layer);
 
     private :
 

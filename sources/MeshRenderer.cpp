@@ -9,6 +9,7 @@
 
 #include "../headers/MeshRenderer.hpp"
 #include "../headers/Container.hpp"
+#include "../headers/SCEInternal.hpp"
 
 //import required components
 #include "../headers/Transform.hpp"
@@ -19,9 +20,10 @@ using namespace SCE;
 using namespace std;
 
 
-MeshRenderer::MeshRenderer()
+MeshRenderer::MeshRenderer(Container &container, const string &typeName)
+    : Component(container, "MeshRenderer::" + typeName)
 {
-
+    initializeGLData();
 }
 
 MeshRenderer::~MeshRenderer()
@@ -29,36 +31,29 @@ MeshRenderer::~MeshRenderer()
 
 }
 
-void MeshRenderer::SetContainer(Container *cont)
-{
-    SCE_DEBUG_LOG("Setting mesh renderer container");
-    Component::SetContainer(cont);
-    initializeGLData();
-}
-
-
 void MeshRenderer::initializeGLData()
 {
-    SCE_DEBUG_LOG("Initializing mesh renderer data");
+    SCEInternal::InternalMessage("Initializing mesh renderer data");
 
-    Mesh* mesh = GET_COMPONENT(Mesh);
-    SCE_ASSERT(mesh, "No mesh found, add a mesh component to the object adding a renderer\n");
+    Mesh& mesh = GetContainer().GetComponent<Mesh>();
 
-    Material * mat = GET_COMPONENT(Material);
-    mat->InitRenderData();
-    GLuint programID = mat->GetShaderProgram();
+    Material& mat = GetContainer().GetComponent<Material>();
+    mat.InitRenderData();
+    GLuint programID = mat.GetShaderProgram();
 
-    vector<ushort>* indices     = mesh->GetIndices();
-    vector<vec3>*   vertices    = mesh->GetVertices();
+    vector<ushort>* indices     = mesh.GetIndices();
+    vector<vec3>*   vertices    = mesh.GetVertices();
     //optional
-    vector<vec3>*   normals     = mesh->GetNormals();
-    vector<vec2>*   uvs         = mesh->GetUvs();
-    vector<vec3>*   tangents    = mesh->GetTangents();
-    vector<vec3>*   bitangents  = mesh->GetBitangents();
+    vector<vec3>*   normals     = mesh.GetNormals();
+    vector<vec2>*   uvs         = mesh.GetUvs();
+    vector<vec3>*   tangents    = mesh.GetTangents();
+    vector<vec3>*   bitangents  = mesh.GetBitangents();
 
 
     /** This will be in the trasform later */
     // Get a handle for our "MVP" uniform
+
+
     mMVPMatrixID    = glGetUniformLocation(programID, "MVP");
     mViewMatrixID   = glGetUniformLocation(programID, "V");
     mModelMatrixID  = glGetUniformLocation(programID, "M");
@@ -103,6 +98,7 @@ void MeshRenderer::initializeGLData()
                  , indices->size() * sizeof(unsigned short)
                  , &(*indices)[0] , GL_STATIC_DRAW);
 
+
 }
 
 void MeshRenderer::addAttribute(  const std::string &name
@@ -112,8 +108,8 @@ void MeshRenderer::addAttribute(  const std::string &name
                                 , const size_t &typedSize)
 {
 
-    Material * mat = GET_COMPONENT(Material);
-    GLuint programID = mat->GetShaderProgram();
+    Material& mat = GetContainer().GetComponent<Material>();
+    GLuint programID = mat.GetShaderProgram();
 
     GLuint id = glGetAttribLocation(programID, name.c_str());
 
@@ -133,25 +129,25 @@ void MeshRenderer::addAttribute(  const std::string &name
     }
 }
 
-void MeshRenderer::Render(Camera *cam)
+void MeshRenderer::Render(const Camera& cam)
 {
-    Mesh* mesh = GET_COMPONENT(Mesh);
-    Transform* transform = GET_COMPONENT(Transform);
+    Mesh& mesh = GetContainer().GetComponent<Mesh>();
+    Transform& transform = GetContainer().GetComponent<Transform>();
 
-    Material * mat = GET_COMPONENT(Material);
-    GLuint programID = mat->GetShaderProgram();
+    Material& mat = GetContainer().GetComponent<Material>();
+    GLuint programID = mat.GetShaderProgram();
 
-    vector<ushort>* indices     = mesh->GetIndices();
+    vector<ushort>* indices     = mesh.GetIndices();
 
     //bind mesh data and render
 
     // Use our shader
     glUseProgram(programID);
-    mat->BindRenderData();
+    mat.BindRenderData();
 
-    glm::mat4 ProjectionMatrix  = cam->GetProjectionMatrix();
-    glm::mat4 ViewMatrix        = cam->GetViewMatrix();
-    glm::mat4 ModelMatrix       = transform->GetWorldTransform();
+    glm::mat4 ProjectionMatrix  = cam.GetProjectionMatrix();
+    glm::mat4 ViewMatrix        = cam.GetViewMatrix();
+    glm::mat4 ModelMatrix       = transform.GetWorldTransform();
     glm::mat4 MVP               = ProjectionMatrix * ViewMatrix * ModelMatrix;
 
     // Send our transformation to the currently bound shader,

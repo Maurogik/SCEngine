@@ -1,10 +1,10 @@
 /**********Sand Castle Engine**********/
 /**************************************/
 /******** AUTHOR : Gwenn AUBERT *******/
-/********* FILE : SCEDebug.hpp ********/
+/******* FILE : SCE_GLDebug.hpp *******/
 /**************************************/
-#ifndef SCE_DEBUG_HPP
-#define SCE_DEBUG_HPP
+#ifndef SCE_GL_DEBUG_HPP
+#define SCE_GL_DEBUG_HPP
 
 
 #include "SCEDefines.hpp"
