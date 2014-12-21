@@ -9,13 +9,13 @@
 #include "SCEDefines.hpp"
 #include "SCETools.hpp"
 #include "Component.hpp"
-#include <functional>
 
 namespace SCE {
 
     template<class T>
-    class InternalComponent : T {
+    class InternalComponent : public T {
 
+        //Container is the only class allowed to create an internal component
         friend class Container;
 
     public :
@@ -26,8 +26,9 @@ namespace SCE {
 
 
     private :
+
         template < class... Args >
-        InternalComponent(Args&&... args) : T(args...){
+        InternalComponent(Args&&... args): T(args...){
             InternalComponent<T>::sTypeHash = T::GetTypeHash();
         }
 
@@ -39,6 +40,5 @@ namespace SCE {
     int InternalComponent<T>::sTypeHash;
 
 }
-
 
 #endif

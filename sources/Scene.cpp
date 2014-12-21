@@ -16,11 +16,10 @@ using namespace std;
 
 
 Scene* Scene::s_scene = 0l;
-bool   Scene::mCleaningScene = false;
 
 SCE::Scene::Scene()
+    : mLastId(0)
 {
-    mCleaningScene = false;
     // Dark blue background
     glClearColor(0.0f, 0.0f, 0.4f, 0.0f);
 
@@ -36,6 +35,15 @@ SCE::Scene::Scene()
 
 SCE::Scene::~Scene()
 {
+    SCEInternal::InternalMessage("Delete scene");
+    SCEInternal::InternalMessage("Clear stuff");
+    for(auto cont : mContainers)
+    {
+        delete(cont);
+    }
+    mContainers.clear();
+    mGameObjects.clear();
+    mLights.clear();
 }
 
 void SCE::Scene::CreateEmptyScene()
@@ -70,7 +78,7 @@ void SCE::Scene::RenderScene()
 
     for(size_t i = 0; i < mContainers.size(); ++i){
         if(mContainers[i]->HasComponent<Camera>()){
-            Camera& cam = mContainers[i]->GetComponent<Camera>();
+            Handle<Camera> cam = mContainers[i]->GetComponent<Camera>();
             renderSceneWithCamera(cam);
         }
     }
@@ -83,7 +91,7 @@ void Scene::UpdateScene()
 
     //TODO handle case where an object is waiting to be destroyed
 
-    vector<shared_ptr<GameObject> > tmpGameObjects = s_scene->mGameObjects;
+    vector<Handle<GameObject> > tmpGameObjects = s_scene->mGameObjects;
 
     for(size_t i = 0; i < tmpGameObjects.size(); ++i){
         tmpGameObjects[i]->Update();
@@ -94,10 +102,12 @@ void Scene::UpdateScene()
      **/
     SCEInternal::InternalMessage("move control code to appropriate location");
 
-    shared_ptr<Container> contPtr;
+    //move camera
+
+    Handle<Container> contPtr;
     for(size_t i = 0; i < mContainers.size(); ++i){
         if(mContainers[i]->HasComponent<Camera>()){
-            contPtr = mContainers[i];
+            contPtr = Handle<Container>(mContainers[i]);
             break;
         }
     }
@@ -107,8 +117,8 @@ void Scene::UpdateScene()
 
 
     GLFWwindow* window = SCECore::GetWindow();
-    Transform& transform = contPtr->GetComponent<Transform>();
-    vec3 position = transform.GetLocalPosition();
+    Handle<Transform> transform = contPtr->GetComponent<Transform>();
+    vec3 position = transform->GetLocalPosition();
 
     // glfwGetTime is called only once, the first time this function is called
     static double lastTime = glfwGetTime();
@@ -124,8 +134,8 @@ void Scene::UpdateScene()
     //vec3 forward(0, 0, 1);
     //vec3 left(1, 0 ,0);
 
-    vec3 forward = transform.Forward();
-    vec3 left = transform.Left();
+    vec3 forward = transform->Forward();
+    vec3 left = transform->Left();
 
     // Move forward
     if (glfwGetKey( window, GLFW_KEY_UP ) == GLFW_PRESS){
@@ -145,91 +155,103 @@ void Scene::UpdateScene()
     }
 
     if(glfwGetKey( window, GLFW_KEY_Q ) == GLFW_PRESS){
-        transform.RotateAroundAxis(vec3(0, 1, 0), rotateSpeed * deltaTime);
+        transform->RotateAroundAxis(vec3(0, 1, 0), rotateSpeed * deltaTime);
     }
 
     if(glfwGetKey( window, GLFW_KEY_D ) == GLFW_PRESS){
-        transform.RotateAroundAxis(vec3(0, 1, 0), -rotateSpeed * deltaTime);
+        transform->RotateAroundAxis(vec3(0, 1, 0), -rotateSpeed * deltaTime);
     }
 
-    transform.SetLocalPosition(position);
+    transform->SetLocalPosition(position);
     /** End of temporary**/
 }
 
 void SCE::Scene::DestroyScene()
 {
-    mCleaningScene = true;
     SECURE_DELETE(s_scene);
 }
 
-void SCE::Scene::AddContainer(std::shared_ptr<Container> obj)
+Handle<Container> Scene::CreateContainer(const string &name)
 {
-    SCEInternal::InternalMessage("Adding container to scene");
-    s_scene->mContainers.push_back(obj);
+    if(!s_scene){
+        Debug::PrintError("No scene to add the container to, create a scene first");
+    }
+    Container* cont = new Container(name, ++s_scene->mLastId);
+    s_scene->mContainers.push_back(cont);
+    return Handle<Container>(cont);
 }
 
-void Scene::RemoveContainer(std::shared_ptr<Container> obj)
+void Scene::DestroyContainer(const Handle<Container> &container)
+{
+    RemoveContainer(container->GetContainerId());
+}
+
+
+void Scene::RemoveContainer(const int &objId)
 {
     SCEInternal::InternalMessage("Removing container from scene");
-    auto objIt = find(begin(s_scene->mContainers), end(s_scene->mContainers), obj);
+    if(!s_scene) return;
+    auto objIt = find_if(
+                        begin(s_scene->mContainers)
+                      , end(s_scene->mContainers)
+                      , [&objId](Container* cont) {
+                          return cont->GetContainerId() == objId;
+                      });
     if(objIt != end(s_scene->mContainers)) {
+        delete(*objIt);
         s_scene->mContainers.erase(objIt);
     }
 }
 
-vector<shared_ptr<Container> > Scene::FindContainersWithTag(const string &tag)
+std::vector<Handle<Container> > Scene::FindContainersWithTag(const string &tag)
 {
-    vector<shared_ptr<Container> > tagged;
+    vector<Handle<Container> > tagged;
     for(size_t i = 0; i < s_scene->mContainers.size(); ++i){
         if(s_scene->mContainers[i]->GetTag() == tag){
-            tagged.push_back(s_scene->mContainers[i]);
+            tagged.push_back(Handle<Container>(s_scene->mContainers[i]));
         }
     }
     return tagged;
 }
 
-vector<shared_ptr<Container> >  Scene::FindContainersWithLayer(const string &layer)
+std::vector<Handle<Container> > Scene::FindContainersWithLayer(const string &layer)
 {
-    vector<shared_ptr<Container> >  layered;
+    vector<Handle<Container> >  layered;
     for(size_t i = 0; i < s_scene->mContainers.size(); ++i){
         if(s_scene->mContainers[i]->GetLayer() == layer){
-            layered.push_back(s_scene->mContainers[i]);
+            layered.push_back(Handle<Container>(s_scene->mContainers[i]));
         }
     }
     return layered;
 }
 
-void Scene::RegisterGameObject(std::shared_ptr<GameObject> gameObject)
+void Scene::RegisterGameObject(Handle<GameObject> gameObject)
 {
     if(find(begin(s_scene->mGameObjects), end(s_scene->mGameObjects), gameObject) == end(s_scene->mGameObjects)){
        s_scene-> mGameObjects.push_back(gameObject);
     }
 }
 
-void Scene::UnregisterGameObject(std::shared_ptr<GameObject> gameObject)
+void Scene::UnregisterGameObject(Handle<GameObject> gameObject)
 {
-    if(!mCleaningScene){
-        auto it = find(begin(s_scene->mGameObjects), end(s_scene->mGameObjects), gameObject);
-        if(it != end(s_scene->mGameObjects)){
-            s_scene-> mGameObjects.erase(it);
-        }
+    auto it = find(begin(s_scene->mGameObjects), end(s_scene->mGameObjects), gameObject);
+    if(it != end(s_scene->mGameObjects)){
+        s_scene-> mGameObjects.erase(it);
     }
 }
 
-void Scene::RegisterLight(shared_ptr<Light> light)
+void Scene::RegisterLight(Handle<Light> light)
 {
     if(find(begin(s_scene->mLights), end(s_scene->mLights), light) == end(s_scene->mLights)){
        s_scene-> mLights.push_back(light);
     }
 }
 
-void Scene::UnregisterLight(shared_ptr<Light> light)
+void Scene::UnregisterLight(Handle<Light> light)
 {
-    if(!mCleaningScene) {
-        auto it = find(begin(s_scene->mLights), end(s_scene->mLights), light);
-        if(it != end(s_scene->mLights)){
-            s_scene->mLights.erase(it);
-        }
+    auto it = find(begin(s_scene->mLights), end(s_scene->mLights), light);
+    if(it != end(s_scene->mLights)){
+        s_scene->mLights.erase(it);
     }
 }
 
@@ -247,13 +269,13 @@ void Scene::BindLightRenderData(const GLuint &shaderId)
     }
 }
 
-void Scene::renderSceneWithCamera(const Camera &camera)
+void Scene::renderSceneWithCamera(const Handle<Camera> &camera)
 {
     for(size_t i = 0; i < mContainers.size(); ++i){
         if(mContainers[i]->HasComponent<MeshRenderer>()
-           && camera.IsLayerRendered( mContainers[i]->GetLayer() )){
-            MeshRenderer& renderer = mContainers[i]->GetComponent<MeshRenderer>();
-            renderer.Render(camera);
+           && camera->IsLayerRendered( mContainers[i]->GetLayer() )){
+            Handle<MeshRenderer> renderer = mContainers[i]->GetComponent<MeshRenderer>();
+            renderer->Render(camera);
         }
     }
 }

@@ -6,7 +6,6 @@
 
 #include "../headers/SCEInternal.hpp"
 #include <iostream>
-#include <assert.h>
 
 using namespace std;
 
@@ -16,7 +15,9 @@ namespace SCEInternal {
 
     void InternalMessage(const string &message)
     {
+#ifdef SCE_DEBUG_ENGINE
         cout << "(Internal) : " << message << endl;
+#endif
     }
 
 }

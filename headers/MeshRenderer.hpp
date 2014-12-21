@@ -28,11 +28,11 @@ namespace SCE {
 
     public :
                         ~MeshRenderer();
-        void            Render(const Camera &cam);
+        void            Render(const Handle<Camera> &cam);
 
     protected :
 
-                        MeshRenderer(Container& container, const std::string& typeName = "");
+                        MeshRenderer(Handle<Container>& container, const std::string& typeName = "");
 
     private :
 

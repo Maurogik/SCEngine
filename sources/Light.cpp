@@ -16,15 +16,15 @@ using namespace glm;
 using namespace SCE;
 
 
-Light::Light(Container &container, const std::string& typeName)
+Light::Light(Handle<Container> &container, const std::string& typeName)
     : Component(container, "Light::" + typeName), mLightColor(1.0f, 1.0f, 1.0f, 1.0f)
 {
-    Scene::RegisterLight(shared_ptr<Light>(this));
+    Scene::RegisterLight(Handle<Light>(this));
 }
 
 Light::~Light()
 {
-    Scene::UnregisterLight(shared_ptr<Light>(this));
+    Scene::UnregisterLight(Handle<Light>(this));
 }
 
 void Light::InitRenderDataForShader(const GLuint &shaderId)
@@ -42,9 +42,9 @@ void Light::BindRenderDataForShader(const GLuint &shaderId)
     GLuint lightPosUnif = mLightPosByShader[shaderId];
     GLuint lightColorUnif = mLightColorByShader[shaderId];
 
-    Transform& transform = GetContainer().GetComponent<Transform>();
+    Handle<Transform> transform = GetContainer()->GetComponent<Transform>();
 
-    vec3 lightPos = transform.GetWorldPosition();
+    vec3 lightPos = transform->GetWorldPosition();
 
     glUniform3f(lightPosUnif, lightPos.x, lightPos.y, lightPos.z);
     glUniform4f(lightColorUnif, mLightColor.r, mLightColor.g, mLightColor.b, mLightColor.a);

@@ -12,13 +12,13 @@ using namespace SCE;
 using namespace std;
 
 
-GameObject::GameObject(Container &container, const string &typeName)
+GameObject::GameObject(Handle<Container> &container, const string &typeName)
     : Component(container, "GameObject::" + typeName)
 {
-    Scene::RegisterGameObject(shared_ptr<GameObject>(this));
+    Scene::RegisterGameObject(Handle<GameObject>(this));
 }
 
 GameObject::~GameObject()
 {
-    Scene::UnregisterGameObject(shared_ptr<GameObject>(this));
+    Scene::UnregisterGameObject(Handle<GameObject>(this));
 }

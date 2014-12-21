@@ -89,12 +89,18 @@ set(HEADERS
         ./headers/Container.hpp
         ./headers/Component.hpp
         ./headers/InternalComponent.hpp
+        ./headers/Handle.hpp
+        ./headers/HandleTarget.hpp
+        ./headers/SCEEvent.hpp
 )
 
 
 aux_source_directory(./sources SOURCES)
 aux_source_directory(./common COMMONS)
 aux_source_directory(${TARGET} APP_SOURCES)
+file(GLOB TEMPLATES
+    "templates/*.tpp"
+)
 
 # User playground
 add_executable(${TARGET}
@@ -103,6 +109,7 @@ add_executable(${TARGET}
     ${HEADERS}
     ${SOURCES}
     ${COMMONS}
+    ${TEMPLATES}
 )
 target_link_libraries(${TARGET}
     ${ALL_LIBS}

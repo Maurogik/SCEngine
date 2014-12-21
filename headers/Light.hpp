@@ -27,7 +27,7 @@ namespace SCE {
 
     protected :
 
-                            Light(Container& container, const std::string& typeName = "");
+                            Light(Handle<Container>& container, const std::string& typeName = "");
 
     private :
 

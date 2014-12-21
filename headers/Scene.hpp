@@ -33,32 +33,34 @@ namespace SCE {
         static void     DestroyScene();
 
         //object related functions
-        static void     AddContainer(std::shared_ptr<Container> obj);
-        static void     RemoveContainer(std::shared_ptr<Container> obj);
+        static Handle<Container> CreateContainer(const std::string& name);
+        static void      DestroyContainer(const Handle<Container>& container);
 
-        static std::vector<std::shared_ptr<Container> > FindContainersWithTag(const std::string& tag);
-        static std::vector<std::shared_ptr<Container> > FindContainersWithLayer(const std::string& layer);
+        static std::vector<Handle<Container> > FindContainersWithTag(const std::string& tag);
+        static std::vector<Handle<Container> > FindContainersWithLayer(const std::string& layer);
 
-        static void     RegisterGameObject(std::shared_ptr<GameObject> gameObject);
-        static void     UnregisterGameObject(std::shared_ptr<GameObject> gameObject);
+        static void     RegisterGameObject(Handle<GameObject> gameObject);
+        static void     UnregisterGameObject(Handle<GameObject> gameObject);
 
-        static void     RegisterLight(std::shared_ptr<Light> light);
-        static void     UnregisterLight(std::shared_ptr<Light> light);
+        static void     RegisterLight(Handle<Light> light);
+        static void     UnregisterLight(Handle<Light> light);
 
         static void     InitLightRenderData(const GLuint &shaderId);
         static void     BindLightRenderData(const GLuint &shaderId);
 
     private :
 
-        void            renderSceneWithCamera(const Camera& camera);
+        static void     RemoveContainer(const int& objId);
 
-        std::vector<std::shared_ptr<Container> >    mContainers;
-        std::vector<std::shared_ptr<Light> >        mLights;
-        std::vector<std::shared_ptr<GameObject> >   mGameObjects;
-        static bool                                 mCleaningScene;
+        void            renderSceneWithCamera(const Handle<Camera> &camera);
+
+        std::vector<Container*>             mContainers;
+        std::vector<Handle<Light> >         mLights;
+        std::vector<Handle<GameObject> >    mGameObjects;
+        int                                 mLastId;
 
         /*****Static*****/
-        static Scene*                               s_scene;
+        static Scene*                       s_scene;
 
     };
 

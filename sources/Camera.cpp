@@ -13,7 +13,7 @@ using namespace SCE;
 using namespace std;
 
 
-Camera::Camera(Container& container)
+Camera::Camera(Handle<Container> &container)
     : Component(container, "Camera::")
     , mType (PERSPECTIVE)
 {
@@ -26,8 +26,7 @@ Camera::Camera(Container& container)
     init();
 }
 
-Camera::Camera(
-          Container& container
+Camera::Camera(Handle<Container> &container
         , const float &fieldOfView
         , const float &aspectRatio
         , const float &nearPlane, const float &farPlane)
@@ -43,8 +42,7 @@ Camera::Camera(
     init();
 }
 
-Camera::Camera(
-          Container& container,
+Camera::Camera(Handle<Container> &container,
           const float &leftPlane
         , const float &rightPlane
         , const float &topPlane
@@ -93,8 +91,8 @@ const CameraType& Camera::GetType() const
 
 mat4 Camera::GetViewMatrix() const
 {
-    const Transform& transform = GetContainer().GetComponent<Transform>();
-    return mNegativeZInverter * inverse(transform.GetWorldTransform());;
+    const Handle<Transform> transform = GetContainer()->GetComponent<Transform>();
+    return mNegativeZInverter * inverse(transform->GetWorldTransform());;
 }
 
 const mat4& Camera::GetProjectionMatrix() const

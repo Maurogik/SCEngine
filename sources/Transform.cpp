@@ -11,7 +11,7 @@ using namespace SCE;
 using namespace std;
 
 
-Transform::Transform(Container &container)
+Transform::Transform(Handle<Container> &container)
     : Component(container, "Transform"),
       mTranslation(0, 0, 0)
     , mScale(1.0f, 1.0f, 1.0f)
@@ -21,10 +21,11 @@ Transform::Transform(Container &container)
     SCEInternal::InternalMessage("Transform initialized");
 }
 
+
 Transform::~Transform()
 {
     for(size_t i = 0; i < mChildren.size(); ++i){
-        mChildren[i]->SetParent(0l);
+        mChildren[i]->RemoveParent();
     }
     if(mParent){
         mParent->RemoveChild(this);
@@ -33,7 +34,6 @@ Transform::~Transform()
 
 const vec3& Transform::GetLocalPosition() const
 {
-    //return vec3(mTransformMatrix[3]);
     return mTranslation;
 }
 
@@ -194,6 +194,7 @@ void Transform::SetWorldOrientation(const vec3 &orientation)
         quat parentQuat = mParent->GetWorldQuaternion();
         parentQuat = inverse(parentQuat);
         mOrientation = parentQuat * worldOrientation;
+        // math :
         // newWorldOri = ParentQuat * newLocalOri
         // newLocalOri = ParentQuat -1 * newWorldOri
     }
@@ -230,35 +231,67 @@ void Transform::RotateAroundPivot(const glm::vec3& pivot, const glm::vec3& axis,
 //in world space
 void Transform::LookAt(const glm::vec3& target)
 {
+    LookAt(target, vec3(0.0f, 1.0f, 0.0f));
+}
+
+//in world space
+void Transform::LookAt(const glm::vec3& target, const glm::vec3& upVector)
+{
     vec3 direction = WorldToLocalPos(target) - mTranslation;
-    vec3 up = vec3(0.0f, 1.0f, 0.0f);
-    quat q = QuatLookAt(direction, up);
-    //vec3 v = QuatToEuler(q);
-    /*float x, y ,z;
-    x = v.x;
-    y = v.y;
-    z = v.z;*/
+    quat q = QuatLookAt(direction, upVector);
     mOrientation = q;
 }
 
-void Transform::SetParent(Transform *parentPtr)
+void Transform::SetParent(Handle<Transform> parentPtr)
 {
+    //make a copy of current world position, scale and rotation
+    vec3 wPos   = GetWorldPosition();
+    quat wQuat  = GetWorldQuaternion();
+    vec3 wScale = GetWorldScale();
+
+    //change parent
     mParent = parentPtr;
-    //TODO implement parent switching without changing transform
+    if(mParent) {
+        mParent->AddChild(this);
+    }
+
+    //convert saved transform to local
+    mat4 inverseTransform = inverse(GetWorldTransform());
+    mTranslation = vec3(inverseTransform * vec4(wPos, 1.0f));
+    mOrientation = inverse(GetWorldQuaternion()) * wQuat;
+    mScale       = vec3(inverseTransform * vec4(wScale, 0.0f));
 }
 
-void Transform::AddChild(Transform *child)
+void Transform::RemoveParent()
+{
+    //make a copy of current world position, scale and rotation
+    vec3 wPos   = GetWorldPosition();
+    quat wQuat  = GetWorldQuaternion();
+    vec3 wScale = GetWorldScale();
+
+    //chang parent
+    mParent = 0l;
+
+    //convert save transform to local
+    mTranslation = wPos;
+    mOrientation = wQuat;
+    mScale       = wScale;
+}
+
+void Transform::AddChild(Handle<Transform> child)
 {
     Debug::Assert(find(mChildren.begin(), mChildren.end(), child) == mChildren.end()
                , "Cannont add because the child has already been added");
     mChildren.push_back(child);
+    child->SetParent(this);
 }
 
-void Transform::RemoveChild(Transform *child)
+void Transform::RemoveChild(Handle<Transform> child)
 {
-    vector<Transform*>::iterator it = find(mChildren.begin(), mChildren.end(), child);
-    Debug::Assert(it != mChildren.end()
+    auto it = find(begin(mChildren), end(mChildren), child);
+    Debug::Assert(it != end(mChildren)
                , "Cannont remove because the transform is not a child");
+    (*it)->RemoveParent();
     mChildren.erase(it);
 }
 

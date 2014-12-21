@@ -7,6 +7,7 @@
 #define SCE_MATERIAL_HPP
 
 #include "SCEDefines.hpp"
+#include "SCETools.hpp"
 #include "Component.hpp"
 #include <map>
 
@@ -54,16 +55,23 @@ namespace SCE {
         void                CleanMaterial();
 
         template<typename T>
-        void                SetUniformValue(const std::string& uniformName, const T& value);
+        void                SetUniformValue(const std::string& uniformName, const T& value){
+            SCE::Debug::Assert(mUniforms.count(uniformName) > 0, "ERROR : This uniform does not exist");
+            mUniforms[uniformName].data = new T(value);
+        }
 
         template<typename T>
-        const T&            GetUniformValue(const std::string& uniformName);
+        const T&            GetUniformValue(const std::string& uniformName) const {
+            SCE::Debug::Assert(mUniforms.count(uniformName) > 0, "ERROR : This uniform does not exist");
+            return *(T*)(mUniforms.at(uniformName).data);
+        }
 
-        const GLuint&       GetShaderProgram();
+
+        const GLuint&       GetShaderProgram() const;
 
     protected :
 
-                            Material(Container& container, const std::string &filename, const std::string& typeName = "");
+                            Material(Handle<Container>& container, const std::string &filename, const std::string& typeName = "");
 
     private :
 

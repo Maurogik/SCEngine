@@ -13,18 +13,12 @@ using namespace std;
 
 GLFWwindow * SCECore::s_window = 0l;
 
-
-SCECore::SCECore()
-{
-
-}
-
 SCECore::~SCECore()
 {
     CleanUpEngine();
 }
 
-std::shared_ptr<SCECore> SCECore::InitEngine(const std::string &windowName)
+void SCECore::InitEngine(const std::string &windowName)
 {
     SCEInternal::InternalMessage("Initializing engine");
 
@@ -81,8 +75,6 @@ std::shared_ptr<SCECore> SCECore::InitEngine(const std::string &windowName)
     glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 
 #endif
-
-    return shared_ptr<SCECore>(new SCECore());
 }
 
 void SCECore::RunEngine()
@@ -105,6 +97,8 @@ void SCECore::CleanUpEngine()
 {
     SCEInternal::InternalMessage("Cleaning up engine");
     Scene::DestroyScene();
+    // Close OpenGL window and terminate GLFW
+    glfwTerminate();
 }
 
 GLFWwindow *SCECore::GetWindow()

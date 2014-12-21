@@ -27,9 +27,17 @@ namespace SCE {
 
         /*****Static*****/
 
-        static Mesh&        AddCustomMesh(Container& container, const std::string &filename);
-        static Mesh&        AddSphereMesh(Container& container, const ushort &radius, const ushort &tesselation);
-        static Mesh&        AddCubeMesh(Container& container, const ushort &width, const ushort &height, const ushort &depth);
+        static Handle<Mesh> AddCustomMesh ( Handle<Container>& container, const std::string &filename);
+        static Handle<Mesh> AddSphereMesh ( Handle<Container>& container, const ushort &radius, const ushort &tesselation);
+        static Handle<Mesh> AddCubeMesh   ( Handle<Container>& container, const ushort &size);
+        static Handle<Mesh> AddCustomMesh ( Handle<Container>& container,
+                                            std::vector<ushort> *indices,
+                                            std::vector<vec3>   *vertices,
+                                            std::vector<vec3>   *normals,
+                                            std::vector<vec2>   *uvs,
+                                            std::vector<vec3>   *tangents,
+                                            std::vector<vec3>   *bitangents
+                                            );
 
     protected :
 
@@ -43,17 +51,17 @@ namespace SCE {
 
     protected :
 
-        Mesh(   Container& container);
-        Mesh(   Container& container, const std::string& filename);
-        Mesh(   Container& container, const ushort &radius, const ushort &tesselation);
-        Mesh(   Container& container, const ushort &width, const ushort &height, const ushort &depth);
-        Mesh(   Container& container,
+        //Mesh(   Handle<Container>& container);
+        Mesh(   Handle<Container>& container, const std::string& filename);
+        /*Mesh(   Handle<Container>& container, const ushort &radius, const ushort &tesselation);
+        Mesh(   Handle<Container>& container, const ushort &size);*/
+        Mesh(   Handle<Container>& container,
                 std::vector<ushort> *indices,
-                std::vector<vec3> *vertices,
-                std::vector<vec3> *normals,
-                std::vector<vec2> *uvs,
-                std::vector<vec3> *tangents,
-                std::vector<vec3> *bitangents
+                std::vector<vec3>   *vertices,
+                std::vector<vec3>   *normals,
+                std::vector<vec2>   *uvs,
+                std::vector<vec3>   *tangents,
+                std::vector<vec3>   *bitangents
                 );
 
     private :

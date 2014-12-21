@@ -32,14 +32,14 @@ namespace SCE {
 
     protected :
 
-        Camera(  Container &container  );
-        Camera(  Container &container,
+        Camera(  Handle<Container>& container  );
+        Camera(  Handle<Container>& container,
                  const float &fieldOfView
                , const float &aspectRatio
                , const float &nearPlane
                , const float &farPlane
         );
-        Camera(  Container &container,
+        Camera(  Handle<Container>& container,
                  const float &leftPlane
                , const float &rightPlane
                , const float &topPlane

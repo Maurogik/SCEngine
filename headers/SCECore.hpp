@@ -19,16 +19,16 @@ namespace SCE {
 
     public :
 
+                                            SCECore() = default;
                                             ~SCECore();
 
-        static std::shared_ptr<SCECore>     InitEngine(const std::string &windowName);
+        void                                InitEngine(const std::string &windowName);
         void                                RunEngine();
 
         static GLFWwindow*                  GetWindow();
 
     private :
 
-                                            SCECore();
         void                                CleanUpEngine();
 
         static GLFWwindow* s_window;

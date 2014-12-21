@@ -5,7 +5,6 @@
 /**************************************/
 
 #include "../headers/Material.hpp"
-#include "../headers/SCETools.hpp"
 #include "../headers/SCEInternal.hpp"
 #include "../headers/Scene.hpp"
 
@@ -24,7 +23,7 @@ using namespace std;
 
 
 
-Material::Material(Container &container, const string &filename, const string &typeName)
+Material::Material(Handle<Container> &container, const string &filename, const string &typeName)
     : Component(container, "Material::" + typeName)
 {
     LoadMaterial(filename);
@@ -34,6 +33,33 @@ Material::Material(Container &container, const string &filename, const string &t
 Material::~Material()
 {
     //free each allocated structures
+    for(auto it = begin(mUniforms); it != end(mUniforms); ++it)
+    {
+        uniform_data data = it->second;
+        if(data.type == UNIFORM_FLOAT)
+        {
+            float* fData = (float*) data.data;
+            delete(fData);
+        }
+        else if (data.type == UNIFORM_VEC3)
+        {
+            glm::vec3* fData = (glm::vec3*) data.data;
+            delete(fData);
+        }
+        else if (data.type == UNIFORM_VEC4)
+        {
+            glm::vec4* fData = (glm::vec4*) data.data;
+            delete(fData);
+        }
+        else if (data.type == UNIFORM_TEXTURE2D)
+        {
+            string* fData = (string*) data.data;
+            delete(fData);
+        }
+    }
+
+    //unload shader
+    glDeleteProgram(mProgramShaderId);
 }
 
 void Material::LoadMaterial(const string &filename)
@@ -177,7 +203,7 @@ void Material::CleanMaterial()
 
 }
 
-const GLuint& Material::GetShaderProgram()
+const GLuint& Material::GetShaderProgram() const
 {
     return mProgramShaderId;
 }
@@ -185,6 +211,7 @@ const GLuint& Material::GetShaderProgram()
 GLuint Material::loadShaders(const string &filename)
 {
     string fullPath = SHADER_PATH + filename + SHADER_SUFIX;
+
     // Create the shaders
     GLuint VertexShaderID = glCreateShader(GL_VERTEX_SHADER);
     GLuint FragmentShaderID = glCreateShader(GL_FRAGMENT_SHADER);
@@ -289,14 +316,4 @@ GLuint Material::loadShaders(const string &filename)
     return ProgramID;
 }
 
-template<typename T>
-void                Material::SetUniformValue(const std::string& uniformName, const T& value){
-    Debug::Assert(mUniforms.count(uniformName) > 0, "ERROR : This uniform does not exist");
-    mUniforms[uniformName].data = new T(value);
-}
 
-template<typename T>
-const T&            Material::GetUniformValue(const std::string& uniformName){
-    Debug::Assert(mUniforms.count(uniformName) > 0, "ERROR : This uniform does not exist");
-    return *(T*)(mUniforms[uniformName].data);
-}

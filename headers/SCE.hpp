@@ -19,17 +19,19 @@
 #include "SCETime.hpp"
 #include "GameObject.hpp"
 #include "Light.hpp"
+#include "Handle.hpp"
 
 #include "SCETools.hpp"
 #include "SCETime.hpp"
 
-//GLM
-#include <glm/glm.hpp>
 
 // Include standard headers
 #include <stdio.h>
 #include <stdlib.h>
 #include <string>
+
+//GLM
+#include <glm/glm.hpp>
 
 using namespace glm;
 

@@ -7,114 +7,71 @@
 #define SCE_CONTAINER_HPP
 
 #include "SCEDefines.hpp"
+#include "SCEInternal.hpp"
 #include "Component.hpp"
 #include "InternalComponent.hpp"
+#include "Handle.hpp"
 #include <typeinfo>
-//#include <map>
 #include <type_traits>
 
 namespace SCE {
-
-    //class Component;//forward declaration of component
-
-    //Container class should not be inherited
-    class Container {
+    //Container class should not be inherited but the final keyword doesn't seem to work here
+    class Container : public HandleTarget{
+        friend class Scene;
 
     public :
 
-        //Prevent creation of copy constructor
-                        Container(const Container&)     = delete;
-        //Prevent creation of move Contructor
-                         Container(Container&&)          = delete;
+                            ~Container();
 
-                        Container(const std::string& name);
-                        ~Container();
+        template < class T, class... Args >
+        Handle<T>           AddComponent(Args&&... args);
 
-        //Only provide template functions for Component derived classes.
-        template < class T, class... Args,
-                   class = typename std::enable_if<std::is_base_of<Component, T>::value>::type>
-        T&                 AddComponent(Args&&... args)
-        {
-            T* compo = new InternalComponent<T> (*this, args...);
-            mComponents.push_back(std::shared_ptr<Component>(compo));
-            return *compo;
-        }
+
+        template < class T >
+        Handle<T>           GetComponent();
 
 
 
-        template < class T,
-                   class = typename std::enable_if<std::is_base_of<Component, T>::value>::type>
-        T&                  GetComponent()
-        {
-            return fetchComponent<T>();
-        }
+        template < class T >
+        const Handle<T>     GetComponent() const;
 
 
+        template < class T >
+        void                RemoveComponent();
 
-        template < class T,
-                   class = typename std::enable_if<std::is_base_of<Component, T>::value>::type>
-        const T&                  GetComponent() const
-        {
-            return fetchComponent<T>();
-        }
-
-
-
-        template < class T,
-                   class = typename std::enable_if<std::is_base_of<Component, T>::value>::type>
-        void                RemoveComponent()
-        {
-
-        }
-
-
-        template < class T,
-                   class = typename std::enable_if<std::is_base_of<Component, T>::value>::type>
-        bool                HasComponent() const
-        {
-            int typeHash = InternalComponent<T>::sTypeHash;
-            auto it = std::find_if(begin(mComponents), end(mComponents),
-                                   [&typeHash] (const std::shared_ptr<Component>& compo){
-                                        return compo->GetTypeHash() == typeHash;
-                                    }
-            );
-            return it != end(mComponents);
-        }
+        template < class T >
+        bool                HasComponent() const;
 
         const std::string&  GetTag() const;
         const std::string&  GetLayer() const;
+        const std::string&  GetName() const;
         void                SetTag(const std::string& tag);
         void                SetLayer(const std::string& layer);
-
-        const std::string&  GetName() const;
         void                SetName(const std::string &name);
+
+        const int&          GetContainerId() const;
 
     private :
 
+        //Prevent creation of copy constructor for now
+                            Container(const Container&)     = delete;
+        //Prevent creation of move Contructor for now
+                            Container(Container&&)          = delete;
 
-        template < class T,
-                   class = typename std::enable_if<std::is_base_of<Component, T>::value>::type>
-        T&                      fetchComponent() const
-        {
-            int typeHash = InternalComponent<T>::sTypeHash;
-            auto it = std::find_if(begin(mComponents), end(mComponents),
-                                   [&typeHash] (const std::shared_ptr<Component>& compo){
-                                        return compo->GetTypeHash() == typeHash;
-                                    }
-            );
-            Debug::Assert(it != end(mComponents), "Could not find component on container : " + mName);
-            return *(T*)it->get();
-        }
+                            Container(const std::string& name, const int& id);
 
+        template < class T >
+        Handle<T>           fetchComponent() const;
 
-        std::vector<std::shared_ptr<Component> >            mComponents;
+        std::vector<Component*>                             mComponents;
         std::string                                         mTag;
         std::string                                         mLayer;
         std::string                                         mName;
+        int                                                 mContainerId;
 
     };
-
 }
 
+#include "../templates/Container.tpp"
 
 #endif

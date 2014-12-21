@@ -12,7 +12,7 @@ using namespace SCE;
 using namespace std;
 
 
-Component::Component(Container& container, const string &typeName)
+Component::Component(Handle<Container> &container, const string &typeName, const int &guid)
     : mContainer(container)
     , mTypeHash(SCE::Tools::HashFromString( "Component::"+typeName))
 {
@@ -24,12 +24,12 @@ Component::~Component()
 
 }
 
-Container &Component::GetContainer()
+Handle<Container> Component::GetContainer()
 {
     return mContainer;
 }
 
-const Container &Component::GetContainer() const
+const Handle<Container> Component::GetContainer() const
 {
     return mContainer;
 }

@@ -20,7 +20,7 @@ namespace SCE {
 
     protected :
 
-                            GameObject(Container& container, const std::string& typeName);
+                            GameObject(Handle<Container>& container, const std::string& typeName);
 
     private :
 

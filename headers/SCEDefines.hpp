@@ -9,7 +9,7 @@ using namespace glm;
 
 //define here because it is used in SCETools ans SCEInternal
 #define SCE_DEBUG
-#define SCE_DEBUG_ENGINE
+//#define SCE_DEBUG_ENGINE
 
 #include <string>
 #include <iostream>

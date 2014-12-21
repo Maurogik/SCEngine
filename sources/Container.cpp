@@ -13,18 +13,25 @@ using namespace SCE;
 using namespace std;
 
 
-Container::Container(const string &name)
+Container::Container(const string &name, const int &id)
     : mComponents()
     , mTag(DEFAULT_TAG)
     , mLayer(DEFAULT_LAYER)
     , mName(name)
+    , mContainerId(id)
 {
     SCEInternal::InternalMessage("New container");
-    Scene::AddContainer(shared_ptr<Container>(this));
 }
 
 Container::~Container()
 {
+    SCEInternal::InternalMessage("delete container");
+    SCEInternal::InternalMessage("delete components");
+    for(Component* compo : mComponents)
+    {
+        delete(compo);
+    }
+    mComponents.clear();
 }
 
 const string& Container::GetTag() const
@@ -55,6 +62,11 @@ void Container::SetName(const std::string &name)
 {
     mName = name;
 }
+const int& Container::GetContainerId() const
+{
+    return mContainerId;
+}
+
 
 
 
