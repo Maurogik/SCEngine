@@ -9,7 +9,7 @@ using namespace glm;
 
 //define here because it is used in SCETools ans SCEInternal
 #define SCE_DEBUG
-//#define SCE_DEBUG_ENGINE
+#define SCE_DEBUG_ENGINE
 
 #include <string>
 #include <iostream>
@@ -25,6 +25,7 @@ using namespace glm;
 #define SHADER_PATH "ressources/"
 #define SHADER_SUFIX ".shader"
 #define MATERIAL_SUFIX ".material"
+#define TEXTURE_METADATA_SUFIX ".texData"
 
 
 #endif

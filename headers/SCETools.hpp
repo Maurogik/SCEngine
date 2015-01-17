@@ -10,7 +10,6 @@
 #include "SCEDefines.hpp"
 #include <iostream>
 #include <stdio.h>
-#include <string>
 
 namespace SCE {
 
@@ -27,6 +26,7 @@ namespace Parser {
 namespace Tools {
 
     int         HashFromString(const std::string& str);
+    std::string ToLowerCase(const std::string &str);
 
 }
 

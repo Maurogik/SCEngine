@@ -8,7 +8,7 @@
 
 //SCE
 #include "Mesh.hpp"
-#include "Scene.hpp"
+#include "SCEScene.hpp"
 #include "Transform.hpp"
 #include "MeshRenderer.hpp"
 #include "Material.hpp"
@@ -19,7 +19,7 @@
 #include "SCETime.hpp"
 #include "GameObject.hpp"
 #include "Light.hpp"
-#include "Handle.hpp"
+#include "SCEHandle.hpp"
 
 #include "SCETools.hpp"
 #include "SCETime.hpp"

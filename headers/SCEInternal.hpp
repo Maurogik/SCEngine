@@ -7,6 +7,7 @@
 #define SCE_INTERNAL_HPP
 
 #include <string>
+#include "SCEDefines.hpp"
 
 #define SECURE_DELETE(ptr) \
     if((ptr)) { \

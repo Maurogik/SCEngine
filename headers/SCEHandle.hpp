@@ -7,29 +7,29 @@
 #define SCE_HANDLE_HPP
 
 #include <memory>
-#include "HandleTarget.hpp"
+#include "SCEHandleTarget.hpp"
 
 namespace SCE {
 
     template <class T>
-    class Handle {
+    class SCEHandle {
         friend class Container;
 
     public :
 
-        Handle();
+        SCEHandle();
 
-        Handle (HandleTarget* target);
+        SCEHandle (SCEHandleTarget* target);
 
-        Handle (Handle<T>& handle);
+        SCEHandle (SCEHandle<T>& handle);
 
-        Handle (const Handle<T>& handle);
+        SCEHandle (const SCEHandle<T>& handle);
 
-        Handle (Handle<T>&& handle);
+        SCEHandle (SCEHandle<T>&& handle);
 
-        Handle<T>& operator= (const Handle<T>& rhs);
+        SCEHandle<T>& operator= (const SCEHandle<T>& rhs);
 
-        Handle<T>& operator= (HandleTarget* rhs);
+        SCEHandle<T>& operator= (SCEHandleTarget* rhs);
 
         T*                      operator->();
 
@@ -37,21 +37,21 @@ namespace SCE {
 
         explicit operator bool() const;
 
-        bool operator== (const Handle<T>& rhs);
+        bool operator== (const SCEHandle<T>& rhs);
 
-        bool operator!= (const Handle<T>& rhs);
+        bool operator!= (const SCEHandle<T>& rhs);
 
     private :
 
         void                    invalidateTarget();
 
-        HandleTarget*           mTarget;
+        SCEHandleTarget*           mTarget;
         Delegate                mDestroyedDelegate;
 
     };
 
 }
 
-#include "../templates/Handle.tpp"
+#include "../templates/SCEHandle.tpp"
 
 #endif

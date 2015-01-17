@@ -20,7 +20,7 @@ using namespace SCE;
 using namespace std;
 
 
-MeshRenderer::MeshRenderer(Handle<Container> &container, const string &typeName)
+MeshRenderer::MeshRenderer(SCEHandle<Container> &container, const string &typeName)
     : Component(container, "MeshRenderer::" + typeName)
 {
     initializeGLData();
@@ -39,10 +39,10 @@ void MeshRenderer::initializeGLData()
 {
     SCEInternal::InternalMessage("Initializing mesh renderer data");
 
-    Handle<Mesh> mesh = GetContainer()->GetComponent<Mesh>();
+    SCEHandle<Mesh> mesh = GetContainer()->GetComponent<Mesh>();
 
-    Handle<Material> mat = GetContainer()->GetComponent<Material>();
-    mat->InitRenderData();
+    SCEHandle<Material> mat = GetContainer()->GetComponent<Material>();
+
     GLuint programID = mat->GetShaderProgram();
 
     vector<ushort>* indices     = mesh->GetIndices();
@@ -54,13 +54,19 @@ void MeshRenderer::initializeGLData()
     vector<vec3>*   bitangents  = mesh->GetBitangents();
 
 
-    /** This will be in the trasform later */
+    /** This will be in the trasform later,...or not */
     // Get a handle for our "MVP" uniform
 
 
     mMVPMatrixID    = glGetUniformLocation(programID, "MVP");
     mViewMatrixID   = glGetUniformLocation(programID, "V");
     mModelMatrixID  = glGetUniformLocation(programID, "M");
+
+    /* Allocate and assign a Vertex Array Object to our handle */
+    glGenVertexArrays(1, &mVaoID);
+
+    /* Bind our Vertex Array Object as the current used object */
+    glBindVertexArray(mVaoID);
 
     addAttribute("vertexPosition_modelspace"
                 , &(*vertices)[0]
@@ -102,6 +108,8 @@ void MeshRenderer::initializeGLData()
                  , indices->size() * sizeof(unsigned short)
                  , &(*indices)[0] , GL_STATIC_DRAW);
 
+    glEnableVertexAttribArray(0); // Disable our Vertex Array Object
+    glBindVertexArray(0); // Disable our Vertex Buffer Object
 
 }
 
@@ -112,7 +120,7 @@ void MeshRenderer::addAttribute(  const std::string &name
                                 , const size_t &typedSize)
 {
 
-    Handle<Material> mat = GetContainer()->GetComponent<Material>();
+    SCEHandle<Material> mat = GetContainer()->GetComponent<Material>();
     GLuint programID = mat->GetShaderProgram();
 
     GLuint id = glGetAttribLocation(programID, name.c_str());
@@ -133,20 +141,19 @@ void MeshRenderer::addAttribute(  const std::string &name
     }
 }
 
-void MeshRenderer::Render(const Handle<Camera>& cam)
+void MeshRenderer::Render(const SCEHandle<Camera>& cam)
 {
-    Handle<Mesh> mesh = GetContainer()->GetComponent<Mesh>();
-    Handle<Transform> transform = GetContainer()->GetComponent<Transform>();
+    SCEHandle<Mesh> mesh = GetContainer()->GetComponent<Mesh>();
+    SCEHandle<Transform> transform = GetContainer()->GetComponent<Transform>();
 
-    Handle<Material> mat = GetContainer()->GetComponent<Material>();
-    GLuint programID = mat->GetShaderProgram();
+    SCEHandle<Material> mat = GetContainer()->GetComponent<Material>();
 
     vector<ushort>* indices     = mesh->GetIndices();
 
     //bind mesh data and render
+    glBindVertexArray(mVaoID);
 
     // Use our shader
-    glUseProgram(programID);
     mat->BindRenderData();
 
     glm::mat4 ProjectionMatrix  = cam->GetProjectionMatrix();
@@ -159,6 +166,8 @@ void MeshRenderer::Render(const Handle<Camera>& cam)
     glUniformMatrix4fv(mMVPMatrixID, 1, GL_FALSE, &MVP[0][0]);
     glUniformMatrix4fv(mModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
     glUniformMatrix4fv(mViewMatrixID, 1, GL_FALSE, &ViewMatrix[0][0]);
+
+
 
     //set the attributes
     for(size_t i = 0; i < mAttributes.size(); ++i){
@@ -184,6 +193,8 @@ void MeshRenderer::Render(const Handle<Camera>& cam)
                 GL_UNSIGNED_SHORT,   // type
                 (void*)0             // element array buffer offset
                 );
+
+    glBindVertexArray(0);
 
     //clean the attributes ?
     for(size_t i = 0; i < mAttributes.size(); ++i){

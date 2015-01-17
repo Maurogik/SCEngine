@@ -13,23 +13,23 @@
 namespace SCE {
 
     template<class T>
-    class InternalComponent : public T {
+    class SCEInternalComponent : public T {
 
         //Container is the only class allowed to create an internal component
         friend class Container;
 
     public :
 
-        InternalComponent()                         = delete;
-        InternalComponent(const InternalComponent&) = delete;
-        InternalComponent(InternalComponent&&)      = delete;
+        SCEInternalComponent()                         = delete;
+        SCEInternalComponent(const SCEInternalComponent&) = delete;
+        SCEInternalComponent(SCEInternalComponent&&)      = delete;
 
 
     private :
 
         template < class... Args >
-        InternalComponent(Args&&... args): T(args...){
-            InternalComponent<T>::sTypeHash = T::GetTypeHash();
+        SCEInternalComponent(Args&&... args): T(args...){
+            SCEInternalComponent<T>::sTypeHash = T::GetTypeHash();
         }
 
         static int sTypeHash;
@@ -37,7 +37,7 @@ namespace SCE {
     };
 
     template<class T>
-    int InternalComponent<T>::sTypeHash;
+    int SCEInternalComponent<T>::sTypeHash;
 
 }
 

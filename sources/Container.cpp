@@ -6,7 +6,7 @@
 
 #include "../headers/Container.hpp"
 #include "../headers/Component.hpp"
-#include "../headers/Scene.hpp"
+#include "../headers/SCEScene.hpp"
 #include "../headers/SCEInternal.hpp"
 
 using namespace SCE;

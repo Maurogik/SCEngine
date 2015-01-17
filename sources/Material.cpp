@@ -6,14 +6,13 @@
 
 #include "../headers/Material.hpp"
 #include "../headers/SCEInternal.hpp"
-#include "../headers/Scene.hpp"
+#include "../headers/SCEScene.hpp"
+#include "../headers/SCETexture.hpp"
 
 #include "external/rapidjson/document.h" // rapidjson's DOM-style API
 #include "external/rapidjson/prettywriter.h" // for stringify JSON
 #include "external/rapidjson/filestream.h" // wrapper of C stream for prettywriter as output
 
-#include <string>
-#include <vector>
 #include <iostream>
 #include <fstream>
 
@@ -23,7 +22,7 @@ using namespace std;
 
 
 
-Material::Material(Handle<Container> &container, const string &filename, const string &typeName)
+Material::Material(SCEHandle<Container> &container, const string &filename, const string &typeName)
     : Component(container, "Material::" + typeName)
 {
     LoadMaterial(filename);
@@ -53,7 +52,7 @@ Material::~Material()
         }
         else if (data.type == UNIFORM_TEXTURE2D)
         {
-            string* fData = (string*) data.data;
+            SCETexture* fData = (SCETexture*) data.data;
             delete(fData);
         }
     }
@@ -91,7 +90,14 @@ void Material::LoadMaterial(const string &filename)
         rapidjson::Value& materialData = materialRoot["Data"];
         string shaderName   = root["Shader"].GetString();
 
+        mProgramShaderId = loadShaders(shaderName);
+
+        //start initializing the render data as soon as the shader is loaded
+        glUseProgram(mProgramShaderId);
+
         Debug::Assert(materialData.IsArray(), "Data value of Json material file should be an array");
+
+        //initialize all found uniforms
 
         for(rapidjson::SizeType i = 0; i < materialData.Size(); ++i){
             const rapidjson::Value& entry = materialData[i];
@@ -100,66 +106,75 @@ void Material::LoadMaterial(const string &filename)
             string value = entry["Value"].GetString();
 
             uniform_data unifData;
-
-            if(type == "float"){
-                unifData.type = UNIFORM_FLOAT;
-                unifData.data = new float(Parser::StringToFloat(value));
-            } else if (type == "Texture2D"){
+            unifData.name = name;
+            if(type == "Texture2D"){
+                //do additional texture work (fetch sampler & stuff)
+                //load texture here
+                SCETexture* texture = new SCETexture(value, unifData.name, mProgramShaderId);
+                unifData.data = (void*)texture;
+                unifData.dataID = texture->GetTextureId();
                 unifData.type = UNIFORM_TEXTURE2D;
-                unifData.data = new string(value);
-            } else if (type == "vec4"){
-                unifData.type = UNIFORM_VEC4;
-                unifData.data = new vec4(Parser::StringToVec4(value));
-            } else if (type == "vec3"){
-                unifData.type = UNIFORM_VEC3;
-                unifData.data = new vec3(Parser::StringToVec3(value));
+            } else {
+                if(type == "float"){
+                    unifData.type = UNIFORM_FLOAT;
+                    unifData.data = new float(Parser::StringToFloat(value));
+                } else if (type == "vec4"){
+                    unifData.type = UNIFORM_VEC4;
+                    unifData.data = new vec4(Parser::StringToVec4(value));
+                } else if (type == "vec3"){
+                    unifData.type = UNIFORM_VEC3;
+                    unifData.data = new vec3(Parser::StringToVec3(value));
+                }
+                unifData.dataID = glGetUniformLocation(mProgramShaderId, name.c_str());
             }
 
             mUniforms[name] = unifData;
         }
 
-        mProgramShaderId = loadShaders(shaderName);
+        //Initialize Light render data so that it can be added to the shader
+        SCEScene::InitLightRenderData(mProgramShaderId);
 
     } else {
         Debug::RaiseError("Failed to open file " + fullPath);
     }
 }
 
-void Material::InitRenderData()
-{
-/*
-    // Get a handle for our "MVP" uniform
-    mMVPMatrixID    = glGetUniformLocation(mProgramID, "MVP");
-    mViewMatrixID   = glGetUniformLocation(mProgramID, "V");
-    mModelMatrixID  = glGetUniformLocation(mProgramID, "M");
- */
-    map<string, uniform_data>::iterator it;
-    for(it = mUniforms.begin(); it != mUniforms.end(); ++it){
-        // iterator->first = key
-        // iterator->second = value
-        string name = it->first;
-        uniform_data& uniform = it->second;
 
-        uniform.dataID = glGetUniformLocation(mProgramShaderId, name.c_str());
-        if(uniform.type == UNIFORM_TEXTURE2D){
-            //do additional texture work (fetch sampler & stuff)
-        }
+//void Material::InitRenderData()
+//{
+//    map<string, uniform_data>::iterator it;
+//    for(it = mUniforms.begin(); it != mUniforms.end(); ++it){
+//        // iterator->first = key
+//        // iterator->second = value
+//        string name = it->first;
+//        uniform_data& uniform = it->second;
 
-    }
+//        if(uniform.type == UNIFORM_TEXTURE2D){
+//            //do additional texture work (fetch sampler & stuff)
+//            //load texture here
+//            string* path = (string*)uniform.data;
+//            SCETexture* texture = new SCETexture(*path, uniform.name, mProgramShaderId);
+//            SECURE_DELETE(path);
+//            uniform.data = (void*)texture;
+//            uniform.dataID = texture->GetTextureId();
+//        } else {
+//            uniform.dataID = glGetUniformLocation(mProgramShaderId, name.c_str());
+//        }
 
-    Scene::InitLightRenderData(mProgramShaderId);
-}
+//    }
+
+//    SCEScene::InitLightRenderData(mProgramShaderId);
+//}
 
 void Material::BindRenderData()
 {
-    Scene::BindLightRenderData(mProgramShaderId);
-/*
-    // Send our transformation to the currently bound shader,
-    // in the "MVP" uniform
-    glUniformMatrix4fv(mMVPMatrixID, 1, GL_FALSE, &MVP[0][0]);
-    glUniformMatrix4fv(mModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
-    glUniformMatrix4fv(mViewMatrixID, 1, GL_FALSE, &ViewMatrix[0][0]);
- */
+    glUseProgram(mProgramShaderId);
+
+    GLuint textureUnit = 0;
+
+    //should the be here ?
+    SCEScene::BindLightRenderData(mProgramShaderId);
+
     map<string, uniform_data>::iterator it;
     for(it = mUniforms.begin(); it != mUniforms.end(); ++it){
         // iterator->first = key
@@ -174,7 +189,10 @@ void Material::BindRenderData()
         }
         case UNIFORM_TEXTURE2D :
         {
-            //exture uniforms not handled yet
+            //texture uniforms not handled yet
+            SCETexture* texture = (SCETexture*)uniform.data;
+            texture->BindTexture(textureUnit);
+            ++textureUnit;
             break;
         }
         case UNIFORM_VEC3 :
@@ -195,12 +213,12 @@ void Material::BindRenderData()
 
 void Material::ReloadMaterial()
 {
-
+    SCE::Debug::RaiseError("Not implemented yet");
 }
 
 void Material::CleanMaterial()
 {
-
+    SCE::Debug::RaiseError("Not implemented yet");
 }
 
 const GLuint& Material::GetShaderProgram() const

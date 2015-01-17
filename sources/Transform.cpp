@@ -11,7 +11,7 @@ using namespace SCE;
 using namespace std;
 
 
-Transform::Transform(Handle<Container> &container)
+Transform::Transform(SCEHandle<Container> &container)
     : Component(container, "Transform"),
       mTranslation(0, 0, 0)
     , mScale(1.0f, 1.0f, 1.0f)
@@ -242,7 +242,7 @@ void Transform::LookAt(const glm::vec3& target, const glm::vec3& upVector)
     mOrientation = q;
 }
 
-void Transform::SetParent(Handle<Transform> parentPtr)
+void Transform::SetParent(SCEHandle<Transform> parentPtr)
 {
     //make a copy of current world position, scale and rotation
     vec3 wPos   = GetWorldPosition();
@@ -278,7 +278,7 @@ void Transform::RemoveParent()
     mScale       = wScale;
 }
 
-void Transform::AddChild(Handle<Transform> child)
+void Transform::AddChild(SCEHandle<Transform> child)
 {
     Debug::Assert(find(mChildren.begin(), mChildren.end(), child) == mChildren.end()
                , "Cannont add because the child has already been added");
@@ -286,7 +286,7 @@ void Transform::AddChild(Handle<Transform> child)
     child->SetParent(this);
 }
 
-void Transform::RemoveChild(Handle<Transform> child)
+void Transform::RemoveChild(SCEHandle<Transform> child)
 {
     auto it = find(begin(mChildren), end(mChildren), child);
     Debug::Assert(it != end(mChildren)

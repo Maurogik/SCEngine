@@ -28,11 +28,11 @@ namespace SCE {
 
     public :
                         ~MeshRenderer();
-        void            Render(const Handle<Camera> &cam);
+        void            Render(const SCEHandle<Camera> &cam);
 
     protected :
 
-                        MeshRenderer(Handle<Container>& container, const std::string& typeName = "");
+                        MeshRenderer(SCEHandle<Container>& container, const std::string& typeName = "");
 
     private :
 
@@ -52,6 +52,7 @@ namespace SCE {
         //indexation buffer
         GLuint                      mIndiceBuffer;
 
+        GLuint                      mVaoID;
         std::vector<attrib_data>    mAttributes;
 
 

@@ -10,10 +10,23 @@
 #include "Component.hpp"
 #include <map>
 
-#define LIGHT_POS_UNIFORM_STR "LightPos_worldspace"
-#define LIGHT_COLOR_UNIFORM_STR "LightColor"
-
 namespace SCE {
+
+    enum LightUniformType {
+        LIGHT_POSITION = 0,
+        LIGHT_DIRECTION,
+        LIGHT_REACH,
+        LIGHT_COLOR,
+        LIGHT_START_RADIUS,
+        LIGHT_END_RADIUS,
+        LIGHT_UNIFORMS_COUNT
+    };
+
+    enum LightType{
+        DIRECTIONAL_LIGHT,
+        POINT_LIGHT,
+        SPOT_LIGHT
+    };
 
     class Light : public Component {
 
@@ -25,16 +38,32 @@ namespace SCE {
 
         void                BindRenderDataForShader(const GLuint &shaderId);
 
+        float GetLightReach() const;
+        void SetLightReach(float lightReach);
+
+        float GetLightStartRadius() const;
+        void SetLightStartRadius(float lightStartRadius);
+
+        float GetLightEndRadius() const;
+        void SetLightEndRadius(float lightEndRadius);
+
+        float GetLightColor() const;
+        void SetLightColor(float lightColor);
+
     protected :
 
-                            Light(Handle<Container>& container, const std::string& typeName = "");
+        Light(SCEHandle<Container>& container, const LightType &lightType,
+                                  const std::string& typeName = "");
 
     private :
 
-        glm::vec4                   mLightColor;
-        //keep map of all shader/uniforms ID pairs ?
-        std::map<GLuint, GLuint>    mLightPosByShader;
-        std::map<GLuint, GLuint>    mLightColorByShader;
+        LightingType                mLightingType;
+        LightType                   mLightType;
+        float                       mLightReach;
+        float                       mLightStartRadius;
+        float                       mLightEndRadius;
+        float                       mLightColor;
+        std::map<GLuint, GLuint>    mLightUniformsByShader[LIGHT_UNIFORMS_COUNT];
 
     };
 

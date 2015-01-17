@@ -9,31 +9,31 @@
 #include "SCEDefines.hpp"
 #include "SCEInternal.hpp"
 #include "Component.hpp"
-#include "InternalComponent.hpp"
-#include "Handle.hpp"
+#include "SCEInternalComponent.hpp"
+#include "SCEHandle.hpp"
 #include <typeinfo>
 #include <type_traits>
 
 namespace SCE {
     //Container class should not be inherited but the final keyword doesn't seem to work here
-    class Container : public HandleTarget{
-        friend class Scene;
+    class Container : public SCEHandleTarget{
+        friend class SCEScene;
 
     public :
 
                             ~Container();
 
         template < class T, class... Args >
-        Handle<T>           AddComponent(Args&&... args);
+        SCEHandle<T>           AddComponent(Args&&... args);
 
 
         template < class T >
-        Handle<T>           GetComponent();
+        SCEHandle<T>           GetComponent();
 
 
 
         template < class T >
-        const Handle<T>     GetComponent() const;
+        const SCEHandle<T>     GetComponent() const;
 
 
         template < class T >
@@ -61,7 +61,7 @@ namespace SCE {
                             Container(const std::string& name, const int& id);
 
         template < class T >
-        Handle<T>           fetchComponent() const;
+        SCEHandle<T>           fetchComponent() const;
 
         std::vector<Component*>                             mComponents;
         std::string                                         mTag;

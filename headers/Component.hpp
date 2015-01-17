@@ -7,14 +7,14 @@
 #define SCE_COMPONENT_HPP
 
 #include "SCEDefines.hpp"
-#include "HandleTarget.hpp"
-#include "Handle.hpp"
+#include "SCEHandleTarget.hpp"
+#include "SCEHandle.hpp"
 
 namespace SCE {
 
     class Container;//forward declaration of container
 
-    class Component : public HandleTarget {
+    class Component : public SCEHandleTarget {
 
     public :
 
@@ -24,20 +24,20 @@ namespace SCE {
 
         virtual                     ~Component();
 
-        Handle<Container>           GetContainer();
+        SCEHandle<Container>           GetContainer();
 
-        const Handle<Container>     GetContainer() const ;
+        const SCEHandle<Container>     GetContainer() const ;
 
         const int&                  GetTypeHash() const;        
 
     protected :
 
-                                    Component(Handle<Container>& container, const std::string& typeName, const int& guid = 0);
+                                    Component(SCEHandle<Container>& container, const std::string& typeName, const int& guid = 0);
 
 
     private :
 
-        Handle<Container>   mContainer;
+        SCEHandle<Container>   mContainer;
         int                 mTypeHash;
 
     };

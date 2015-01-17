@@ -92,6 +92,13 @@ namespace Tools {
         return hash_func(str);
     }
 
+    string ToLowerCase(const string &str)
+    {
+        string res = str;
+        std::transform(begin(res), end(res), begin(res), ::tolower);
+        return res;
+    }
+
 }
 
 }

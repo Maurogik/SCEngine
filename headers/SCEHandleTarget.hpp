@@ -13,8 +13,8 @@
 
 namespace SCE {
 
-class HandleTarget {
-    template<class T> friend class Handle;
+class SCEHandleTarget {
+    template<class T> friend class SCEHandle;
 
 public:
 

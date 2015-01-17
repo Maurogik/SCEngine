@@ -23,7 +23,7 @@
 using namespace SCE;
 using namespace std;
 
-SCE::Mesh::Mesh(Handle<Container> &container, const string& filename)
+SCE::Mesh::Mesh(SCEHandle<Container> &container, const string& filename)
     : Component(container, "Mesh::")
     , mIndices(0l), mVertices(0l), mNormals(0l), mUvs(0l), mTangents(0l), mBitangents(0l)
 {
@@ -60,7 +60,7 @@ SCE::Mesh::Mesh(Handle<Container> &container, const string& filename)
     }
 }
 
-SCE::Mesh::Mesh(Handle<Container> &container
+SCE::Mesh::Mesh(SCEHandle<Container> &container
                 , vector<ushort> *indices
                 , vector<vec3> *vertices
                 , vector<vec3> *normals
@@ -129,13 +129,13 @@ std::vector<vec3> *SCE::Mesh::GetBitangents()
     return mBitangents;
 }
 
-Handle<Mesh> SCE::Mesh::AddCustomMesh(Handle<Container> &container, const string &filename)
+SCEHandle<Mesh> SCE::Mesh::AddCustomMesh(SCEHandle<Container> &container, const string &filename)
 {
     return container->AddComponent<Mesh>(filename);
 }
 
 //Tesselation : number of time the basic (90°) angle is divided by 2 to get the angle step, range from 0 to infinity
-Handle<Mesh> SCE::Mesh::AddSphereMesh(Handle<Container> &container, const ushort &radius, const ushort &tesselation)
+SCEHandle<Mesh> SCE::Mesh::AddSphereMesh(SCEHandle<Container> &container, const ushort &radius, const ushort &tesselation)
 {
     float fTess = (float)tesselation;
     float angleStep = 90.0f / glm::pow(2.0f, fTess);
@@ -212,7 +212,7 @@ Handle<Mesh> SCE::Mesh::AddSphereMesh(Handle<Container> &container, const ushort
     return container->AddComponent<Mesh>(&indices, &vertices, &normals, &uvs, (vector<vec3>*) 0l, (vector<vec3>*) 0l);
 }
 
-Handle<Mesh> SCE::Mesh::AddCubeMesh(Handle<Container> &container, const ushort &size)
+SCEHandle<Mesh> SCE::Mesh::AddCubeMesh(SCEHandle<Container> &container, const ushort &size)
 {
 
     vector<vec3> vertices = vector<vec3>{
@@ -315,7 +315,7 @@ Handle<Mesh> SCE::Mesh::AddCubeMesh(Handle<Container> &container, const ushort &
     return container->AddComponent<Mesh>(&indices, &vertices, &normals, &uvs, (std::vector<vec3> *)0l, (std::vector<vec3> *)0l);
 }
 
-Handle<Mesh> Mesh::AddCustomMesh(Handle<Container> &container, std::vector<ushort> *indices, std::vector<vec3> *vertices
+SCEHandle<Mesh> Mesh::AddCustomMesh(SCEHandle<Container> &container, std::vector<ushort> *indices, std::vector<vec3> *vertices
                                  , std::vector<vec3> *normals, std::vector<vec2> *uvs, std::vector<vec3> *tangents, std::vector<vec3> *bitangents)
 {
     return container->AddComponent<Mesh>(indices, vertices, normals, uvs, tangents, bitangents);

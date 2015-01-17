@@ -12,7 +12,7 @@ public :
 
 protected :
 
-                    Rotator(SCE::Handle<SCE::Container> container);
+                    Rotator(SCE::SCEHandle<SCE::Container> container);
 
 private :
 

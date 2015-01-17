@@ -1,0 +1,9 @@
+{
+    "Name": "texture.png",
+    "Texture": {
+		"Format": "DDS",
+        "Mipmaps": true,
+        "Wrapping": "Clamp"
+	}
+}
+

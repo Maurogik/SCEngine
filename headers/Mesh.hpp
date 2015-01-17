@@ -27,10 +27,10 @@ namespace SCE {
 
         /*****Static*****/
 
-        static Handle<Mesh> AddCustomMesh ( Handle<Container>& container, const std::string &filename);
-        static Handle<Mesh> AddSphereMesh ( Handle<Container>& container, const ushort &radius, const ushort &tesselation);
-        static Handle<Mesh> AddCubeMesh   ( Handle<Container>& container, const ushort &size);
-        static Handle<Mesh> AddCustomMesh ( Handle<Container>& container,
+        static SCEHandle<Mesh> AddCustomMesh ( SCEHandle<Container>& container, const std::string &filename);
+        static SCEHandle<Mesh> AddSphereMesh ( SCEHandle<Container>& container, const ushort &radius, const ushort &tesselation);
+        static SCEHandle<Mesh> AddCubeMesh   ( SCEHandle<Container>& container, const ushort &size);
+        static SCEHandle<Mesh> AddCustomMesh ( SCEHandle<Container>& container,
                                             std::vector<ushort> *indices,
                                             std::vector<vec3>   *vertices,
                                             std::vector<vec3>   *normals,
@@ -51,11 +51,11 @@ namespace SCE {
 
     protected :
 
-        //Mesh(   Handle<Container>& container);
-        Mesh(   Handle<Container>& container, const std::string& filename);
-        /*Mesh(   Handle<Container>& container, const ushort &radius, const ushort &tesselation);
-        Mesh(   Handle<Container>& container, const ushort &size);*/
-        Mesh(   Handle<Container>& container,
+        //Mesh(   SCEHandle<Container>& container);
+        Mesh(   SCEHandle<Container>& container, const std::string& filename);
+        /*Mesh(   SCEHandle<Container>& container, const ushort &radius, const ushort &tesselation);
+        Mesh(   SCEHandle<Container>& container, const ushort &size);*/
+        Mesh(   SCEHandle<Container>& container,
                 std::vector<ushort> *indices,
                 std::vector<vec3>   *vertices,
                 std::vector<vec3>   *normals,

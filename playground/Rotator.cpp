@@ -3,7 +3,7 @@
 using namespace SCE;
 using namespace std;
 
-Rotator::Rotator(SCE::Handle<Container> container)
+Rotator::Rotator(SCE::SCEHandle<Container> container)
     : GameObject(container, "Rotator"), mSpeed(25.0f)
 {
 
@@ -17,7 +17,7 @@ Rotator::~Rotator()
 void Rotator::Update()
 {
     static bool start = true;
-    Handle<Transform> transform = GetContainer()->GetComponent<Transform>();
+    SCEHandle<Transform> transform = GetContainer()->GetComponent<Transform>();
 
     /*if(start){
         start = false;

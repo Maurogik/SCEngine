@@ -7,21 +7,21 @@
 //template implementation
 
 template < class T, class... Args >
-SCE::Handle<T>          SCE::Container::AddComponent(Args&&... args)
+SCE::SCEHandle<T>          SCE::Container::AddComponent(Args&&... args)
 {
-    T* compo = new InternalComponent<T> (Handle<Container>(this), args...);
+    T* compo = new SCEInternalComponent<T> (SCEHandle<Container>(this), args...);
     mComponents.push_back(compo);
-    return Handle<T>((HandleTarget*) compo);
+    return SCEHandle<T>((SCEHandleTarget*) compo);
 }
 
 template < class T >
-SCE::Handle<T>          SCE::Container::GetComponent()
+SCE::SCEHandle<T>          SCE::Container::GetComponent()
 {
     return fetchComponent<T>();
 }
 
 template < class T >
-const SCE::Handle<T>    SCE::Container::GetComponent() const
+const SCE::SCEHandle<T>    SCE::Container::GetComponent() const
 {
     return fetchComponent<T>();
 }
@@ -35,7 +35,7 @@ void                    SCE::Container::RemoveComponent()
 template < class T >
 bool                    SCE::Container::HasComponent() const
 {
-    int typeHash = InternalComponent<T>::sTypeHash;
+    int typeHash = SCEInternalComponent<T>::sTypeHash;
     auto it = std::find_if(
                   begin(mComponents)
                 , end(mComponents)
@@ -45,9 +45,9 @@ bool                    SCE::Container::HasComponent() const
 }
 
 template < class T >
-SCE::Handle<T>          SCE::Container::fetchComponent() const
+SCE::SCEHandle<T>          SCE::Container::fetchComponent() const
 {
-    int typeHash = InternalComponent<T>::sTypeHash;
+    int typeHash = SCEInternalComponent<T>::sTypeHash;
     auto it = std::find_if(
                   begin(mComponents)
                 , end(mComponents)
@@ -61,5 +61,5 @@ SCE::Handle<T>          SCE::Container::fetchComponent() const
         SCE::SCEInternal::InternalMessage("Could not find component on container : " + mName );
 
     }
-    return Handle<T>(resultPtr);
+    return SCEHandle<T>(resultPtr);
 }

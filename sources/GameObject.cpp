@@ -6,19 +6,19 @@
 
 #include "../headers/GameObject.hpp"
 #include "../headers/Container.hpp"
-#include "../headers/Scene.hpp"
+#include "../headers/SCEScene.hpp"
 
 using namespace SCE;
 using namespace std;
 
 
-GameObject::GameObject(Handle<Container> &container, const string &typeName)
+GameObject::GameObject(SCEHandle<Container> &container, const string &typeName)
     : Component(container, "GameObject::" + typeName)
 {
-    Scene::RegisterGameObject(Handle<GameObject>(this));
+    SCEScene::RegisterGameObject(SCEHandle<GameObject>(this));
 }
 
 GameObject::~GameObject()
 {
-    Scene::UnregisterGameObject(Handle<GameObject>(this));
+    SCEScene::UnregisterGameObject(SCEHandle<GameObject>(this));
 }

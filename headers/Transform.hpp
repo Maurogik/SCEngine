@@ -218,7 +218,7 @@ namespace SCE {
          * @brief Sets the parent of the transform, the world space transform remains the same
          * @param parentPtr the transfrom's new parent
          */
-        void                    SetParent(Handle<Transform>  parentPtr);
+        void                    SetParent(SCEHandle<Transform>  parentPtr);
 
         /**
          * @brief Removes the transform's parent, the local transform is now the world transform
@@ -230,17 +230,17 @@ namespace SCE {
          * , the child's world transform will not change
          * @param child the transform object to add as child
          */
-        void                    AddChild(Handle<Transform>  child);
+        void                    AddChild(SCEHandle<Transform>  child);
 
         /**
          * @brief Remove the givent transform object from the children list and clear it's parent
          * @param child the transform object to unparent
          */
-        void                    RemoveChild(Handle<Transform>  child);
+        void                    RemoveChild(SCEHandle<Transform>  child);
 
     protected :
 
-                                Transform(Handle<Container>& container);
+                                Transform(SCEHandle<Container>& container);
 
     private :
 
@@ -251,8 +251,8 @@ namespace SCE {
         glm::vec3                       mScale;
         glm::quat                       mOrientation;
 
-        Handle<Transform>               mParent;
-        std::vector<Handle<Transform> > mChildren;
+        SCEHandle<Transform>               mParent;
+        std::vector<SCEHandle<Transform> > mChildren;
 
     };
 

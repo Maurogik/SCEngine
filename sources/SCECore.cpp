@@ -28,9 +28,12 @@ void SCECore::InitEngine(const std::string &windowName)
        Debug::RaiseError("Failed to initialize GLFW");
     }
 
-    glfwWindowHint(GLFW_SAMPLES, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+    glfwWindowHint(GLFW_SAMPLES, 4); // 4x antialiasing
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3); // We want OpenGL 3.3
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // To make MacOS happy; should not be needed
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); //We don't want the old OpenGL
+
 
 #ifdef SCE_DEBUG
     // Create a debug OpenGL context or tell your OpenGL library (GLFW, SDL) to do so.
@@ -46,6 +49,7 @@ void SCECore::InitEngine(const std::string &windowName)
         Debug::RaiseError("Failed to open GLFW window.");
     }
     glfwMakeContextCurrent(s_window);
+    glewExperimental=true; // Needed in core profile
 
     // Initialize GLEW
     if (glewInit() != GLEW_OK) {
@@ -81,7 +85,7 @@ void SCECore::RunEngine()
 {
 
     do {
-        Scene::Run();
+        SCEScene::Run();
 
         // Swap buffers
         glfwSwapBuffers(s_window);
@@ -96,7 +100,7 @@ void SCECore::RunEngine()
 void SCECore::CleanUpEngine()
 {
     SCEInternal::InternalMessage("Cleaning up engine");
-    Scene::DestroyScene();
+    SCEScene::DestroyScene();
     // Close OpenGL window and terminate GLFW
     glfwTerminate();
 }

@@ -15,8 +15,9 @@
 namespace SCE {
 
     enum LightingType {
-        LIGHTING_NONE,
-        LIGHTING_CUSTOM
+        LIGHTING_NONE, //Do nothing & do not pass the light uniforms
+        LIGHTING_CUSTOM, //Pass the light uniforms but do nothing
+        LIGHTING_DEFAULT //Pass the uniforms & insert stardard functions to process lights
     };
 
     enum UniformType {
@@ -27,6 +28,7 @@ namespace SCE {
     };
 
     struct uniform_data{
+        std::string name;
         void* data;
         UniformType type;
         GLuint dataID;
@@ -40,11 +42,6 @@ namespace SCE {
         virtual             ~Material();
 
         /**
-         * @brief InitRenderData
-         */
-        void                InitRenderData();
-
-        /**
          * @brief BindRenderData
          */
         void                BindRenderData();
@@ -55,23 +52,17 @@ namespace SCE {
         void                CleanMaterial();
 
         template<typename T>
-        void                SetUniformValue(const std::string& uniformName, const T& value){
-            SCE::Debug::Assert(mUniforms.count(uniformName) > 0, "ERROR : This uniform does not exist");
-            mUniforms[uniformName].data = new T(value);
-        }
+        void                SetUniformValue(const std::string& uniformName, const T& value);
 
         template<typename T>
-        const T&            GetUniformValue(const std::string& uniformName) const {
-            SCE::Debug::Assert(mUniforms.count(uniformName) > 0, "ERROR : This uniform does not exist");
-            return *(T*)(mUniforms.at(uniformName).data);
-        }
+        const T&            GetUniformValue(const std::string& uniformName) const;
 
 
         const GLuint&       GetShaderProgram() const;
 
     protected :
 
-                            Material(Handle<Container>& container, const std::string &filename, const std::string& typeName = "");
+                            Material(SCEHandle<Container>& container, const std::string &filename, const std::string& typeName = "");
 
     private :
 
@@ -89,6 +80,11 @@ namespace SCE {
          */
         static GLuint       loadShaders(const std::string& filename);
 
+//        /**
+//         * @brief InitRenderData
+//         */
+//        void                InitRenderData();
+
         //TODO add LOD for shader ? later ?
         std::string                             mMaterialName;
         GLuint                                  mProgramShaderId;
@@ -97,5 +93,6 @@ namespace SCE {
 
 }
 
+#include "../templates/Material.tpp"
 
 #endif
