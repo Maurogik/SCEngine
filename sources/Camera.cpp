@@ -79,7 +79,8 @@ void Camera::init()
      */
 
     //Needed because opengl camera renders along the negative Z axis
-    mNegativeZInverter = glm::rotate(mat4(1.0f), 180.0f, vec3(0.0f, 1.0f, 0.0f));
+    //mNegativeZInverter = glm::rotate(mat4(1.0f), 180.0f, vec3(0.0f, 1.0f, 0.0f));
+    mNegativeZInverter = glm::scale(mat4(1.0f), vec3(1.0f, 1.0f, -1.0f));
     //mNegativeZInverter = mat4(1.0f);
     mRenderedLayers.push_back(DEFAULT_LAYER);
 }
@@ -91,8 +92,14 @@ const CameraType& Camera::GetType() const
 
 mat4 Camera::GetViewMatrix() const
 {
+
     const SCEHandle<Transform> transform = GetContainer()->GetComponent<Transform>();
-    return mNegativeZInverter * inverse(transform->GetWorldTransform());;
+
+    mat4 rotationMat = toMat4(transform->GetWorldQuaternion());
+    rotationMat = mNegativeZInverter * rotationMat;//invert the orientation matrix so that the camera looks at the positive Z axis
+    mat4 translationMatrix = translate(mat4(1.0f), transform->GetWorldPosition());
+    //return inverse( mNegativeZInverter * transform->GetWorldTransform());
+    return inverse(translationMatrix * rotationMat);
 }
 
 const mat4& Camera::GetProjectionMatrix() const

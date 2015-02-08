@@ -9,13 +9,14 @@
 #include "SCEDefines.hpp"
 #include "SCETools.hpp"
 #include "Component.hpp"
+#include "Light.hpp"
 #include <map>
 
 
 namespace SCE {
 
     enum LightingType {
-        LIGHTING_NONE, //Do nothing & do not pass the light uniforms
+        LIGHTING_NONE,   //Do nothing & do not pass the light uniforms
         LIGHTING_CUSTOM, //Pass the light uniforms but do nothing
         LIGHTING_DEFAULT //Pass the uniforms & insert stardard functions to process lights
     };
@@ -28,10 +29,10 @@ namespace SCE {
     };
 
     struct uniform_data{
-        std::string name;
-        void* data;
-        UniformType type;
-        GLuint dataID;
+        std::string     name;
+        void*           data;
+        UniformType     type;
+        GLuint          dataID;
     };
 
     class Material : public Component{
@@ -41,11 +42,11 @@ namespace SCE {
 
         virtual             ~Material();
 
-        /**
-         * @brief BindRenderData
-         */
-        void                BindRenderData();
+        void                BindMaterialData();
 
+        int                 GetPassCount();
+
+        void                BindPassData(const int& passIndex);
 
         void                ReloadMaterial();
 
@@ -89,6 +90,7 @@ namespace SCE {
         std::string                             mMaterialName;
         GLuint                                  mProgramShaderId;
         std::map<std::string, uniform_data>     mUniforms;
+        std::vector<SCE::SCEHandle<SCE::Light> >     mLightsInRange;
     };
 
 }

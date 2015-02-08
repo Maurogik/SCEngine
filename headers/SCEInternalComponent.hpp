@@ -20,9 +20,9 @@ namespace SCE {
 
     public :
 
-        SCEInternalComponent()                         = delete;
-        SCEInternalComponent(const SCEInternalComponent&) = delete;
-        SCEInternalComponent(SCEInternalComponent&&)      = delete;
+        SCEInternalComponent()                              = delete;
+        SCEInternalComponent(const SCEInternalComponent&)   = delete;
+        SCEInternalComponent(SCEInternalComponent&&)        = delete;
 
 
     private :

@@ -1,4 +1,4 @@
-/**********Sand Castle Engine**********/
+/********* Sand Castle Engine *********/
 /**************************************/
 /******** AUTHOR : Gwenn AUBERT *******/
 /********** FILE : Light.hpp **********/
@@ -17,8 +17,7 @@ namespace SCE {
         LIGHT_DIRECTION,
         LIGHT_REACH,
         LIGHT_COLOR,
-        LIGHT_START_RADIUS,
-        LIGHT_END_RADIUS,
+        LIGHT_MAX_ANGLE,
         LIGHT_UNIFORMS_COUNT
     };
 
@@ -37,18 +36,16 @@ namespace SCE {
         void                InitRenderDataForShader(const GLuint &shaderId);
 
         void                BindRenderDataForShader(const GLuint &shaderId);
+        void                BindLightModelForShader(const GLuint &shaderId);
 
-        float GetLightReach() const;
-        void SetLightReach(float lightReach);
+        const float&        GetLightReach() const;
+        void                SetLightReach(float lightReach);
 
-        float GetLightStartRadius() const;
-        void SetLightStartRadius(float lightStartRadius);
+        const float&        GetLightMaxAngle() const;
+        void                SetLightMaxAngle(float lightMaxAngle);
 
-        float GetLightEndRadius() const;
-        void SetLightEndRadius(float lightEndRadius);
-
-        float GetLightColor() const;
-        void SetLightColor(float lightColor);
+        const glm::vec4&    GetLightColor() const;
+        void                SetLightColor(glm::vec4 lightColor);
 
     protected :
 
@@ -57,12 +54,12 @@ namespace SCE {
 
     private :
 
-        LightingType                mLightingType;
+//        LightingType                mLightingType;
         LightType                   mLightType;
         float                       mLightReach;
-        float                       mLightStartRadius;
-        float                       mLightEndRadius;
-        float                       mLightColor;
+        float                       mLightMaxAngle;
+        glm::vec4                   mLightColor;
+        //array containing a map of uniforms Id by shader ID, for each light uniform type
         std::map<GLuint, GLuint>    mLightUniformsByShader[LIGHT_UNIFORMS_COUNT];
 
     };

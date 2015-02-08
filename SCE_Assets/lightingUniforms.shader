@@ -4,7 +4,7 @@
 /*****FILE:lightingUniforms.shader*****/
 /**************************************/
 
-uniform vec3    SCE_LightPosition_worldspace
+uniform vec3    SCE_LightPosition_worldspace;
 uniform vec3    SCE_LightDirection_worldspace;
 uniform float   SCE_LightReach_worldspace;
 uniform vec4    SCE_LightColor;

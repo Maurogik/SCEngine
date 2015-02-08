@@ -8,6 +8,7 @@
 #include "../headers/SCEInternal.hpp"
 #include "../headers/SCEScene.hpp"
 #include "../headers/SCETexture.hpp"
+#include "../headers/Transform.hpp"
 
 #include "external/rapidjson/document.h" // rapidjson's DOM-style API
 #include "external/rapidjson/prettywriter.h" // for stringify JSON
@@ -23,7 +24,11 @@ using namespace std;
 
 
 Material::Material(SCEHandle<Container> &container, const string &filename, const string &typeName)
-    : Component(container, "Material::" + typeName)
+    : Component(container, "Material::" + typeName) ,
+      mMaterialName("Material not loaded yet"),
+      mProgramShaderId(999999),
+      mUniforms(),
+      mLightsInRange()
 {
     LoadMaterial(filename);
 }
@@ -83,8 +88,8 @@ void Material::LoadMaterial(const string &filename)
         //Access values
         Debug::Assert(root.IsObject(), "Malformated Json material file\n");
 
-        string name = root["Name"].GetString();
-        SCEInternal::InternalMessage("Parsing material : " + name);
+        mMaterialName = root["Name"].GetString();
+        SCEInternal::InternalMessage("Parsing material : " + mMaterialName);
 
         rapidjson::Value& materialRoot = root["Material"];
         rapidjson::Value& materialData = materialRoot["Data"];
@@ -166,14 +171,11 @@ void Material::LoadMaterial(const string &filename)
 //    SCEScene::InitLightRenderData(mProgramShaderId);
 //}
 
-void Material::BindRenderData()
+void Material::BindMaterialData()
 {
     glUseProgram(mProgramShaderId);
 
     GLuint textureUnit = 0;
-
-    //should the be here ?
-    SCEScene::BindLightRenderData(mProgramShaderId);
 
     map<string, uniform_data>::iterator it;
     for(it = mUniforms.begin(); it != mUniforms.end(); ++it){
@@ -209,6 +211,30 @@ void Material::BindRenderData()
         }
         }
     }
+}
+
+int Material::GetPassCount()
+{
+    SCEHandle<Transform> transform = GetContainer()->GetComponent<Transform>();
+    mLightsInRange = SCEScene::FindLightsInRange(transform->GetWorldPosition());
+    return mLightsInRange.size();
+}
+
+void Material::BindPassData(const int &passIndex)
+{
+    if(passIndex == 0){ //first pass, no blending
+        glDisable(GL_BLEND);
+        //or
+        //glEnable(GL_BLEND);
+        //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    } else { //other passes, blend
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+    }
+
+    SCEHandle<Light> light = mLightsInRange[passIndex];
+    light->BindRenderDataForShader(mProgramShaderId);
+    light->BindLightModelForShader(mProgramShaderId);
 }
 
 void Material::ReloadMaterial()

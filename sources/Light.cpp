@@ -15,27 +15,29 @@ using namespace std;
 using namespace glm;
 using namespace SCE;
 
-#define REACH_DEFAULT 10.0f
+#define REACH_DEFAULT 20.0f
 #define COLOR_DEFAULT vec4(1.0f, 1.0f, 1.0f, 1.0f)
-#define START_RADIUS_DEFAULT 1.0f
-#define END_RADIUS_DEFAULT 5.0f
+#define ANGLE_DEFAULT 45.0f
+
+#define COMPUTE_LIGHT_UNIFORM_NAME "SCE_ComputeLight"
+#define COMPUTE_DIRECTIONAL_LIGHT_NAME "SCE_ComputeDirectionalLight"
+#define COMPUTE_POINT_LIGHT_NAME "SCE_ComputePointLight"
+#define COMPUTE_SPOT_LIGHT_NAME "SCE_ComputeSpotLight"
 
 static string s_lightUniformNames[LIGHT_UNIFORMS_COUNT] = {
     "SCE_LightPosition_worldspace",
     "SCE_LightDirection_worldspace",
     "SCE_LightReach_worldspace",
     "SCE_LightColor",
-    "SCE_LightStartRadius_worldspace",
-    "SCE_LightEndRadius_worldspace"
+    "SCE_LightMaxAngle"
 };
 
 Light::Light(SCEHandle<Container>& container, const LightType &lightType,
-             const std::string& typeName = "")
+             const std::string& typeName)
     : Component(container, "Light::" + typeName),
       mLightType(lightType),
       mLightReach(REACH_DEFAULT),
-      mLightStartRadius(START_RADIUS_DEFAULT),
-      mLightEndRadius(END_RADIUS_DEFAULT),
+      mLightMaxAngle(ANGLE_DEFAULT),
       mLightColor(COLOR_DEFAULT)
 {
     SCEScene::RegisterLight(SCEHandle<Light>(this));
@@ -49,31 +51,35 @@ Light::~Light()
 
 void Light::InitRenderDataForShader(const GLuint &shaderId)
 {
+    glUseProgram(shaderId);
     //get the location for all uniforms, some may not be used but that's ok.
-    for(LightUniformType type = LIGHT_POSITION; type < LIGHT_UNIFORMS_COUNT; ++ type){
-        GLuint uniform = glGetUniformLocation(shaderId, s_lightUniformNames[type]);
+    for(int type = LIGHT_POSITION; type < LIGHT_UNIFORMS_COUNT; ++type){
+        string name = s_lightUniformNames[type];
+        GLuint uniform = glGetUniformLocation(shaderId, name.c_str());
         //set the uniformId for this uniform and shader if it's not done already
-        if(mLightUniformsByShader[type].count(shaderId == 0)){
-            mLightUniformsByShader[type][shaderId] = uniform;
+        if(mLightUniformsByShader[(LightUniformType)type].count(shaderId) == 0){
+            mLightUniformsByShader[(LightUniformType)type][shaderId] = uniform;
         }
     }
 }
 
 void Light::BindRenderDataForShader(const GLuint &shaderId)
 {
-    GLuint lightPosUnif = mLightPosByShader[shaderId];
-    GLuint lightColorUnif = mLightColorByShader[shaderId];
-
     SCEHandle<Transform> transform = GetContainer()->GetComponent<Transform>();
 
     vec3 lightPos = transform->GetWorldPosition();
-    vec3 lightDir = transform->GetWorldOrientation();
+    vec4 tmp = transform->GetWorldTransform() * vec4(0, 0, 1, 0);
+    vec3 lightDir = vec3(tmp.x, tmp.y, tmp.z);
+    lightDir = glm::normalize(lightDir);
 
-//    glUniform3f(lightPosUnif, lightPos.x, lightPos.y, lightPos.z);
-//    glUniform4f(lightColorUnif, mLightColor.r, mLightColor.g, mLightColor.b, mLightColor.a);
+    Debug::PrintMessage("direction : " + to_string(lightDir.x)
+                        + ", " + to_string(lightDir.y)
+                        + ", " + to_string(lightDir.z));
 
-    for(LightUniformType type = LIGHT_POSITION; type < LIGHT_UNIFORMS_COUNT; ++ type){
-        GLuint unifId = mLightUniformsByShader[type][shaderId];
+    //send the light data to the uniforms
+    for(int type = LIGHT_POSITION; type < LIGHT_UNIFORMS_COUNT; ++ type){
+        GLuint unifId = mLightUniformsByShader[(LightUniformType)type][shaderId];
+
 
         switch(type){
         case LIGHT_POSITION :
@@ -83,49 +89,94 @@ void Light::BindRenderDataForShader(const GLuint &shaderId)
             glUniform3f(unifId, lightDir.x, lightDir.y, lightDir.z);
             break;
         case LIGHT_REACH :
+            glUniform1f(unifId, mLightReach);
             break;
         case LIGHT_COLOR :
+            glUniform4f(unifId, mLightColor.r, mLightColor.g, mLightColor.b, mLightColor.a);
             break;
-        case LIGHT_START_RADIUS :
+        case LIGHT_MAX_ANGLE :
+            glUniform1f(unifId, mLightMaxAngle);
             break;
-        case LIGHT_END_RADIUS :
-            break;
+        default :
+            SCE::Debug::PrintError("Unknown ligth uniform type : " + type);
         }
+    }
+}
+
+void Light::BindLightModelForShader(const GLuint &shaderId)
+{
+    //set subroutine according to light type
+    GLuint shaderType = GL_FRAGMENT_SHADER; //always fragment shader for lighting computations (for now)
+
+    //get the index of the subroutine uniform (form 0 to nb of subroutines uniforms)
+    GLuint lightSubroutineUniform = glGetSubroutineUniformLocation(shaderId, shaderType, COMPUTE_LIGHT_UNIFORM_NAME);
+
+    string lightSubroutineName("UnknownLightType");
+    switch(mLightType)
+    {
+    case POINT_LIGHT :
+        lightSubroutineName = COMPUTE_POINT_LIGHT_NAME;
+        break;
+    case SPOT_LIGHT :
+        lightSubroutineName = COMPUTE_SPOT_LIGHT_NAME;
+        break;
+    case DIRECTIONAL_LIGHT :
+        lightSubroutineName = COMPUTE_DIRECTIONAL_LIGHT_NAME;
+        break;
+    default :
+        Debug::PrintError("Unknown Light type " + mLightType);
+        break;
+    }
+
+    GLuint lightSubroutine = glGetSubroutineIndex( shaderId,
+                                                  shaderType, lightSubroutineName.c_str());
+
+    //Get the number of active uniforms
+    //This is expecting that subroutines are only used for light (bad !!!)
+    GLint subroutineUniformCount;
+    glGetProgramStageiv(shaderId, shaderType, GL_ACTIVE_SUBROUTINE_UNIFORMS, &subroutineUniformCount);
+
+    if(subroutineUniformCount > 0){
+        //array of subroutine index for each subroutine uniform
+        //ex : {indexForUniform1, indexForUniform2, indexForUniform3, ...}
+        GLuint uniformArray[subroutineUniformCount];
+        for(GLint uniformIndex = 0; uniformIndex < subroutineUniformCount; ++uniformIndex){
+            if(uniformIndex == (GLint)lightSubroutineUniform) {
+                uniformArray[uniformIndex] = lightSubroutine;
+            } else {
+                Debug::PrintError("Unexepected subroutine found at index : " + uniformIndex);
+            }
+        }
+
+        //send the binding of uniform/subroutines to the current context/shader
+        glUniformSubroutinesuiv( shaderType, subroutineUniformCount, uniformArray);
     }
 
 }
 
-float Light::GetLightColor() const
+
+
+const glm::vec4 &Light::GetLightColor() const
 {
     return mLightColor;
 }
 
-void Light::SetLightColor(float lightColor)
+void Light::SetLightColor(glm::vec4 lightColor)
 {
     mLightColor = lightColor;
 }
 
-float Light::GetLightEndRadius() const
+const float &Light::GetLightMaxAngle() const
 {
-    return mLightEndRadius;
+    return mLightMaxAngle;
 }
 
-void Light::SetLightEndRadius(float lightEndRadius)
+void Light::SetLightMaxAngle(float lightMaxAngle)
 {
-    mLightEndRadius = lightEndRadius;
+    mLightMaxAngle = lightMaxAngle;
 }
 
-float Light::GetLightStartRadius() const
-{
-    return mLightStartRadius;
-}
-
-void Light::SetLightStartRadius(float lightStartRadius)
-{
-    mLightStartRadius = lightStartRadius;
-}
-
-float Light::GetLightReach() const
+const float &Light::GetLightReach() const
 {
     return mLightReach;
 }

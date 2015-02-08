@@ -24,16 +24,16 @@ namespace SCE {
                             ~Container();
 
         template < class T, class... Args >
-        SCEHandle<T>           AddComponent(Args&&... args);
+        SCEHandle<T>        AddComponent(Args&&... args);
 
 
         template < class T >
-        SCEHandle<T>           GetComponent();
+        SCEHandle<T>        GetComponent();
 
 
 
         template < class T >
-        const SCEHandle<T>     GetComponent() const;
+        const SCEHandle<T>  GetComponent() const;
 
 
         template < class T >
@@ -61,7 +61,7 @@ namespace SCE {
                             Container(const std::string& name, const int& id);
 
         template < class T >
-        SCEHandle<T>           fetchComponent() const;
+        SCEHandle<T>        fetchComponent() const;
 
         std::vector<Component*>                             mComponents;
         std::string                                         mTag;

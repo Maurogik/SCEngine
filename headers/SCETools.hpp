@@ -20,7 +20,6 @@ namespace Parser {
     float       StringToFloat(const std::string& str);
     double      StringToDouble(const std::string& str);
     int         StringToInt(const std::string& str);
-
 }
 
 namespace Tools {

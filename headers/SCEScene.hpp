@@ -33,20 +33,20 @@ namespace SCE {
         static void     DestroyScene();
 
         //object related functions
-        static SCEHandle<Container> CreateContainer(const std::string& name);
-        static void      DestroyContainer(const SCEHandle<Container>& container);
+        static SCEHandle<Container>     CreateContainer(const std::string& name);
+        static void                     DestroyContainer(const SCEHandle<Container>& container);
 
-        static std::vector<SCEHandle<Container> > FindContainersWithTag(const std::string& tag);
-        static std::vector<SCEHandle<Container> > FindContainersWithLayer(const std::string& layer);
+        static std::vector<SCEHandle<Container> >   FindContainersWithTag(const std::string& tag);
+        static std::vector<SCEHandle<Container> >   FindContainersWithLayer(const std::string& layer);
 
         static void     RegisterGameObject(SCEHandle<GameObject> gameObject);
         static void     UnregisterGameObject(SCEHandle<GameObject> gameObject);
 
         static void     RegisterLight(SCEHandle<Light> light);
         static void     UnregisterLight(SCEHandle<Light> light);
-
         static void     InitLightRenderData(const GLuint &shaderId);
         static void     BindLightRenderData(const GLuint &shaderId);
+        static std::vector<SCEHandle<Light> >       FindLightsInRange(const glm::vec3& worldPosition);
 
     private :
 

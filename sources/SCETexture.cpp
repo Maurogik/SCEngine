@@ -162,7 +162,7 @@ SCETextureFormat SCETexture::formatFromString(const string &formatString)
 {
     SCETextureFormat res = DDS_FORMAT;
     if(Tools::ToLowerCase(formatString) == Tools::ToLowerCase(DDS_STR)){
-        res == DDS_FORMAT;
+        //res == DDS_FORMAT;
     } else if(Tools::ToLowerCase(formatString) == Tools::ToLowerCase(UNCOMPRESSED_STR)){
         res = UNCOMPRESSED_FORMAT;
     } else {
@@ -176,7 +176,7 @@ SCETextureWrap SCETexture::wrapModeFromString(const string &wrapString)
 {
     SCETextureWrap res = CLAMP_WRAP;
     if(Tools::ToLowerCase(wrapString) == Tools::ToLowerCase(CLAMP_STR)){
-        res == CLAMP_WRAP;
+        //res == CLAMP_WRAP;
     } else if(Tools::ToLowerCase(wrapString) == Tools::ToLowerCase(REPEAT_STR)){
         res = REPEAT_WRAP;
     } else {

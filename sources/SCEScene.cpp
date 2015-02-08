@@ -26,9 +26,10 @@ SCE::SCEScene::SCEScene()
     // Enable depth test
     glEnable(GL_DEPTH_TEST);
     // Accept fragment if it closer to the camera than the former one
-    glDepthFunc(GL_LESS);
-
+    glDepthFunc(GL_LEQUAL);
+    //glDepthFunc(GL_LESS);
     // Cull triangles which normal is not towards the camera
+    glFrontFace(GL_CW);
     glEnable(GL_CULL_FACE);
 
 }
@@ -241,9 +242,16 @@ void SCEScene::UnregisterGameObject(SCEHandle<GameObject> gameObject)
 }
 
 void SCEScene::RegisterLight(SCEHandle<Light> light)
-{   //this should also call every amterial to run InitLightRenderData with their shaders
+{   //this should also call every material to run InitLightRenderData with their shaders
     if(find(begin(s_scene->mLights), end(s_scene->mLights), light) == end(s_scene->mLights)){
-       s_scene-> mLights.push_back(light);
+       s_scene->mLights.push_back(light);
+    }
+
+    for(size_t i = 0; i < s_scene->mContainers.size(); ++i){
+        if(s_scene->mContainers[i]->HasComponent<Material>()){
+            SCEHandle<Material> mat = s_scene->mContainers[i]->GetComponent<Material>();
+            light->InitRenderDataForShader(mat->GetShaderProgram());
+        }
     }
 }
 
@@ -257,6 +265,7 @@ void SCEScene::UnregisterLight(SCEHandle<Light> light)
 
 void SCEScene::InitLightRenderData(const GLuint &shaderId)
 {
+    //TODO store light uniforms for shader only once, not for each light
     for(size_t i = 0; i < s_scene->mLights.size(); ++i){
         s_scene->mLights[i]->InitRenderDataForShader(shaderId);
     }
@@ -267,7 +276,13 @@ void SCEScene::BindLightRenderData(const GLuint &shaderId)
     //here I should test to see if the lights will influence the object rendering
     for(size_t i = 0; i < s_scene->mLights.size(); ++i){
         s_scene->mLights[i]->BindRenderDataForShader(shaderId);
+        s_scene->mLights[i]->BindLightModelForShader(shaderId);
     }
+}
+
+std::vector<SCEHandle<Light> > SCEScene::FindLightsInRange(const glm::vec3 &worldPosition)
+{
+    return s_scene->mLights;
 }
 
 void SCEScene::renderSceneWithCamera(const SCEHandle<Camera> &camera)

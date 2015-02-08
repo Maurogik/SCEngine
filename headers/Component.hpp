@@ -24,9 +24,9 @@ namespace SCE {
 
         virtual                     ~Component();
 
-        SCEHandle<Container>           GetContainer();
+        SCEHandle<Container>        GetContainer();
 
-        const SCEHandle<Container>     GetContainer() const ;
+        const SCEHandle<Container>  GetContainer() const ;
 
         const int&                  GetTypeHash() const;        
 
@@ -37,8 +37,8 @@ namespace SCE {
 
     private :
 
-        SCEHandle<Container>   mContainer;
-        int                 mTypeHash;
+        SCEHandle<Container>        mContainer;
+        int                         mTypeHash;
 
     };
 

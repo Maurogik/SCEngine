@@ -237,9 +237,12 @@ void Transform::LookAt(const glm::vec3& target)
 //in world space
 void Transform::LookAt(const glm::vec3& target, const glm::vec3& upVector)
 {
-    vec3 direction = WorldToLocalPos(target) - mTranslation;
+    /*vec3 direction = WorldToLocalPos(target);// - mTranslation;
+    direction = normalize(direction);
     quat q = QuatLookAt(direction, upVector);
-    mOrientation = q;
+    mOrientation = q;*/
+
+    SCE::Debug::PrintError("Not implemented yet");
 }
 
 void Transform::SetParent(SCEHandle<Transform> parentPtr)

@@ -154,7 +154,7 @@ void MeshRenderer::Render(const SCEHandle<Camera>& cam)
     glBindVertexArray(mVaoID);
 
     // Use our shader
-    mat->BindRenderData();
+    mat->BindMaterialData();
 
     glm::mat4 ProjectionMatrix  = cam->GetProjectionMatrix();
     glm::mat4 ViewMatrix        = cam->GetViewMatrix();
@@ -186,13 +186,18 @@ void MeshRenderer::Render(const SCEHandle<Camera>& cam)
     // Index buffer
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mIndiceBuffer);
 
-    // Draw the triangles !
-    glDrawElements(
-                GL_TRIANGLES,        // mode
-                indices->size(),    // count
-                GL_UNSIGNED_SHORT,   // type
-                (void*)0             // element array buffer offset
-                );
+    int passCount = mat->GetPassCount();
+    Debug::PrintMessage("Passes to render : " + to_string(passCount));
+    for(int i = 0; i < passCount; ++i){
+        mat->BindPassData(i);
+        // Draw the triangles !
+        glDrawElements(
+                    GL_TRIANGLES,        // mode
+                    indices->size(),    // count
+                    GL_UNSIGNED_SHORT,   // type
+                    (void*)0             // element array buffer offset
+                    );
+    }
 
     glBindVertexArray(0);
 

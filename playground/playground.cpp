@@ -4,15 +4,20 @@
 
 #include "../headers/SCECore.hpp"
 #include "Rotator.hpp"
+#include "LookAtTarget.hpp"
 
 using namespace SCE;
 using namespace std;
 
-void createSphere(const string& name, const ushort& tesselation, const vec3& pos){
+#define TEST_MAT "TestMaterial"
+#define DEBUG_MAT "Debug" //"TestMaterial"
+#define MATERIAL "TestMaterial"
+
+SCEHandle<Container> createSphere(const string& name, const ushort& tesselation, const vec3& pos){
     //cube model
     SCEHandle<Container> object = SCEScene::CreateContainer(name);
 
-    object->AddComponent<Material>("TestMaterial");
+    object->AddComponent<Material>(MATERIAL);
 
     SCEHandle<Transform> transform = object->AddComponent<Transform>();
     transform->SetWorldPosition(pos);
@@ -21,19 +26,46 @@ void createSphere(const string& name, const ushort& tesselation, const vec3& pos
     Mesh::AddSphereMesh(object, 1.0f, tesselation);
     object->AddComponent<MeshRenderer>();
     object->AddComponent<Rotator>();
+
+    return object;
 }
 
 void createModel(const string& objectName, const string& filename, const vec3& pos){
     SCEHandle<Container> object = SCEScene::CreateContainer(objectName);
 
-    object->AddComponent<Material>("TestMaterial");
+    object->AddComponent<Material>(MATERIAL);
 
     SCEHandle<Transform> transform = object->AddComponent<Transform>();
     transform->SetWorldPosition(pos);
-
     object->AddComponent<Mesh>(filename);
     object->AddComponent<MeshRenderer>();
     object->AddComponent<Rotator>();
+}
+
+SCEHandle<Container> createLight(vec3 pos, vec3 orientation, LightType type){
+    //Light
+    SCEHandle<Container> lightObject = SCEScene::CreateContainer("lightObject");
+
+    SCEHandle<Transform> lightTransform = lightObject->AddComponent<Transform>();
+    lightObject->AddComponent<Light>(type);
+
+    lightTransform->SetWorldOrientation(orientation);
+    lightTransform->SetWorldPosition(pos);
+
+    return lightObject;
+}
+
+SCEHandle<Container> createLightSphere(vec3 pos, vec4 color){
+
+    SCEHandle<Container> light =createLight(pos, vec3(0, 0, 0), LightType::POINT_LIGHT);
+    light->GetComponent<Light>()->SetLightColor(color);
+    light->AddComponent<Material>(MATERIAL);
+
+    //Mesh::AddCubeMesh(cubeObject, 1.0f);
+    Mesh::AddSphereMesh(light, 1.0f, 3);
+    light->AddComponent<MeshRenderer>();
+
+    return light;
 }
 
 int main( void )
@@ -43,32 +75,28 @@ int main( void )
 
     SCEScene::CreateEmptyScene();
 
-    //Light
-    SCEHandle<Container> lightObject = SCEScene::CreateContainer("lightObject");
-    SCEHandle<Container> cont = SCEScene::CreateContainer("toto");
+    //createLight(vec3(0, 10, 20), vec3(30, 0, 30), LightType::POINT_LIGHT);
+    //createLight(vec3(0, 10, 20), vec3(30, 0, 30), LightType::SPOT_LIGHT);
 
-    lightObject->AddComponent<Light>();
-    SCEHandle<Transform> lightTransform = lightObject->AddComponent<Transform>();
-
-    lightTransform->SetWorldOrientation(vec3(30, 0, 30));
-    lightTransform->SetWorldPosition(vec3(0, 10, 20));
-
+    SCEHandle<Container> light = createLightSphere(vec3(4, 4, 1), vec4(1, 0, 0, 1));
+    SCEHandle<Container> light2 = createLightSphere(vec3(-4, 4, 1), vec4(0, 1, 0, 1));
 
     //Suzanne model
-    createModel("suzanneObject", "suzanne.obj", vec3(1, 0, 0));
+    createModel("suzanneObject", "suzanne.obj", vec3(0, 0, 0));
 
-    /*int startX = -4;
+    int startX = -4;
     for(int i = 0; i < 5; ++i){
-        createSphere("sphereObject", i, vec3(startX + i * 2, 0, 0));
-    }*/
+        createSphere("sphereObject", i+2, vec3(startX + i * 5, -i-3, 0));
+    }
 
     //Camera
     SCEHandle<Container> cameraObject = SCEScene::CreateContainer("cameraObject");
     SCEHandle<Transform> cameraTransform = cameraObject->AddComponent<Transform>();
     cameraObject->AddComponent<Camera>(40.0f, 4.0f/3.0f, 0.1f, 100.0f);
+    //cameraObject->AddComponent<LookAtTarget>();
 
     cameraTransform->SetWorldPosition(vec3(0, 0, 12));
-    cameraTransform->LookAt(vec3(0, 0, 0));
+    cameraTransform->RotateAroundAxis(vec3(0.0f, 1.0f, 0.0f), 180.0f);
 
     //load scene here
     engine.RunEngine();

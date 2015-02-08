@@ -18,34 +18,35 @@ namespace SCE {
          * @brief timeInSeconds
          * @return the time since the game have started
          */
-        static const double&   timeInSeconds();
+        static const double&    TimeInSeconds();
 
         /**
          * @brief deltaTime
          * @return return the time since the last  frame, in seconds
          */
-        static const double&   deltaTime();
+        static const double&    DeltaTime();
 
         /**
          * @brief realTimeInSeconds
          * @return the actual time since the game have started
          */
-        static const double&   realTimeInSeconds();
+        static const double&    RealTimeInSeconds();
 
         /**
          * @brief Update the game time
          */
-        static void            Update();
+        static void             Update();
 
-        static float           timeSpeed;
-        static double   s_timeInSeconds;
-        static double   s_deltaTime;
-        static double   s_realTimeInSeconds;
+
+        static const float&     TimeSpeed();
+        static void             SetTimeSpeed(float value);
 
     private :
 
-
-
+        static float    s_timeSpeed;
+        static double   s_timeInSeconds;
+        static double   s_deltaTime;
+        static double   s_realTimeInSeconds;
 
         static double  start_time;
         static double  last_time;

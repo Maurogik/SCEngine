@@ -75,6 +75,7 @@ file(GLOB HEADERS
     "headers/*.hpp"
 )
 
+aux_source_directory(./external/glm-0.9.4.0/ EXT)
 aux_source_directory(./sources SOURCES)
 aux_source_directory(./common COMMONS)
 aux_source_directory(${TARGET} APP_SOURCES)
@@ -93,11 +94,18 @@ file(GLOB SCE_ASSETS
     "${SCE_PATH}/SCE_Assets/*"
 )
 
+file(GLOB GLM_HEADERS
+    "${SCE_PATH}/external/glm-0.9.4.0/glm/*"
+)
+
+
+
 # User playground
 add_executable(${TARGET}
     ${APP_SOURCES}
     ${HEADERS}
     ${SOURCES}
+    ${GLM_HEADERS}
     ${COMMONS}
     ${TEMPLATES}
     ${RESSOURCES}
