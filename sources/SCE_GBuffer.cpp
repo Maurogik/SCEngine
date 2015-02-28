@@ -86,6 +86,7 @@ void SCE_GBuffer::BindForReading()
     glBindFramebuffer(GL_READ_FRAMEBUFFER, mFBOId);
 }
 
+TODO make generic Gbuffer
 void SCE_GBuffer::BindTexturesForShader(GLuint shaderID)
 {
     for (unsigned int i = 0 ; i < GBUFFER_TEXTURE_COUNT; i++) {

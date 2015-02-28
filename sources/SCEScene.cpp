@@ -297,6 +297,9 @@ void debugDeferredLighting(SCE_GBuffer mLightingGBuffer){
 
 void SCEScene::renderSceneWithCamera(const SCEHandle<Camera> &camera)
 {
+
+    TODO use stencyl buffer to only light pixel that are actually under light
+
     //Geometry pass
     //render objects without lighting
 
@@ -333,6 +336,7 @@ void SCEScene::renderSceneWithCamera(const SCEHandle<Camera> &camera)
 
     //render lights
 
+    TODO find corrend blending
     /*glEnable(GL_BLEND);
     glBlendEquation(GL_FUNC_ADD);
     glBlendFunc(GL_SRC_ALPHA, GL_DST_ALPHA);
