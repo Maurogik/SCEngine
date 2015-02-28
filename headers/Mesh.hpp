@@ -28,8 +28,10 @@ namespace SCE {
         /*****Static*****/
 
         static SCEHandle<Mesh> AddCustomMesh ( SCEHandle<Container>& container, const std::string &filename);
-        static SCEHandle<Mesh> AddSphereMesh ( SCEHandle<Container>& container, const ushort &radius, const ushort &tesselation);
-        static SCEHandle<Mesh> AddCubeMesh   ( SCEHandle<Container>& container, const ushort &size);
+        static SCEHandle<Mesh> AddSphereMesh ( SCEHandle<Container>& container, const float &radius, const float &tesselation);
+        static SCEHandle<Mesh> AddCubeMesh   (SCEHandle<Container>& container, const float &cubeSize);
+        static SCEHandle<Mesh> AddQuadMesh   (SCEHandle<Container>& container, const float &width, const float &height);
+        static SCEHandle<Mesh> AddConeMesh   (SCEHandle<Container>& container, const float &length, const float &angle, const float &tesselation);
         static SCEHandle<Mesh> AddCustomMesh ( SCEHandle<Container>& container,
                                             std::vector<ushort> *indices,
                                             std::vector<vec3>   *vertices,

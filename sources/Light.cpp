@@ -9,22 +9,26 @@
 #include "../headers/Container.hpp"
 #include "../headers/Transform.hpp"
 #include "../headers/SCEScene.hpp"
-
+#include "../headers/SCECore.hpp"
 
 using namespace std;
 using namespace glm;
 using namespace SCE;
 
-#define REACH_DEFAULT 20.0f
+#define REACH_DEFAULT 10.0f
 #define COLOR_DEFAULT vec4(1.0f, 1.0f, 1.0f, 1.0f)
 #define ANGLE_DEFAULT 45.0f
+
+#define SCREEN_SIZE_UNIFORM_NAME "SCE_ScreenSize"
+
+#define LIGHT_SHADER_NAME "DeferredLighting"
 
 #define COMPUTE_LIGHT_UNIFORM_NAME "SCE_ComputeLight"
 #define COMPUTE_DIRECTIONAL_LIGHT_NAME "SCE_ComputeDirectionalLight"
 #define COMPUTE_POINT_LIGHT_NAME "SCE_ComputePointLight"
 #define COMPUTE_SPOT_LIGHT_NAME "SCE_ComputeSpotLight"
 
-static string s_lightUniformNames[LIGHT_UNIFORMS_COUNT] = {
+string s_lightUniformNames[LIGHT_UNIFORMS_COUNT] = {
     "SCE_LightPosition_worldspace",
     "SCE_LightDirection_worldspace",
     "SCE_LightReach_worldspace",
@@ -32,15 +36,23 @@ static string s_lightUniformNames[LIGHT_UNIFORMS_COUNT] = {
     "SCE_LightMaxAngle"
 };
 
+GLuint SCE::Light::s_DefaultLightShader = (GLuint) -1;
+
 Light::Light(SCEHandle<Container>& container, const LightType &lightType,
              const std::string& typeName)
     : Component(container, "Light::" + typeName),
       mLightType(lightType),
       mLightReach(REACH_DEFAULT),
       mLightMaxAngle(ANGLE_DEFAULT),
-      mLightColor(COLOR_DEFAULT)
+      mLightColor(COLOR_DEFAULT),
+      mLightUniformsByShader(),
+      mLightMesh(0l),
+      mLightRenderer(0l)
 {
     SCEScene::RegisterLight(SCEHandle<Light>(this));
+    generateLightMesh();
+    initLightShader();
+    initRenderDataForShader(s_DefaultLightShader);
 }
 
 
@@ -49,7 +61,14 @@ Light::~Light()
     SCEScene::UnregisterLight(SCEHandle<Light>(this));
 }
 
-void Light::InitRenderDataForShader(const GLuint &shaderId)
+void Light::initLightShader()
+{
+    if(s_DefaultLightShader == (GLuint) -1){
+        s_DefaultLightShader = SCE::ShaderTools::CompileShader(LIGHT_SHADER_NAME);
+    }
+}
+
+void Light::initRenderDataForShader(const GLuint &shaderId)
 {
     glUseProgram(shaderId);
     //get the location for all uniforms, some may not be used but that's ok.
@@ -61,10 +80,17 @@ void Light::InitRenderDataForShader(const GLuint &shaderId)
             mLightUniformsByShader[(LightUniformType)type][shaderId] = uniform;
         }
     }
+
+    mScreenSizeUniform = glGetUniformLocation(shaderId, SCREEN_SIZE_UNIFORM_NAME);
+
+    mLightRenderer = GetContainer()->AddComponent<MeshRenderer>(shaderId);
+    mLightRenderer->SetIsHidden(true);
 }
 
-void Light::BindRenderDataForShader(const GLuint &shaderId)
+void Light::bindRenderDataForShader(const GLuint &shaderId)
 {
+    glUseProgram(shaderId);
+
     SCEHandle<Transform> transform = GetContainer()->GetComponent<Transform>();
 
     vec3 lightPos = transform->GetWorldPosition();
@@ -72,14 +98,9 @@ void Light::BindRenderDataForShader(const GLuint &shaderId)
     vec3 lightDir = vec3(tmp.x, tmp.y, tmp.z);
     lightDir = glm::normalize(lightDir);
 
-    Debug::PrintMessage("direction : " + to_string(lightDir.x)
-                        + ", " + to_string(lightDir.y)
-                        + ", " + to_string(lightDir.z));
-
     //send the light data to the uniforms
     for(int type = LIGHT_POSITION; type < LIGHT_UNIFORMS_COUNT; ++ type){
         GLuint unifId = mLightUniformsByShader[(LightUniformType)type][shaderId];
-
 
         switch(type){
         case LIGHT_POSITION :
@@ -98,13 +119,17 @@ void Light::BindRenderDataForShader(const GLuint &shaderId)
             glUniform1f(unifId, mLightMaxAngle);
             break;
         default :
-            SCE::Debug::PrintError("Unknown ligth uniform type : " + type);
+            SCE::Debug::LogError("Unknown ligth uniform type : " + type);
         }
     }
+
+    glUniform2f(mScreenSizeUniform, SCECore::GetWindowWidth(), SCECore::GetWindowHeight());
 }
 
-void Light::BindLightModelForShader(const GLuint &shaderId)
+void Light::bindLightModelForShader(const GLuint &shaderId)
 {
+    glUseProgram(shaderId);
+
     //set subroutine according to light type
     GLuint shaderType = GL_FRAGMENT_SHADER; //always fragment shader for lighting computations (for now)
 
@@ -124,7 +149,7 @@ void Light::BindLightModelForShader(const GLuint &shaderId)
         lightSubroutineName = COMPUTE_DIRECTIONAL_LIGHT_NAME;
         break;
     default :
-        Debug::PrintError("Unknown Light type " + mLightType);
+        Debug::LogError("Unknown Light type : " + mLightType);
         break;
     }
 
@@ -144,7 +169,7 @@ void Light::BindLightModelForShader(const GLuint &shaderId)
             if(uniformIndex == (GLint)lightSubroutineUniform) {
                 uniformArray[uniformIndex] = lightSubroutine;
             } else {
-                Debug::PrintError("Unexepected subroutine found at index : " + uniformIndex);
+                Debug::LogError("Unexepected subroutine found at index : " + uniformIndex);
             }
         }
 
@@ -166,6 +191,22 @@ void Light::SetLightColor(glm::vec4 lightColor)
     mLightColor = lightColor;
 }
 
+void Light::RenderLight(const SCEHandle<Camera> &cam)
+{
+    bindRenderDataForShader(s_DefaultLightShader);
+    bindLightModelForShader(s_DefaultLightShader);
+    if(mLightType == DIRECTIONAL_LIGHT){
+        mLightRenderer->Render(cam, true);
+    } else {
+        mLightRenderer->Render(cam);
+    }
+}
+
+void Light::StartLightPass()
+{
+    glUseProgram(s_DefaultLightShader);
+}
+
 const float &Light::GetLightMaxAngle() const
 {
     return mLightMaxAngle;
@@ -174,6 +215,7 @@ const float &Light::GetLightMaxAngle() const
 void Light::SetLightMaxAngle(float lightMaxAngle)
 {
     mLightMaxAngle = lightMaxAngle;
+    generateLightMesh();
 }
 
 const float &Light::GetLightReach() const
@@ -184,6 +226,42 @@ const float &Light::GetLightReach() const
 void Light::SetLightReach(float lightReach)
 {
     mLightReach = lightReach;
+    generateLightMesh();
 }
 
+void Light::generateLightMesh()
+{
+    if(mLightMesh){
+        GetContainer()->RemoveComponent<Mesh>(mLightMesh);
+    }
+    switch(mLightType) {
+    case POINT_LIGHT:
+        generatePointLightMesh();
+        break;
+    case DIRECTIONAL_LIGHT :
+        generateDirectionalLightMesh();
+        break;
+    case SPOT_LIGHT :
+        generateSpotLightMesh();
+        break;
+    }
+}
+
+void Light::generateDirectionalLightMesh()
+{
+    SCEHandle<Container> container = GetContainer();
+    mLightMesh = Mesh::AddQuadMesh(container, 2.0f, 2.0f);
+}
+
+void Light::generateSpotLightMesh()
+{
+    SCEHandle<Container> container = GetContainer();
+    mLightMesh = Mesh::AddConeMesh(container, mLightReach, mLightMaxAngle, 4.0f);
+}
+
+void Light::generatePointLightMesh()
+{
+    SCEHandle<Container> container = GetContainer();
+    mLightMesh = Mesh::AddSphereMesh(container, mLightReach, 4.0f);
+}
 

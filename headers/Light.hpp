@@ -9,6 +9,8 @@
 #include "SCEDefines.hpp"
 #include "Component.hpp"
 #include <map>
+#include "Mesh.hpp"
+#include "MeshRenderer.hpp"
 
 namespace SCE {
 
@@ -22,7 +24,7 @@ namespace SCE {
     };
 
     enum LightType{
-        DIRECTIONAL_LIGHT,
+        DIRECTIONAL_LIGHT = 0,
         POINT_LIGHT,
         SPOT_LIGHT
     };
@@ -33,11 +35,6 @@ namespace SCE {
 
         virtual             ~Light();
 
-        void                InitRenderDataForShader(const GLuint &shaderId);
-
-        void                BindRenderDataForShader(const GLuint &shaderId);
-        void                BindLightModelForShader(const GLuint &shaderId);
-
         const float&        GetLightReach() const;
         void                SetLightReach(float lightReach);
 
@@ -47,6 +44,11 @@ namespace SCE {
         const glm::vec4&    GetLightColor() const;
         void                SetLightColor(glm::vec4 lightColor);
 
+        void                RenderLight(const SCEHandle<Camera> &cam);
+
+        static void         StartLightPass();
+        static GLuint               s_DefaultLightShader;
+
     protected :
 
         Light(SCEHandle<Container>& container, const LightType &lightType,
@@ -54,14 +56,27 @@ namespace SCE {
 
     private :
 
-//        LightingType                mLightingType;
+
         LightType                   mLightType;
         float                       mLightReach;
         float                       mLightMaxAngle;
         glm::vec4                   mLightColor;
         //array containing a map of uniforms Id by shader ID, for each light uniform type
         std::map<GLuint, GLuint>    mLightUniformsByShader[LIGHT_UNIFORMS_COUNT];
+        SCEHandle<Mesh>             mLightMesh;
+        SCEHandle<MeshRenderer>     mLightRenderer;
+        //tmp
+        GLuint                      mScreenSizeUniform;
 
+        void                        initLightShader();
+        void                        initRenderDataForShader(const GLuint &shaderId);
+        void                        bindRenderDataForShader(const GLuint &shaderId);
+        void                        bindLightModelForShader(const GLuint &shaderId);
+
+        void                        generateLightMesh();
+        void                        generateDirectionalLightMesh();
+        void                        generateSpotLightMesh();
+        void                        generatePointLightMesh();
     };
 
 }

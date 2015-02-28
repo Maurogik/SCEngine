@@ -19,11 +19,18 @@
 using namespace SCE;
 using namespace std;
 
-
 MeshRenderer::MeshRenderer(SCEHandle<Container> &container, const string &typeName)
     : Component(container, "MeshRenderer::" + typeName)
 {
-    initializeGLData();
+    SCEHandle<Material> mat = GetContainer()->GetComponent<Material>();
+    GLuint programID = mat->GetShaderProgram();
+    initializeGLData(programID);
+}
+
+MeshRenderer::MeshRenderer(SCEHandle<Container> &container, GLuint shaderProgramID, const string &typeName)
+    : Component(container, "MeshRenderer::" + typeName)
+{
+    initializeGLData(shaderProgramID);
 }
 
 MeshRenderer::~MeshRenderer()
@@ -35,15 +42,11 @@ MeshRenderer::~MeshRenderer()
     glDeleteBuffers(1, &mIndiceBuffer);
 }
 
-void MeshRenderer::initializeGLData()
+void MeshRenderer::initializeGLData(GLuint programID)
 {
-    SCEInternal::InternalMessage("Initializing mesh renderer data");
+    Internal::Log("Initializing mesh renderer data");
 
     SCEHandle<Mesh> mesh = GetContainer()->GetComponent<Mesh>();
-
-    SCEHandle<Material> mat = GetContainer()->GetComponent<Material>();
-
-    GLuint programID = mat->GetShaderProgram();
 
     vector<ushort>* indices     = mesh->GetIndices();
     vector<vec3>*   vertices    = mesh->GetVertices();
@@ -68,26 +71,30 @@ void MeshRenderer::initializeGLData()
     /* Bind our Vertex Array Object as the current used object */
     glBindVertexArray(mVaoID);
 
-    addAttribute("vertexPosition_modelspace"
+    addAttribute( programID
+                , "vertexPosition_modelspace"
                 , &(*vertices)[0]
                 , vertices->size() * sizeof(glm::vec3)
                 , GL_FLOAT
                 , 3);
 
-    addAttribute("vertexUV"
+    addAttribute( programID
+                , "vertexUV"
                 , &(*uvs)[0]
                 , uvs->size() * sizeof(glm::vec2)
                 , GL_FLOAT
                 , 2);
 
-    addAttribute("vertexNormal_modelspace"
+    addAttribute( programID
+                , "vertexNormal_modelspace"
                 , &(*normals)[0]
                 , normals->size() * sizeof(glm::vec3)
                 , GL_FLOAT
                 , 3);
 
     if(tangents){
-        addAttribute("vertexTangent"
+        addAttribute( programID
+                    , "vertexTangent"
                     , &(*tangents)[0]
                     , tangents->size() * sizeof(glm::vec3)
                     , GL_FLOAT
@@ -95,7 +102,8 @@ void MeshRenderer::initializeGLData()
     }
 
     if(bitangents){
-        addAttribute("vertexBitangent"
+        addAttribute( programID
+                    , "vertexBitangent"
                     , &(*bitangents)[0]
                     , bitangents->size() * sizeof(glm::vec3)
                     , GL_FLOAT
@@ -113,16 +121,13 @@ void MeshRenderer::initializeGLData()
 
 }
 
-void MeshRenderer::addAttribute(  const std::string &name
+void MeshRenderer::addAttribute(  GLuint programID
+                                , const std::string &name
                                 , void* buffer
                                 , const size_t &size
                                 , const int &type
                                 , const size_t &typedSize)
 {
-
-    SCEHandle<Material> mat = GetContainer()->GetComponent<Material>();
-    GLuint programID = mat->GetShaderProgram();
-
     GLuint id = glGetAttribLocation(programID, name.c_str());
 
     if(id < MAX_ATTRIB_ID){
@@ -141,31 +146,35 @@ void MeshRenderer::addAttribute(  const std::string &name
     }
 }
 
-void MeshRenderer::Render(const SCEHandle<Camera>& cam)
+#include "../headers/SCECore.hpp"
+
+void MeshRenderer::Render(const SCEHandle<Camera>& cam, bool renderScreenspace)
 {
     SCEHandle<Mesh> mesh = GetContainer()->GetComponent<Mesh>();
-    SCEHandle<Transform> transform = GetContainer()->GetComponent<Transform>();
-
-    SCEHandle<Material> mat = GetContainer()->GetComponent<Material>();
+    SCEHandle<Transform> transform = GetContainer()->GetComponent<Transform>();    
 
     vector<ushort>* indices     = mesh->GetIndices();
 
     //bind mesh data and render
     glBindVertexArray(mVaoID);
 
-    // Use our shader
-    mat->BindMaterialData();
+    glm::mat4 projectionMatrix  = cam->GetProjectionMatrix();
+    glm::mat4 viewMatrix        = cam->GetViewMatrix();
+    glm::mat4 modelMatrix       = transform->GetWorldTransform();
 
-    glm::mat4 ProjectionMatrix  = cam->GetProjectionMatrix();
-    glm::mat4 ViewMatrix        = cam->GetViewMatrix();
-    glm::mat4 ModelMatrix       = transform->GetWorldTransform();
-    glm::mat4 MVP               = ProjectionMatrix * ViewMatrix * ModelMatrix;
+    if(renderScreenspace){
+        modelMatrix         = glm::mat4(1.0f);
+        projectionMatrix    = glm::mat4(1.0f);
+        viewMatrix          = glm::mat4(1.0f);
+    }
+
+    glm::mat4 MVP               = projectionMatrix * viewMatrix * modelMatrix;
 
     // Send our transformation to the currently bound shader,
     // in the "MVP" uniform
     glUniformMatrix4fv(mMVPMatrixID, 1, GL_FALSE, &MVP[0][0]);
-    glUniformMatrix4fv(mModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
-    glUniformMatrix4fv(mViewMatrixID, 1, GL_FALSE, &ViewMatrix[0][0]);
+    glUniformMatrix4fv(mModelMatrixID, 1, GL_FALSE, &modelMatrix[0][0]);
+    glUniformMatrix4fv(mViewMatrixID, 1, GL_FALSE, &viewMatrix[0][0]);
 
 
 
@@ -186,18 +195,13 @@ void MeshRenderer::Render(const SCEHandle<Camera>& cam)
     // Index buffer
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mIndiceBuffer);
 
-    int passCount = mat->GetPassCount();
-    Debug::PrintMessage("Passes to render : " + to_string(passCount));
-    for(int i = 0; i < passCount; ++i){
-        mat->BindPassData(i);
-        // Draw the triangles !
-        glDrawElements(
-                    GL_TRIANGLES,        // mode
-                    indices->size(),    // count
-                    GL_UNSIGNED_SHORT,   // type
-                    (void*)0             // element array buffer offset
-                    );
-    }
+    // Draw the triangles !
+    glDrawElements(
+                GL_TRIANGLES,        // mode
+                indices->size(),    // count
+                GL_UNSIGNED_SHORT,   // type
+                (void*)0             // element array buffer offset
+                );
 
     glBindVertexArray(0);
 

@@ -18,7 +18,7 @@ Transform::Transform(SCEHandle<Container> &container)
     , mOrientation(vec3(0, 0, 0))
     , mParent(0l)
 {
-    SCEInternal::InternalMessage("Transform initialized");
+    Internal::Log("Transform initialized");
 }
 
 
@@ -242,7 +242,7 @@ void Transform::LookAt(const glm::vec3& target, const glm::vec3& upVector)
     quat q = QuatLookAt(direction, upVector);
     mOrientation = q;*/
 
-    SCE::Debug::PrintError("Not implemented yet");
+    SCE::Debug::LogError("Not implemented yet");
 }
 
 void Transform::SetParent(SCEHandle<Transform> parentPtr)

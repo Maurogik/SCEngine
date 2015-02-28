@@ -26,12 +26,17 @@ namespace SCE {
         void                                RunEngine();
 
         static GLFWwindow*                  GetWindow();
+        static int                          GetWindowWidth();
+        static int                          GetWindowHeight();
+        static void                         UpdateWindow();
 
     private :
 
         void                                CleanUpEngine();
 
-        static GLFWwindow* s_window;
+        static int          s_windowWidth;
+        static int          s_windowHeight;
+        static GLFWwindow*  s_window;
     };
 
 }

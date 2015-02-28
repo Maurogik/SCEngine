@@ -21,8 +21,8 @@ using namespace glm;
 #define DEFAULT_LAYER "DefaultLayer"
 #define DEFAULT_TAG "DefaultTag"
 
+#define ENGINE_RESSOURCE_PATH "SCE_Assets/"
 #define RESSOURCE_PATH "ressources/"
-#define SHADER_PATH "ressources/"
 #define SHADER_SUFIX ".shader"
 #define MATERIAL_SUFIX ".material"
 #define TEXTURE_METADATA_SUFIX ".texData"

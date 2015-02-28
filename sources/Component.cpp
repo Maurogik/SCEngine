@@ -15,6 +15,7 @@ using namespace std;
 Component::Component(SCEHandle<Container> &container, const string &typeName, const int &guid)
     : mContainer(container)
     , mTypeHash(SCE::Tools::HashFromString( "Component::"+typeName))
+    , mIsHidden(false)
 {
 
 }
@@ -37,4 +38,14 @@ const SCEHandle<Container> Component::GetContainer() const
 const int& Component::GetTypeHash() const
 {
     return mTypeHash;
+}
+
+void Component::SetIsHidden(bool isHidden)
+{
+    mIsHidden = isHidden;
+}
+
+bool Component::IsHidden()
+{
+    return mIsHidden;
 }

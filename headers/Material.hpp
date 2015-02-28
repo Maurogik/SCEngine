@@ -44,10 +44,6 @@ namespace SCE {
 
         void                BindMaterialData();
 
-        int                 GetPassCount();
-
-        void                BindPassData(const int& passIndex);
-
         void                ReloadMaterial();
 
         void                CleanMaterial();
@@ -81,16 +77,10 @@ namespace SCE {
          */
         static GLuint       loadShaders(const std::string& filename);
 
-//        /**
-//         * @brief InitRenderData
-//         */
-//        void                InitRenderData();
-
         //TODO add LOD for shader ? later ?
         std::string                             mMaterialName;
         GLuint                                  mProgramShaderId;
         std::map<std::string, uniform_data>     mUniforms;
-        std::vector<SCE::SCEHandle<SCE::Light> >     mLightsInRange;
     };
 
 }

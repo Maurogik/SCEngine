@@ -28,17 +28,19 @@ namespace SCE {
 
     public :
                         ~MeshRenderer();
-        void            Render(const SCEHandle<Camera> &cam);
+        void            Render(const SCEHandle<Camera> &cam, bool renderScreenspace = false);
 
     protected :
 
                         MeshRenderer(SCEHandle<Container>& container, const std::string& typeName = "");
+                        MeshRenderer(SCEHandle<Container>& container, GLuint shaderProgramID, const std::string& typeName = "");
 
     private :
 
-        void            initializeGLData();
+        void            initializeGLData(GLuint programID);
         void            addAttribute(
-                            const std::string &name
+                            GLuint programID
+                          , const std::string &name
                           , void* buffer
                           , const size_t &size
                           , const int &type

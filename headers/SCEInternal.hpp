@@ -18,9 +18,9 @@
 
 namespace SCE {
 
-namespace SCEInternal {
+namespace Internal {
 
-    void        InternalMessage(const std::string& message);
+    void        Log(const std::string& message);
 
 }
 

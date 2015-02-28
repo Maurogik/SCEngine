@@ -11,7 +11,9 @@
 using namespace SCE;
 using namespace std;
 
-GLFWwindow * SCECore::s_window = 0l;
+GLFWwindow *    SCECore::s_window       = 0l;
+int             SCECore::s_windowWidth  = 0;
+int             SCECore::s_windowHeight = 0;
 
 SCECore::~SCECore()
 {
@@ -20,7 +22,7 @@ SCECore::~SCECore()
 
 void SCECore::InitEngine(const std::string &windowName)
 {
-    SCEInternal::InternalMessage("Initializing engine");
+    Internal::Log("Initializing engine");
 
     // Initialise GLFW
     if( !glfwInit() )
@@ -42,7 +44,7 @@ void SCECore::InitEngine(const std::string &windowName)
 
     // Open a window and create its OpenGL context
     s_window = glfwCreateWindow( 1024, 768, windowName.c_str(), NULL, NULL);
-    SCEInternal::InternalMessage("Window created");
+    Internal::Log("Window created");
 
     if( s_window == NULL ){
         glfwTerminate();
@@ -56,6 +58,8 @@ void SCECore::InitEngine(const std::string &windowName)
         Debug::RaiseError("Failed to initialize GLEW.");
     }
 
+    UpdateWindow();
+
     // Ensure we can capture the escape key being pressed below
     //glfwSetInputMode(s_window, GLFW_STICKY_KEYS, GL_TRUE);
     //glfwSetCursorPos(s_window, 1024/2, 768/2);
@@ -64,15 +68,15 @@ void SCECore::InitEngine(const std::string &windowName)
 
 
     if(glDebugMessageCallbackAMD) {
-        SCEInternal::InternalMessage("Linking GL debug with AMD callback");
+        Internal::Log("Linking GL debug with AMD callback");
         glDebugMessageCallbackAMD(DebugCallbackAMD, NULL);
     }
     else if(glDebugMessageCallbackARB) {
-        SCEInternal::InternalMessage("Linking GL debug with ARB callback");
+        Internal::Log("Linking GL debug with ARB callback");
         glDebugMessageCallbackARB(DebugCallback, NULL);
     }
     else {
-        SCEInternal::InternalMessage("Linking GL debug with standard callback");
+        Internal::Log("Linking GL debug with standard callback");
         glDebugMessageCallback(DebugCallback, NULL);
     }
 
@@ -99,7 +103,7 @@ void SCECore::RunEngine()
 
 void SCECore::CleanUpEngine()
 {
-    SCEInternal::InternalMessage("Cleaning up engine");
+    Internal::Log("Cleaning up engine");
     SCEScene::DestroyScene();
     // Close OpenGL window and terminate GLFW
     glfwTerminate();
@@ -108,6 +112,25 @@ void SCECore::CleanUpEngine()
 GLFWwindow *SCECore::GetWindow()
 {
     return s_window;
+}
+
+int SCECore::GetWindowWidth()
+{
+    return s_windowWidth;
+}
+
+int SCECore::GetWindowHeight()
+{
+    return s_windowHeight;
+}
+
+void SCECore::UpdateWindow()
+{
+
+    int width, height;
+    glfwGetWindowSize(s_window, &width, &height);
+    s_windowWidth = width;
+    s_windowHeight = height;
 }
 
 

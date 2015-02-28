@@ -150,3 +150,4 @@ set(QMAKE_LFLAGS "${QMAKE_LFLAGS} -std=c++11")
 #endif (NOT ${CMAKE_GENERATOR} MATCHES "Xcode" )
 
 file( COPY "${TARGET}/ressources" DESTINATION "." )
+file( COPY "${SCE_PATH}/SCE_Assets" DESTINATION "." )

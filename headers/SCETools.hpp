@@ -26,15 +26,21 @@ namespace Tools {
 
     int         HashFromString(const std::string& str);
     std::string ToLowerCase(const std::string &str);
-
+    int         floatToColorRange(float val);
 }
 
 namespace Debug {
 
     void        Assert(bool condition, const std::string& message);
     void        RaiseError(const std::string& errorMsg);
-    void        PrintMessage(const std::string& message);
-    void        PrintError(const std::string& message);
+    void        Log(const std::string& message);
+    void        LogError(const std::string& message);
+
+}
+
+namespace ShaderTools {
+
+    GLuint      CompileShader(const std::string& shaderFileName);
 
 }
 

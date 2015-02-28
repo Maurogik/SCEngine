@@ -30,24 +30,32 @@ using namespace SCE;
 #define REPEAT_STR "Repeat"
 
 
-SCETexture::SCETexture(const string &filename, const string &samplerName, GLuint shaderProgram)
-    : mTextureId(0), mName(samplerName)
+SCETexture::SCETexture(const string &filename, const string &samplerName)
+    : mTextureId(0), mName(samplerName), mWidth(-1), mHeight(-1)
 {
-    mTextureId = loadTextureFromFile(filename, shaderProgram);
+    mTextureId = loadTextureFromFile(filename);
 }
 
-GLuint SCETexture::GetSamplerUniformId() const
+SCETexture::SCETexture(const string &samplerName, int width, int height, vec4 color, SCETextureFormat textureFormat, SCETextureWrap wrapMode, bool mipmapsOn)
+    : mTextureId(0), mName(samplerName), mWidth(width), mHeight(height)
 {
-    return mSamplerUniformId;
+    mTextureId = createTexture(width, height, color, textureFormat, wrapMode, mipmapsOn);
 }
 
-void SCETexture::BindTexture(GLuint textureUnit)
+SCETexture::~SCETexture()
 {
-    // Bind our texture in Texture Unit 0
+    if(mTextureId != 0){
+        glDeleteTextures(1, &mTextureId);
+    }
+}
+
+void SCETexture::BindTexture(GLuint textureUnit, GLuint samplerUniformId)
+{
+    // Bind the texture to a texture Unit
     glActiveTexture(GL_TEXTURE0 + textureUnit);
     glBindTexture(GL_TEXTURE_2D, mTextureId);
-    // Set our "myTextureSampler" sampler to user Texture Unit 0
-    glUniform1i(mSamplerUniformId, textureUnit);
+    // Set the sampler uniform to the texture unit
+    glUniform1i(samplerUniformId, textureUnit);
 }
 
 GLuint SCETexture::GetTextureId() const
@@ -56,7 +64,7 @@ GLuint SCETexture::GetTextureId() const
 }
 
 
-GLuint SCETexture::loadTextureFromFile(const string &filename, GLuint shaderProgram)
+GLuint SCETexture::loadTextureFromFile(const string &filename)
 {
     string fullTexturePath = RESSOURCE_PATH + filename;
     string metadataFile = fullTexturePath + TEXTURE_METADATA_SUFIX;
@@ -84,7 +92,7 @@ GLuint SCETexture::loadTextureFromFile(const string &filename, GLuint shaderProg
         Debug::Assert(root.IsObject(), "Malformated Json texture file\n");
 
         string name = root["Name"].GetString();
-        SCEInternal::InternalMessage("Parsing texture data for : " + name);
+        Internal::Log("Parsing texture data for : " + name);
 
         rapidjson::Value& textureRoot  = root["Texture"];
 
@@ -98,7 +106,7 @@ GLuint SCETexture::loadTextureFromFile(const string &filename, GLuint shaderProg
         SCETextureFormat format = formatFromString(formatStr);
         SCETextureWrap wrapMode = wrapModeFromString(wrappingModeStr);
 
-        return loadTexture(filename, shaderProgram, format, wrapMode, mipmapsOn);
+        return loadTexture(filename, format, wrapMode, mipmapsOn);
 
     } else {
         Debug::RaiseError("Failed to open file " + metadataFile);
@@ -106,35 +114,12 @@ GLuint SCETexture::loadTextureFromFile(const string &filename, GLuint shaderProg
     }
 }
 
-GLuint SCETexture::loadTexture(const string &filename, GLuint shaderProgram, SCETextureFormat format, SCETextureWrap wrapMode, bool mipmapsOn)
+GLuint SCETexture::loadTexture(const string &filename, SCETextureFormat format, SCETextureWrap wrapMode, bool mipmapsOn)
 {
     string fullTexturePath = RESSOURCE_PATH + filename;
-    uint soilFlags = 0;
+    uint soilFlags = getSoilFlags(format, wrapMode, mipmapsOn);
 
-    switch(format) {
-    case DDS_FORMAT :
-        soilFlags |= SOIL_FLAG_COMPRESS_TO_DXT;
-        break;
-    case UNCOMPRESSED_FORMAT :
-        //if not specified, Soil use uncompressed texture
-        break;
-    default ://DDS_FORMAT is the default
-        soilFlags |= SOIL_FLAG_COMPRESS_TO_DXT;
-        break;
-    }
-
-    switch(wrapMode){
-    case REPEAT_WRAP :
-        soilFlags |= SOIL_FLAG_TEXTURE_REPEATS;
-        break;
-    case CLAMP_WRAP :
-        //if not specified, CLAMP is used
-        break;
-    }
-
-    if(mipmapsOn) {
-        soilFlags |= SOIL_FLAG_GL_MIPMAPS;
-    }
+    Internal::Log("TODO : Find a way to get the width and height of the loaded texture");
 
     //create a new openGL texture
     //force_channels : 0 = channels auto
@@ -153,7 +138,29 @@ GLuint SCETexture::loadTexture(const string &filename, GLuint shaderProgram, SCE
 
 //    SOIL_free_image_data(image);
 
-    mSamplerUniformId = glGetUniformLocation(shaderProgram, mName.c_str());
+    return textureID;
+}
+
+GLuint SCETexture::createTexture(int width, int height, vec4 color, SCETextureFormat textureFormat, SCETextureWrap wrapMode, bool mipmapsOn)
+{
+    int channelCount = 4;
+    uint soilFlags = getSoilFlags(textureFormat, wrapMode, mipmapsOn);
+    unsigned char *textureData = new unsigned char [width * height * channelCount];
+    int xstart, ystart;
+    for(int x = 0; x < width; ++x){
+        xstart = x * height * channelCount;
+        for(int y = 0; y < height; ++y){
+            ystart = y * channelCount;
+            textureData[xstart + ystart + 0] = Tools::floatToColorRange(color.x);
+            textureData[xstart + ystart + 1] = Tools::floatToColorRange(color.y);
+            textureData[xstart + ystart + 2] = Tools::floatToColorRange(color.z);
+            textureData[xstart + ystart + 3] = Tools::floatToColorRange(color.w);
+        }
+    }
+
+    GLuint textureID = SOIL_create_OGL_texture(textureData, &mWidth, &mHeight, channelCount, 0, soilFlags);
+    //GLuint textureID = SOIL_load_OGL_texture(fullTexturePath.c_str(), 0, 0, soilFlags);
+    delete[](textureData);
 
     return textureID;
 }
@@ -184,4 +191,36 @@ SCETextureWrap SCETexture::wrapModeFromString(const string &wrapString)
     }
 
     return res;
+}
+
+uint SCETexture::getSoilFlags(SCETextureFormat format, SCETextureWrap wrapMode, bool mipmapsOn)
+{
+    uint soilFlags = 0;
+
+    switch(format) {
+    case DDS_FORMAT :
+        soilFlags |= SOIL_FLAG_COMPRESS_TO_DXT;
+        break;
+    case UNCOMPRESSED_FORMAT :
+        //if not specified, Soil use uncompressed texture
+        break;
+    default ://DDS_FORMAT is the default
+        soilFlags |= SOIL_FLAG_COMPRESS_TO_DXT;
+        break;
+    }
+
+    switch(wrapMode){
+    case REPEAT_WRAP :
+        soilFlags |= SOIL_FLAG_TEXTURE_REPEATS;
+        break;
+    case CLAMP_WRAP :
+        //if not specified, CLAMP is used
+        break;
+    }
+
+    if(mipmapsOn) {
+        soilFlags |= SOIL_FLAG_GL_MIPMAPS;
+    }
+
+    return soilFlags;
 }

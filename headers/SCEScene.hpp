@@ -10,6 +10,7 @@
 #include "Container.hpp"
 #include "SCEDefines.hpp"
 #include "Light.hpp"
+#include "SCE_GBuffer.hpp"
 
 
 namespace SCE {
@@ -55,9 +56,10 @@ namespace SCE {
         void            renderSceneWithCamera(const SCEHandle<Camera> &camera);
 
         std::vector<Container*>             mContainers;
-        std::vector<SCEHandle<Light> >         mLights;
-        std::vector<SCEHandle<GameObject> >    mGameObjects;
+        std::vector<SCEHandle<Light> >      mLights;
+        std::vector<SCEHandle<GameObject> > mGameObjects;
         int                                 mLastId;
+        SCE::SCE_GBuffer                    mLightingGBuffer;
 
         /*****Static*****/
         static SCEScene*                       s_scene;

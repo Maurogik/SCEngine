@@ -27,8 +27,7 @@ Material::Material(SCEHandle<Container> &container, const string &filename, cons
     : Component(container, "Material::" + typeName) ,
       mMaterialName("Material not loaded yet"),
       mProgramShaderId(999999),
-      mUniforms(),
-      mLightsInRange()
+      mUniforms()
 {
     LoadMaterial(filename);
 }
@@ -89,7 +88,7 @@ void Material::LoadMaterial(const string &filename)
         Debug::Assert(root.IsObject(), "Malformated Json material file\n");
 
         mMaterialName = root["Name"].GetString();
-        SCEInternal::InternalMessage("Parsing material : " + mMaterialName);
+        Internal::Log("Parsing material : " + mMaterialName);
 
         rapidjson::Value& materialRoot = root["Material"];
         rapidjson::Value& materialData = materialRoot["Data"];
@@ -111,65 +110,32 @@ void Material::LoadMaterial(const string &filename)
             string value = entry["Value"].GetString();
 
             uniform_data unifData;
-            unifData.name = name;
+
             if(type == "Texture2D"){
                 //do additional texture work (fetch sampler & stuff)
                 //load texture here
-                SCETexture* texture = new SCETexture(value, unifData.name, mProgramShaderId);
+                SCETexture* texture = new SCETexture(value, name);
                 unifData.data = (void*)texture;
-                unifData.dataID = texture->GetTextureId();
                 unifData.type = UNIFORM_TEXTURE2D;
-            } else {
-                if(type == "float"){
-                    unifData.type = UNIFORM_FLOAT;
-                    unifData.data = new float(Parser::StringToFloat(value));
-                } else if (type == "vec4"){
-                    unifData.type = UNIFORM_VEC4;
-                    unifData.data = new vec4(Parser::StringToVec4(value));
-                } else if (type == "vec3"){
-                    unifData.type = UNIFORM_VEC3;
-                    unifData.data = new vec3(Parser::StringToVec3(value));
-                }
-                unifData.dataID = glGetUniformLocation(mProgramShaderId, name.c_str());
+            } else if(type == "float"){
+                unifData.type = UNIFORM_FLOAT;
+                unifData.data = new float(Parser::StringToFloat(value));
+            } else if (type == "vec4"){
+                unifData.type = UNIFORM_VEC4;
+                unifData.data = new vec4(Parser::StringToVec4(value));
+            } else if (type == "vec3"){
+                unifData.type = UNIFORM_VEC3;
+                unifData.data = new vec3(Parser::StringToVec3(value));
             }
+            unifData.name = name;
+            unifData.dataID = glGetUniformLocation(mProgramShaderId, name.c_str());
 
             mUniforms[name] = unifData;
         }
-
-        //Initialize Light render data so that it can be added to the shader
-        SCEScene::InitLightRenderData(mProgramShaderId);
-
     } else {
         Debug::RaiseError("Failed to open file " + fullPath);
     }
 }
-
-
-//void Material::InitRenderData()
-//{
-//    map<string, uniform_data>::iterator it;
-//    for(it = mUniforms.begin(); it != mUniforms.end(); ++it){
-//        // iterator->first = key
-//        // iterator->second = value
-//        string name = it->first;
-//        uniform_data& uniform = it->second;
-
-//        if(uniform.type == UNIFORM_TEXTURE2D){
-//            //do additional texture work (fetch sampler & stuff)
-//            //load texture here
-//            string* path = (string*)uniform.data;
-//            SCETexture* texture = new SCETexture(*path, uniform.name, mProgramShaderId);
-//            SECURE_DELETE(path);
-//            uniform.data = (void*)texture;
-//            uniform.dataID = texture->GetTextureId();
-//        } else {
-//            uniform.dataID = glGetUniformLocation(mProgramShaderId, name.c_str());
-//        }
-
-//    }
-
-//    SCEScene::InitLightRenderData(mProgramShaderId);
-//}
 
 void Material::BindMaterialData()
 {
@@ -191,9 +157,8 @@ void Material::BindMaterialData()
         }
         case UNIFORM_TEXTURE2D :
         {
-            //texture uniforms not handled yet
             SCETexture* texture = (SCETexture*)uniform.data;
-            texture->BindTexture(textureUnit);
+            texture->BindTexture(textureUnit, uniform.dataID);
             ++textureUnit;
             break;
         }
@@ -213,30 +178,6 @@ void Material::BindMaterialData()
     }
 }
 
-int Material::GetPassCount()
-{
-    SCEHandle<Transform> transform = GetContainer()->GetComponent<Transform>();
-    mLightsInRange = SCEScene::FindLightsInRange(transform->GetWorldPosition());
-    return mLightsInRange.size();
-}
-
-void Material::BindPassData(const int &passIndex)
-{
-    if(passIndex == 0){ //first pass, no blending
-        glDisable(GL_BLEND);
-        //or
-        //glEnable(GL_BLEND);
-        //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    } else { //other passes, blend
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-    }
-
-    SCEHandle<Light> light = mLightsInRange[passIndex];
-    light->BindRenderDataForShader(mProgramShaderId);
-    light->BindLightModelForShader(mProgramShaderId);
-}
-
 void Material::ReloadMaterial()
 {
     SCE::Debug::RaiseError("Not implemented yet");
@@ -254,110 +195,7 @@ const GLuint& Material::GetShaderProgram() const
 
 GLuint Material::loadShaders(const string &filename)
 {
-    string fullPath = SHADER_PATH + filename + SHADER_SUFIX;
-
-    // Create the shaders
-    GLuint VertexShaderID = glCreateShader(GL_VERTEX_SHADER);
-    GLuint FragmentShaderID = glCreateShader(GL_FRAGMENT_SHADER);
-
-    // Read the Shader code from the text file
-    std::string shaderCode;
-    string vertexCode, fragmentCode;
-
-    bool vertex = true;
-
-    std::ifstream shaderStream(fullPath.c_str(), std::ios::in);
-    if(shaderStream.is_open()){
-        std::string Line = "";
-
-        while(getline(shaderStream, Line)){
-
-            shaderCode += "\n" + Line;
-
-            if(Line.find("VertexShader") != string::npos
-                || Line.find("_{") != string::npos
-                || Line.find("_}") != string::npos){
-                continue;
-            }
-
-            if(Line.find("FragmentShader") != string::npos){
-                vertex = false;
-                continue;
-            }
-
-            if(vertex){
-                vertexCode += "\n" + Line;
-            } else {
-                fragmentCode += "\n" + Line;
-            }
-        }
-        shaderStream.close();
-    }else{
-        Debug::RaiseError("Failled to open file " + fullPath);
-        return 0;
-    }
-
-    GLint Result = GL_FALSE;
-    int InfoLogLength;
-
-
-    SCEInternal::InternalMessage("Vertex shader : \n\n" + vertexCode);
-    SCEInternal::InternalMessage("Fragment shader : \n\n" + fragmentCode);
-
-
-    SCEInternal::InternalMessage("Compiling shader at " + fullPath);
-    // Compile Vertex Shader
-    const char* vertexCodePointer = vertexCode.c_str();
-    glShaderSource(VertexShaderID, 1, &vertexCodePointer , NULL);
-    glCompileShader(VertexShaderID);
-
-    // Check Vertex Shader
-    glGetShaderiv(VertexShaderID, GL_COMPILE_STATUS, &Result);
-    glGetShaderiv(VertexShaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
-    if ( InfoLogLength > 0 ){
-        std::vector<char> VertexShaderErrorMessage(InfoLogLength+1);
-        glGetShaderInfoLog(VertexShaderID, InfoLogLength, NULL, &VertexShaderErrorMessage[0]);
-        SCEInternal::InternalMessage(string(&VertexShaderErrorMessage[0]) + "\n");
-    }
-
-
-
-    // Compile Fragment Shader
-    const char* fragmentCodePointer = fragmentCode.c_str();
-    glShaderSource(FragmentShaderID, 1, &fragmentCodePointer , NULL);
-    glCompileShader(FragmentShaderID);
-
-    // Check Fragment Shader
-    glGetShaderiv(FragmentShaderID, GL_COMPILE_STATUS, &Result);
-    glGetShaderiv(FragmentShaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
-    if ( InfoLogLength > 0 ){
-        std::vector<char> FragmentShaderErrorMessage(InfoLogLength+1);
-        glGetShaderInfoLog(FragmentShaderID, InfoLogLength, NULL, &FragmentShaderErrorMessage[0]);
-        SCEInternal::InternalMessage(string(&FragmentShaderErrorMessage[0]) + "\n");
-    }
-
-
-
-    // Link the program
-    SCEInternal::InternalMessage("Linking shader program\n");
-    GLuint ProgramID = glCreateProgram();
-    glAttachShader(ProgramID, VertexShaderID);
-    glAttachShader(ProgramID, FragmentShaderID);
-    glLinkProgram(ProgramID);
-
-    // Check the program
-    glGetProgramiv(ProgramID, GL_LINK_STATUS, &Result);
-    glGetProgramiv(ProgramID, GL_INFO_LOG_LENGTH, &InfoLogLength);
-    if ( InfoLogLength > 0 ){
-        std::vector<char> ProgramErrorMessage(InfoLogLength+1);
-        glGetProgramInfoLog(ProgramID, InfoLogLength, NULL, &ProgramErrorMessage[0]);
-        SCEInternal::InternalMessage(string(&ProgramErrorMessage[0]) + "\n");
-    }
-
-    glDeleteShader(VertexShaderID);
-    glDeleteShader(FragmentShaderID);
-
-    return ProgramID;
+    return ShaderTools::CompileShader(filename);
 }
 
 

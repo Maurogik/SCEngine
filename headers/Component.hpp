@@ -28,7 +28,11 @@ namespace SCE {
 
         const SCEHandle<Container>  GetContainer() const ;
 
-        const int&                  GetTypeHash() const;        
+        const int&                  GetTypeHash() const;
+
+        void                        SetIsHidden(bool isPrivate = true);
+
+        bool                        IsHidden();
 
     protected :
 
@@ -39,6 +43,7 @@ namespace SCE {
 
         SCEHandle<Container>        mContainer;
         int                         mTypeHash;
+        bool                        mIsHidden;
 
     };
 

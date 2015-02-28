@@ -95,9 +95,21 @@ bool SCE::SCEHandle<T>::operator== (const SCE::SCEHandle<T>& rhs)
 }
 
 template <class T>
+bool SCE::SCEHandle<T>::operator== (const SCE::SCEHandleTarget* rhs)
+{
+    return mTarget == rhs;
+}
+
+template <class T>
 bool SCE::SCEHandle<T>::operator!= (const SCE::SCEHandle<T>& rhs)
 {
     return mTarget != rhs.mTarget;
+}
+
+template <class T>
+bool SCE::SCEHandle<T>::operator!= (const SCE::SCEHandleTarget* rhs)
+{
+    return mTarget != rhs;
 }
 
 template <class T>

@@ -18,10 +18,10 @@ using namespace std;
 SCEScene* SCEScene::s_scene = 0l;
 
 SCE::SCEScene::SCEScene()
-    : mLastId(0)
+    : mContainers(), mLights(), mGameObjects(), mLastId(0), mLightingGBuffer()
 {
     // Dark blue background
-    glClearColor(0.0f, 0.0f, 0.4f, 0.0f);
+    glClearColor(0.0f, 0.0f, 0.4f, 1.0f);
 
     // Enable depth test
     glEnable(GL_DEPTH_TEST);
@@ -32,12 +32,15 @@ SCE::SCEScene::SCEScene()
     glFrontFace(GL_CW);
     glEnable(GL_CULL_FACE);
 
+    //initialize the Gbuffer used to deferred lighting
+
+    mLightingGBuffer.Init(SCECore::GetWindowWidth(), SCECore::GetWindowHeight());
 }
 
 SCE::SCEScene::~SCEScene()
 {
-    SCEInternal::InternalMessage("Delete scene");
-    SCEInternal::InternalMessage("Clear stuff");
+    Internal::Log("Delete scene");
+    Internal::Log("Clear stuff");
     for(auto cont : mContainers)
     {
         delete(cont);
@@ -76,7 +79,7 @@ void SCE::SCEScene::RenderScene()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     //Parse cameras and render them
-
+    //TODO order cameras by depth first
     for(size_t i = 0; i < mContainers.size(); ++i){
         if(mContainers[i]->HasComponent<Camera>()){
             SCEHandle<Camera> cam = mContainers[i]->GetComponent<Camera>();
@@ -175,7 +178,7 @@ void SCE::SCEScene::DestroyScene()
 SCEHandle<Container> SCEScene::CreateContainer(const string &name)
 {
     if(!s_scene){
-        Debug::PrintError("No scene to add the container to, create a scene first");
+        Debug::LogError("No scene to add the container to, create a scene first");
     }
     Container* cont = new Container(name, ++s_scene->mLastId);
     s_scene->mContainers.push_back(cont);
@@ -190,7 +193,7 @@ void SCEScene::DestroyContainer(const SCEHandle<Container> &container)
 
 void SCEScene::RemoveContainer(const int &objId)
 {
-    SCEInternal::InternalMessage("Removing container from scene");
+    Internal::Log("Removing container from scene");
     if(!s_scene) return;
     auto objIt = find_if(
                         begin(s_scene->mContainers)
@@ -246,13 +249,6 @@ void SCEScene::RegisterLight(SCEHandle<Light> light)
     if(find(begin(s_scene->mLights), end(s_scene->mLights), light) == end(s_scene->mLights)){
        s_scene->mLights.push_back(light);
     }
-
-    for(size_t i = 0; i < s_scene->mContainers.size(); ++i){
-        if(s_scene->mContainers[i]->HasComponent<Material>()){
-            SCEHandle<Material> mat = s_scene->mContainers[i]->GetComponent<Material>();
-            light->InitRenderDataForShader(mat->GetShaderProgram());
-        }
-    }
 }
 
 void SCEScene::UnregisterLight(SCEHandle<Light> light)
@@ -263,35 +259,93 @@ void SCEScene::UnregisterLight(SCEHandle<Light> light)
     }
 }
 
-void SCEScene::InitLightRenderData(const GLuint &shaderId)
-{
-    //TODO store light uniforms for shader only once, not for each light
-    for(size_t i = 0; i < s_scene->mLights.size(); ++i){
-        s_scene->mLights[i]->InitRenderDataForShader(shaderId);
-    }
-}
-
-void SCEScene::BindLightRenderData(const GLuint &shaderId)
-{
-    //here I should test to see if the lights will influence the object rendering
-    for(size_t i = 0; i < s_scene->mLights.size(); ++i){
-        s_scene->mLights[i]->BindRenderDataForShader(shaderId);
-        s_scene->mLights[i]->BindLightModelForShader(shaderId);
-    }
-}
-
 std::vector<SCEHandle<Light> > SCEScene::FindLightsInRange(const glm::vec3 &worldPosition)
 {
+    Internal::Log("TODO : finds actual lights in range");
     return s_scene->mLights;
+}
+
+void debugDeferredLighting(SCE_GBuffer mLightingGBuffer){
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    mLightingGBuffer.BindForReading();
+
+    GLsizei width = SCECore::GetWindowWidth();
+    GLsizei height = SCECore::GetWindowHeight();
+    GLsizei HalfWidth = (GLsizei)(width / 2);
+    GLsizei HalfHeight = (GLsizei)(height / 2);
+
+    mLightingGBuffer.SetReadBuffer(SCE_GBuffer::GBUFFER_TEXTURE_TYPE_DIFFUSE);
+        glBlitFramebuffer(0, 0, width, height,
+                        0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+
+    /*mLightingGBuffer.SetReadBuffer(SCE_GBuffer::GBUFFER_TEXTURE_TYPE_POSITION);
+    glBlitFramebuffer(0, 0, width, height,
+                    0, 0, HalfWidth, HalfHeight, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+
+    mLightingGBuffer.SetReadBuffer(SCE_GBuffer::GBUFFER_TEXTURE_TYPE_DIFFUSE);
+    glBlitFramebuffer(0, 0, width, height,
+                    0, HalfHeight, HalfWidth, height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+
+    mLightingGBuffer.SetReadBuffer(SCE_GBuffer::GBUFFER_TEXTURE_TYPE_NORMAL);
+    glBlitFramebuffer(0, 0, width, height,
+                    HalfWidth, HalfHeight, width, height, GL_COLOR_BUFFER_BIT, GL_LINEAR);*/
+
 }
 
 void SCEScene::renderSceneWithCamera(const SCEHandle<Camera> &camera)
 {
+    //Geometry pass
+    //render objects without lighting
+
+    mLightingGBuffer.BindForWriting();
+    // Only the geometry pass updates the depth buffer
+    glDepthMask(GL_TRUE);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glEnable(GL_CULL_FACE);
+    glEnable(GL_DEPTH_TEST);
+
+    glDisable(GL_BLEND);
+
     for(size_t i = 0; i < mContainers.size(); ++i){
         if(mContainers[i]->HasComponent<MeshRenderer>()
            && camera->IsLayerRendered( mContainers[i]->GetLayer() )){
+
+            SCEHandle<Material> mat = mContainers[i]->GetComponent<Material>();
+            // Use the shader
+            mat->BindMaterialData();
+
             SCEHandle<MeshRenderer> renderer = mContainers[i]->GetComponent<MeshRenderer>();
             renderer->Render(camera);
         }
+    }
+
+    // When we get here the depth buffer is already populated and the other pass
+    // depends on it, but it does not write to it.
+    glDepthMask(GL_FALSE);
+
+    glDisable(GL_DEPTH_TEST);
+
+    //debugDeferredLighting(mLightingGBuffer);
+    //return;
+
+    //render lights
+
+    /*glEnable(GL_BLEND);
+    glBlendEquation(GL_FUNC_ADD);
+    glBlendFunc(GL_SRC_ALPHA, GL_DST_ALPHA);
+    //glBlendFunc(GL_SRC_ALPHA, GL_ONE);*/
+    glDisable(GL_CULL_FACE);
+
+    Light::StartLightPass();
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    mLightingGBuffer.BindForReading();
+    mLightingGBuffer.BindTexturesForShader(Light::s_DefaultLightShader);
+
+    for(size_t i = 0; i < mLights.size(); ++i){
+        mLights[i]->RenderLight(camera);
     }
 }

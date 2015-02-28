@@ -20,13 +20,13 @@ Container::Container(const string &name, const int &id)
     , mName(name)
     , mContainerId(id)
 {
-    SCEInternal::InternalMessage("New container");
+    Internal::Log("New container");
 }
 
 Container::~Container()
 {
-    SCEInternal::InternalMessage("delete container");
-    SCEInternal::InternalMessage("delete components");
+    Internal::Log("delete container");
+    Internal::Log("delete components");
     for(Component* compo : mComponents)
     {
         delete(compo);

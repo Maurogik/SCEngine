@@ -29,7 +29,28 @@ const SCE::SCEHandle<T>    SCE::Container::GetComponent() const
 template < class T >
 void                    SCE::Container::RemoveComponent()
 {
+    int typeHash = SCEInternalComponent<T>::sTypeHash;
+    auto it = std::find_if(
+                  begin(mComponents)
+                , end(mComponents)
+                , [&typeHash] (const Component* compo){ return compo->GetTypeHash() == typeHash; }
+    );
+    if(it != end(mComponents)){
+        mComponents.erase(it);
+    }
+}
 
+template < class T >
+void                    SCE::Container::RemoveComponent(SCE::SCEHandle<T> component)
+{
+    auto it = std::find_if(
+                  begin(mComponents)
+                , end(mComponents)
+                , [&component] (const Component* compo){ return component == compo; }
+    );
+    if(it != end(mComponents)){
+        mComponents.erase(it);
+    }
 }
 
 template < class T >
@@ -41,7 +62,7 @@ bool                    SCE::Container::HasComponent() const
                 , end(mComponents)
                 , [&typeHash] (const Component* compo){ return compo->GetTypeHash() == typeHash; }
     );
-    return it != end(mComponents);
+    return it != end(mComponents) && !(*it)->IsHidden();
 }
 
 template < class T >
@@ -55,10 +76,10 @@ SCE::SCEHandle<T>          SCE::Container::fetchComponent() const
     );
     //Debug::Assert(it != end(mComponents), "Could not find component on container : " + mName + ", check if component exists with HasComponent");
     T* resultPtr = (T*)*it;
-    if(it == end(mComponents))
+    if(it == end(mComponents) || (*it)->IsHidden())
     {
         resultPtr = 0l;
-        SCE::SCEInternal::InternalMessage("Could not find component on container : " + mName );
+        SCE::Internal::Log("Could not find component on container : " + mName );
 
     }
     return SCEHandle<T>(resultPtr);

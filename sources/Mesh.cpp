@@ -135,11 +135,11 @@ SCEHandle<Mesh> SCE::Mesh::AddCustomMesh(SCEHandle<Container> &container, const 
 }
 
 //Tesselation : number of time the basic (90°) angle is divided by 2 to get the angle step, range from 0 to infinity
-SCEHandle<Mesh> SCE::Mesh::AddSphereMesh(SCEHandle<Container> &container, const ushort &radius, const ushort &tesselation)
+SCEHandle<Mesh> SCE::Mesh::AddSphereMesh(SCEHandle<Container> &container, const float &radius, const float &tesselation)
 {
-    float fTess = (float)tesselation;
+    float fTess     = (float)tesselation;
     float angleStep = 90.0f / glm::pow(2.0f, fTess);
-    int nbSteps = 360.0f / angleStep;
+    int nbSteps     = 360.0f / angleStep;
 
     //indicies of vertices, normal and uvs stored by angle over x, angle over y;
     short angleIndices[nbSteps][nbSteps];
@@ -150,10 +150,10 @@ SCEHandle<Mesh> SCE::Mesh::AddSphereMesh(SCEHandle<Container> &container, const 
         }
     }
 
-    vector<vec3> vertices;
-    vector<vec3> normals;
-    vector<vec2> uvs;
-    vector<ushort> indices;
+    vector<vec3>    vertices;
+    vector<vec3>    normals;
+    vector<vec2>    uvs;
+    vector<ushort>  indices;
 
     //loop over all the angles to make a full 360 over x and y axis
     for(int xStep = 0; xStep < nbSteps / 2; ++xStep){
@@ -167,10 +167,11 @@ SCEHandle<Mesh> SCE::Mesh::AddSphereMesh(SCEHandle<Container> &container, const 
         for(int yStep = 0; yStep < nbSteps; ++yStep){
             float yAngle = yStep * angleStep;
 
-            if(yStep == nbSteps - 1){
+            /*if(yStep == nbSteps - 1){
 
-                SCE::Debug::PrintMessage("stop !");
-            }
+                SCE::Debug::Log("stop !" + std::to_string(xStep) + " " + std::to_string(yStep));
+                //break;
+            }*/
 
             glm::quat yRot[2] = {
                 glm::angleAxis(yAngle, 0.0f, 1.0f, 0.0f),
@@ -212,9 +213,10 @@ SCEHandle<Mesh> SCE::Mesh::AddSphereMesh(SCEHandle<Container> &container, const 
     return container->AddComponent<Mesh>(&indices, &vertices, &normals, &uvs, (vector<vec3>*) 0l, (vector<vec3>*) 0l);
 }
 
-SCEHandle<Mesh> SCE::Mesh::AddCubeMesh(SCEHandle<Container> &container, const ushort &size)
+SCEHandle<Mesh> SCE::Mesh::AddCubeMesh(SCEHandle<Container> &container, const float &cubeSize)
 {
 
+    float size = cubeSize / 2.0f;
     vector<vec3> vertices = vector<vec3>{
         // Front face
         vec3(-size, -size,  size),
@@ -295,7 +297,7 @@ SCEHandle<Mesh> SCE::Mesh::AddCubeMesh(SCEHandle<Container> &container, const us
         vec3(-1.0f, 0.0f, 0.0f), //left
     };
 
-    vector<vec3> normals = vector<vec3>();
+    vector<vec3> normals;
     for(int i = 0; i < 6; ++i){
         vec3 norm = normalArray[i];
         for(int j = 0; j < 4; ++j){
@@ -313,6 +315,103 @@ SCEHandle<Mesh> SCE::Mesh::AddCubeMesh(SCEHandle<Container> &container, const us
     };
 
     return container->AddComponent<Mesh>(&indices, &vertices, &normals, &uvs, (std::vector<vec3> *)0l, (std::vector<vec3> *)0l);
+}
+
+SCEHandle<Mesh> Mesh::AddQuadMesh(SCEHandle<Container> &container, const float &width, const float &height)
+{
+    vector<vec3> vertices = vector<vec3>{
+        vec3(-width/2.0f, -height/2.0f,  0.0f),
+        vec3( width/2.0f, -height/2.0f,  0.0f),
+        vec3( width/2.0f,  height/2.0f,  0.0f),
+        vec3(-width/2.0f,  height/2.0f,  0.0f)
+    };
+
+    vector<vec2> uvs = vector<vec2>{
+           vec2(0.0f, 0.0f),
+           vec2(1.0f, 0.0f),
+           vec2(1.0f, 1.0f),
+           vec2(0.0f, 1.0f)
+    };
+
+    vector<vec3> normals;
+    normals.push_back(vec3(0.0f, 0.0f, 1.0f));
+    vector<ushort> indices = vector<ushort>{
+        2,  1,  0,      3,  2,  0
+    };
+
+    return container->AddComponent<Mesh>(&indices, &vertices, &normals, &uvs, (std::vector<vec3> *)0l, (std::vector<vec3> *)0l);
+}
+
+SCEHandle<Mesh> Mesh::AddConeMesh(SCEHandle<Container> &container, const float &length, const float &angle, const float &tesselation)
+{
+    float fTess         = tesselation;
+    float angleStep     = 90.0f / glm::pow(2.0f, fTess);
+    float lengthStep    = length / glm::pow(2.0f, fTess);
+    int nbAngleSteps    = 360.0f / angleStep;
+    int nbLengthSteps   = length / lengthStep;
+
+    //indicies of vertices, normal and uvs stored by angle over x, angle over y;
+    short viewedVertices[nbAngleSteps][nbAngleSteps];
+    //set the array to -1 as default value
+    for(int i = 0; i < nbAngleSteps; ++i){
+        for(int j = 0; j < nbAngleSteps; ++j){
+            viewedVertices[i][j] = -1;
+        }
+    }
+
+    vector<vec3>    vertices;
+    vector<vec3>    normals;
+    vector<vec2>    uvs;
+    vector<ushort>  indices;
+
+    glm::quat coneRotation = glm::angleAxis(angle, 1.0f, 0.0f, 0.0f);
+
+    //loop over all the angles to make a full 360 over x and y axis
+    for(int zAngleStep = 0; zAngleStep < nbAngleSteps - 1; ++zAngleStep){
+        float zAngle = zAngleStep * angleStep;
+
+        glm::quat zRot[2] = {
+            glm::angleAxis(zAngle, 0.0f, 0.0f, 1.0f) * coneRotation,
+            glm::angleAxis(zAngle + angleStep, 0.0f, 0.0f, 1.0f) * coneRotation
+        };
+
+        for(int zPosStep = 0; zPosStep < nbLengthSteps - 1; ++zPosStep) {
+
+            float zPos[2] = {
+                zPosStep * lengthStep,
+                (zPosStep + 1) * lengthStep
+            };
+
+            ushort vertIndices[4];
+            int indCount = 0;
+            //loop over the four needed vertices to construct a quad (2 tris) in the order x1y1, x1y2, x2y1, x2y2
+            for(int subStepZAngle = 0; subStepZAngle <= 1; ++subStepZAngle){
+                for(int subStepZPos = 0; subStepZPos <= 1; ++subStepZPos){
+
+                    vec3 pos = zRot[subStepZAngle] * vec3(0.0f, 0.0f, zPos[subStepZPos]);
+
+                    if(viewedVertices[zAngleStep + subStepZAngle][zPosStep + subStepZPos] < 0) { //first encouter of this vertice
+                        vertices.push_back(pos);///////////////////////TODO COMPUTE NORMALS
+                        vec3 normal = normalize(pos - vec3(0.0f, 0.0f, zPos[subStepZPos]));
+                        normals.push_back(normal);
+                        uvs.push_back(vec2(0.0f, 0.0f));//push dummy uv for now, fix later
+                        viewedVertices[zAngleStep + subStepZAngle][zPosStep + subStepZPos] = vertices.size() - 1;
+                    }
+                    vertIndices[indCount] = viewedVertices[zAngleStep + subStepZAngle][zPosStep + subStepZPos];
+                    ++indCount;
+                }
+            }
+            //push the two triangles
+            indices.push_back(vertIndices[2]);
+            indices.push_back(vertIndices[1]);
+            indices.push_back(vertIndices[0]);
+
+            indices.push_back(vertIndices[1]);
+            indices.push_back(vertIndices[2]);
+            indices.push_back(vertIndices[3]);
+        }
+    }
+    return container->AddComponent<Mesh>(&indices, &vertices, &normals, &uvs, (vector<vec3>*) 0l, (vector<vec3>*) 0l);
 }
 
 SCEHandle<Mesh> Mesh::AddCustomMesh(SCEHandle<Container> &container, std::vector<ushort> *indices, std::vector<vec3> *vertices

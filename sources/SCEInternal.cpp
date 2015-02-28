@@ -11,9 +11,9 @@ using namespace std;
 
 namespace SCE {
 
-namespace SCEInternal {
+namespace Internal {
 
-    void InternalMessage(const string &message)
+    void Log(const string &message)
     {
 #ifdef SCE_DEBUG_ENGINE
         cout << "(Internal) : " << message << endl;

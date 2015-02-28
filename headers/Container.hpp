@@ -40,6 +40,9 @@ namespace SCE {
         void                RemoveComponent();
 
         template < class T >
+        void                RemoveComponent(SCEHandle<T> component);
+
+        template < class T >
         bool                HasComponent() const;
 
         const std::string&  GetTag() const;

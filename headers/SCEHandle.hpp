@@ -39,13 +39,17 @@ namespace SCE {
 
         bool operator== (const SCEHandle<T>& rhs);
 
+        bool operator== (const SCEHandleTarget* rhs);
+
         bool operator!= (const SCEHandle<T>& rhs);
+
+        bool operator!= (const SCEHandleTarget* rhs);
 
     private :
 
         void                    invalidateTarget();
 
-        SCEHandleTarget*           mTarget;
+        SCEHandleTarget*        mTarget;
         Delegate                mDestroyedDelegate;
 
     };

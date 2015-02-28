@@ -13,7 +13,7 @@ using namespace std;
 #define DEBUG_MAT "Debug" //"TestMaterial"
 #define MATERIAL "TestMaterial"
 
-SCEHandle<Container> createSphere(const string& name, const ushort& tesselation, const vec3& pos){
+SCEHandle<Container> createSphere(const string& name, const float& tesselation, const vec3& pos){
     //cube model
     SCEHandle<Container> object = SCEScene::CreateContainer(name);
 
@@ -26,6 +26,23 @@ SCEHandle<Container> createSphere(const string& name, const ushort& tesselation,
     Mesh::AddSphereMesh(object, 1.0f, tesselation);
     object->AddComponent<MeshRenderer>();
     object->AddComponent<Rotator>();
+
+    return object;
+}
+
+SCEHandle<Container> createCone(const string& name, const float& tesselation, const vec3& pos){
+    //cube model
+    SCEHandle<Container> object = SCEScene::CreateContainer(name);
+
+    object->AddComponent<Material>(MATERIAL);
+
+    SCEHandle<Transform> transform = object->AddComponent<Transform>();
+    transform->SetWorldPosition(pos);
+
+    //Mesh::AddCubeMesh(cubeObject, 1.0f);
+    Mesh::AddConeMesh(object, 1.0f, 45.0f, tesselation);
+    object->AddComponent<MeshRenderer>();
+    //object->AddComponent<Rotator>();
 
     return object;
 }
@@ -75,15 +92,18 @@ int main( void )
 
     SCEScene::CreateEmptyScene();
 
-    //createLight(vec3(0, 10, 20), vec3(30, 0, 30), LightType::POINT_LIGHT);
-    //createLight(vec3(0, 10, 20), vec3(30, 0, 30), LightType::SPOT_LIGHT);
+    //createLight(vec3(4, 4, 1), vec3(30, 0, 30), LightType::DIRECTIONAL_LIGHT);
+    SCEHandle<Container> light1 = createLight(vec3(4, 4, 1), vec3(30, 0, 30), LightType::POINT_LIGHT);
+    //SCEHandle<Container> light2 = createLight(vec3(-4, 4, 1), vec3(30, 0, 30), LightType::POINT_LIGHT);
+    light1->GetComponent<Light>()->SetLightReach(2.0f);
+    //light2->GetComponent<Light>()->SetLightReach(2.0f);
 
-    SCEHandle<Container> light = createLightSphere(vec3(4, 4, 1), vec4(1, 0, 0, 1));
-    SCEHandle<Container> light2 = createLightSphere(vec3(-4, 4, 1), vec4(0, 1, 0, 1));
+    //SCEHandle<Container> light = createLightSphere(vec3(4, 4, 1), vec4(1, 1, 1, 1));
+    //SCEHandle<Container> light2 = createLightSphere(vec3(-4, 4, 1), vec4(0, 0, 1, 1));
 
     //Suzanne model
     createModel("suzanneObject", "suzanne.obj", vec3(0, 0, 0));
-
+    //createCone("coneObject", 3.0f, vec3(0, 0, 0));
     int startX = -4;
     for(int i = 0; i < 5; ++i){
         createSphere("sphereObject", i+2, vec3(startX + i * 5, -i-3, 0));
