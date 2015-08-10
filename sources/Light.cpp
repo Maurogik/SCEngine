@@ -9,6 +9,7 @@
 #include "../headers/Container.hpp"
 #include "../headers/Transform.hpp"
 #include "../headers/SCEScene.hpp"
+#include "../headers/SCELighting.hpp"
 #include "../headers/SCECore.hpp"
 
 using namespace std;
@@ -19,14 +20,11 @@ using namespace SCE;
 #define COLOR_DEFAULT vec4(1.0f, 1.0f, 1.0f, 1.0f)
 #define ANGLE_DEFAULT 45.0f
 
-#define SCREEN_SIZE_UNIFORM_NAME "SCE_ScreenSize"
-
-#define LIGHT_SHADER_NAME "DeferredLighting"
-
-#define COMPUTE_LIGHT_UNIFORM_NAME "SCE_ComputeLight"
-#define COMPUTE_DIRECTIONAL_LIGHT_NAME "SCE_ComputeDirectionalLight"
-#define COMPUTE_POINT_LIGHT_NAME "SCE_ComputePointLight"
-#define COMPUTE_SPOT_LIGHT_NAME "SCE_ComputeSpotLight"
+#define SCREEN_SIZE_UNIFORM_NAME        "SCE_ScreenSize"
+#define COMPUTE_LIGHT_UNIFORM_NAME      "SCE_ComputeLight"
+#define COMPUTE_DIRECTIONAL_LIGHT_NAME  "SCE_ComputeDirectionalLight"
+#define COMPUTE_POINT_LIGHT_NAME        "SCE_ComputePointLight"
+#define COMPUTE_SPOT_LIGHT_NAME         "SCE_ComputeSpotLight"
 
 string s_lightUniformNames[LIGHT_UNIFORMS_COUNT] = {
     "SCE_LightPosition_worldspace",
@@ -36,8 +34,6 @@ string s_lightUniformNames[LIGHT_UNIFORMS_COUNT] = {
     "SCE_LightMaxAngle"
 };
 
-GLuint SCE::Light::s_DefaultLightShader = (GLuint) -1;
-
 Light::Light(SCEHandle<Container>& container, const LightType &lightType,
              const std::string& typeName)
     : Component(container, "Light::" + typeName),
@@ -46,13 +42,12 @@ Light::Light(SCEHandle<Container>& container, const LightType &lightType,
       mLightMaxAngle(ANGLE_DEFAULT),
       mLightColor(COLOR_DEFAULT),
       mLightUniformsByShader(),
-      mLightMesh(0l),
-      mLightRenderer(0l)
+      mLightMesh(nullptr),
+      mLightRenderer(nullptr)
 {
     SCEScene::RegisterLight(SCEHandle<Light>(this));
-    generateLightMesh();
-    initLightShader();
-    initRenderDataForShader(s_DefaultLightShader);
+    generateLightMesh();    
+    initRenderDataForShader(SCELighting::GetLightShader());
 }
 
 
@@ -61,30 +56,26 @@ Light::~Light()
     SCEScene::UnregisterLight(SCEHandle<Light>(this));
 }
 
-void Light::initLightShader()
-{
-    if(s_DefaultLightShader == (GLuint) -1){
-        s_DefaultLightShader = SCE::ShaderTools::CompileShader(LIGHT_SHADER_NAME);
-    }
-}
+
 
 void Light::initRenderDataForShader(const GLuint &shaderId)
 {
     glUseProgram(shaderId);
+
     //get the location for all uniforms, some may not be used but that's ok.
     for(int type = LIGHT_POSITION; type < LIGHT_UNIFORMS_COUNT; ++type){
         string name = s_lightUniformNames[type];
         GLuint uniform = glGetUniformLocation(shaderId, name.c_str());
         //set the uniformId for this uniform and shader if it's not done already
-        if(mLightUniformsByShader[(LightUniformType)type].count(shaderId) == 0){
+        if(mLightUniformsByShader[(LightUniformType)type].count(shaderId) == 0)
+        {
             mLightUniformsByShader[(LightUniformType)type][shaderId] = uniform;
         }
     }
 
     mScreenSizeUniform = glGetUniformLocation(shaderId, SCREEN_SIZE_UNIFORM_NAME);
 
-    mLightRenderer = GetContainer()->AddComponent<MeshRenderer>(shaderId);
-    mLightRenderer->SetIsHidden(true);
+    mLightRenderer = GetContainer()->AddComponent<MeshRenderer>(shaderId);    
 }
 
 void Light::bindRenderDataForShader(const GLuint &shaderId)
@@ -102,7 +93,8 @@ void Light::bindRenderDataForShader(const GLuint &shaderId)
     for(int type = LIGHT_POSITION; type < LIGHT_UNIFORMS_COUNT; ++ type){
         GLuint unifId = mLightUniformsByShader[(LightUniformType)type][shaderId];
 
-        switch(type){
+        switch(type)
+        {
         case LIGHT_POSITION :
             glUniform3f(unifId, lightPos.x, lightPos.y, lightPos.z);
             break;
@@ -179,8 +171,6 @@ void Light::bindLightModelForShader(const GLuint &shaderId)
 
 }
 
-
-
 const glm::vec4 &Light::GetLightColor() const
 {
     return mLightColor;
@@ -193,18 +183,13 @@ void Light::SetLightColor(glm::vec4 lightColor)
 
 void Light::RenderLight(const SCEHandle<Camera> &cam)
 {
-    bindRenderDataForShader(s_DefaultLightShader);
-    bindLightModelForShader(s_DefaultLightShader);
+    bindRenderDataForShader(SCELighting::GetLightShader());
+    bindLightModelForShader(SCELighting::GetLightShader());
     if(mLightType == DIRECTIONAL_LIGHT){
         mLightRenderer->Render(cam, true);
     } else {
         mLightRenderer->Render(cam);
     }
-}
-
-void Light::StartLightPass()
-{
-    glUseProgram(s_DefaultLightShader);
 }
 
 const float &Light::GetLightMaxAngle() const

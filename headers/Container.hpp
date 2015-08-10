@@ -11,12 +11,15 @@
 #include "Component.hpp"
 #include "SCEInternalComponent.hpp"
 #include "SCEHandle.hpp"
-#include <typeinfo>
-#include <type_traits>
 
 namespace SCE {
-    //Container class should not be inherited but the final keyword doesn't seem to work here
+
+    /**
+     * @brief The Container class, holds a collection of attached
+     * components
+     */
     class Container : public SCEHandleTarget{
+    //Container class should not be inherited but the final keyword doesn't seem to work here
         friend class SCEScene;
 
     public :
@@ -26,15 +29,8 @@ namespace SCE {
         template < class T, class... Args >
         SCEHandle<T>        AddComponent(Args&&... args);
 
-
         template < class T >
-        SCEHandle<T>        GetComponent();
-
-
-
-        template < class T >
-        const SCEHandle<T>  GetComponent() const;
-
+        SCEHandle<T>        GetComponent() const;
 
         template < class T >
         void                RemoveComponent();
@@ -56,12 +52,13 @@ namespace SCE {
 
     private :
 
-        //Prevent creation of copy constructor for now
-                            Container(const Container&)     = delete;
-        //Prevent creation of move Contructor for now
-                            Container(Container&&)          = delete;
+                            //Prevent creation of default constructors for now
+                            Container(const Container&)             = delete;
+                            Container(Container&&)                  = delete;
+                            Container& operator=(const Container&)  = delete;
+                            Container& operator=(Container&&)       = delete;
 
-                            Container(const std::string& name, const int& id);
+                            Container(const std::string& name, int id);
 
         template < class T >
         SCEHandle<T>        fetchComponent() const;

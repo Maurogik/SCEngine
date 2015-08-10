@@ -11,6 +11,9 @@
 
 namespace SCE {
 
+    /**
+     * @brief Base class for all components that need to be updated every frame
+     */
     class GameObject : public Component {
 
     public :

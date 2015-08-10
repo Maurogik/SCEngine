@@ -10,6 +10,7 @@
 #include "../headers/MeshRenderer.hpp"
 #include "../headers/Container.hpp"
 #include "../headers/SCEInternal.hpp"
+#include "../headers/SCECore.hpp"
 
 //import required components
 #include "../headers/Transform.hpp"
@@ -121,12 +122,12 @@ void MeshRenderer::initializeGLData(GLuint programID)
 
 }
 
-void MeshRenderer::addAttribute(  GLuint programID
+void MeshRenderer::addAttribute(GLuint programID
                                 , const std::string &name
                                 , void* buffer
-                                , const size_t &size
-                                , const int &type
-                                , const size_t &typedSize)
+                                , size_t size
+                                , int type
+                                , size_t typedSize)
 {
     GLuint id = glGetAttribLocation(programID, name.c_str());
 
@@ -146,29 +147,27 @@ void MeshRenderer::addAttribute(  GLuint programID
     }
 }
 
-#include "../headers/SCECore.hpp"
-
-void MeshRenderer::Render(const SCEHandle<Camera>& cam, bool renderScreenspace)
+void MeshRenderer::Render(const SCEHandle<Camera>& cam, bool renderFullScreenQuad)
 {
     SCEHandle<Mesh> mesh = GetContainer()->GetComponent<Mesh>();
     SCEHandle<Transform> transform = GetContainer()->GetComponent<Transform>();    
 
     vector<ushort>* indices     = mesh->GetIndices();
 
-    //bind mesh data and render
+    //bind mesh data
     glBindVertexArray(mVaoID);
 
-    glm::mat4 projectionMatrix  = cam->GetProjectionMatrix();
-    glm::mat4 viewMatrix        = cam->GetViewMatrix();
-    glm::mat4 modelMatrix       = transform->GetWorldTransform();
+    glm::mat4 projectionMatrix  = mat4(1.0);
+    glm::mat4 viewMatrix        = mat4(1.0);
+    glm::mat4 modelMatrix       = mat4(1.0);
 
-    if(renderScreenspace){
-        modelMatrix         = glm::mat4(1.0f);
-        projectionMatrix    = glm::mat4(1.0f);
-        viewMatrix          = glm::mat4(1.0f);
+    if(!renderFullScreenQuad){
+        projectionMatrix  = cam->GetProjectionMatrix();
+        viewMatrix        = cam->GetViewMatrix();
+        modelMatrix       = transform->GetWorldTransform();
     }
 
-    glm::mat4 MVP               = projectionMatrix * viewMatrix * modelMatrix;
+    glm::mat4 MVP           = projectionMatrix * viewMatrix * modelMatrix;
 
     // Send our transformation to the currently bound shader,
     // in the "MVP" uniform
@@ -183,9 +182,9 @@ void MeshRenderer::Render(const SCEHandle<Camera>& cam, bool renderScreenspace)
         glEnableVertexAttribArray(mAttributes[i].dataID);
         glBindBuffer(GL_ARRAY_BUFFER, mAttributes[i].dataBuffer);
         glVertexAttribPointer(
-                    mAttributes[i].dataID,               // The attribute we want to configure
-                    mAttributes[i].size,                          // size
-                    mAttributes[i].type,                   // type
+                    mAttributes[i].dataID,      // The attribute we want to configure
+                    mAttributes[i].size,        // size
+                    mAttributes[i].type,        // type
                     GL_FALSE,                   // normalized?
                     0,                          // stride
                     (void*)0                    // array buffer offset
@@ -197,10 +196,10 @@ void MeshRenderer::Render(const SCEHandle<Camera>& cam, bool renderScreenspace)
 
     // Draw the triangles !
     glDrawElements(
-                GL_TRIANGLES,        // mode
+                GL_TRIANGLES,       // mode
                 indices->size(),    // count
-                GL_UNSIGNED_SHORT,   // type
-                (void*)0             // element array buffer offset
+                GL_UNSIGNED_SHORT,  // type
+                (void*)0            // element array buffer offset
                 );
 
     glBindVertexArray(0);

@@ -42,7 +42,6 @@ SCEHandle<Container> createCone(const string& name, const float& tesselation, co
     //Mesh::AddCubeMesh(cubeObject, 1.0f);
     Mesh::AddConeMesh(object, 1.0f, 45.0f, tesselation);
     object->AddComponent<MeshRenderer>();
-    //object->AddComponent<Rotator>();
 
     return object;
 }
@@ -62,6 +61,7 @@ void createModel(const string& objectName, const string& filename, const vec3& p
 SCEHandle<Container> createLight(vec3 pos, vec3 orientation, LightType type){
     //Light
     SCEHandle<Container> lightObject = SCEScene::CreateContainer("lightObject");
+    lightObject->SetLayer("Light");
 
     SCEHandle<Transform> lightTransform = lightObject->AddComponent<Transform>();
     lightObject->AddComponent<Light>(type);

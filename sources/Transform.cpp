@@ -16,7 +16,7 @@ Transform::Transform(SCEHandle<Container> &container)
       mTranslation(0, 0, 0)
     , mScale(1.0f, 1.0f, 1.0f)
     , mOrientation(vec3(0, 0, 0))
-    , mParent(0l)
+    , mParent(nullptr)
 {
     Internal::Log("Transform initialized");
 }
@@ -273,7 +273,7 @@ void Transform::RemoveParent()
     vec3 wScale = GetWorldScale();
 
     //chang parent
-    mParent = 0l;
+    mParent = nullptr;
 
     //convert save transform to local
     mTranslation = wPos;

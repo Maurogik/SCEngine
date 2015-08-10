@@ -21,12 +21,13 @@
 using namespace SCE;
 using namespace std;
 
+#define NO_SHADER_ID 999999
 
 
 Material::Material(SCEHandle<Container> &container, const string &filename, const string &typeName)
     : Component(container, "Material::" + typeName) ,
       mMaterialName("Material not loaded yet"),
-      mProgramShaderId(999999),
+      mProgramShaderId(NO_SHADER_ID),
       mUniforms()
 {
     LoadMaterial(filename);
@@ -70,17 +71,21 @@ void Material::LoadMaterial(const string &filename)
     string fullPath = RESSOURCE_PATH + filename + MATERIAL_SUFIX;
 
     rapidjson::Document root;
-    string fileStr = "";
-    ifstream fileStream(fullPath.c_str(), ios::in);
+    ifstream materialFileStream(fullPath.c_str(), ios::in);
 
-    if(fileStream.is_open()){
+    if(materialFileStream.is_open())
+    {
         string currLine;
-        while (getline(fileStream, currLine)) {
-            fileStr += "\n" + currLine;
+        string matFileStr = "";
+        //read whole file in a string
+        while (getline(materialFileStream, currLine))
+        {
+            matFileStr += "\n" + currLine;
         }
-        fileStream.close();
+        materialFileStream.close();
 
-        if (root.Parse<0>(fileStr.c_str()).HasParseError()){
+        if (root.Parse<0>(matFileStr.c_str()).HasParseError())
+        {
             Debug::RaiseError("Error reading the material file : " + filename);
         }
 
@@ -102,8 +107,8 @@ void Material::LoadMaterial(const string &filename)
         Debug::Assert(materialData.IsArray(), "Data value of Json material file should be an array");
 
         //initialize all found uniforms
-
-        for(rapidjson::SizeType i = 0; i < materialData.Size(); ++i){
+        for(rapidjson::SizeType i = 0; i < materialData.Size(); ++i)
+        {
             const rapidjson::Value& entry = materialData[i];
             string name = entry["Name"].GetString();
             string type = entry["Type"].GetString();
@@ -111,19 +116,26 @@ void Material::LoadMaterial(const string &filename)
 
             uniform_data unifData;
 
-            if(type == "Texture2D"){
+            if(type == "Texture2D")
+            {
                 //do additional texture work (fetch sampler & stuff)
                 //load texture here
                 SCETexture* texture = new SCETexture(value, name);
                 unifData.data = (void*)texture;
                 unifData.type = UNIFORM_TEXTURE2D;
-            } else if(type == "float"){
+            }
+            else if(type == "float")
+            {
                 unifData.type = UNIFORM_FLOAT;
                 unifData.data = new float(Parser::StringToFloat(value));
-            } else if (type == "vec4"){
+            }
+            else if (type == "vec4")
+            {
                 unifData.type = UNIFORM_VEC4;
                 unifData.data = new vec4(Parser::StringToVec4(value));
-            } else if (type == "vec3"){
+            }
+            else if (type == "vec3")
+            {
                 unifData.type = UNIFORM_VEC3;
                 unifData.data = new vec3(Parser::StringToVec3(value));
             }
@@ -132,7 +144,9 @@ void Material::LoadMaterial(const string &filename)
 
             mUniforms[name] = unifData;
         }
-    } else {
+    }
+    else
+    {
         Debug::RaiseError("Failed to open file " + fullPath);
     }
 }
@@ -144,9 +158,8 @@ void Material::BindMaterialData()
     GLuint textureUnit = 0;
 
     map<string, uniform_data>::iterator it;
-    for(it = mUniforms.begin(); it != mUniforms.end(); ++it){
-        // iterator->first = key
-        // iterator->second = value
+    for(it = mUniforms.begin(); it != mUniforms.end(); ++it)
+    {
         uniform_data& uniform = it->second;
         switch(uniform.type) {
         case UNIFORM_FLOAT :

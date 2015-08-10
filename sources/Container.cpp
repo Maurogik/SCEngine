@@ -12,8 +12,7 @@
 using namespace SCE;
 using namespace std;
 
-
-Container::Container(const string &name, const int &id)
+Container::Container(const string &name, int id)
     : mComponents()
     , mTag(DEFAULT_TAG)
     , mLayer(DEFAULT_LAYER)

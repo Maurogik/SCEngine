@@ -7,11 +7,12 @@
 #include "../headers/SCECore.hpp"
 #include "../headers/SCE_GLDebug.hpp"
 #include "../headers/SCEInternal.hpp"
+#include "../headers/SCELighting.hpp"
 
 using namespace SCE;
 using namespace std;
 
-GLFWwindow *    SCECore::s_window       = 0l;
+GLFWwindow *    SCECore::s_window       = nullptr;
 int             SCECore::s_windowWidth  = 0;
 int             SCECore::s_windowHeight = 0;
 
@@ -66,7 +67,6 @@ void SCECore::InitEngine(const std::string &windowName)
 
 #ifdef SCE_DEBUG
 
-
     if(glDebugMessageCallbackAMD) {
         Internal::Log("Linking GL debug with AMD callback");
         glDebugMessageCallbackAMD(DebugCallbackAMD, NULL);
@@ -83,21 +83,25 @@ void SCECore::InitEngine(const std::string &windowName)
     glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 
 #endif
+
+    //Init Engine subcomponents in order
+    SCETime::Init();
+    SCELighting::Init();
 }
 
 void SCECore::RunEngine()
 {
 
     do {
+        SCETime::Update();
         SCEScene::Run();
 
         // Swap buffers
         glfwSwapBuffers(s_window);
         glfwPollEvents();
 
-    } while(    glfwGetKey(s_window, GLFW_KEY_ESCAPE ) != GLFW_PRESS
+    } while( glfwGetKey(s_window, GLFW_KEY_ESCAPE ) != GLFW_PRESS
              && glfwWindowShouldClose(s_window) == 0 );
-
 
 }
 
@@ -105,6 +109,10 @@ void SCECore::CleanUpEngine()
 {
     Internal::Log("Cleaning up engine");
     SCEScene::DestroyScene();
+
+    SCELighting::CleanUp();
+    SCETime::CleanUp();
+
     // Close OpenGL window and terminate GLFW
     glfwTerminate();
 }
@@ -126,7 +134,6 @@ int SCECore::GetWindowHeight()
 
 void SCECore::UpdateWindow()
 {
-
     int width, height;
     glfwGetWindowSize(s_window, &width, &height);
     s_windowWidth = width;

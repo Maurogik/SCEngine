@@ -19,15 +19,18 @@ SCE_GBuffer::SCE_GBuffer()
 
 SCE_GBuffer::~SCE_GBuffer()
 {
-    if (mFBOId != 0) {
+    if (mFBOId != 0)
+    {
         glDeleteFramebuffers(1, &mFBOId);
     }
 
-    if (mTextures[0] != 0) {
+    if (mTextures[0] != 0)
+    {
         glDeleteTextures(GBUFFER_TEXTURE_COUNT, mTextures);
     }
 
-    if (mDepthTexture != 0) {
+    if (mDepthTexture != 0)
+    {
         glDeleteTextures(1, &mDepthTexture);
     }
 }
@@ -45,13 +48,13 @@ bool SCE_GBuffer::Init(unsigned int windowWidth, unsigned int windowHeight)
     GLenum drawBuffers[GBUFFER_TEXTURE_COUNT];// = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3 };
 
     for (unsigned int i = 0 ; i < GBUFFER_TEXTURE_COUNT ; i++) {
-       glBindTexture(GL_TEXTURE_2D, mTextures[i]);
-       glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, windowWidth, windowHeight, 0, GL_RGB, GL_FLOAT, NULL);
-       glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-       glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-       //set this texure as frameBufferObject attachment i
-       glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, mTextures[i], 0);
-       drawBuffers[i] = GL_COLOR_ATTACHMENT0 + i;
+        glBindTexture(GL_TEXTURE_2D, mTextures[i]);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, windowWidth, windowHeight, 0, GL_RGB, GL_FLOAT, NULL);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        //set this texure as frameBufferObject attachment i
+        glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, mTextures[i], 0);
+        drawBuffers[i] = GL_COLOR_ATTACHMENT0 + i;
     }
 
     // depth
@@ -80,19 +83,19 @@ void SCE_GBuffer::BindForWriting()
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mFBOId);
 }
 
-char* names[] = {"PositionTex", "DiffuseTex", "NormalTex"};
 void SCE_GBuffer::BindForReading()
 {
     glBindFramebuffer(GL_READ_FRAMEBUFFER, mFBOId);
 }
 
-TODO make generic Gbuffer
+//TODO make generic Gbuffer
+string names[] = {"PositionTex", "DiffuseTex", "NormalTex"};
 void SCE_GBuffer::BindTexturesForShader(GLuint shaderID)
 {
-    for (unsigned int i = 0 ; i < GBUFFER_TEXTURE_COUNT; i++) {
+    for (unsigned int i = 0; i < GBUFFER_TEXTURE_COUNT; i++) {
         glActiveTexture(GL_TEXTURE0 + i);
         glBindTexture(GL_TEXTURE_2D, mTextures[i]);
-        GLuint loc = glGetUniformLocation(shaderID, names[i]);
+        GLuint loc = glGetUniformLocation(shaderID, names[i].c_str());
         // Set the sampler uniform to the texture unit
         glUniform1i(loc, i);
     }

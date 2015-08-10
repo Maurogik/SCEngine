@@ -10,30 +10,40 @@
 using namespace SCE;
 using namespace std;
 
-double  SCETime::s_timeInSeconds = 0;
-double  SCETime::s_realTimeInSeconds = 0;
-double  SCETime::s_deltaTime = 0;
-float   SCETime::s_timeSpeed = 1.0f;
-double  SCETime::start_time = glfwGetTime();
-double  SCETime::last_time = glfwGetTime();
+SCETime* SCETime::s_instance;
 
-
-const double &SCETime::TimeInSeconds()
+SCETime::SCETime()
+    : mTimeSpeed(1.0f),
+      mTimeInSeconds(0.0),
+      mDeltaTime(0.0),
+      mRealTimeInSeconds(0.0)
 {
-    return s_timeInSeconds;
+    mStartTime = glfwGetTime();
+    mLastTime = glfwGetTime();
+    s_instance = this;
 }
 
-const double &SCETime::DeltaTime()
+SCETime::~SCETime()
 {
-    return s_deltaTime;
 }
 
-const double &SCETime::RealTimeInSeconds()
+void SCETime::Init()
 {
-    return s_realTimeInSeconds;
+    s_instance = new SCETime;
+}
+
+void SCETime::CleanUp()
+{
+    delete(s_instance);
+    s_instance = nullptr;
 }
 
 void SCETime::Update()
+{
+    s_instance->update();
+}
+
+void SCETime::update()
 {
     /*clock_t currClock = clock();
     SCE_DEBUG_LOG("clock : %d", (int)currClock);
@@ -46,19 +56,35 @@ void SCETime::Update()
     s_timeInSeconds += s_deltaTime;*/
 
     double currentTime = glfwGetTime();
-    s_deltaTime = currentTime - last_time;
-    s_deltaTime *= s_timeSpeed;
-    s_timeInSeconds += s_deltaTime;
-    s_realTimeInSeconds = start_time - currentTime;
-    last_time = currentTime;
+    mDeltaTime = currentTime - mLastTime;
+    mDeltaTime *= mTimeSpeed;
+    mTimeInSeconds += mDeltaTime;
+    mRealTimeInSeconds = mStartTime - currentTime;
+    mLastTime = currentTime;
 }
-const float& SCETime::TimeSpeed()
+
+double SCETime::TimeInSeconds()
 {
-    return s_timeSpeed;
+    return s_instance->mTimeInSeconds;
+}
+
+double SCETime::DeltaTime()
+{
+    return s_instance->mDeltaTime;
+}
+
+double SCETime::RealTimeInSeconds()
+{
+    return s_instance->mRealTimeInSeconds;
+}
+
+float SCETime::GetTimeSpeed()
+{
+    return s_instance->mTimeSpeed;
 }
 
 void SCETime::SetTimeSpeed(float value)
 {
-    s_timeSpeed = value;
+    s_instance->mTimeSpeed = value;
 }
 

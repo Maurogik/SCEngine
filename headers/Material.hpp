@@ -21,31 +21,31 @@ namespace SCE {
         LIGHTING_DEFAULT //Pass the uniforms & insert stardard functions to process lights
     };
 
-    enum UniformType {
-        UNIFORM_FLOAT,
-        UNIFORM_VEC4,
-        UNIFORM_VEC3,
-        UNIFORM_TEXTURE2D
-    };
 
-    struct uniform_data{
-        std::string     name;
-        void*           data;
-        UniformType     type;
-        GLuint          dataID;
-    };
-
+    /**
+     * @brief The Material class, basically contains a shader and related uniforms
+     */
     class Material : public Component{
 
+        enum UniformType {
+            UNIFORM_FLOAT,
+            UNIFORM_VEC4,
+            UNIFORM_VEC3,
+            UNIFORM_TEXTURE2D
+        };
+
+        struct uniform_data{
+            std::string     name;
+            void*           data;
+            UniformType     type;
+            GLuint          dataID;
+        };
 
     public :
 
         virtual             ~Material();
-
         void                BindMaterialData();
-
         void                ReloadMaterial();
-
         void                CleanMaterial();
 
         template<typename T>
@@ -53,7 +53,6 @@ namespace SCE {
 
         template<typename T>
         const T&            GetUniformValue(const std::string& uniformName) const;
-
 
         const GLuint&       GetShaderProgram() const;
 
@@ -77,7 +76,7 @@ namespace SCE {
          */
         static GLuint       loadShaders(const std::string& filename);
 
-        //TODO add LOD for shader ? later ?
+        //TODO add LOD/verions for shader ?
         std::string                             mMaterialName;
         GLuint                                  mProgramShaderId;
         std::map<std::string, uniform_data>     mUniforms;

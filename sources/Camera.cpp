@@ -14,8 +14,11 @@ using namespace std;
 
 
 Camera::Camera(SCEHandle<Container> &container)
-    : Component(container, "Camera::")
-    , mType (PERSPECTIVE)
+    : Component(container, "Camera::"),
+      mType (PERSPECTIVE),
+      mRenderedLayers(),
+      mProjectionMatrix(),
+      mNegativeZInverter()
 {
     mProjectionMatrix  = glm::perspective(
                 45.0f //Fov
@@ -30,8 +33,11 @@ Camera::Camera(SCEHandle<Container> &container
         , const float &fieldOfView
         , const float &aspectRatio
         , const float &nearPlane, const float &farPlane)
-    : Component(container, "Camera::")
-    , mType (PERSPECTIVE)
+    : Component(container, "Camera::"),
+      mType (PERSPECTIVE),
+      mRenderedLayers(),
+      mProjectionMatrix(),
+      mNegativeZInverter()
 {
     mProjectionMatrix  = glm::perspective(
                   fieldOfView
@@ -49,43 +55,31 @@ Camera::Camera(SCEHandle<Container> &container,
         , const float &bottomPlane
         , const float &nearPlane
         , const float &farPlane)
-    : Component(container, "Camera::")
-    , mType (ORTHOGRAPHIC)
+    : Component(container, "Camera::"),
+      mType (ORTHOGRAPHIC),
+      mRenderedLayers(),
+      mProjectionMatrix(),
+      mNegativeZInverter()
 {
     mProjectionMatrix = glm::ortho(
-                  leftPlane
-                , rightPlane
-                , bottomPlane
-                , topPlane
-                , nearPlane
-                , farPlane
+                leftPlane,
+                rightPlane,
+                bottomPlane,
+                topPlane,
+                nearPlane,
+                farPlane
             );
     init();
 }
 
-Camera::~Camera()
-{
-
-}
-
 void Camera::init()
 {
-    /*
-    glm::lookAt(
-                glm::vec3(4,3,-3), // Camera is at (4,3,-3), in World Space
-                glm::vec3(0,0,0), // and looks at the origin
-                glm::vec3(0,1,0)  // Head is up (set to 0,-1,0 to look upside-down)
-           );
-     */
-
-    //Needed because opengl camera renders along the negative Z axis
-    //mNegativeZInverter = glm::rotate(mat4(1.0f), 180.0f, vec3(0.0f, 1.0f, 0.0f));
+    //Needed because opengl camera renders along the negative Z axis and I want it to render along the positiv axis
     mNegativeZInverter = glm::scale(mat4(1.0f), vec3(1.0f, 1.0f, -1.0f));
-    //mNegativeZInverter = mat4(1.0f);
     mRenderedLayers.push_back(DEFAULT_LAYER);
 }
 
-const CameraType& Camera::GetType() const
+const Camera::Type &Camera::GetProjectionType() const
 {
     return mType;
 }
@@ -96,9 +90,9 @@ mat4 Camera::GetViewMatrix() const
     const SCEHandle<Transform> transform = GetContainer()->GetComponent<Transform>();
 
     mat4 rotationMat = toMat4(transform->GetWorldQuaternion());
-    rotationMat = mNegativeZInverter * rotationMat;//invert the orientation matrix so that the camera looks at the positive Z axis
+    //invert the orientation matrix so that the camera looks at the positive Z axis
+    rotationMat = mNegativeZInverter * rotationMat;
     mat4 translationMatrix = translate(mat4(1.0f), transform->GetWorldPosition());
-    //return inverse( mNegativeZInverter * transform->GetWorldTransform());
     return inverse(translationMatrix * rotationMat);
 }
 
@@ -120,21 +114,22 @@ bool Camera::IsLayerRendered(const std::string &layer) const
 
 void Camera::AddLayerToRender(const std::string &layer)
 {
-    if( std::find(begin(mRenderedLayers), end(mRenderedLayers), layer)
-            == end(mRenderedLayers) ) {
+    if(std::find(begin(mRenderedLayers), end(mRenderedLayers), layer) == end(mRenderedLayers))
+    {
         mRenderedLayers.push_back(layer);
     }
 }
 
 void Camera::RemoveLayerToRender(const std::string &layer)
 {
-    std::vector<std::string>::iterator it_layer = std::find(
+    auto iterLayer = std::find(
                   begin(mRenderedLayers)
                 , end(mRenderedLayers)
                 , layer
             );
 
-    if(it_layer != end(mRenderedLayers) ) {
-        mRenderedLayers.erase(it_layer);
+    if(iterLayer != end(mRenderedLayers))
+    {
+        mRenderedLayers.erase(iterLayer);
     }
 }

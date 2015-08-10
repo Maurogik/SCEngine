@@ -24,39 +24,38 @@ using namespace SCE;
 using namespace std;
 
 SCE::Mesh::Mesh(SCEHandle<Container> &container, const string& filename)
-    : Component(container, "Mesh::")
-    , mIndices(0l), mVertices(0l), mNormals(0l), mUvs(0l), mTangents(0l), mBitangents(0l)
+    : Component(container, "Mesh::"),
+      mIndices(nullptr),
+      mVertices(nullptr),
+      mNormals(nullptr),
+      mUvs(nullptr),
+      mTangents(nullptr),
+      mBitangents(nullptr)
 {
     string fullPath = RESSOURCE_PATH + filename;
     vector<vec3> vertices;
     vector<vec2> uvs;
     vector<vec3> normals;
-//    vector<vec3> tangents;
-//    vector<vec3> bitangents;
 
     if(loadOBJ(fullPath.c_str()
                , vertices
                , uvs
                , normals))
     {
-        //computeTangentBasis(vertices, uvs, normals, tangents, bitangents);
-
         vector<ushort> indices;
         vector<vec3>   out_vert;
         vector<vec2>   out_uvs;
         vector<vec3>   out_norm;
-//        vector<vec3>   out_tan;
-//        vector<vec3>   out_bitan;
 
-        indexVBO(vertices
-                 , uvs
-                 , normals
-                 , indices
-                 , out_vert
-                 , out_uvs
-                 , out_norm);
+        indexVBO(vertices,
+                 uvs,
+                 normals,
+                 indices,
+                 out_vert,
+                 out_uvs,
+                 out_norm);
 
-        initMeshData(&indices, &out_vert, &out_norm, &out_uvs, 0l, 0l);
+        initMeshData(&indices, &out_vert, &out_norm, &out_uvs, nullptr, nullptr);
     }
 }
 
@@ -67,31 +66,48 @@ SCE::Mesh::Mesh(SCEHandle<Container> &container
                 , vector<vec2> *uvs
                 , vector<vec3> *tangents
                 , vector<vec3> *bitangents)
-    : Component(container, "Mesh::")
-    , mIndices(0l), mVertices(0l), mNormals(0l), mUvs(0l), mTangents(0l), mBitangents(0l)
+    : Component(container, "Mesh::"),
+      mIndices(nullptr),
+      mVertices(nullptr),
+      mNormals(nullptr),
+      mUvs(nullptr),
+      mTangents(nullptr),
+      mBitangents(nullptr)
 {
     initMeshData(indices, vertices, normals, uvs, tangents, bitangents);
 }
 
-void SCE::Mesh::initMeshData(  vector<ushort> *indices
-                             , vector<vec3> *vertices
-                             , vector<vec3> *normals
-                             , vector<vec2> *uvs
-                             , vector<vec3> *tangents
-                             , vector<vec3> *bitangents)
+void SCE::Mesh::initMeshData(  vector<ushort> *indices,
+                               vector<vec3> *vertices,
+                               vector<vec3> *normals,
+                               vector<vec2> *uvs,
+                               vector<vec3> *tangents,
+                               vector<vec3> *bitangents)
 {
     if(indices)
+    {
         mIndices    = new vector<ushort>(*indices);
+    }
     if(vertices)
+    {
         mVertices   = new vector<vec3>(*vertices);
+    }
     if(normals)
+    {
         mNormals    = new vector<vec3>(*normals);
+    }
     if(uvs)
+    {
         mUvs        = new vector<vec2>(*uvs);
+    }
     if(tangents)
+    {
         mTangents   = new vector<vec3>(*tangents);
+    }
     if(bitangents)
+    {
         mBitangents = new vector<vec3>(*bitangents);
+    }
 }
 
 SCE::Mesh::~Mesh()
@@ -144,8 +160,10 @@ SCEHandle<Mesh> SCE::Mesh::AddSphereMesh(SCEHandle<Container> &container, const 
     //indicies of vertices, normal and uvs stored by angle over x, angle over y;
     short angleIndices[nbSteps][nbSteps];
     //set the array to -1 as default value
-    for(int i = 0; i < nbSteps; ++i){
-        for(int j = 0; j < nbSteps; ++j){
+    for(int i = 0; i < nbSteps; ++i)
+    {
+        for(int j = 0; j < nbSteps; ++j)
+        {
             angleIndices[i][j] = -1;
         }
     }
@@ -156,7 +174,8 @@ SCEHandle<Mesh> SCE::Mesh::AddSphereMesh(SCEHandle<Container> &container, const 
     vector<ushort>  indices;
 
     //loop over all the angles to make a full 360 over x and y axis
-    for(int xStep = 0; xStep < nbSteps / 2; ++xStep){
+    for(int xStep = 0; xStep < nbSteps / 2; ++xStep)
+    {
         float xAngle = xStep * angleStep;
 
         glm::quat xRot[2] = {
@@ -164,14 +183,9 @@ SCEHandle<Mesh> SCE::Mesh::AddSphereMesh(SCEHandle<Container> &container, const 
             glm::angleAxis(xAngle + angleStep, 1.0f, 0.0f, 0.0f)
         };
 
-        for(int yStep = 0; yStep < nbSteps; ++yStep){
+        for(int yStep = 0; yStep < nbSteps; ++yStep)
+        {
             float yAngle = yStep * angleStep;
-
-            /*if(yStep == nbSteps - 1){
-
-                SCE::Debug::Log("stop !" + std::to_string(xStep) + " " + std::to_string(yStep));
-                //break;
-            }*/
 
             glm::quat yRot[2] = {
                 glm::angleAxis(yAngle, 0.0f, 1.0f, 0.0f),
@@ -181,15 +195,17 @@ SCEHandle<Mesh> SCE::Mesh::AddSphereMesh(SCEHandle<Container> &container, const 
             ushort vertIndices[4];
             int indCount = 0;
             //loop over the four needed vertices to construct a quad (2 tris) in the order x1y1, x1y2, x2y1, x2y2
-            for(int stepAddX = 0; stepAddX <= 1; ++stepAddX){
-                for(int stepAddY = 0; stepAddY <= 1; ++stepAddY){
-
+            for(int stepAddX = 0; stepAddX <= 1; ++stepAddX)
+            {
+                for(int stepAddY = 0; stepAddY <= 1; ++stepAddY)
+                {
                     vec3 dir = yRot[stepAddY] * xRot[stepAddX] * vec3(0.0f, 1.0f, 0.0f);
                     vec3 normalizedDir = normalize(dir);
                     dir = normalizedDir;
                     dir *= radius;
 
-                    if(angleIndices[xStep + stepAddX][yStep + stepAddY] < 0) { //first encouter of this vertice
+                    if(angleIndices[xStep + stepAddX][yStep + stepAddY] < 0)
+                    { //first encouter of this vertice
                         vertices.push_back(dir);
                         normals.push_back(normalizedDir);
                         uvs.push_back(vec2(0.0f, 0.0f));//push dummy uv for now, fix later
@@ -210,12 +226,16 @@ SCEHandle<Mesh> SCE::Mesh::AddSphereMesh(SCEHandle<Container> &container, const 
         }
     }
 
-    return container->AddComponent<Mesh>(&indices, &vertices, &normals, &uvs, (vector<vec3>*) 0l, (vector<vec3>*) 0l);
+    return container->AddComponent<Mesh>(&indices,
+                                         &vertices,
+                                         &normals,
+                                         &uvs,
+                                         nullptr,
+                                         nullptr);
 }
 
 SCEHandle<Mesh> SCE::Mesh::AddCubeMesh(SCEHandle<Container> &container, const float &cubeSize)
 {
-
     float size = cubeSize / 2.0f;
     vector<vec3> vertices = vector<vec3>{
         // Front face
@@ -298,9 +318,11 @@ SCEHandle<Mesh> SCE::Mesh::AddCubeMesh(SCEHandle<Container> &container, const fl
     };
 
     vector<vec3> normals;
-    for(int i = 0; i < 6; ++i){
+    for(int i = 0; i < 6; ++i)
+    {
         vec3 norm = normalArray[i];
-        for(int j = 0; j < 4; ++j){
+        for(int j = 0; j < 4; ++j)
+        {
             normals.push_back(norm);
         }
     }
@@ -314,7 +336,7 @@ SCEHandle<Mesh> SCE::Mesh::AddCubeMesh(SCEHandle<Container> &container, const fl
         20, 21, 22,     20, 22, 23    // left
     };
 
-    return container->AddComponent<Mesh>(&indices, &vertices, &normals, &uvs, (std::vector<vec3> *)0l, (std::vector<vec3> *)0l);
+    return container->AddComponent<Mesh>(&indices, &vertices, &normals, &uvs, (std::vector<vec3> *)nullptr, (std::vector<vec3> *)nullptr);
 }
 
 SCEHandle<Mesh> Mesh::AddQuadMesh(SCEHandle<Container> &container, const float &width, const float &height)
@@ -339,7 +361,7 @@ SCEHandle<Mesh> Mesh::AddQuadMesh(SCEHandle<Container> &container, const float &
         2,  1,  0,      3,  2,  0
     };
 
-    return container->AddComponent<Mesh>(&indices, &vertices, &normals, &uvs, (std::vector<vec3> *)0l, (std::vector<vec3> *)0l);
+    return container->AddComponent<Mesh>(&indices, &vertices, &normals, &uvs, (std::vector<vec3> *)nullptr, (std::vector<vec3> *)nullptr);
 }
 
 SCEHandle<Mesh> Mesh::AddConeMesh(SCEHandle<Container> &container, const float &length, const float &angle, const float &tesselation)
@@ -353,8 +375,10 @@ SCEHandle<Mesh> Mesh::AddConeMesh(SCEHandle<Container> &container, const float &
     //indicies of vertices, normal and uvs stored by angle over x, angle over y;
     short viewedVertices[nbAngleSteps][nbAngleSteps];
     //set the array to -1 as default value
-    for(int i = 0; i < nbAngleSteps; ++i){
-        for(int j = 0; j < nbAngleSteps; ++j){
+    for(int i = 0; i < nbAngleSteps; ++i)
+    {
+        for(int j = 0; j < nbAngleSteps; ++j)
+        {
             viewedVertices[i][j] = -1;
         }
     }
@@ -367,7 +391,8 @@ SCEHandle<Mesh> Mesh::AddConeMesh(SCEHandle<Container> &container, const float &
     glm::quat coneRotation = glm::angleAxis(angle, 1.0f, 0.0f, 0.0f);
 
     //loop over all the angles to make a full 360 over x and y axis
-    for(int zAngleStep = 0; zAngleStep < nbAngleSteps - 1; ++zAngleStep){
+    for(int zAngleStep = 0; zAngleStep < nbAngleSteps - 1; ++zAngleStep)
+    {
         float zAngle = zAngleStep * angleStep;
 
         glm::quat zRot[2] = {
@@ -375,8 +400,8 @@ SCEHandle<Mesh> Mesh::AddConeMesh(SCEHandle<Container> &container, const float &
             glm::angleAxis(zAngle + angleStep, 0.0f, 0.0f, 1.0f) * coneRotation
         };
 
-        for(int zPosStep = 0; zPosStep < nbLengthSteps - 1; ++zPosStep) {
-
+        for(int zPosStep = 0; zPosStep < nbLengthSteps - 1; ++zPosStep)
+        {
             float zPos[2] = {
                 zPosStep * lengthStep,
                 (zPosStep + 1) * lengthStep
@@ -385,12 +410,15 @@ SCEHandle<Mesh> Mesh::AddConeMesh(SCEHandle<Container> &container, const float &
             ushort vertIndices[4];
             int indCount = 0;
             //loop over the four needed vertices to construct a quad (2 tris) in the order x1y1, x1y2, x2y1, x2y2
-            for(int subStepZAngle = 0; subStepZAngle <= 1; ++subStepZAngle){
-                for(int subStepZPos = 0; subStepZPos <= 1; ++subStepZPos){
+            for(int subStepZAngle = 0; subStepZAngle <= 1; ++subStepZAngle)
+            {
+                for(int subStepZPos = 0; subStepZPos <= 1; ++subStepZPos)
+                {
 
                     vec3 pos = zRot[subStepZAngle] * vec3(0.0f, 0.0f, zPos[subStepZPos]);
 
-                    if(viewedVertices[zAngleStep + subStepZAngle][zPosStep + subStepZPos] < 0) { //first encouter of this vertice
+                    if(viewedVertices[zAngleStep + subStepZAngle][zPosStep + subStepZPos] < 0)
+                    { //first encouter of this vertice
                         vertices.push_back(pos);///////////////////////TODO COMPUTE NORMALS
                         vec3 normal = normalize(pos - vec3(0.0f, 0.0f, zPos[subStepZPos]));
                         normals.push_back(normal);
@@ -411,7 +439,7 @@ SCEHandle<Mesh> Mesh::AddConeMesh(SCEHandle<Container> &container, const float &
             indices.push_back(vertIndices[3]);
         }
     }
-    return container->AddComponent<Mesh>(&indices, &vertices, &normals, &uvs, (vector<vec3>*) 0l, (vector<vec3>*) 0l);
+    return container->AddComponent<Mesh>(&indices, &vertices, &normals, &uvs, (vector<vec3>*) nullptr, (vector<vec3>*) nullptr);
 }
 
 SCEHandle<Mesh> Mesh::AddCustomMesh(SCEHandle<Container> &container, std::vector<ushort> *indices, std::vector<vec3> *vertices
@@ -429,11 +457,11 @@ void SCE::Mesh::resetMeshData()
     SECURE_DELETE(mTangents);
     SECURE_DELETE(mBitangents);
 
-    mIndices    = 0l;
-    mVertices   = 0l;
-    mNormals    = 0l;
-    mUvs        = 0l;
-    mTangents   = 0l;
-    mBitangents = 0l;
+    mIndices    = nullptr;
+    mVertices   = nullptr;
+    mNormals    = nullptr;
+    mUvs        = nullptr;
+    mTangents   = nullptr;
+    mBitangents = nullptr;
 }
 

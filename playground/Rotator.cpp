@@ -9,11 +9,6 @@ Rotator::Rotator(SCE::SCEHandle<Container> container)
 
 }
 
-Rotator::~Rotator()
-{
-
-}
-
 void Rotator::Update()
 {
     //static bool start = true;

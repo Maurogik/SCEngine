@@ -17,34 +17,27 @@ namespace SCE {
     class Component : public SCEHandleTarget {
 
     public :
-
-        Component()                 = delete;
-        Component(const Component&) = delete;
-        Component(Component&& )     = delete;
-
+        //do not allow default contructors and copy operators to be generated
+        Component()                             = delete;
+        Component(const Component&)             = delete;
+        Component(Component&&)                  = delete;
+        Component& operator= (const Component&) = delete;
+        Component& operator= (Component&&)      = delete;
+        //declare destructor as virtual as this is the base class for other components
         virtual                     ~Component();
 
         SCEHandle<Container>        GetContainer();
-
         const SCEHandle<Container>  GetContainer() const ;
-
         const int&                  GetTypeHash() const;
-
-        void                        SetIsHidden(bool isPrivate = true);
-
-        bool                        IsHidden();
 
     protected :
 
                                     Component(SCEHandle<Container>& container, const std::string& typeName, const int& guid = 0);
 
-
     private :
 
         SCEHandle<Container>        mContainer;
         int                         mTypeHash;
-        bool                        mIsHidden;
-
     };
 
 }

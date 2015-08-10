@@ -12,7 +12,7 @@
 #define SECURE_DELETE(ptr) \
     if((ptr)) { \
         delete((ptr));\
-        ptr = 0l; \
+        ptr = nullptr; \
     }
 
 

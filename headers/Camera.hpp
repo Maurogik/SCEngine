@@ -9,20 +9,20 @@
 #include "SCEDefines.hpp"
 #include "Component.hpp"
 
-namespace SCE {
-
-    enum {
-        PERSPECTIVE = 0,
-        ORTHOGRAPHIC
-    } typedef CameraType;
-
-
-    class Camera : public Component {
+namespace SCE
+{
+    class Camera : public Component
+    {
 
     public :
 
-        virtual             ~Camera();
-        const CameraType&   GetType() const;
+        enum
+        {
+            PERSPECTIVE = 0,
+            ORTHOGRAPHIC
+        } typedef Type;
+
+        const Type&         GetProjectionType() const;
         mat4                GetViewMatrix() const;
         const glm::mat4&    GetProjectionMatrix() const;
         mat4                GetViewProjectionMatrix() const;
@@ -52,7 +52,7 @@ namespace SCE {
 
         void                init();
 
-        CameraType                  mType;
+        Type                        mType;
         std::vector<std::string>    mRenderedLayers;
         glm::mat4                   mProjectionMatrix;
         glm::mat4                   mNegativeZInverter;
@@ -60,6 +60,5 @@ namespace SCE {
     };
 
 }
-
 
 #endif

@@ -8,9 +8,10 @@
 
 #include "SCEDefines.hpp"
 #include "Component.hpp"
-#include <map>
+#include "Camera.hpp"
 #include "Mesh.hpp"
 #include "MeshRenderer.hpp"
+#include <map>
 
 namespace SCE {
 
@@ -46,9 +47,6 @@ namespace SCE {
 
         void                RenderLight(const SCEHandle<Camera> &cam);
 
-        static void         StartLightPass();
-        static GLuint               s_DefaultLightShader;
-
     protected :
 
         Light(SCEHandle<Container>& container, const LightType &lightType,
@@ -68,7 +66,6 @@ namespace SCE {
         //tmp
         GLuint                      mScreenSizeUniform;
 
-        void                        initLightShader();
         void                        initRenderDataForShader(const GLuint &shaderId);
         void                        bindRenderDataForShader(const GLuint &shaderId);
         void                        bindLightModelForShader(const GLuint &shaderId);
