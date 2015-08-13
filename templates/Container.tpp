@@ -23,6 +23,7 @@ SCE::SCEHandle<T> SCE::Container::GetComponent() const
 template < class T >
 void SCE::Container::RemoveComponent()
 {
+    Internal::Log("Removing component by type");
     int typeHash = SCEInternalComponent<T>::sTypeHash;
     auto it = std::find_if(
                   begin(mComponents)
@@ -30,6 +31,7 @@ void SCE::Container::RemoveComponent()
                 , [&typeHash] (const Component* compo){ return compo->GetTypeHash() == typeHash; }
     );
     if(it != end(mComponents)){
+        delete *it;
         mComponents.erase(it);
     }
 }
@@ -37,12 +39,14 @@ void SCE::Container::RemoveComponent()
 template < class T >
 void SCE::Container::RemoveComponent(SCE::SCEHandle<T> component)
 {
+    Internal::Log("Removing component by handle");
     auto it = std::find_if(
                   begin(mComponents)
                 , end(mComponents)
                 , [&component] (const Component* compo){ return component == compo; }
     );
     if(it != end(mComponents)){
+        delete *it;
         mComponents.erase(it);
     }
 }

@@ -86,7 +86,7 @@ void Material::LoadMaterial(const string &filename)
 
         if (root.Parse<0>(matFileStr.c_str()).HasParseError())
         {
-            Debug::RaiseError("Error reading the material file : " + filename);
+            Debug::RaiseError("Error reading the material file : " + filename + "\n error : " + root.Parse<0>(matFileStr.c_str()).GetParseError());
         }
 
         //Access values

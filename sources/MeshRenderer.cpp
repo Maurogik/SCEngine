@@ -24,8 +24,7 @@ MeshRenderer::MeshRenderer(SCEHandle<Container> &container, const string &typeNa
     : Component(container, "MeshRenderer::" + typeName)
 {
     SCEHandle<Material> mat = GetContainer()->GetComponent<Material>();
-    GLuint programID = mat->GetShaderProgram();
-    initializeGLData(programID);
+    initializeGLData(mat->GetShaderProgram());
 }
 
 MeshRenderer::MeshRenderer(SCEHandle<Container> &container, GLuint shaderProgramID, const string &typeName)
@@ -38,9 +37,14 @@ MeshRenderer::~MeshRenderer()
 {
     //unload all loaded data
     for(size_t i = 0; i < mAttributes.size(); ++i){
-        glDeleteBuffers(1, &mAttributes[i].dataBuffer);
+        glDeleteBuffers(1, &mAttributes[i].dataBufferId);
     }
     glDeleteBuffers(1, &mIndiceBuffer);
+}
+
+void MeshRenderer::UpdateRenderedMesh()
+{
+    updateMeshData();
 }
 
 void MeshRenderer::initializeGLData(GLuint programID)
@@ -122,6 +126,59 @@ void MeshRenderer::initializeGLData(GLuint programID)
 
 }
 
+void MeshRenderer::updateMeshData()
+{
+    SCEHandle<Mesh> mesh = GetContainer()->GetComponent<Mesh>();
+
+    vector<ushort>* indices     = mesh->GetIndices();
+    vector<vec3>*   vertices    = mesh->GetVertices();
+    //optional
+    vector<vec3>*   normals     = mesh->GetNormals();
+    vector<vec2>*   uvs         = mesh->GetUvs();
+    vector<vec3>*   tangents    = mesh->GetTangents();
+    vector<vec3>*   bitangents  = mesh->GetBitangents();
+
+    vector<size_t> newSizes;
+    vector<void*> newBuffers;
+
+    newBuffers.push_back( &(*vertices)[0] );
+    newBuffers.push_back( &(*uvs)[0] );
+    newBuffers.push_back( &(*normals)[0] );
+
+    newSizes.push_back(sizeof(glm::vec3) * vertices->size());
+    newSizes.push_back(sizeof(glm::vec3) * uvs->size());
+    newSizes.push_back(sizeof(glm::vec3) * normals->size());
+
+    if(tangents)
+    {
+        newBuffers.push_back( &(*tangents)[0] );
+        newSizes.push_back(sizeof(glm::vec3) * tangents->size());
+    }
+    if(bitangents)
+    {
+        newBuffers.push_back( &(*bitangents)[0] );
+        newSizes.push_back(sizeof(glm::vec3) * bitangents->size());
+    }
+
+    /* Bind our Vertex Array Object as the current used object */
+    glBindVertexArray(mVaoID);
+
+    for(int i = 0; i < mAttributes.size(); ++i)
+    {
+        setAttribute( mAttributes[i]
+                    , newBuffers[i]
+                    , newSizes[i]);
+    }
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mIndiceBuffer);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER
+                 , indices->size() * sizeof(unsigned short)
+                 , &(*indices)[0] , GL_STATIC_DRAW);
+
+    glEnableVertexAttribArray(0); // Disable our Vertex Array Object
+    glBindVertexArray(0); // Disable our Vertex Buffer Object
+}
+
 void MeshRenderer::addAttribute(GLuint programID
                                 , const std::string &name
                                 , void* buffer
@@ -133,18 +190,29 @@ void MeshRenderer::addAttribute(GLuint programID
 
     if(id < MAX_ATTRIB_ID){
         attrib_data attribData;
-        attribData.dataID = id;
+        attribData.dataLocation = id;
 
-        glGenBuffers(1, &attribData.dataBuffer);
-        glBindBuffer(GL_ARRAY_BUFFER, attribData.dataBuffer);
+        glGenBuffers(1, &attribData.dataBufferId);
+        glBindBuffer(GL_ARRAY_BUFFER, attribData.dataBufferId);
         glBufferData(GL_ARRAY_BUFFER
                      , size
                      , buffer, GL_STATIC_DRAW);
 
         attribData.type = type;
-        attribData.size = typedSize;
+        attribData.typeSize= typedSize;
+        attribData.buffer = buffer;
         mAttributes.push_back(attribData);
     }
+}
+
+void MeshRenderer::setAttribute(attrib_data& data, void* newBuffer, size_t newSize)
+{
+    glBindBuffer(GL_ARRAY_BUFFER, data.dataBufferId);
+    glBufferData(GL_ARRAY_BUFFER
+                 , newSize
+                 , newBuffer, GL_STATIC_DRAW);
+
+    data.buffer = newBuffer;
 }
 
 void MeshRenderer::Render(const SCEHandle<Camera>& cam, bool renderFullScreenQuad)
@@ -179,11 +247,11 @@ void MeshRenderer::Render(const SCEHandle<Camera>& cam, bool renderFullScreenQua
 
     //set the attributes
     for(size_t i = 0; i < mAttributes.size(); ++i){
-        glEnableVertexAttribArray(mAttributes[i].dataID);
-        glBindBuffer(GL_ARRAY_BUFFER, mAttributes[i].dataBuffer);
+        glEnableVertexAttribArray(mAttributes[i].dataLocation);
+        glBindBuffer(GL_ARRAY_BUFFER, mAttributes[i].dataBufferId);
         glVertexAttribPointer(
-                    mAttributes[i].dataID,      // The attribute we want to configure
-                    mAttributes[i].size,        // size
+                    mAttributes[i].dataLocation,// The attribute we want to configure
+                    mAttributes[i].typeSize,    // size
                     mAttributes[i].type,        // type
                     GL_FALSE,                   // normalized?
                     0,                          // stride
@@ -206,7 +274,7 @@ void MeshRenderer::Render(const SCEHandle<Camera>& cam, bool renderFullScreenQua
 
     //clean the attributes ?
     for(size_t i = 0; i < mAttributes.size(); ++i){
-        glDisableVertexAttribArray(mAttributes[i].dataID);
+        glDisableVertexAttribArray(mAttributes[i].dataLocation);
     }
 
 }

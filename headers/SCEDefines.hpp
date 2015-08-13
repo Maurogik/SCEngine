@@ -19,6 +19,7 @@ using namespace glm;
 
 
 #define DEFAULT_LAYER "DefaultLayer"
+#define LIGHTS_LAYER "Lighting"
 #define DEFAULT_TAG "DefaultTag"
 
 #define ENGINE_RESSOURCE_PATH "SCE_Assets/"

@@ -20,6 +20,8 @@ using namespace SCE;
 #define COLOR_DEFAULT vec4(1.0f, 1.0f, 1.0f, 1.0f)
 #define ANGLE_DEFAULT 45.0f
 
+#define LIGHT_ROUTINE_COUNT 1
+
 #define SCREEN_SIZE_UNIFORM_NAME        "SCE_ScreenSize"
 #define COMPUTE_LIGHT_UNIFORM_NAME      "SCE_ComputeLight"
 #define COMPUTE_DIRECTIONAL_LIGHT_NAME  "SCE_ComputeDirectionalLight"
@@ -46,8 +48,10 @@ Light::Light(SCEHandle<Container>& container, const LightType &lightType,
       mLightRenderer(nullptr)
 {
     SCEScene::RegisterLight(SCEHandle<Light>(this));
-    generateLightMesh();    
+    generateLightMesh();
     initRenderDataForShader(SCELighting::GetLightShader());
+    //change layer to avoid rendering the light mesh as a regular mesh
+    container->SetLayer(LIGHTS_LAYER);
 }
 
 
@@ -149,11 +153,17 @@ void Light::bindLightModelForShader(const GLuint &shaderId)
                                                   shaderType, lightSubroutineName.c_str());
 
     //Get the number of active uniforms
-    //This is expecting that subroutines are only used for light (bad !!!)
+    //This is expecting that subroutines are only used for light in this shader
     GLint subroutineUniformCount;
     glGetProgramStageiv(shaderId, shaderType, GL_ACTIVE_SUBROUTINE_UNIFORMS, &subroutineUniformCount);
 
     if(subroutineUniformCount > 0){
+
+        Debug::Assert(subroutineUniformCount == LIGHT_ROUTINE_COUNT,
+                      string("Wrong number of subroutine found in light pass shader \n")
+                      + "expected " + std::to_string(LIGHT_ROUTINE_COUNT)
+                      + " found " + std::to_string(subroutineUniformCount));
+
         //array of subroutine index for each subroutine uniform
         //ex : {indexForUniform1, indexForUniform2, indexForUniform3, ...}
         GLuint uniformArray[subroutineUniformCount];
@@ -168,7 +178,6 @@ void Light::bindLightModelForShader(const GLuint &shaderId)
         //send the binding of uniform/subroutines to the current context/shader
         glUniformSubroutinesuiv( shaderType, subroutineUniformCount, uniformArray);
     }
-
 }
 
 const glm::vec4 &Light::GetLightColor() const
@@ -176,7 +185,7 @@ const glm::vec4 &Light::GetLightColor() const
     return mLightColor;
 }
 
-void Light::SetLightColor(glm::vec4 lightColor)
+void Light::SetLightColor(const glm::vec4 &lightColor)
 {
     mLightColor = lightColor;
 }
@@ -192,7 +201,7 @@ void Light::RenderLight(const SCEHandle<Camera> &cam)
     }
 }
 
-const float &Light::GetLightMaxAngle() const
+float Light::GetLightMaxAngle() const
 {
     return mLightMaxAngle;
 }
@@ -203,7 +212,7 @@ void Light::SetLightMaxAngle(float lightMaxAngle)
     generateLightMesh();
 }
 
-const float &Light::GetLightReach() const
+float Light::GetLightReach() const
 {
     return mLightReach;
 }
@@ -229,6 +238,10 @@ void Light::generateLightMesh()
     case SPOT_LIGHT :
         generateSpotLightMesh();
         break;
+    }
+    if(mLightRenderer)
+    {
+        mLightRenderer->UpdateRenderedMesh();
     }
 }
 

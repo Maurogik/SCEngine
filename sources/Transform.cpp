@@ -201,7 +201,7 @@ void Transform::SetWorldOrientation(const vec3 &orientation)
 }
 
 
-void Transform::RotateAroundAxis(const vec3 &axis, const float &angle)
+void Transform::RotateAroundAxis(const vec3 &axis, float angle)
 {
     vec3 locAxis(axis);
     if(mParent){
@@ -211,7 +211,7 @@ void Transform::RotateAroundAxis(const vec3 &axis, const float &angle)
     mOrientation = mOrientation * rotation;
 }
 
-void Transform::RotateAroundPivot(const glm::vec3& pivot, const glm::vec3& axis, const float& angle)
+void Transform::RotateAroundPivot(const glm::vec3& pivot, const glm::vec3& axis, float angle)
 {
     vec3 locPivot(pivot);
     vec3 locAxis(axis);

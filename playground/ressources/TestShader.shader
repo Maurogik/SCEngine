@@ -45,6 +45,8 @@ _{
     void main(){
 
         oColor = texture2D(MainTex, fragUV).xyz;
+        //gamma expansion of texture because it is store gamma corrected and we will do our own gamma correction in the last shading pass
+        oColor = pow(oColor, vec3(2.2));
         oPosition = Position_cameraspace;
         oNormal = Normal_cameraspace;
         //oUV = fragUV;

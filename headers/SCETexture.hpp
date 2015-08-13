@@ -40,12 +40,6 @@ namespace SCE {
 
         /**
          * @brief load a texture from disk
-         * TODO :
-         * 1. cache texture so it can be reused later
-         * 2. generate opengl texture
-         * 3. bind texture data to opengl
-         * 4. load parameter from description file
-         * 5. apply parameters
          * @param filename
          */
         GLuint              loadTextureFromFile(const std::string &filename);

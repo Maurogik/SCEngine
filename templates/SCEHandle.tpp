@@ -113,6 +113,8 @@ bool SCE::SCEHandle<T>::operator!= (const SCE::SCEHandleTarget* rhs)
 }
 
 template <class T>
-void                    SCE::SCEHandle<T>::invalidateTarget() {
+void                    SCE::SCEHandle<T>::invalidateTarget()
+{
+    Internal::Log("Invalidating handle target");
     mTarget = nullptr;
 }

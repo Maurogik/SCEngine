@@ -19,11 +19,10 @@ using namespace std;
 SCEScene* SCEScene::s_scene = nullptr;
 
 SCE::SCEScene::SCEScene()
-    : mContainers(), mLights(), mGameObjects(), mLastId(0), mLightingGBuffer()
-{
-    // Dark blue background
-    glClearColor(0.0f, 0.0f, 0.4f, 1.0f);
-
+    : mContainers(), mLights(), mGameObjects(), mLastId(0), mLightingGBuffer(),
+      mDefaultClearColor(0.0f, 0.0f, 0.0f, 1.0f)
+{    
+    resetClearColorToDefault();
     // Enable depth test
     glEnable(GL_DEPTH_TEST);
     // Accept fragment if it closer to the camera than the former one
@@ -243,7 +242,7 @@ void SCEScene::UnregisterGameObject(SCEHandle<GameObject> gameObject)
 }
 
 void SCEScene::RegisterLight(SCEHandle<Light> light)
-{   //this should also call every material to run InitLightRenderData with their shaders
+{
     if(find(begin(s_scene->mLights), end(s_scene->mLights), light) == end(s_scene->mLights)){
         s_scene->mLights.push_back(light);
     }
@@ -297,16 +296,20 @@ void debugDeferredLighting(SCE_GBuffer &mLightingGBuffer){
 
 void SCEScene::renderSceneWithCamera(const SCEHandle<Camera> &camera)
 {
-
     //TODO use stencyl buffer to only light pixel that are actually under light
 
     //Geometry pass
     //render objects without lighting
 
     mLightingGBuffer.BindForWriting();
+//    float clearPosition[4] = {0.0f, 0.0f, 1.0f, 1.0f};
+//    glClearBufferfv(GL_COLOR,
+//                    SCE_GBuffer::GBUFFER_TEXTURE_TYPE_DIFFUSE,
+//                    clearPosition);
     // Only the geometry pass updates the depth buffer
-    glDepthMask(GL_TRUE);
+    glDepthMask(GL_TRUE);  
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
     glEnable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
     glDisable(GL_BLEND);
@@ -328,28 +331,42 @@ void SCEScene::renderSceneWithCamera(const SCEHandle<Camera> &camera)
     // depends on it, but it does not write to it.
     glDepthMask(GL_FALSE);
 
-    glDisable(GL_DEPTH_TEST);
+    //glDisable(GL_DEPTH_TEST);
 
-    //    debugDeferredLighting(mLightingGBuffer);
-    //    return;
+//    debugDeferredLighting(mLightingGBuffer);
+//    return;
 
     //render lights
 
-    //TODO find correct blending
-    /*glEnable(GL_BLEND);
-    glBlendEquation(GL_FUNC_ADD);
-    glBlendFunc(GL_SRC_ALPHA, GL_DST_ALPHA);
-    //glBlendFunc(GL_SRC_ALPHA, GL_ONE);*/
-
-    //glDisable(GL_CULL_FACE);
+//    glDisable(GL_CULL_FACE);
 
     SCELighting::StartLightPass();
+
+
+
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     mLightingGBuffer.BindForReading();
+
+//    GLsizei width = SCECore::GetWindowWidth();
+//    GLsizei height = SCECore::GetWindowHeight();
+
+//    mLightingGBuffer.SetReadBuffer(SCE_GBuffer::GBUFFER_TEXTURE_TYPE_DIFFUSE);
+//    glBlitFramebuffer(0, 0, width, height,
+//                      0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+
     mLightingGBuffer.BindTexturesForShader(SCELighting::GetLightShader());
+
+    glEnable(GL_BLEND);
+    glBlendEquation(GL_FUNC_ADD);
+    glBlendFunc(GL_ONE, GL_ONE);
 
     for(size_t i = 0; i < mLights.size(); ++i){
         mLights[i]->RenderLight(camera);
     }
+}
+
+void SCEScene::resetClearColorToDefault()
+{
+    glClearColor(mDefaultClearColor.r, mDefaultClearColor.g, mDefaultClearColor.b, mDefaultClearColor.a);
 }

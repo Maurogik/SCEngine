@@ -111,7 +111,7 @@ namespace SCE {
          * @param axis world space axis
          * @param angle rotation angle (in degree)
          */
-        void                    RotateAroundAxis(const glm::vec3& axis, const float& angle);
+        void                    RotateAroundAxis(const glm::vec3& axis, float angle);
 
         /**
          * @brief Rotates the object around a world space point and axis for the given angle
@@ -119,7 +119,7 @@ namespace SCE {
          * @param axis : world space rotation axis
          * @param angle : rotation angle (in degree)
          */
-        void                    RotateAroundPivot(const glm::vec3& pivot, const glm::vec3& axis, const float& angle);
+        void                    RotateAroundPivot(const glm::vec3& pivot, const glm::vec3& axis, float angle);
 
         /**
          * @brief Rotates the objects so that it is facing the target

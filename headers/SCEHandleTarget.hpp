@@ -15,6 +15,11 @@ namespace SCE {
 
     public :
 
+        ~SCEHandleTarget()
+        {   //send event to invalidate all handle for this target
+            mInvalidateHandleEvent();
+        }
+
     private :
 
         Event<>             mInvalidateHandleEvent;

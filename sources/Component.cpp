@@ -21,7 +21,7 @@ Component::Component(SCEHandle<Container> &container, const string &typeName, co
 
 Component::~Component()
 {
-
+    Internal::Log("Deleting component");
 }
 
 SCEHandle<Container> Component::GetContainer()

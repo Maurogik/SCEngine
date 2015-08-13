@@ -1,7 +1,7 @@
 {
-    "Name": "texture.png",
+    "Name": "1texture.png",
     "Texture": {
-		"Format": "DDS",
+        "Format": "UNCOMPRESSED",
         "Mipmaps": true,
         "Wrapping": "Clamp"
 	}

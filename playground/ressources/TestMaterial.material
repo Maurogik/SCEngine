@@ -3,8 +3,8 @@
     "Shader": "TestShader",
     "Material": {
 		"Data": [  
-			{"Name": "AmbientColor", "Type": "vec3", "Value": "(1.0, 0.0, 1.0)"},
-                        {"Name": "MainTex", "Type": "Texture2D", "Value": "texture.jpg"}
+            {"Name": "AmbientColor", "Type": "vec3", "Value": "(1.0, 0.0, 1.0)"},
+            {"Name": "MainTex", "Type": "Texture2D", "Value": "textsuzanne.png"}
 		]
 	}
 }

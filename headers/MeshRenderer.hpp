@@ -16,9 +16,10 @@
 namespace SCE {
 
     struct attrib_data{
-        GLuint  dataBuffer;
-        size_t  size;
-        GLuint  dataID;
+        GLuint  dataBufferId;
+        void*   buffer;
+        size_t  typeSize;
+        GLuint  dataLocation;
         int     type;
     };
 
@@ -29,6 +30,7 @@ namespace SCE {
     public :
                         ~MeshRenderer();
         void            Render(const SCEHandle<Camera> &cam, bool renderFullScreenQuad = false);
+        void            UpdateRenderedMesh();
 
     protected :
 
@@ -38,6 +40,7 @@ namespace SCE {
     private :
 
         void            initializeGLData(GLuint programID);
+        void            updateMeshData();
         void            addAttribute(
                             GLuint programID
                           , const std::string &name
@@ -46,6 +49,11 @@ namespace SCE {
                           , int type
                           , size_t typedSize
                         );
+        void            setAttribute(
+                            attrib_data& data
+                          , void* newBuffer
+                          , size_t newSize
+                          );
 
         GLuint                      mMVPMatrixID;
         GLuint                      mViewMatrixID;

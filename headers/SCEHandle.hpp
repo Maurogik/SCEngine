@@ -8,6 +8,7 @@
 
 #include <memory>
 #include "SCEHandleTarget.hpp"
+#include "SCEInternal.hpp"
 
 namespace SCE {
 

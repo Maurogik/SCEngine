@@ -15,10 +15,10 @@
 namespace SCE {
 
     /**
-     * @brief The Container class, holds a collection of attached
+     * @brief The Container class, holds and manages a collection of attached
      * components
      */
-    class Container : public SCEHandleTarget{
+    class Container : public SCEHandleTarget {
     //Container class should not be inherited but the final keyword doesn't seem to work here
         friend class SCEScene;
 

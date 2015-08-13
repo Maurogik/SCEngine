@@ -22,7 +22,7 @@ using namespace SCE;
 
 #define FORMAT_STR "Format"
 #define DDS_STR "DDS"
-#define UNCOMPRESSED_STR "Uncompressed"
+#define UNCOMPRESSED_STR "UNCOMPRESSED"
 
 #define MIPMAPS_STR "Mipmaps"
 #define WRAPPING_STR "Wrapping"
@@ -69,7 +69,6 @@ GLuint SCETexture::loadTextureFromFile(const string &filename)
     string fullTexturePath = RESSOURCE_PATH + filename;
     string metadataFile = fullTexturePath + TEXTURE_METADATA_SUFIX;
 
-
     //load texture metada
 
     rapidjson::Document root;
@@ -106,7 +105,7 @@ GLuint SCETexture::loadTextureFromFile(const string &filename)
         SCETextureFormat format = formatFromString(formatStr);
         SCETextureWrap wrapMode = wrapModeFromString(wrappingModeStr);
 
-        return loadTexture(filename, format, wrapMode, mipmapsOn);
+        return loadTexture(name, format, wrapMode, mipmapsOn);
 
     } else {
         Debug::RaiseError("Failed to open file " + metadataFile);

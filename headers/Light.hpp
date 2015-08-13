@@ -36,14 +36,14 @@ namespace SCE {
 
         virtual             ~Light();
 
-        const float&        GetLightReach() const;
+        float               GetLightReach() const;
         void                SetLightReach(float lightReach);
 
-        const float&        GetLightMaxAngle() const;
+        float               GetLightMaxAngle() const;
         void                SetLightMaxAngle(float lightMaxAngle);
 
         const glm::vec4&    GetLightColor() const;
-        void                SetLightColor(glm::vec4 lightColor);
+        void                SetLightColor(const vec4& lightColor);
 
         void                RenderLight(const SCEHandle<Camera> &cam);
 

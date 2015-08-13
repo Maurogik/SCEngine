@@ -33,7 +33,7 @@ _{
 
         LightPosition_cameraspace   = ( V * vec4(SCE_LightPosition_worldspace, 1.0)).xyz;
 
-        LightDirection_cameraspace  = ( V * vec4(SCE_LightDirection_worldspace, 1.0)).xyz;
+        LightDirection_cameraspace  = ( V * vec4(SCE_LightDirection_worldspace, 0.0)).xyz;
 
         LightReach_cameraspace = length( V * vec4(SCE_LightReach_worldspace, 0.0, 0.0, 0.0));
     }
@@ -69,9 +69,9 @@ _{
 
         vec3 eyeDir         = normalize(in_EyeDirection_cameraspace);
         vec3 reflectedLight = reflect(dirToLight, in_Normal_cameraspace);
-        float EdotL         = clamp( dot( eyeDir, reflectedLight ), 0,1 );
+        float EdotL         = clamp( dot( eyeDir, reflectedLight ), 0, 1 );
 
-        float distCoef  = 10;
+        float distCoef  = 1.0;
 
         vec4 lightCol   = vec4(1, 1, 1, 1); //SCE_LightColor;
         vec4 light      = lightCol * NdotL / (distCoef * distCoef)
@@ -93,17 +93,20 @@ _{
         vec3 reflectedLight = reflect(dirToLight, in_Normal_cameraspace);
         float EdotL         = clamp( dot(eyeDir, reflectedLight), 0.0 ,1.0 );
 
-        float distance      = length(in_LightToFrag_cameraspace);
-        float falloffDist   = 6.0f;//inverse square law falls to zero at approximatly 5
+        float sqDist        = dot(in_LightToFrag_cameraspace, in_LightToFrag_cameraspace);
+        float falloffDist   = 6.0;//inverse square law falls to zero at approximatly 5
         float lightReach    = in_LightReach_cameraspace;
-        float distCoef      = (distance / falloffDist) * lightReach;
+        float distCoef      = lightReach / falloffDist / sqDist;
 
-        vec3 light      = vec3(
-                    NdotL / (distCoef * distCoef), //diffuse lighting
-                    pow(EdotL, 5) / (distCoef * distCoef),
-                    1.0); //specular component
+        vec3 light  = vec3(
+                    NdotL, //diffuse lighting
+                    pow(EdotL, 5.0), //specular component
+                    1.0);
+        light *= distCoef;
 
-//        return vec4(1.0, 1.0, 0.0, 1.0) + vec4(light, 1.0) * 0.001f;
+        //light = vec3(distance / lightReach) + light * 0.001;
+
+//        return vec4(1.0, 1.0, 0.0, 1.0) + vec4(light, 1.0) * 0.001;
         return vec4(light, 1.0);
     }
 
@@ -146,15 +149,12 @@ _{
                     LightReach_cameraspace
                     );
 
-        //color = lightCol;
+        color = vec4( //Diffuse
+                      MaterialDiffuseColor * lightCol.x * SCE_LightColor.rgb * SCE_LightColor.a +
+                      //Specular
+                      lightCol.y, 1.0);
 
-        //float LdotN = dot(normalize(-LightToFrag_cameraspace), Normal_cameraspace);
-        //color = vec4(vec3(LdotN), 1.0);
-
-        color = vec4(MaterialDiffuseColor * lightCol.x * SCE_LightColor.rgb * SCE_LightColor.a
-                     + lightCol.y, 1.0);
-        //color = vec4(uv.x, uv.y, 1.0, 1.0);
-        //color = vec4(Normal_cameraspace, 1.0);// + vec4(0, 1, 0, 1);
-        //color = vec4(uv.xy, 1.0, 1.0);
+        //gamma correction
+        color = pow(color, vec4(1.0/2.2));
     }
 _}
