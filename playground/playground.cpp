@@ -46,6 +46,22 @@ SCEHandle<Container> createCone(const string& name, const float& tesselation, co
     return object;
 }
 
+SCEHandle<Container> createPlane(const string& name, float size, const vec3& pos){
+    //cube model
+    SCEHandle<Container> object = SCEScene::CreateContainer(name);
+
+    object->AddComponent<Material>(MATERIAL);
+
+    SCEHandle<Transform> transform = object->AddComponent<Transform>();
+    transform->SetWorldPosition(pos);
+
+    //Mesh::AddCubeMesh(cubeObject, 1.0f);
+    Mesh::AddQuadMesh(object, size, size);
+    object->AddComponent<MeshRenderer>();
+
+    return object;
+}
+
 SCEHandle<Container> createModel(const string& objectName, const string& filename, const vec3& pos){
     SCEHandle<Container> object = SCEScene::CreateContainer(objectName);
 
@@ -94,10 +110,10 @@ int main( void )
     SCEScene::CreateEmptyScene();
 
     //createLight(vec3(4, 4, 1), vec3(30, 0, 30), LightType::DIRECTIONAL_LIGHT);
-    SCEHandle<Container> light1 = createLight(vec3(4, 4, 1), vec3(30, 0, 30), LightType::POINT_LIGHT);
-    //SCEHandle<Container> light2 = createLight(vec3(-4, 4, 1), vec3(30, 0, 30), LightType::POINT_LIGHT);
+    SCEHandle<Container> light1 = createLight(vec3(0.0f, 3.0f, -1.0f), vec3(30, 0, 30), LightType::POINT_LIGHT);
+//    SCEHandle<Container> light2 = createLight(vec3(-4, 4, -1), vec3(30, 0, 30), LightType::POINT_LIGHT);
 
-    //light1->GetComponent<Light>()->SetLightReach(30.0f);
+    light1->GetComponent<Light>()->SetLightReach(1.0f);
 
     //light2->GetComponent<Light>()->SetLightReach(2.0f);
 
@@ -109,20 +125,24 @@ int main( void )
     suz->GetComponent<Transform>()->RotateAroundAxis(vec3(0.0f, 1.0f, 0.0f), 180.0f);
     //createCone("coneObject", 3.0f, vec3(0, 0, 0));
 
-    int nbSpheres = 4;
+    int nbSpheres = 5;
     for(int i = 0; i < nbSpheres; ++i){
-        createSphere("sphereObject", i+2, vec3(4.0f, 4.0f, 1.0f)
-            + normalize(vec3(1.0f, 0.0f, 0.0f)) * 10.0f * float(i+1) / (float)nbSpheres);
+        createSphere("sphereObject", i+2, vec3(0.0f, 0.0f, 0.0f)
+            + normalize(vec3(-1.0f, 0.0f, 0.0f)) * 20.0f * float(i+1) / float(nbSpheres));
+
+        createSphere("sphereObject", i+2, vec3(0.0f, 0.0f, 0.0f)
+            + normalize(vec3(1.0f, 0.0f, 0.0f)) * 20.0f * float(i+1) / float(nbSpheres));
     }
+
+    SCEHandle<Container> plane = createPlane("plane", 50.0f, vec3(0.0f, -2.0f, 2.0f));
+    plane->GetComponent<Transform>()->SetWorldOrientation(vec3(-90.0f, 180.0f, 0.0f));
 
     //Camera
     SCEHandle<Container> cameraObject = SCEScene::CreateContainer("cameraObject");
     SCEHandle<Transform> cameraTransform = cameraObject->AddComponent<Transform>();
     cameraObject->AddComponent<Camera>(40.0f, 4.0f/3.0f, 0.1f, 100.0f);
-    //cameraObject->AddComponent<LookAtTarget>();
-
-    cameraTransform->SetWorldPosition(vec3(0, 0, -25));
-    //cameraTransform->RotateAroundAxis(vec3(0.0f, 1.0f, 0.0f), 180.0f);
+    cameraTransform->SetWorldPosition(vec3(0, 10, -25));
+    cameraTransform->RotateAroundAxis(vec3(1.0f, 0.0f, 0.0f), 90.0f);
 
     //load scene here
     engine.RunEngine();

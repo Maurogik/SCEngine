@@ -17,7 +17,7 @@ public :
 
 protected :
 
-                    LookAtTarget(SCE::SCEHandle<SCE::Container> container);
+                    LookAtTarget(SCE::SCEHandle<SCE::Container> container, const vec3 &target);
 
 private :
 

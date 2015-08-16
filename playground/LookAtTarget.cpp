@@ -10,9 +10,9 @@ using namespace SCE;
 using namespace glm;
 using namespace std;
 
-LookAtTarget::LookAtTarget(SCE::SCEHandle<SCE::Container> container)
+LookAtTarget::LookAtTarget(SCE::SCEHandle<SCE::Container> container, const vec3& target)
     : SCE::GameObject(container, "LookAtTarget"),
-      mWorldTarget(0.0f, 0.0f, 0.0f)
+      mWorldTarget(target)
 {
 
 }
