@@ -55,7 +55,6 @@ namespace SCE
         Type                        mType;
         std::vector<std::string>    mRenderedLayers;
         glm::mat4                   mProjectionMatrix;
-        glm::mat4                   mNegativeZInverter;
 
     };
 

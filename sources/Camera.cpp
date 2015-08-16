@@ -17,8 +17,7 @@ Camera::Camera(SCEHandle<Container> &container)
     : Component(container, "Camera::"),
       mType (PERSPECTIVE),
       mRenderedLayers(),
-      mProjectionMatrix(),
-      mNegativeZInverter()
+      mProjectionMatrix()
 {
     mProjectionMatrix  = glm::perspective(
                 45.0f //Fov
@@ -36,8 +35,7 @@ Camera::Camera(SCEHandle<Container> &container
     : Component(container, "Camera::"),
       mType (PERSPECTIVE),
       mRenderedLayers(),
-      mProjectionMatrix(),
-      mNegativeZInverter()
+      mProjectionMatrix()
 {
     mProjectionMatrix  = glm::perspective(
                   fieldOfView
@@ -58,8 +56,7 @@ Camera::Camera(SCEHandle<Container> &container,
     : Component(container, "Camera::"),
       mType (ORTHOGRAPHIC),
       mRenderedLayers(),
-      mProjectionMatrix(),
-      mNegativeZInverter()
+      mProjectionMatrix()
 {
     mProjectionMatrix = glm::ortho(
                 leftPlane,
@@ -75,7 +72,7 @@ Camera::Camera(SCEHandle<Container> &container,
 void Camera::init()
 {
     //Needed because opengl camera renders along the negative Z axis and I want it to render along the positiv axis
-    mNegativeZInverter = glm::scale(mat4(1.0f), vec3(1.0f, 1.0f, -1.0f));
+    mProjectionMatrix = glm::scale(mProjectionMatrix, vec3(1, 1, -1));
     mRenderedLayers.push_back(DEFAULT_LAYER);
 }
 
@@ -90,10 +87,8 @@ mat4 Camera::GetViewMatrix() const
     const SCEHandle<Transform> transform = GetContainer()->GetComponent<Transform>();
 
     mat4 rotationMat = toMat4(transform->GetWorldQuaternion());
-    //invert the orientation matrix so that the camera looks at the positive Z axis
-    rotationMat = mNegativeZInverter * rotationMat;
     mat4 translationMatrix = translate(mat4(1.0f), transform->GetWorldPosition());
-    return inverse(translationMatrix * rotationMat);
+    return inverse(transform->GetWorldTransform());
 }
 
 const mat4& Camera::GetProjectionMatrix() const
