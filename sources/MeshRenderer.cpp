@@ -66,9 +66,9 @@ void MeshRenderer::initializeGLData(GLuint programID)
     // Get a handle for our "MVP" uniform
 
 
-    mMVPMatrixID    = glGetUniformLocation(programID, "MVP");
-    mViewMatrixID   = glGetUniformLocation(programID, "V");
-    mModelMatrixID  = glGetUniformLocation(programID, "M");
+    mMVPMatrixUniform    = glGetUniformLocation(programID, "MVP");
+    mViewMatrixUniform   = glGetUniformLocation(programID, "V");
+    mModelMatrixUniform  = glGetUniformLocation(programID, "M");
 
     /* Allocate and assign a Vertex Array Object to our handle */
     glGenVertexArrays(1, &mVaoID);
@@ -163,7 +163,7 @@ void MeshRenderer::updateMeshData()
     /* Bind our Vertex Array Object as the current used object */
     glBindVertexArray(mVaoID);
 
-    for(int i = 0; i < mAttributes.size(); ++i)
+    for(size_t i = 0; i < mAttributes.size(); ++i)
     {
         setAttribute( mAttributes[i]
                     , newBuffers[i]
@@ -239,11 +239,9 @@ void MeshRenderer::Render(const SCEHandle<Camera>& cam, bool renderFullScreenQua
 
     // Send our transformation to the currently bound shader,
     // in the "MVP" uniform
-    glUniformMatrix4fv(mMVPMatrixID, 1, GL_FALSE, &MVP[0][0]);
-    glUniformMatrix4fv(mModelMatrixID, 1, GL_FALSE, &modelMatrix[0][0]);
-    glUniformMatrix4fv(mViewMatrixID, 1, GL_FALSE, &viewMatrix[0][0]);
-
-
+    glUniformMatrix4fv(mMVPMatrixUniform, 1, GL_FALSE, &MVP[0][0]);
+    glUniformMatrix4fv(mModelMatrixUniform, 1, GL_FALSE, &modelMatrix[0][0]);
+    glUniformMatrix4fv(mViewMatrixUniform, 1, GL_FALSE, &viewMatrix[0][0]);
 
     //set the attributes
     for(size_t i = 0; i < mAttributes.size(); ++i){

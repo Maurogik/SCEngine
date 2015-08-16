@@ -55,9 +55,9 @@ namespace SCE {
                           , size_t newSize
                           );
 
-        GLuint                      mMVPMatrixID;
-        GLuint                      mViewMatrixID;
-        GLuint                      mModelMatrixID;
+        GLuint                      mMVPMatrixUniform;
+        GLuint                      mViewMatrixUniform;
+        GLuint                      mModelMatrixUniform;
 
         //indexation buffer
         GLuint                      mIndiceBuffer;
