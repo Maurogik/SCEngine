@@ -16,9 +16,11 @@ using namespace std;
 using namespace glm;
 using namespace SCE;
 
-#define REACH_DEFAULT 10.0f
+#define REACH_DEFAULT 1.0f
 #define COLOR_DEFAULT vec4(1.0f, 1.0f, 1.0f, 1.0f)
 #define ANGLE_DEFAULT 45.0f
+
+#define POINT_LIGHT_CUTOFF (1.0/256.0)
 
 #define LIGHT_ROUTINE_COUNT 1
 
@@ -33,7 +35,8 @@ string s_lightUniformNames[LIGHT_UNIFORMS_COUNT] = {
     "SCE_LightDirection_worldspace",
     "SCE_LightReach_worldspace",
     "SCE_LightColor",
-    "SCE_LightMaxAngle"
+    "SCE_LightMaxAngle",
+    "SCE_LightCutoff"
 };
 
 Light::Light(SCEHandle<Container>& container, const LightType &lightType,
@@ -42,6 +45,7 @@ Light::Light(SCEHandle<Container>& container, const LightType &lightType,
       mLightType(lightType),
       mLightReach(REACH_DEFAULT),
       mLightMaxAngle(ANGLE_DEFAULT),
+      mLightCutoff(POINT_LIGHT_CUTOFF),
       mLightColor(COLOR_DEFAULT),
       mLightUniformsByShader(),
       mLightMesh(nullptr),
@@ -49,7 +53,7 @@ Light::Light(SCEHandle<Container>& container, const LightType &lightType,
 {
     SCEScene::RegisterLight(SCEHandle<Light>(this));
     generateLightMesh();
-    initRenderDataForShader(SCELighting::GetLightShader());
+    initRenderDataForShader(SCELighting::GetLightShader(), SCELighting::GetStencilShader());
     //change layer to avoid rendering the light mesh as a regular mesh
     container->SetLayer(LIGHTS_LAYER);
 }
@@ -60,26 +64,26 @@ Light::~Light()
     SCEScene::UnregisterLight(SCEHandle<Light>(this));
 }
 
-
-
-void Light::initRenderDataForShader(const GLuint &shaderId)
+void Light::initRenderDataForShader(GLuint lightShaderId, GLuint stencilShaderId)
 {
-    glUseProgram(shaderId);
+    glUseProgram(lightShaderId);
 
     //get the location for all uniforms, some may not be used but that's ok.
-    for(int type = LIGHT_POSITION; type < LIGHT_UNIFORMS_COUNT; ++type){
+    for(int type = LIGHT_POSITION; type < LIGHT_UNIFORMS_COUNT; ++type)
+    {
         string name = s_lightUniformNames[type];
-        GLuint uniform = glGetUniformLocation(shaderId, name.c_str());
+        GLuint uniform = glGetUniformLocation(lightShaderId, name.c_str());
         //set the uniformId for this uniform and shader if it's not done already
-        if(mLightUniformsByShader[(LightUniformType)type].count(shaderId) == 0)
+        if(mLightUniformsByShader[(LightUniformType)type].count(lightShaderId) == 0)
         {
-            mLightUniformsByShader[(LightUniformType)type][shaderId] = uniform;
+            mLightUniformsByShader[(LightUniformType)type][lightShaderId] = uniform;
         }
     }
 
-    mScreenSizeUniform = glGetUniformLocation(shaderId, SCREEN_SIZE_UNIFORM_NAME);
+    mScreenSizeUniform = glGetUniformLocation(lightShaderId, SCREEN_SIZE_UNIFORM_NAME);
 
-    mLightRenderer = GetContainer()->AddComponent<MeshRenderer>(shaderId);    
+    mLightRenderer = GetContainer()->AddComponent<MeshRenderer>(lightShaderId);
+    mLightStencilRenderer = GetContainer()->AddComponent<MeshRenderer>(stencilShaderId);
 }
 
 void Light::bindRenderDataForShader(const GLuint &shaderId)
@@ -94,7 +98,8 @@ void Light::bindRenderDataForShader(const GLuint &shaderId)
     lightDir = glm::normalize(lightDir);
 
     //send the light data to the uniforms
-    for(int type = LIGHT_POSITION; type < LIGHT_UNIFORMS_COUNT; ++ type){
+    for(int type = LIGHT_POSITION; type < LIGHT_UNIFORMS_COUNT; ++ type)
+    {
         GLuint unifId = mLightUniformsByShader[(LightUniformType)type][shaderId];
 
         switch(type)
@@ -113,6 +118,9 @@ void Light::bindRenderDataForShader(const GLuint &shaderId)
             break;
         case LIGHT_MAX_ANGLE :
             glUniform1f(unifId, mLightMaxAngle);
+            break;
+        case LIGHT_CUTOFF :
+            glUniform1f(unifId, mLightCutoff);
             break;
         default :
             SCE::Debug::LogError("Unknown ligth uniform type : " + type);
@@ -150,15 +158,15 @@ void Light::bindLightModelForShader(const GLuint &shaderId)
     }
 
     GLuint lightSubroutine = glGetSubroutineIndex( shaderId,
-                                                  shaderType, lightSubroutineName.c_str());
+                                                   shaderType, lightSubroutineName.c_str());
 
     //Get the number of active uniforms
     //This is expecting that subroutines are only used for light in this shader
     GLint subroutineUniformCount;
     glGetProgramStageiv(shaderId, shaderType, GL_ACTIVE_SUBROUTINE_UNIFORMS, &subroutineUniformCount);
 
-    if(subroutineUniformCount > 0){
-
+    if(subroutineUniformCount > 0)
+    {
         Debug::Assert(subroutineUniformCount == LIGHT_ROUTINE_COUNT,
                       string("Wrong number of subroutine found in light pass shader \n")
                       + "expected " + std::to_string(LIGHT_ROUTINE_COUNT)
@@ -167,10 +175,14 @@ void Light::bindLightModelForShader(const GLuint &shaderId)
         //array of subroutine index for each subroutine uniform
         //ex : {indexForUniform1, indexForUniform2, indexForUniform3, ...}
         GLuint uniformArray[subroutineUniformCount];
-        for(GLint uniformIndex = 0; uniformIndex < subroutineUniformCount; ++uniformIndex){
-            if(uniformIndex == (GLint)lightSubroutineUniform) {
+        for(GLint uniformIndex = 0; uniformIndex < subroutineUniformCount; ++uniformIndex)
+        {
+            if(uniformIndex == (GLint)lightSubroutineUniform)
+            {
                 uniformArray[uniformIndex] = lightSubroutine;
-            } else {
+            }
+            else
+            {
                 Debug::LogError("Unexepected subroutine found at index : " + uniformIndex);
             }
         }
@@ -190,14 +202,29 @@ void Light::SetLightColor(const glm::vec4 &lightColor)
     mLightColor = lightColor;
 }
 
-void Light::RenderLight(const SCEHandle<Camera> &cam)
+void Light::RenderDeffered(const SCEHandle<Camera> &cam)
 {
     bindRenderDataForShader(SCELighting::GetLightShader());
     bindLightModelForShader(SCELighting::GetLightShader());
-    if(mLightType == DIRECTIONAL_LIGHT){
+    if(mLightType == DIRECTIONAL_LIGHT)
+    {
         mLightRenderer->Render(cam, true);
-    } else {
+    }
+    else
+    {
         mLightRenderer->Render(cam);
+    }
+}
+
+void Light::RenderForStencil(const SCEHandle<Camera>& cam)
+{
+    if(mLightType == DIRECTIONAL_LIGHT)
+    {
+        mLightStencilRenderer->Render(cam, true);
+    }
+    else
+    {
+        mLightStencilRenderer->Render(cam);
     }
 }
 
@@ -225,10 +252,12 @@ void Light::SetLightReach(float lightReach)
 
 void Light::generateLightMesh()
 {
-    if(mLightMesh){
+    if(mLightMesh)
+    {
         GetContainer()->RemoveComponent<Mesh>(mLightMesh);
     }
-    switch(mLightType) {
+    switch(mLightType)
+    {
     case POINT_LIGHT:
         generatePointLightMesh();
         break;
@@ -242,6 +271,7 @@ void Light::generateLightMesh()
     if(mLightRenderer)
     {
         mLightRenderer->UpdateRenderedMesh();
+        mLightStencilRenderer->UpdateRenderedMesh();
     }
 }
 
@@ -259,7 +289,17 @@ void Light::generateSpotLightMesh()
 
 void Light::generatePointLightMesh()
 {
+    //Compute radius at which light intensity goes under some threshold
+//    float lightSphereRadius2 = sqrt(mLightReach / POINT_LIGHT_CUTOFF);
+
+    //Compute radius at which light intensity goes under some threshold
+    //using solution to quadratic equation 1/square(x/r + 1) = cutoff(c)
+    //s = (-2*r + sqrt(4*r*r/c))/2
+    float lightSphereRadius = 0.0f;
+    float delta = (4.0f * mLightReach * mLightReach)/mLightCutoff;
+    lightSphereRadius = (-2.0f * mLightReach  + sqrt(delta))/2.0f;
+
     SCEHandle<Container> container = GetContainer();
-    mLightMesh = Mesh::AddSphereMesh(container, mLightReach, 4.0f);
+    mLightMesh = Mesh::AddSphereMesh(container, lightSphereRadius, 4.0f);
 }
 

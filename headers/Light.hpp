@@ -21,6 +21,7 @@ namespace SCE {
         LIGHT_REACH,
         LIGHT_COLOR,
         LIGHT_MAX_ANGLE,
+        LIGHT_CUTOFF,
         LIGHT_UNIFORMS_COUNT
     };
 
@@ -45,7 +46,8 @@ namespace SCE {
         const glm::vec4&    GetLightColor() const;
         void                SetLightColor(const vec4& lightColor);
 
-        void                RenderLight(const SCEHandle<Camera> &cam);
+        void                RenderDeffered(const SCEHandle<Camera> &cam);
+        void                RenderForStencil(const SCEHandle<Camera> &cam);
 
     protected :
 
@@ -58,15 +60,17 @@ namespace SCE {
         LightType                   mLightType;
         float                       mLightReach;
         float                       mLightMaxAngle;
+        float                       mLightCutoff;
         glm::vec4                   mLightColor;
         //array containing a map of uniforms Id by shader ID, for each light uniform type
         std::map<GLuint, GLuint>    mLightUniformsByShader[LIGHT_UNIFORMS_COUNT];
         SCEHandle<Mesh>             mLightMesh;
         SCEHandle<MeshRenderer>     mLightRenderer;
+        SCEHandle<MeshRenderer>     mLightStencilRenderer;
         //tmp
         GLuint                      mScreenSizeUniform;
 
-        void                        initRenderDataForShader(const GLuint &shaderId);
+        void                        initRenderDataForShader(GLuint lightShaderId, GLuint stencilShaderId);
         void                        bindRenderDataForShader(const GLuint &shaderId);
         void                        bindLightModelForShader(const GLuint &shaderId);
 
