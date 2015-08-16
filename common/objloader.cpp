@@ -21,7 +21,8 @@ bool loadOBJ(
 	const char * path, 
 	std::vector<glm::vec3> & out_vertices, 
 	std::vector<glm::vec2> & out_uvs,
-	std::vector<glm::vec3> & out_normals
+    std::vector<glm::vec3> & out_normals,
+    unsigned int windClockWise
 ){
 	printf("Loading OBJ file %s...\n", path);
 
@@ -69,15 +70,32 @@ bool loadOBJ(
 				printf("File can't be read by our simple parser :-( Try exporting with other options\n");
 				return false;
 			}
-			vertexIndices.push_back(vertexIndex[0]);
-			vertexIndices.push_back(vertexIndex[1]);
-			vertexIndices.push_back(vertexIndex[2]);
-			uvIndices    .push_back(uvIndex[0]);
-			uvIndices    .push_back(uvIndex[1]);
-			uvIndices    .push_back(uvIndex[2]);
-			normalIndices.push_back(normalIndex[0]);
-			normalIndices.push_back(normalIndex[1]);
-			normalIndices.push_back(normalIndex[2]);
+
+            if(windClockWise)
+            {
+                vertexIndices.push_back(vertexIndex[0]);
+                vertexIndices.push_back(vertexIndex[1]);
+                vertexIndices.push_back(vertexIndex[2]);
+                uvIndices    .push_back(uvIndex[0]);
+                uvIndices    .push_back(uvIndex[1]);
+                uvIndices    .push_back(uvIndex[2]);
+                normalIndices.push_back(normalIndex[0]);
+                normalIndices.push_back(normalIndex[1]);
+                normalIndices.push_back(normalIndex[2]);
+            }
+            else
+            {
+                vertexIndices.push_back(vertexIndex[2]);
+                vertexIndices.push_back(vertexIndex[1]);
+                vertexIndices.push_back(vertexIndex[0]);
+                uvIndices    .push_back(uvIndex[2]);
+                uvIndices    .push_back(uvIndex[1]);
+                uvIndices    .push_back(uvIndex[0]);
+                normalIndices.push_back(normalIndex[2]);
+                normalIndices.push_back(normalIndex[1]);
+                normalIndices.push_back(normalIndex[0]);
+            }
+
 		}else{
 			// Probably a comment, eat up the rest of the line
 			char stupidBuffer[1000];

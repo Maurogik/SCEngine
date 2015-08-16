@@ -6,7 +6,6 @@ using namespace glm;
 
 #include "quaternion_utils.hpp"
 
-
 // Returns a quaternion such that q*start = dest
 quat RotationBetweenVectors(vec3 start, vec3 dest){
 	start = normalize(start);
@@ -45,8 +44,6 @@ quat RotationBetweenVectors(vec3 start, vec3 dest){
 
 }
 
-
-
 // Returns a quaternion that will make your object looking towards 'direction'.
 // Similar to RotationBetweenVectors, but also controls the vertical orientation.
 // This assumes that at rest, the object faces +Z.
@@ -73,8 +70,6 @@ quat QuatLookAt(vec3 direction, vec3 desiredUp){
 	return rot2 * rot1; // remember, in reverse order.
 }
 
-
-
 // Like SLERP, but forbids rotation greater than maxAngle (in radians)
 // In conjunction to LookAt, can make your characters 
 quat RotateTowards(quat q1, quat q2, float maxAngle){
@@ -100,7 +95,7 @@ quat RotateTowards(quat q1, quat q2, float maxAngle){
 	
 	float angle = acos(cosTheta);
 	
-	// If there is only a 2° difference, and we are allowed 5°,
+	// If there is only a 2Â° difference, and we are allowed 5Â°,
 	// then we arrived.
 	if (angle < maxAngle){
 		return q2;
@@ -116,25 +111,6 @@ quat RotateTowards(quat q1, quat q2, float maxAngle){
 	
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 void tests(){
 
 	glm::vec3 Xpos(+1.0f,  0.0f,  0.0f);
@@ -145,7 +121,7 @@ void tests(){
 	glm::vec3 Zneg( 0.0f,  0.0f, -1.0f);
 	
 	// Testing standard, easy case
-	// Must be 90° rotation on X : 0.7 0 0 0.7
+	// Must be 90Â° rotation on X : 0.7 0 0 0.7
 	quat X90rot = RotationBetweenVectors(Ypos, Zpos);
 	
 	// Testing with v1 = v2
@@ -153,11 +129,11 @@ void tests(){
 	quat id = RotationBetweenVectors(Xpos, Xpos);
 	
 	// Testing with v1 = -v2
-	// Must be 180° on +/-Y axis : 0 +/-1 0 0
+	// Must be 180Â° on +/-Y axis : 0 +/-1 0 0
 	quat Y180rot = RotationBetweenVectors(Xpos, Xneg);
 	
 	// Testing with v1 = -v2, but with a "bad first guess"
-	// Must be 180° on +/-Y axis : 0 +/-1 0 0
+	// Must be 180Â° on +/-Y axis : 0 +/-1 0 0
 	quat X180rot = RotationBetweenVectors(Zpos, Zneg);
 	
 
