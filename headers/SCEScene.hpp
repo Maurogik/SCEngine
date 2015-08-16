@@ -54,6 +54,9 @@ namespace SCE {
         static void     RemoveContainer(int objId);
 
         void            renderSceneWithCamera(const SCEHandle<Camera> &camera);
+        void            renderGeometryPass(const SCEHandle<Camera> &camera);
+        void            renderLightStencilPass(const SCEHandle<Camera> &camera, SCEHandle<Light> light);
+        void            renderLightPass(const SCEHandle<Camera> &camera, SCEHandle<Light> light);
         void            resetClearColorToDefault();
 
         std::vector<Container*>             mContainers;

@@ -9,6 +9,7 @@
 #define SCE_LIGHTING_HPP
 
 #include "SCEDefines.hpp"
+#include "SCE_GBuffer.hpp"
 
 namespace SCE
 {
@@ -16,17 +17,26 @@ namespace SCE
     {
     public :
 
+        SCELighting();
+
         static void         Init();
         static void         CleanUp();
-        static void         StartLightPass();
+        static void         StartLightRenderPass();
+        static void         StartLightStencilPass();
         static GLuint       GetLightShader();
+        static GLuint       GetStencilShader();
+        static GLuint       GetTextureSamplerUniform(SCE_GBuffer::GBUFFER_TEXTURE_TYPE textureType);
 
     private :
 
-        static GLuint       s_DefaultLightShader;
+        static SCELighting* s_instance;
 
-        static void         initLightShader();
+        GLuint              mDefaultLightShader;
+        GLuint              mLightStencilShader;
+        std::string         mTexSamplerNames[SCE_GBuffer::GBUFFER_NUM_TEXTURES];
+        GLuint              mTexSamplerUniforms[SCE_GBuffer::GBUFFER_NUM_TEXTURES];
 
+        void         initLightShader();
     };
 }
 

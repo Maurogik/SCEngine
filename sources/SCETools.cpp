@@ -113,6 +113,7 @@ namespace ShaderTools {
 
     GLuint CompileShader(const string &shaderFileName)
     {
+        Internal::Log("TODO : cache shaders once compiled to avoid compiling again");
         string fullPath = RESSOURCE_PATH + shaderFileName + SHADER_SUFIX;
 
         // Create the shaders
@@ -165,8 +166,8 @@ namespace ShaderTools {
         int InfoLogLength;
 
 
-        Internal::Log("Vertex shader : \n\n" + vertexCode);
-        Internal::Log("Fragment shader : \n\n" + fragmentCode);
+        //Internal::Log("Vertex shader : \n\n" + vertexCode);
+        //Internal::Log("Fragment shader : \n\n" + fragmentCode);
 
 
         Internal::Log("Compiling shader at " + fullPath);

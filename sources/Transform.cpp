@@ -63,7 +63,7 @@ vec3 Transform::GetWorldScale() const
 
 vec3 Transform::GetLocalOrientation() const
 {
-    return QuatToEuler(mOrientation);
+    return degrees(QuatToEuler(mOrientation));
 }
 
 vec3 Transform::GetWorldOrientation() const
@@ -71,7 +71,7 @@ vec3 Transform::GetWorldOrientation() const
     if(!mParent) {
         return GetLocalOrientation();
     } else {
-        return QuatToEuler(GetWorldQuaternion());
+        return degrees(QuatToEuler(GetWorldQuaternion()));
     }
 }
 
@@ -135,12 +135,12 @@ vec3 Transform::Up() const
 
 vec3 Transform::Left() const
 {
-    return LocalToWorldDir(vec3(1, 0, 0));
+    return LocalToWorldDir(vec3(-1, 0, 0));
 }
 
 vec3 Transform::Right() const
 {
-    return LocalToWorldDir(vec3(-1, 0, 0));
+    return LocalToWorldDir(vec3(1, 0, 0));
 }
 
 vec3 Transform::Down() const
@@ -182,7 +182,7 @@ void Transform::SetLocalScale(const vec3 &scale)
 
 void Transform::SetLocalOrientation(const vec3 &orientation)
 {
-    mOrientation = glm::quat(orientation);
+    mOrientation = quat(radians(orientation));
 }
 
 void Transform::SetWorldOrientation(const vec3 &orientation)
@@ -190,7 +190,7 @@ void Transform::SetWorldOrientation(const vec3 &orientation)
     if(!mParent){
         SetLocalOrientation(orientation);
     } else {
-        quat worldOrientation = quat(orientation);
+        quat worldOrientation = quat(radians(orientation));
         quat parentQuat = mParent->GetWorldQuaternion();
         parentQuat = inverse(parentQuat);
         mOrientation = parentQuat * worldOrientation;
@@ -207,7 +207,9 @@ void Transform::RotateAroundAxis(const vec3 &axis, float angle)
     if(mParent){
         locAxis = mParent->WorldToLocalDir(axis);
     }
-    quat rotation = angleAxis(angle, locAxis);
+    //glm angle unit is radians
+    float rads = radians(angle);
+    quat rotation = angleAxis(rads, locAxis);
     mOrientation = mOrientation * rotation;
 }
 
@@ -222,7 +224,9 @@ void Transform::RotateAroundPivot(const glm::vec3& pivot, const glm::vec3& axis,
     vec3 move = locPivot - mTranslation;
     mTranslation += move;
 
-    quat rotation = angleAxis(angle, locAxis);
+    //glm angle unit is radians
+    float rads = radians(angle);
+    quat rotation = angleAxis(rads, locAxis);
     mOrientation = mOrientation * rotation;
     move = rotation * move;
     mTranslation -= move;

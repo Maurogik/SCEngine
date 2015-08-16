@@ -21,16 +21,17 @@ namespace SCE {
             GBUFFER_TEXTURE_TYPE_POSITION = 0,
             GBUFFER_TEXTURE_TYPE_DIFFUSE,
             GBUFFER_TEXTURE_TYPE_NORMAL,
-            //GBUFFER_TEXTURE_TYPE_TEXCOORD,
             GBUFFER_NUM_TEXTURES
         };
 
                 SCE_GBuffer();
                 ~SCE_GBuffer();
         bool    Init(unsigned int windowWidth, unsigned int windowHeight);
-        void    BindForWriting();
-        void    BindForReading();
-        void    BindTexturesForShader(GLuint shaderID);
+        void    BindForGeometryPass();
+        void    BindForStencilPass();
+        void    BindForLightPass();
+        void    BindForFinalPass();
+        void    BindTexturesToLightShader();
         void    SetReadBuffer(GBUFFER_TEXTURE_TYPE TextureType);
 
     private :
@@ -38,6 +39,7 @@ namespace SCE {
         GLuint      mFBOId;
         GLuint      mTextures[GBUFFER_TEXTURE_COUNT];
         GLuint      mDepthTexture;
+        GLuint      mFinalTexture;
 
     };
 }

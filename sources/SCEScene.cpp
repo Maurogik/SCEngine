@@ -27,13 +27,11 @@ SCE::SCEScene::SCEScene()
     glEnable(GL_DEPTH_TEST);
     // Accept fragment if it closer to the camera than the former one
     glDepthFunc(GL_LEQUAL);
-    //glDepthFunc(GL_LESS);
     // Cull triangles which normal is not towards the camera
-    glFrontFace(GL_CW);
+    glFrontFace(GL_CCW); //this is the default open gl winding order
     glEnable(GL_CULL_FACE);
 
     //initialize the Gbuffer used to deferred lighting
-
     mLightingGBuffer.Init(SCECore::GetWindowWidth(), SCECore::GetWindowHeight());
 }
 
@@ -119,21 +117,29 @@ void SCEScene::UpdateScene()
 
     GLFWwindow* window = SCECore::GetWindow();
     SCEHandle<Transform> transform = contPtr->GetComponent<Transform>();
-    vec3 position = transform->GetLocalPosition();
 
-    // glfwGetTime is called only once, the first time this function is called
-    static double lastTime = glfwGetTime();
+    double xMouse = 0.0;
+    double yMouse = 0.0;
 
-    // Compute time difference between current and last frame
-    double currentTime = glfwGetTime();
-    float deltaTime = float(currentTime - lastTime);
-    lastTime = currentTime;
+    glfwGetCursorPos(window, &xMouse, &yMouse);
 
-    float rotateSpeed = 45.0f;
+    static double prevX = 0.0;
+    static double prevY = 0.0;
+
+    double xDelta = xMouse - prevX;
+    double yDelta = yMouse - prevY;
+
+    prevX = xMouse;
+    prevY = yMouse;
+
+    float deltaTime = SCETime::DeltaTime();
+
+    float rotateSpeed = 250.0f;
     float speed = 5.0f;
 
-    //vec3 forward(0, 0, 1);
-    //vec3 left(1, 0 ,0);
+    vec3 position = transform->GetWorldPosition();
+    transform->RotateAroundAxis(vec3(0, 1, 0), xDelta * rotateSpeed * deltaTime);
+    transform->RotateAroundAxis(vec3(1, 0, 0), yDelta * rotateSpeed * deltaTime);  
 
     vec3 forward = transform->Forward();
     vec3 left = transform->Left();
@@ -155,15 +161,7 @@ void SCEScene::UpdateScene()
         position += left * deltaTime * speed;
     }
 
-    if(glfwGetKey( window, GLFW_KEY_Q ) == GLFW_PRESS){
-        transform->RotateAroundAxis(vec3(0, 1, 0), rotateSpeed * deltaTime);
-    }
-
-    if(glfwGetKey( window, GLFW_KEY_D ) == GLFW_PRESS){
-        transform->RotateAroundAxis(vec3(0, 1, 0), -rotateSpeed * deltaTime);
-    }
-
-    transform->SetLocalPosition(position);
+    transform->SetWorldPosition(position);
     /** End of temporary**/
 }
 
@@ -262,12 +260,13 @@ std::vector<SCEHandle<Light> > SCEScene::FindLightsInRange(const glm::vec3 &worl
     return s_scene->mLights;
 }
 
+/*** Debug functions ***/
 void debugDeferredLighting(SCE_GBuffer &mLightingGBuffer){
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    mLightingGBuffer.BindForReading();
+    mLightingGBuffer.BindForLightPass();
 
     GLsizei width = SCECore::GetWindowWidth();
     GLsizei height = SCECore::GetWindowHeight();
@@ -275,49 +274,137 @@ void debugDeferredLighting(SCE_GBuffer &mLightingGBuffer){
     mLightingGBuffer.SetReadBuffer(SCE_GBuffer::GBUFFER_TEXTURE_TYPE_DIFFUSE);
     glBlitFramebuffer(0, 0, width, height,
                       0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+}
 
+void printGLState()
+{
 
-    //    GLsizei HalfWidth = (GLsizei)(width / 2);
-    //    GLsizei HalfHeight = (GLsizei)(height / 2);
+    GLboolean depthMask;
+    glGetBooleanv(GL_DEPTH_WRITEMASK, &depthMask);
 
-    //    mLightingGBuffer.SetReadBuffer(SCE_GBuffer::GBUFFER_TEXTURE_TYPE_POSITION);
-    //    glBlitFramebuffer(0, 0, width, height,
-    //                    0, 0, HalfWidth, HalfHeight, GL_COLOR_BUFFER_BIT, GL_LINEAR);
-
-    //    mLightingGBuffer.SetReadBuffer(SCE_GBuffer::GBUFFER_TEXTURE_TYPE_DIFFUSE);
-    //    glBlitFramebuffer(0, 0, width, height,
-    //                    0, HalfHeight, HalfWidth, height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
-
-    //    mLightingGBuffer.SetReadBuffer(SCE_GBuffer::GBUFFER_TEXTURE_TYPE_NORMAL);
-    //    glBlitFramebuffer(0, 0, width, height,
-    //                    HalfWidth, HalfHeight, width, height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+    Debug::Log("GL_DEPTH_WRITEMASK " + std::to_string(depthMask));
+    //Debug::Log("GL_DEPTH_FUNC" + std::to_string(glGet(GL_DEPTH_FUNC)));
+    Debug::Log("GL_DEPTH_TEST " + std::to_string(glIsEnabled(GL_DEPTH_TEST)));
 
 }
 
+void debugDepthPixels(SCE_GBuffer &mLightingGBuffer)
+{
+    //mLightingGBuffer.BindForStencilPass();
+
+    GLsizei width = SCECore::GetWindowWidth();
+    GLsizei height = SCECore::GetWindowHeight();
+    //GLuint* pixels = new GLuint[width * height];
+    GLfloat* pixels = new GLfloat[width * height];
+
+    glReadPixels(
+        0,
+        0,
+        width,
+        height,
+        GL_DEPTH_COMPONENT,
+        GL_FLOAT,//GL_UNSIGNED_INT,
+        pixels);
+
+    string pixelStr = "";
+    for ( int i = 0; i < height; ++i)
+    {
+        for ( int j = 0; j < width; ++j )
+        {
+            float pixel = pixels[(width * i) + j];
+            string str = std::to_string(pixel);
+            str.erase ( str.find_last_not_of('0') + 1, std::string::npos );
+            pixelStr += str + ", ";
+        }
+        pixelStr += "\n";
+    }
+
+    Debug::Log(pixelStr);
+    Debug::Log("\n //////////////////////////////////////////////// \n");
+}
+
+void debugStencilPixels()
+{
+    //mLightingGBuffer.BindForStencilPass();
+
+    GLsizei width = SCECore::GetWindowWidth();
+    GLsizei height = SCECore::GetWindowHeight();
+    //GLuint* pixels = new GLuint[width * height];
+    GLuint* pixels = new GLuint[width * height];
+
+    glReadPixels(
+        0,
+        0,
+        width,
+        height,
+        GL_STENCIL_INDEX,//GL_DEPTH_COMPONENT,
+        GL_UNSIGNED_INT,
+        pixels);
+
+    string pixelStr = "";
+    for ( int i = 0; i < height; ++i)
+    {
+        for ( int j = 0; j < width; ++j )
+        {
+            unsigned int pixel = pixels[(width * i) + j];
+            string str = std::to_string(pixel);
+            pixelStr += str + ", ";
+        }
+        pixelStr += "\n";
+    }
+
+    Debug::Log(pixelStr); 
+}
+/*** end of debug ***/
+
 void SCEScene::renderSceneWithCamera(const SCEHandle<Camera> &camera)
 {
-    //TODO use stencyl buffer to only light pixel that are actually under light
+    renderGeometryPass(camera);
 
-    //Geometry pass
+    //debugPixels(mLightingGBuffer);
+
+
+    //Render lights with stencil test and no writting to depth buffer
+    glEnable(GL_STENCIL_TEST);
+    glDepthMask(GL_FALSE);
+
+    for(size_t i = 0; i < mLights.size(); ++i)
+    {
+        renderLightStencilPass(camera, mLights[i]);
+        renderLightPass(camera, mLights[i]);
+    }
+
+    glDisable(GL_STENCIL_TEST);
+
+    //Render final image from GBuffer to window framebuffer
+    mLightingGBuffer.BindForFinalPass();
+
+    GLsizei width = SCECore::GetWindowWidth();
+    GLsizei height = SCECore::GetWindowHeight();
+
+    //TODO hook post-processing pipeline here
+    glBlitFramebuffer(0, 0, width, height,
+                      0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+
+    //reset to default framebufffer
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void SCEScene::renderGeometryPass(const SCEHandle<Camera> &camera)
+{
     //render objects without lighting
-
-    mLightingGBuffer.BindForWriting();
-//    float clearPosition[4] = {0.0f, 0.0f, 1.0f, 1.0f};
-//    glClearBufferfv(GL_COLOR,
-//                    SCE_GBuffer::GBUFFER_TEXTURE_TYPE_DIFFUSE,
-//                    clearPosition);
-    // Only the geometry pass updates the depth buffer
-    glDepthMask(GL_TRUE);  
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    glEnable(GL_CULL_FACE);
+    mLightingGBuffer.BindForGeometryPass();
+    // The geometry pass updates the depth buffer
+    glDepthMask(GL_TRUE);
     glEnable(GL_DEPTH_TEST);
-    glDisable(GL_BLEND);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
 
     for(size_t i = 0; i < mContainers.size(); ++i){
         if(mContainers[i]->HasComponent<MeshRenderer>()
-           && camera->IsLayerRendered( mContainers[i]->GetLayer() )){
-
+           && camera->IsLayerRendered( mContainers[i]->GetLayer() ))
+        {
             SCEHandle<Material> mat = mContainers[i]->GetComponent<Material>();
             // Use the shader
             mat->BindMaterialData();
@@ -326,44 +413,61 @@ void SCEScene::renderSceneWithCamera(const SCEHandle<Camera> &camera)
             renderer->Render(camera);
         }
     }
+}
 
-    // When we get here the depth buffer is already populated and the other pass
-    // depends on it, but it does not write to it.
-    glDepthMask(GL_FALSE);
+void SCEScene::renderLightStencilPass(const SCEHandle<Camera>& camera, SCEHandle<Light> light)
+{
+    //use empty shader for stencil pass (only need to do VS for depth test)
+    SCELighting::StartLightStencilPass();
+    mLightingGBuffer.BindForStencilPass();
 
-    //glDisable(GL_DEPTH_TEST);
+    //avoid writting in color and depth buffers in stencyl pass
+    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+    glStencilMask(0xFF); //enable writting to stencil
+    glEnable(GL_DEPTH_TEST);
+    glDisable(GL_CULL_FACE);
+    glClear(GL_STENCIL_BUFFER_BIT);
+    // We need the stencil test to be enabled but we want it
+    // to always succeed. Only the depth test matters.
+    glStencilFunc(GL_ALWAYS, 0, 0xFF);
 
-//    debugDeferredLighting(mLightingGBuffer);
-//    return;
+    //glStencilOpSeparate(GLenum face,  GLenum sfail,  GLenum dpfail,  GLenum dppass)
+    glStencilOpSeparate(GL_BACK, GL_KEEP, GL_INCR_WRAP, GL_KEEP);
+    glStencilOpSeparate(GL_FRONT, GL_KEEP, GL_DECR_WRAP, GL_KEEP);
 
-    //render lights
+    light->RenderForStencil(camera);
 
-//    glDisable(GL_CULL_FACE);
+    //re enable color writting
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+}
 
-    SCELighting::StartLightPass();
-
-
-
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    mLightingGBuffer.BindForReading();
-
-//    GLsizei width = SCECore::GetWindowWidth();
-//    GLsizei height = SCECore::GetWindowHeight();
-
-//    mLightingGBuffer.SetReadBuffer(SCE_GBuffer::GBUFFER_TEXTURE_TYPE_DIFFUSE);
-//    glBlitFramebuffer(0, 0, width, height,
-//                      0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
-
-    mLightingGBuffer.BindTexturesForShader(SCELighting::GetLightShader());
+void SCEScene::renderLightPass(const SCEHandle<Camera>& camera, SCEHandle<Light> light)
+{
+    SCELighting::StartLightRenderPass();
+    mLightingGBuffer.BindForLightPass();
+    mLightingGBuffer.BindTexturesToLightShader();
 
     glEnable(GL_BLEND);
     glBlendEquation(GL_FUNC_ADD);
     glBlendFunc(GL_ONE, GL_ONE);
+    glStencilMask(0x00); //dont write to stencil buffer in this pass
 
-    for(size_t i = 0; i < mLights.size(); ++i){
-        mLights[i]->RenderLight(camera);
-    }
+    //only render pixels with stendil value > 0
+    glStencilFunc(GL_NOTEQUAL, 0, 0xFF);
+
+//    glStencilFunc(GL_ALWAYS, 0, 0);
+
+    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+
+    glDisable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_FRONT);
+
+    //render light
+    light->RenderDeffered(camera);
+
+    glCullFace(GL_BACK);
+    glDisable(GL_BLEND);
 }
 
 void SCEScene::resetClearColorToDefault()
