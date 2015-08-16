@@ -20,6 +20,7 @@ _{
     uniform float   SCE_LightReach_worldspace;
     uniform vec4    SCE_LightColor;
     uniform float   SCE_LightMaxAngle;
+    uniform float   SCE_LightCutoff;
 
     void main(){
 
@@ -49,12 +50,22 @@ _{
     uniform float   SCE_LightReach_worldspace;
     uniform vec4    SCE_LightColor;
     uniform float   SCE_LightMaxAngle;
+    uniform float   SCE_LightCutoff;
 
 #define LIGHT_SUBROUTINE_PARAMS in vec3 in_LightDirection_cameraspace,\
     in vec3 in_Normal_cameraspace,\
     in vec3 in_EyeDirection_cameraspace,\
     in vec3 in_LightToFrag_cameraspace,\
     in float in_LightReach_cameraspace
+
+
+    float mapToRange(float fromMin, float fromMax, float toMin, float toMax, float val)
+    {
+        val = max(fromMin, (min(fromMax, val)));//clamp in range if outside
+        float fromSize = fromMax - fromMin;
+        val = (val - fromMin) / fromSize;
+        return mix(toMin, toMax, val);
+    }
 
     //define a subroutine signature
     subroutine vec4 SCE_ComputeLightType(LIGHT_SUBROUTINE_PARAMS);
@@ -93,20 +104,26 @@ _{
         vec3 reflectedLight = reflect(dirToLight, in_Normal_cameraspace);
         float EdotL         = clamp( dot(eyeDir, reflectedLight), 0.0 ,1.0 );
 
-        float sqDist        = dot(in_LightToFrag_cameraspace, in_LightToFrag_cameraspace);
-        float falloffDist   = 6.0;//inverse square law falls to zero at approximatly 5
         float lightReach    = in_LightReach_cameraspace;
-        float distCoef      = lightReach / falloffDist / sqDist;
+
+        float dist              = length(in_LightToFrag_cameraspace);
+        float d = max(dist - lightReach, 0);
+        // calculate basic attenuation
+        float denom = d/lightReach + 1;
+        float attenuation = 1 / (denom*denom);
+
+        // scale and bias attenuation such that:
+        //   attenuation == 0 at extent of max influence
+        //   attenuation == 1 when d == 0
+        attenuation = (attenuation - SCE_LightCutoff) / (1 - SCE_LightCutoff);
+        attenuation = max(attenuation, 0);
 
         vec3 light  = vec3(
                     NdotL, //diffuse lighting
                     pow(EdotL, 5.0), //specular component
                     1.0);
-        light *= distCoef;
 
-        //light = vec3(distance / lightReach) + light * 0.001;
-
-//        return vec4(1.0, 1.0, 0.0, 1.0) + vec4(light, 1.0) * 0.001;
+        light *= attenuation;
         return vec4(light, 1.0);
     }
 
@@ -152,7 +169,7 @@ _{
         color = vec4( //Diffuse
                       MaterialDiffuseColor * lightCol.x * SCE_LightColor.rgb * SCE_LightColor.a +
                       //Specular
-                      lightCol.y, 1.0);
+                      + lightCol.y, 1.0);
 
         //gamma correction
         color = pow(color, vec4(1.0/2.2));
