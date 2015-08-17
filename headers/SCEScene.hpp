@@ -10,8 +10,6 @@
 #include "Container.hpp"
 #include "SCEDefines.hpp"
 #include "Light.hpp"
-#include "SCE_GBuffer.hpp"
-
 
 namespace SCE {
 
@@ -53,18 +51,13 @@ namespace SCE {
 
         static void     RemoveContainer(int objId);
 
-        void            renderSceneWithCamera(const SCEHandle<Camera> &camera);
-        void            renderGeometryPass(const SCEHandle<Camera> &camera);
-        void            renderLightStencilPass(const SCEHandle<Camera> &camera, SCEHandle<Light> light);
-        void            renderLightPass(const SCEHandle<Camera> &camera, SCEHandle<Light> light);
-        void            resetClearColorToDefault();
+        void            renderSceneWithCamera(const SCEHandle<Camera> &camera);        
 
         std::vector<Container*>             mContainers;
         std::vector<SCEHandle<Light>>       mLights;
         std::vector<SCEHandle<GameObject>>  mGameObjects;
-        int                                 mLastId;
-        SCE::SCE_GBuffer                    mLightingGBuffer;
-        glm::vec4                           mDefaultClearColor;
+        int                                 mLastId;       
+
 
         /*****Static*****/
         static SCEScene*                       s_scene;

@@ -11,6 +11,7 @@
 #include "Camera.hpp"
 #include "Mesh.hpp"
 #include "MeshRenderer.hpp"
+#include "SCE_GBuffer.hpp"
 #include <map>
 
 namespace SCE {
@@ -44,10 +45,10 @@ namespace SCE {
         void                SetLightMaxAngle(float lightMaxAngle);
 
         const glm::vec4&    GetLightColor() const;
-        void                SetLightColor(const vec4& lightColor);
+        void                SetLightColor(const vec4 &lightColor);
 
-        void                RenderDeffered(const SCEHandle<Camera> &cam);
-        void                RenderForStencil(const SCEHandle<Camera> &cam);
+        void                RenderDeffered(const SCEHandle<Camera>& camera);
+        void                RenderToStencil(const SCEHandle<Camera>& camera);
 
     protected :
 
@@ -71,8 +72,8 @@ namespace SCE {
         GLuint                      mScreenSizeUniform;
 
         void                        initRenderDataForShader(GLuint lightShaderId, GLuint stencilShaderId);
-        void                        bindRenderDataForShader(const GLuint &shaderId);
-        void                        bindLightModelForShader(const GLuint &shaderId);
+        void                        bindRenderDataForShader(GLuint shaderId);
+        void                        bindLightModelForShader(GLuint shaderId);
 
         void                        generateLightMesh();
         void                        generateDirectionalLightMesh();

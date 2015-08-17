@@ -8,6 +8,7 @@
 #include "../headers/SCE_GLDebug.hpp"
 #include "../headers/SCEInternal.hpp"
 #include "../headers/SCELighting.hpp"
+#include "../headers/SCERender.hpp"
 
 using namespace SCE;
 using namespace std;
@@ -91,6 +92,7 @@ void SCECore::InitEngine(const std::string &windowName)
     //Init Engine subcomponents in order
     SCETime::Init();
     SCELighting::Init();
+    SCERender::Init();
 }
 
 void SCECore::RunEngine()
@@ -114,6 +116,8 @@ void SCECore::CleanUpEngine()
     Internal::Log("Cleaning up engine");
     SCEScene::DestroyScene();
 
+    //clean engine subcomponents
+    SCERender::CleanUp();
     SCELighting::CleanUp();
     SCETime::CleanUp();
 

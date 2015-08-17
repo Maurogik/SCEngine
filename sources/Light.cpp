@@ -86,7 +86,7 @@ void Light::initRenderDataForShader(GLuint lightShaderId, GLuint stencilShaderId
     mLightStencilRenderer = GetContainer()->AddComponent<MeshRenderer>(stencilShaderId);
 }
 
-void Light::bindRenderDataForShader(const GLuint &shaderId)
+void Light::bindRenderDataForShader(GLuint shaderId)
 {
     glUseProgram(shaderId);
 
@@ -130,7 +130,7 @@ void Light::bindRenderDataForShader(const GLuint &shaderId)
     glUniform2f(mScreenSizeUniform, SCECore::GetWindowWidth(), SCECore::GetWindowHeight());
 }
 
-void Light::bindLightModelForShader(const GLuint &shaderId)
+void Light::bindLightModelForShader(GLuint shaderId)
 {
     glUseProgram(shaderId);
 
@@ -138,7 +138,9 @@ void Light::bindLightModelForShader(const GLuint &shaderId)
     GLuint shaderType = GL_FRAGMENT_SHADER; //always fragment shader for lighting computations (for now)
 
     //get the index of the subroutine uniform (form 0 to nb of subroutines uniforms)
-    GLuint lightSubroutineUniform = glGetSubroutineUniformLocation(shaderId, shaderType, COMPUTE_LIGHT_UNIFORM_NAME);
+    GLuint lightSubroutineUniform = glGetSubroutineUniformLocation(shaderId,
+                                                                   shaderType,
+                                                                   COMPUTE_LIGHT_UNIFORM_NAME);
 
     string lightSubroutineName("UnknownLightType");
     switch(mLightType)
@@ -158,7 +160,8 @@ void Light::bindLightModelForShader(const GLuint &shaderId)
     }
 
     GLuint lightSubroutine = glGetSubroutineIndex( shaderId,
-                                                   shaderType, lightSubroutineName.c_str());
+                                                   shaderType,
+                                                   lightSubroutineName.c_str());
 
     //Get the number of active uniforms
     //This is expecting that subroutines are only used for light in this shader
@@ -202,30 +205,17 @@ void Light::SetLightColor(const glm::vec4 &lightColor)
     mLightColor = lightColor;
 }
 
-void Light::RenderDeffered(const SCEHandle<Camera> &cam)
+void Light::RenderDeffered(const SCEHandle<Camera>& camera)
 {
     bindRenderDataForShader(SCELighting::GetLightShader());
     bindLightModelForShader(SCELighting::GetLightShader());
-    if(mLightType == DIRECTIONAL_LIGHT)
-    {
-        mLightRenderer->Render(cam, true);
-    }
-    else
-    {
-        mLightRenderer->Render(cam);
-    }
+
+    mLightRenderer->Render(camera, mLightType == DIRECTIONAL_LIGHT);
 }
 
-void Light::RenderForStencil(const SCEHandle<Camera>& cam)
+void Light::RenderToStencil(const SCEHandle<Camera>& camera)
 {
-    if(mLightType == DIRECTIONAL_LIGHT)
-    {
-        mLightStencilRenderer->Render(cam, true);
-    }
-    else
-    {
-        mLightStencilRenderer->Render(cam);
-    }
+    mLightStencilRenderer->Render(camera, mLightType == DIRECTIONAL_LIGHT);
 }
 
 float Light::GetLightMaxAngle() const
@@ -302,4 +292,3 @@ void Light::generatePointLightMesh()
     SCEHandle<Container> container = GetContainer();
     mLightMesh = Mesh::AddSphereMesh(container, lightSphereRadius, 4.0f);
 }
-
