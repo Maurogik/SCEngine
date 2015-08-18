@@ -110,12 +110,14 @@ int main( void )
     SCEScene::CreateEmptyScene();
 
     //createLight(vec3(4, 4, 1), vec3(30, 0, 30), LightType::DIRECTIONAL_LIGHT);
-    SCEHandle<Container> light1 = createLight(vec3(0.0f, 3.0f, -1.0f), vec3(30, 0, 30), LightType::POINT_LIGHT);
-//    SCEHandle<Container> light2 = createLight(vec3(-4, 4, -1), vec3(30, 0, 30), LightType::POINT_LIGHT);
+    SCEHandle<Container> light1 = createLight(vec3(4, 3, -1), vec3(30, 0, 30), LightType::POINT_LIGHT);
+    SCEHandle<Container> light2 = createLight(vec3(-4, 4, -1), vec3(30, 0, 30), LightType::POINT_LIGHT);
 
-    light1->GetComponent<Light>()->SetLightReach(1.0f);
+    light1->GetComponent<Light>()->SetLightReach(2.0f);
+    light1->GetComponent<Light>()->SetLightColor(vec4(1.0, 0.0, 0.0, 1.0));
 
     //light2->GetComponent<Light>()->SetLightReach(2.0f);
+    light2->GetComponent<Light>()->SetLightColor(vec4(0.0, 1.0, 0.0, 1.0));
 
     //SCEHandle<Container> light = createLightSphere(vec3(4, 4, 1), vec4(1, 1, 1, 1));
     //SCEHandle<Container> light2 = createLightSphere(vec3(-4, 4, 1), vec4(0, 0, 1, 1));
