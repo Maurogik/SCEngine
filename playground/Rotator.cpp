@@ -4,7 +4,7 @@ using namespace SCE;
 using namespace std;
 
 Rotator::Rotator(SCE::SCEHandle<Container> container)
-    : GameObject(container, "Rotator"), mSpeed(25.0f)
+    : GameObject(container, "Rotator"), mSpeed(90.0f)
 {
 
 }
@@ -20,8 +20,8 @@ void Rotator::Update()
     }*/
 
     transform->RotateAroundAxis(vec3(0, 0, 1), mSpeed * SCETime::DeltaTime());
-    vec3 worldPos = transform->GetWorldPosition();
-    worldPos += vec3(0.0f, 0.0f, 0.50f) * (float)SCETime::DeltaTime();
+    //vec3 worldPos = transform->GetWorldPosition();
+    //worldPos += vec3(0.0f, 0.0f, 0.50f) * SCETime::DeltaTime();
     //transform->SetWorldPosition(worldPos);
 
     /*transform->RotateAroundAxis(vec3(0, 1, 0), mSpeed * SCETime::DeltaTime());
