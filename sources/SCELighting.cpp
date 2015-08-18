@@ -47,7 +47,7 @@ void SCELighting::StartLightPass()
 {
     //Render lights with stencil test and no writting to depth buffer
     glEnable(GL_STENCIL_TEST);
-    glDepthMask(GL_FALSE);
+    glDepthMask(GL_FALSE);    
 }
 
 void SCELighting::EndLightPass()
@@ -111,7 +111,7 @@ void SCELighting::initLightShader()
 
 void SCELighting::renderLightStencilPass(const SCEHandle<Camera>& camera, SCEHandle<Light> &light)
 {
-    //avoid writting in color and depth buffers in stencyl pass
+    //avoid writting in color buffer in stencyl pass
     glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
     glStencilMask(0xFF); //enable writting to stencil
     glEnable(GL_DEPTH_TEST);
@@ -133,10 +133,14 @@ void SCELighting::renderLightStencilPass(const SCEHandle<Camera>& camera, SCEHan
 }
 
 void SCELighting::renderLightingPass(const SCEHandle<Camera>& camera, SCEHandle<Light> &light)
-{
+{    
+    //glClear(GL_COLOR_BUFFER_BIT);
     glEnable(GL_BLEND);
     glBlendEquation(GL_FUNC_ADD);
     glBlendFunc(GL_ONE, GL_ONE);
+//    glBlendFuncSeparate(GL_ONE, GL_ONE, GL_ZERO, GL_ZERO);
+//    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+
     glStencilMask(0x00); //dont write to stencil buffer in this pass
 
     //only render pixels with stendil value > 0
