@@ -27,6 +27,7 @@ namespace SCE {
                 SCE_GBuffer();
                 ~SCE_GBuffer();
         bool    Init(unsigned int windowWidth, unsigned int windowHeight);
+        void    ClearFinalBuffer();
         void    BindForGeometryPass();
         void    BindForStencilPass();
         void    BindForLightPass();

@@ -77,7 +77,8 @@ bool SCE_GBuffer::Init(unsigned int windowWidth, unsigned int windowHeight)
     // with the stencil test into the Framebuffer where the stencil buffer was filled (this GBuffer)
     glBindTexture(GL_TEXTURE_2D, mFinalTexture);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, windowWidth, windowHeight, 0, GL_RGBA, GL_FLOAT, NULL);
-    glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + GBUFFER_TEXTURE_COUNT,
+    //bind final texture a the next free attachement (num_textures)
+    glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + GBUFFER_NUM_TEXTURES,
                            GL_TEXTURE_2D, mFinalTexture, 0);
 
     GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
@@ -91,6 +92,13 @@ bool SCE_GBuffer::Init(unsigned int windowWidth, unsigned int windowHeight)
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 
     return true;
+}
+
+void SCE_GBuffer::ClearFinalBuffer()
+{
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mFBOId);
+    glDrawBuffer(GL_COLOR_ATTACHMENT0 + GBUFFER_NUM_TEXTURES);
+    glClear(GL_COLOR_BUFFER_BIT);
 }
 
 void SCE_GBuffer::BindForGeometryPass()
@@ -119,7 +127,6 @@ void SCE_GBuffer::BindForLightPass()
     glBindFramebuffer(GL_FRAMEBUFFER, mFBOId);
 
     glDrawBuffer(GL_COLOR_ATTACHMENT0 + GBUFFER_NUM_TEXTURES);
-    glClear(GL_COLOR_BUFFER_BIT);
 }
 
 void SCE_GBuffer::BindForFinalPass()
