@@ -108,23 +108,28 @@ void SCEScene::UpdateScene()
 
     glfwGetCursorPos(window, &xMouse, &yMouse);
 
-    static double prevX = 0.0;
+    xMouse /= SCECore::GetWindowWidth();
+    yMouse /= SCECore::GetWindowHeight();
+
+    /*static double prevX = 0.0;
     static double prevY = 0.0;
 
     double xDelta = xMouse - prevX;
     double yDelta = yMouse - prevY;
 
     prevX = xMouse;
-    prevY = yMouse;
+    prevY = yMouse;*/
 
     float deltaTime = SCETime::DeltaTime();
 
-    float rotateSpeed = 250.0f;
+    float xRotateSpeed = 360.0f;
+    float yRotateSpeed = 180.0f;
     float speed = 5.0f;
 
     vec3 position = transform->GetWorldPosition();
-    transform->RotateAroundAxis(vec3(0, 1, 0), xDelta * rotateSpeed * deltaTime);
-    transform->RotateAroundAxis(vec3(1, 0, 0), yDelta * rotateSpeed * deltaTime);  
+//    transform->RotateAroundAxis(vec3(0, 1, 0), xDelta * rotateSpeed);
+//    transform->RotateAroundAxis(vec3(1, 0, 0), yDelta * rotateSpeed);
+    transform->SetWorldOrientation(vec3((yMouse - 0.5) * yRotateSpeed, (xMouse - 0.5) * xRotateSpeed, 0.0));
 
     vec3 forward = transform->Forward();
     vec3 left = transform->Left();

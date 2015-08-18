@@ -60,11 +60,13 @@ void SCERender::Render(const SCEHandle<Camera>& camera,
     s_instance->renderGeometryPass(camera, objectsToRender);
 
     SCELighting::StartLightPass();
+    s_instance->mGBuffer.ClearFinalBuffer();
+
     for(SCEHandle<Light> light : lightsToRender)
     {
         SCELighting::RenderLightToGBuffer(camera, light, s_instance->mGBuffer);
-
     }
+
     SCELighting::EndLightPass();
 
     //Render final image from GBuffer to window framebuffer
