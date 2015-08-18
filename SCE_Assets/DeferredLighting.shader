@@ -6,7 +6,6 @@ _{
     in vec3 vertexNormal_modelspace;
 
     out vec3 LightDirection_cameraspace;
-    out vec3 EyeDirection_cameraspace;
     out vec3 LightPosition_cameraspace;
     out float LightReach_cameraspace;
 
@@ -30,8 +29,6 @@ _{
 
         vec3 VertexPosition_cameraspace = ( V * M * vec4(vertexPosition_modelspace, 1.0)).xyz;
 
-        EyeDirection_cameraspace    = VertexPosition_cameraspace;
-
         LightPosition_cameraspace   = ( V * vec4(SCE_LightPosition_worldspace, 1.0)).xyz;
 
         LightDirection_cameraspace  = ( V * vec4(SCE_LightDirection_worldspace, 0.0)).xyz;
@@ -54,7 +51,7 @@ _{
 
 #define LIGHT_SUBROUTINE_PARAMS in vec3 in_LightDirection_cameraspace,\
     in vec3 in_Normal_cameraspace,\
-    in vec3 in_EyeDirection_cameraspace,\
+    in vec3 in_EyeToFrag_cameraspace,\
     in vec3 in_LightToFrag_cameraspace,\
     in float in_LightReach_cameraspace
 
@@ -78,7 +75,7 @@ _{
         float NdotL     = dot(in_Normal_cameraspace, dirToLight);
         NdotL           = clamp(NdotL, 0, 1);
 
-        vec3 eyeDir         = normalize(in_EyeDirection_cameraspace);
+        vec3 eyeDir         = normalize(in_EyeToFrag_cameraspace);
         vec3 reflectedLight = reflect(dirToLight, in_Normal_cameraspace);
         float EdotL         = clamp( dot( eyeDir, reflectedLight ), 0, 1 );
 
@@ -100,9 +97,9 @@ _{
         float NdotL     = dot(in_Normal_cameraspace, dirToLight);
         NdotL           = clamp(NdotL, 0.0, 1.0);
 
-        vec3 eyeDir         = normalize(in_EyeDirection_cameraspace);
-        vec3 reflectedLight = reflect(dirToLight, in_Normal_cameraspace);
-        float EdotL         = clamp( dot(eyeDir, reflectedLight), 0.0 ,1.0 );
+        vec3 dirToEye       = normalize(-in_EyeToFrag_cameraspace);
+        vec3 halway         = normalize(dirToEye + dirToLight);
+        float EdotL         = clamp( dot(in_Normal_cameraspace, halway), 0.0 ,1.0 );
 
         float lightReach    = in_LightReach_cameraspace;
 
@@ -120,7 +117,7 @@ _{
 
         vec3 light  = vec3(
                     NdotL, //diffuse lighting
-                    pow(EdotL, 5.0), //specular component
+                    pow(EdotL, 16.0), //specular component
                     1.0);
 
         light *= attenuation;
@@ -138,7 +135,6 @@ _{
 
 
     in vec3     LightDirection_cameraspace;
-    in vec3     EyeDirection_cameraspace;
     in vec3     LightPosition_cameraspace;
     in float    LightReach_cameraspace;
 
@@ -157,11 +153,12 @@ _{
         vec3 Position_cameraspace   = texture2D(PositionTex, uv).xyz;
 
         vec3 LightToFrag_cameraspace = Position_cameraspace - LightPosition_cameraspace;
+        vec3 EyeToFrag_cameraspace = Position_cameraspace;
 
         vec4 lightCol = SCE_ComputeLight(
                     LightDirection_cameraspace,
                     Normal_cameraspace,
-                    EyeDirection_cameraspace,
+                    EyeToFrag_cameraspace,
                     LightToFrag_cameraspace,
                     LightReach_cameraspace
                     );
