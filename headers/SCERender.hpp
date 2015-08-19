@@ -24,7 +24,6 @@ namespace SCE
         static void         Init();
         static void         CleanUp();
         static void         Render(const SCEHandle<Camera> &camera,
-                                   std::vector<SCEHandle<Light> > &lightsToRender,
                                    std::vector<Container*>* objectsToRender);
         static void         ResetClearColorToDefault();
 

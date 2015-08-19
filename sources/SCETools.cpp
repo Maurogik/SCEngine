@@ -201,8 +201,6 @@ namespace ShaderTools {
             Internal::Log(string(&FragmentShaderErrorMessage[0]) + "\n");
         }
 
-
-
         // Link the program
         Internal::Log("Linking shader program\n");
         GLuint ProgramID = glCreateProgram();

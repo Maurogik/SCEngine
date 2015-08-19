@@ -219,7 +219,7 @@ SCEHandle<Mesh> SCE::Mesh::AddSphereMesh(SCEHandle<Container> &container, float 
                     { //first encouter of this vertice
                         vertices.push_back(dir);
                         normals.push_back(normalizedDir);
-                        uvs.push_back(vec2(u[stepAddX], v[stepAddY]));//push dummy uv for now, fix later
+                        uvs.push_back(vec2(u[stepAddX], v[stepAddY]));
                         angleIndices[xStep + stepAddX][yStep + stepAddY] = vertices.size() - 1;
                     }
                     vertIndices[indCount] = angleIndices[xStep + stepAddX][yStep + stepAddY];
@@ -351,7 +351,12 @@ SCEHandle<Mesh> SCE::Mesh::AddCubeMesh(SCEHandle<Container> &container, float cu
         20, 21, 22,     20, 22, 23    // left
     };
 
-    return container->AddComponent<Mesh>(&indices, &vertices, &normals, &uvs, (std::vector<vec3> *)nullptr, (std::vector<vec3> *)nullptr);
+    return container->AddComponent<Mesh>(&indices,
+                                         &vertices,
+                                         &normals,
+                                         &uvs,
+                                         nullptr,
+                                         nullptr);
 }
 
 SCEHandle<Mesh> Mesh::AddQuadMesh(SCEHandle<Container> &container, float width, float height)
@@ -373,28 +378,41 @@ SCEHandle<Mesh> Mesh::AddQuadMesh(SCEHandle<Container> &container, float width, 
 
     vector<vec3> normals;
     normals.push_back(vec3(0.0f, 0.0f, 1.0f));
+    normals.push_back(vec3(0.0f, 0.0f, 1.0f));
+    normals.push_back(vec3(0.0f, 0.0f, 1.0f));
+    normals.push_back(vec3(0.0f, 0.0f, 1.0f));
+
+
     vector<ushort> indices = vector<ushort>
     {
         2,  1,  0,      0,  3,  2
     };
 
-    return container->AddComponent<Mesh>(&indices, &vertices, &normals, &uvs, (std::vector<vec3> *)nullptr, (std::vector<vec3> *)nullptr);
+    return container->AddComponent<Mesh>(&indices,
+                                         &vertices,
+                                         &normals,
+                                         &uvs,
+                                         nullptr,
+                                         nullptr);
 }
 
-SCEHandle<Mesh> Mesh::AddConeMesh(SCEHandle<Container> &container, float length, float angle, float tesselation)
+SCEHandle<Mesh> Mesh::AddConeMesh(SCEHandle<Container> &container,
+                                  float length,
+                                  float angle,
+                                  float tesselation)
 {
     float fTess         = tesselation;
-    float angleStep     = 90.0f / glm::pow(2.0f, fTess);
-    float lengthStep    = length / glm::pow(2.0f, fTess);
+    float angleStep     = glm::max(90.0f / glm::pow(2.0f, fTess), 5.0f);//atefacts appear if angleStep is to low
+    float lengthStep    = glm::max(length / glm::pow(2.0f, fTess), 0.2f);
     int nbAngleSteps    = 360.0f / angleStep;
     int nbLengthSteps   = length / lengthStep;
 
-    //indicies of vertices, normal and uvs stored by angle over x, angle over y;
-    short viewedVertices[nbAngleSteps][nbAngleSteps];
+    //indicies of vertices, normal and uvs stored by [angle over x, distance over z]
+    short viewedVertices[nbAngleSteps + 1][nbLengthSteps + 1];
     //set the array to -1 as default value
-    for(int i = 0; i < nbAngleSteps; ++i)
+    for(int i = 0; i < nbAngleSteps + 1; ++i)
     {
-        for(int j = 0; j < nbAngleSteps; ++j)
+        for(int j = 0; j < nbLengthSteps + 1; ++j)
         {
             viewedVertices[i][j] = -1;
         }
@@ -405,23 +423,43 @@ SCEHandle<Mesh> Mesh::AddConeMesh(SCEHandle<Container> &container, float length,
     vector<vec2>    uvs;
     vector<ushort>  indices;
 
+    //Add the vertex at the center of the cone's end
+    vertices.push_back(vec3(0.0, 0.0, float(nbLengthSteps) * lengthStep));
+    normals.push_back(vec3(0.0, 0.0, 1.0));
+    uvs.push_back(vec2(0.0, 0.0));
+    short endVertexIndex = 0;
+
     glm::quat coneRotation = glm::angleAxis(angle, 1.0f, 0.0f, 0.0f);
 
-    //loop over all the angles to make a full 360 over x and y axis
-    for(int zAngleStep = 0; zAngleStep < nbAngleSteps - 1; ++zAngleStep)
+    //Generate vertices for cone surface
+    //loop over all the angles to make a full 360 around the cone's Z axis
+    for(int zAngleStep = 0; zAngleStep < nbAngleSteps; ++zAngleStep)
     {
         float zAngle = zAngleStep * angleStep;
 
-        glm::quat zRot[2] = {
+        glm::quat zRot[2] =
+        {
             glm::angleAxis(zAngle, 0.0f, 0.0f, 1.0f) * coneRotation,
             glm::angleAxis(zAngle + angleStep, 0.0f, 0.0f, 1.0f) * coneRotation
         };
 
-        for(int zPosStep = 0; zPosStep < nbLengthSteps - 1; ++zPosStep)
+        for(int zPosStep = 0; zPosStep < nbLengthSteps; ++zPosStep)
         {
-            float zPos[2] = {
-                zPosStep * lengthStep,
-                (zPosStep + 1) * lengthStep
+            float zPos[2] =
+            {
+                float(zPosStep) * lengthStep,
+                float(zPosStep + 1) * lengthStep
+            };
+
+            //Compute uvs
+            float u[2] = {
+                float(zAngleStep) / float(nbAngleSteps),
+                float(zAngleStep + 1) / float(nbAngleSteps)
+            };
+
+            float v[2] = {
+                float(zPosStep) / float(nbLengthSteps),
+                float(zPosStep + 1) / float(nbLengthSteps)
             };
 
             ushort vertIndices[4];
@@ -431,15 +469,18 @@ SCEHandle<Mesh> Mesh::AddConeMesh(SCEHandle<Container> &container, float length,
             {
                 for(int subStepZPos = 0; subStepZPos <= 1; ++subStepZPos)
                 {
-
                     vec3 pos = zRot[subStepZAngle] * vec3(0.0f, 0.0f, zPos[subStepZPos]);
+                    //correct z pos so the surface is at the same z;
+                    pos.z = zPos[subStepZPos];
 
                     if(viewedVertices[zAngleStep + subStepZAngle][zPosStep + subStepZPos] < 0)
-                    { //first encouter of this vertice
-                        vertices.push_back(pos);///////////////////////TODO COMPUTE NORMALS
-                        vec3 normal = normalize(pos - vec3(0.0f, 0.0f, zPos[subStepZPos]));
+                    { //first encouter of this vertex
+                        vertices.push_back(pos);
+                        //Normal(approx) is dir from pos on z axis to pos on the surface of the cone
+                        //add small offset to handle the case of the vertex at tip of the cone
+                        vec3 normal = normalize(pos - vec3(0.0f, 0.0f, zPos[subStepZPos] + 0.001f));
                         normals.push_back(normal);
-                        uvs.push_back(vec2(0.0f, 0.0f));//push dummy uv for now, fix later
+                        uvs.push_back(vec2(u[subStepZAngle], v[subStepZPos]));
                         viewedVertices[zAngleStep + subStepZAngle][zPosStep + subStepZPos] = vertices.size() - 1;
                     }
                     vertIndices[indCount] = viewedVertices[zAngleStep + subStepZAngle][zPosStep + subStepZPos];
@@ -447,15 +488,25 @@ SCEHandle<Mesh> Mesh::AddConeMesh(SCEHandle<Container> &container, float length,
                 }
             }
             //push the two triangles
-            indices.push_back(vertIndices[2]);
-            indices.push_back(vertIndices[1]);
             indices.push_back(vertIndices[0]);
-
             indices.push_back(vertIndices[1]);
             indices.push_back(vertIndices[2]);
+
             indices.push_back(vertIndices[3]);
-        }
+            indices.push_back(vertIndices[2]);
+            indices.push_back(vertIndices[1]);
+
+            //Generate vertices for cone end
+            if(zPosStep == nbLengthSteps - 1)
+            {
+                //push a triangle at the end of the cone
+                indices.push_back(vertIndices[3]);
+                indices.push_back(vertIndices[1]);
+                indices.push_back(endVertexIndex);
+            }
+        }                
     }
+
     return container->AddComponent<Mesh>(&indices, &vertices, &normals, &uvs, (vector<vec3>*) nullptr, (vector<vec3>*) nullptr);
 }
 

@@ -9,6 +9,7 @@
 #include "../headers/Light.hpp"
 
 using namespace SCE;
+using namespace std;
 
 #define LIGHT_SHADER_NAME "DeferredLighting"
 #define STENCYL_SHADER_NAME "EmptyShader"
@@ -19,7 +20,9 @@ SCELighting::SCELighting()
     : mLightShader(-1),
       mStencilShader(-1),
       mTexSamplerNames(),
-      mTexSamplerUniforms()
+      mTexSamplerUniforms(),
+      mStenciledLights(),
+      mDirectionalLights()
 {
     //the names ofthe tex sampler uniforms as they appear
     mTexSamplerNames[SCE_GBuffer::GBUFFER_TEXTURE_TYPE_POSITION] = "PositionTex";
@@ -43,35 +46,43 @@ void SCELighting::CleanUp()
     delete s_instance;
 }
 
-void SCELighting::StartLightPass()
-{
-    //Render lights with stencil test and no writting to depth buffer
-    glEnable(GL_STENCIL_TEST);
-    glDepthMask(GL_FALSE);    
-}
-
-void SCELighting::EndLightPass()
-{
-    //reset to default values
-    glDepthMask(GL_TRUE);
-    glDisable(GL_STENCIL_TEST);
-}
-
-void SCELighting::RenderLightToGBuffer(const SCEHandle<Camera> &camera,
-                                       SCEHandle<Light> &light,
+void SCELighting::RenderLightsToGBuffer(const SCEHandle<Camera> &camera,
                                        SCE_GBuffer& gBuffer)
 {
-    Debug::Assert(s_instance, "No Lighting system instance found, Init the system before using it");
+    Debug::Assert(s_instance, "No Lighting system instance found, Init the system before using it");   
 
-    //use empty shader for stencil pass (only need to do VS for depth test)
-    glUseProgram(s_instance->mStencilShader);
-    gBuffer.BindForStencilPass();
-    s_instance->renderLightStencilPass(camera, light);
+    //Render with stencil test and no writting to depth buffer
+    glEnable(GL_STENCIL_TEST);
+    glDepthMask(GL_FALSE);
 
-    glUseProgram(s_instance->mLightShader);
-    gBuffer.BindForLightPass();
-    gBuffer.BindTexturesToLightShader();
-    s_instance->renderLightingPass(camera, light);
+    //render lights needing a stencil pass (Point and Spot lights)
+    for(SCEHandle<Light> light : s_instance->mStenciledLights)
+    {
+        //use (almost) empty shader for stencil pass
+        glUseProgram(s_instance->mStencilShader);
+        gBuffer.BindForStencilPass();
+        s_instance->renderLightStencilPass(camera, light);
+
+        glUseProgram(s_instance->mLightShader);
+        gBuffer.BindForLightPass();
+        gBuffer.BindTexturesToLightShader();
+        s_instance->renderLightingPass(camera, light);
+    }
+
+    //Disable stencil because directional lights don't need it
+    glDisable(GL_STENCIL_TEST);
+
+    //render directionnal lights
+    for(SCEHandle<Light> light : s_instance->mDirectionalLights)
+    {
+        glUseProgram(s_instance->mLightShader);
+        gBuffer.BindForLightPass();
+        gBuffer.BindTexturesToLightShader();
+        s_instance->renderLightingPass(camera, light);
+    }
+
+    //reset depth writting to default
+    glDepthMask(GL_TRUE);
 }
 
 GLuint SCELighting::GetLightShader()
@@ -92,21 +103,89 @@ GLuint SCELighting::GetTextureSamplerUniform(SCE_GBuffer::GBUFFER_TEXTURE_TYPE t
     return s_instance->mTexSamplerUniforms[textureType];
 }
 
+void SCELighting::RegisterLight(SCEHandle<Light> light)
+{
+    Debug::Assert(s_instance, "No Lighting system instance found, Init the system before using it");
+    s_instance->registerLight(light);
+}
+
+void SCELighting::UnregisterLight(SCEHandle<Light> light)
+{
+    Debug::Assert(s_instance, "No Lighting system instance found, Init the system before using it");
+    s_instance->unregisterLight(light);
+}
+
 void SCELighting::initLightShader()
 {
-    if(mLightShader == (GLuint) -1){
+    if(mLightShader == (GLuint) -1)
+    {
         mLightShader = ShaderTools::CompileShader(LIGHT_SHADER_NAME);
     }
 
-    if(mStencilShader == (GLuint) -1){
+    if(mStencilShader == (GLuint) -1)
+    {
         mStencilShader = ShaderTools::CompileShader(STENCYL_SHADER_NAME);
     }
 
     glUseProgram(mLightShader);
 
-    for (unsigned int i = 0; i < SCE_GBuffer::GBUFFER_NUM_TEXTURES; i++) {
+    for (unsigned int i = 0; i < SCE_GBuffer::GBUFFER_NUM_TEXTURES; i++)
+    {
         mTexSamplerUniforms[i] = glGetUniformLocation(mLightShader, mTexSamplerNames[i].c_str());
     }
+}
+
+void SCELighting::registerLight(SCEHandle<Light> light)
+{
+    vector<SCEHandle<Light>> *targetVector = nullptr;
+
+    switch(light->GetLightType())
+    {
+    case LightType::DIRECTIONAL_LIGHT :
+        targetVector = &mDirectionalLights;
+        break;
+    case LightType::SPOT_LIGHT :
+    case LightType::POINT_LIGHT :
+        targetVector = &mStenciledLights;
+        break;
+    default :
+        Debug::RaiseError("Unknown light type found !!");
+        break;
+    }
+
+    Debug::Assert(find(begin(*targetVector),
+                       end(*targetVector),
+                       light)
+                  == end(*targetVector),
+                  "This light is already registered ! That's a problem !");
+    targetVector->push_back(light);
+}
+
+void SCELighting::unregisterLight(SCEHandle<Light> light)
+{
+    vector<SCEHandle<Light>>::iterator lightIt;
+    vector<SCEHandle<Light>> *targetVector = nullptr;
+
+    switch(light->GetLightType())
+    {
+    case LightType::DIRECTIONAL_LIGHT :
+        targetVector = &mDirectionalLights;
+        break;
+    case LightType::SPOT_LIGHT :
+    case LightType::POINT_LIGHT :
+        targetVector = &mStenciledLights;
+        break;
+    default :
+        Debug::RaiseError("Unknown light type found !!");
+        break;
+    }
+
+    lightIt = find(begin(*targetVector), end(*targetVector), light);
+    Debug::Assert(lightIt != end(*targetVector),
+                  "This light wasn't found ! That's a problem !");
+
+
+    targetVector->erase(lightIt);
 }
 
 void SCELighting::renderLightStencilPass(const SCEHandle<Camera>& camera, SCEHandle<Light> &light)
@@ -134,18 +213,13 @@ void SCELighting::renderLightStencilPass(const SCEHandle<Camera>& camera, SCEHan
 
 void SCELighting::renderLightingPass(const SCEHandle<Camera>& camera, SCEHandle<Light> &light)
 {    
-    //glClear(GL_COLOR_BUFFER_BIT);
+    //setup blending between lighting results
     glEnable(GL_BLEND);
     glBlendEquation(GL_FUNC_ADD);
     glBlendFunc(GL_ONE, GL_ONE);
-//    glBlendFuncSeparate(GL_ONE, GL_ONE, GL_ZERO, GL_ZERO);
-//    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
     glStencilMask(0x00); //dont write to stencil buffer in this pass
-
-    //only render pixels with stendil value > 0
-    glStencilFunc(GL_NOTEQUAL, 0, 0xFF);
-//    glStencilFunc(GL_ALWAYS, 0, 0);
+    glStencilFunc(GL_NOTEQUAL, 0, 0xFF);//only render pixels with stendil value > 0
 
     glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 

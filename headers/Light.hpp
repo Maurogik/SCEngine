@@ -21,7 +21,7 @@ namespace SCE {
         LIGHT_DIRECTION,
         LIGHT_REACH,
         LIGHT_COLOR,
-        LIGHT_MAX_ANGLE,
+        LIGHT_SPOT_ATTENUATION,
         LIGHT_CUTOFF,
         LIGHT_UNIFORMS_COUNT
     };
@@ -47,12 +47,14 @@ namespace SCE {
         const glm::vec4&    GetLightColor() const;
         void                SetLightColor(const vec4 &lightColor);
 
+        LightType           GetLightType() const;
+
         void                RenderDeffered(const SCEHandle<Camera>& camera);
         void                RenderToStencil(const SCEHandle<Camera>& camera);
 
     protected :
 
-        Light(SCEHandle<Container>& container, const LightType &lightType,
+        Light(SCEHandle<Container>& container, const LightType &GetLightType,
                                   const std::string& typeName = "");
 
     private :
@@ -61,6 +63,7 @@ namespace SCE {
         LightType                   mLightType;
         float                       mLightReach;
         float                       mLightMaxAngle;
+        float                       mSpotAttenuation;
         float                       mLightCutoff;
         glm::vec4                   mLightColor;
         //array containing a map of uniforms Id by shader ID, for each light uniform type

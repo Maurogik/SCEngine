@@ -49,7 +49,6 @@ void SCERender::CleanUp()
 }
 
 void SCERender::Render(const SCEHandle<Camera>& camera,
-                       vector<SCEHandle<Light> >& lightsToRender,
                        vector<Container*>* objectsToRender)
 {
     Debug::Assert(s_instance, "No Render system instance found, Init the system before using it");
@@ -59,15 +58,8 @@ void SCERender::Render(const SCEHandle<Camera>& camera,
     //render objects without lighting
     s_instance->renderGeometryPass(camera, objectsToRender);
 
-    SCELighting::StartLightPass();
     s_instance->mGBuffer.ClearFinalBuffer();
-
-    for(SCEHandle<Light> light : lightsToRender)
-    {
-        SCELighting::RenderLightToGBuffer(camera, light, s_instance->mGBuffer);
-    }
-
-    SCELighting::EndLightPass();
+    SCELighting::RenderLightsToGBuffer(camera, s_instance->mGBuffer);
 
     //Render final image from GBuffer to window framebuffer
     s_instance->mGBuffer.BindForFinalPass();

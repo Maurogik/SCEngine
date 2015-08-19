@@ -20,7 +20,8 @@ using namespace SCE;
 #define COLOR_DEFAULT vec4(1.0f, 1.0f, 1.0f, 1.0f)
 #define ANGLE_DEFAULT 45.0f
 
-#define POINT_LIGHT_CUTOFF (1.0/256.0)
+#define POINT_LIGHT_CUTOFF (1.0f/256.0f)
+#define SPOT_LIGHT_CUTOFF (0.1f/256.0f)
 
 #define LIGHT_ROUTINE_COUNT 1
 
@@ -35,7 +36,7 @@ string s_lightUniformNames[LIGHT_UNIFORMS_COUNT] = {
     "SCE_LightDirection_worldspace",
     "SCE_LightReach_worldspace",
     "SCE_LightColor",
-    "SCE_LightMaxAngle",
+    "SCE_SpotAttenuation",
     "SCE_LightCutoff"
 };
 
@@ -45,23 +46,30 @@ Light::Light(SCEHandle<Container>& container, const LightType &lightType,
       mLightType(lightType),
       mLightReach(REACH_DEFAULT),
       mLightMaxAngle(ANGLE_DEFAULT),
+      mSpotAttenuation(1.0f),
       mLightCutoff(POINT_LIGHT_CUTOFF),
       mLightColor(COLOR_DEFAULT),
       mLightUniformsByShader(),
       mLightMesh(nullptr),
       mLightRenderer(nullptr)
 {
-    SCEScene::RegisterLight(SCEHandle<Light>(this));
+    SCELighting::RegisterLight(SCEHandle<Light>(this));
     generateLightMesh();
     initRenderDataForShader(SCELighting::GetLightShader(), SCELighting::GetStencilShader());
     //change layer to avoid rendering the light mesh as a regular mesh
     container->SetLayer(LIGHTS_LAYER);
-}
 
+    mLightCutoff = mLightType == SPOT_LIGHT ? SPOT_LIGHT_CUTOFF : POINT_LIGHT_CUTOFF;
+}
 
 Light::~Light()
 {
-    SCEScene::UnregisterLight(SCEHandle<Light>(this));
+    SCELighting::UnregisterLight(SCEHandle<Light>(this));
+}
+
+LightType Light::GetLightType() const
+{
+    return mLightType;
 }
 
 void Light::initRenderDataForShader(GLuint lightShaderId, GLuint stencilShaderId)
@@ -116,8 +124,8 @@ void Light::bindRenderDataForShader(GLuint shaderId)
         case LIGHT_COLOR :
             glUniform4f(unifId, mLightColor.r, mLightColor.g, mLightColor.b, mLightColor.a);
             break;
-        case LIGHT_MAX_ANGLE :
-            glUniform1f(unifId, mLightMaxAngle);
+        case LIGHT_SPOT_ATTENUATION :
+            glUniform1f(unifId, mSpotAttenuation);
             break;
         case LIGHT_CUTOFF :
             glUniform1f(unifId, mLightCutoff);
@@ -258,6 +266,7 @@ void Light::generateLightMesh()
         generateSpotLightMesh();
         break;
     }
+
     if(mLightRenderer)
     {
         mLightRenderer->UpdateRenderedMesh();
@@ -273,6 +282,12 @@ void Light::generateDirectionalLightMesh()
 
 void Light::generateSpotLightMesh()
 {
+    //compute spot attenuation
+    vec3 spotDir(0.0, 0.0, 1.0);
+    vec3 spotAngleDir = normalize(angleAxis(mLightMaxAngle, vec3(1.0, 0.0, 0.0)) * spotDir);
+    float maxDot = dot(spotDir, spotAngleDir);
+    mSpotAttenuation = log(mLightCutoff) / log(maxDot) * 2.0;
+
     SCEHandle<Container> container = GetContainer();
     mLightMesh = Mesh::AddConeMesh(container, mLightReach, mLightMaxAngle, 4.0f);
 }

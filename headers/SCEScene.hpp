@@ -41,12 +41,6 @@ namespace SCE {
         static void                                 RegisterGameObject(SCEHandle<GameObject> gameObject);
         static void                                 UnregisterGameObject(SCEHandle<GameObject> gameObject);
 
-        static void                                 RegisterLight(SCEHandle<Light> light);
-        static void                                 UnregisterLight(SCEHandle<Light> light);
-        static void                                 InitLightRenderData(GLuint shaderId);
-        static void                                 BindLightRenderData(GLuint shaderId);
-        static std::vector<SCEHandle<Light> >       FindLightsInRange(const glm::vec3& worldPosition);
-
     private :
 
         static void     RemoveContainer(int objId);
@@ -54,13 +48,12 @@ namespace SCE {
         void            renderSceneWithCamera(const SCEHandle<Camera> &camera);        
 
         std::vector<Container*>             mContainers;
-        std::vector<SCEHandle<Light>>       mLights;
         std::vector<SCEHandle<GameObject>>  mGameObjects;
         int                                 mLastId;       
 
 
         /*****Static*****/
-        static SCEScene*                       s_scene;
+        static SCEScene*                    s_scene;
 
     };
 

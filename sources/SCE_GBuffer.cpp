@@ -52,8 +52,6 @@ bool SCE_GBuffer::Init(unsigned int windowWidth, unsigned int windowHeight)
     glGenTextures(1, &mDepthTexture);
     glGenTextures(1, &mFinalTexture);
 
-    GLenum drawBuffers[GBUFFER_TEXTURE_COUNT];
-
     for (unsigned int i = 0 ; i < GBUFFER_TEXTURE_COUNT ; i++) {
         glBindTexture(GL_TEXTURE_2D, mTextures[i]);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, windowWidth, windowHeight, 0, GL_RGB, GL_FLOAT, NULL);
@@ -61,7 +59,6 @@ bool SCE_GBuffer::Init(unsigned int windowWidth, unsigned int windowHeight)
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         //set this texure as frameBufferObject color attachment i
         glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, mTextures[i], 0);
-        drawBuffers[i] = GL_COLOR_ATTACHMENT0 + i;
     }
 
     // depth and stencil buffer

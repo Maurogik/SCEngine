@@ -22,7 +22,6 @@ SCEHandle<Container> createSphere(const string& name, const float& tesselation, 
     SCEHandle<Transform> transform = object->AddComponent<Transform>();
     transform->SetWorldPosition(pos);
 
-    //Mesh::AddCubeMesh(cubeObject, 1.0f);
     Mesh::AddSphereMesh(object, 1.0f, tesselation);
     object->AddComponent<MeshRenderer>();
     object->AddComponent<Rotator>();
@@ -30,7 +29,7 @@ SCEHandle<Container> createSphere(const string& name, const float& tesselation, 
     return object;
 }
 
-SCEHandle<Container> createCone(const string& name, const float& tesselation, const vec3& pos){
+SCEHandle<Container> createCone(const string& name, const float& tesselation, float angle, float length, const vec3& pos){
     //cube model
     SCEHandle<Container> object = SCEScene::CreateContainer(name);
 
@@ -39,9 +38,25 @@ SCEHandle<Container> createCone(const string& name, const float& tesselation, co
     SCEHandle<Transform> transform = object->AddComponent<Transform>();
     transform->SetWorldPosition(pos);
 
-    //Mesh::AddCubeMesh(cubeObject, 1.0f);
-    Mesh::AddConeMesh(object, 1.0f, 45.0f, tesselation);
+    Mesh::AddConeMesh(object, length, angle, tesselation);
     object->AddComponent<MeshRenderer>();
+    object->AddComponent<Rotator>();
+
+    return object;
+}
+
+SCEHandle<Container> createCube(const string& name, const vec3& pos){
+    //cube model
+    SCEHandle<Container> object = SCEScene::CreateContainer(name);
+
+    object->AddComponent<Material>(MATERIAL);
+
+    SCEHandle<Transform> transform = object->AddComponent<Transform>();
+    transform->SetWorldPosition(pos);
+
+    Mesh::AddCubeMesh(object, 1.0f);
+    object->AddComponent<MeshRenderer>();
+    object->AddComponent<Rotator>();
 
     return object;
 }
@@ -55,7 +70,6 @@ SCEHandle<Container> createPlane(const string& name, float size, const vec3& pos
     SCEHandle<Transform> transform = object->AddComponent<Transform>();
     transform->SetWorldPosition(pos);
 
-    //Mesh::AddCubeMesh(cubeObject, 1.0f);
     Mesh::AddQuadMesh(object, size, size);
     object->AddComponent<MeshRenderer>();
 
@@ -95,8 +109,7 @@ SCEHandle<Container> createLightSphere(vec3 pos, vec4 color){
     light->GetComponent<Light>()->SetLightColor(color);
     light->AddComponent<Material>(MATERIAL);
 
-    //Mesh::AddCubeMesh(cubeObject, 1.0f);
-    Mesh::AddSphereMesh(light, 1.0f, 3);
+    Mesh::AddSphereMesh(light, 1.0f, 3.0f);
     light->AddComponent<MeshRenderer>();
 
     return light;
@@ -109,23 +122,23 @@ int main( void )
 
     SCEScene::CreateEmptyScene();
 
-    //createLight(vec3(4, 4, 1), vec3(30, 0, 30), LightType::DIRECTIONAL_LIGHT);
-    SCEHandle<Container> light1 = createLight(vec3(4, 3, -1), vec3(30, 0, 30), LightType::POINT_LIGHT);
-    SCEHandle<Container> light2 = createLight(vec3(-4, 4, -1), vec3(30, 0, 30), LightType::POINT_LIGHT);
+    SCEHandle<Container> dirLight = createLight(vec3(4, 4, 1), vec3(30, 30, 0), LightType::DIRECTIONAL_LIGHT);
+    dirLight->GetComponent<Light>()->SetLightColor(vec4(0.8, 0.8, 1.0, 0.2));
 
-    light1->GetComponent<Light>()->SetLightReach(2.0f);
+    SCEHandle<Container> light1 = createLight(vec3(2, 3, -1), vec3(30, 0, 30), LightType::POINT_LIGHT);
     light1->GetComponent<Light>()->SetLightColor(vec4(1.0, 0.0, 0.0, 1.0));
+    light1->GetComponent<Light>()->SetLightReach(2.0f);
 
-    //light2->GetComponent<Light>()->SetLightReach(2.0f);
+    SCEHandle<Container> light2 = createLight(vec3(-5, 10, -5), vec3(60, 0, 0), LightType::SPOT_LIGHT);
+    light2->GetComponent<Light>()->SetLightReach(40.0f);
+    light2->GetComponent<Light>()->SetLightMaxAngle(45.0f);
     light2->GetComponent<Light>()->SetLightColor(vec4(0.0, 1.0, 0.0, 1.0));
 
-    //SCEHandle<Container> light = createLightSphere(vec3(4, 4, 1), vec4(1, 1, 1, 1));
-    //SCEHandle<Container> light2 = createLightSphere(vec3(-4, 4, 1), vec4(0, 0, 1, 1));
+//    createCone("coneObject", 2, vec3(-5, 4, -5))->GetComponent<Transform>()->SetWorldOrientation(vec3(30, 0, 30));
 
     //Suzanne model
     SCEHandle<Container> suz = createModel("suzanneObject", "suzanne.obj", vec3(0, 0, 0));
     suz->GetComponent<Transform>()->RotateAroundAxis(vec3(0.0f, 1.0f, 0.0f), 180.0f);
-    //createCone("coneObject", 3.0f, vec3(0, 0, 0));
 
     int nbSpheres = 5;
     for(int i = 0; i < nbSpheres; ++i){
@@ -134,7 +147,16 @@ int main( void )
 
         createSphere("sphereObject", i+2, vec3(0.0f, 0.0f, 0.0f)
             + normalize(vec3(1.0f, 0.0f, 0.0f)) * 20.0f * float(i+1) / float(nbSpheres));
+
+        createCube("cubeObject", vec3(0.0f, 0.0f, -5.0f)
+            + normalize(vec3(1.0f, 0.0f, 0.0f)) * 20.0f * float(i+1) / float(nbSpheres));
+
     }
+
+//    createCone("coneObject", 2, 45.0f, 5.0f, vec3(0.0f, 2.0f, 3.0f));
+
+//    SCEHandle<Container> cone = createCone("coneObject", 4, 45.0f, 20.0f, vec3(-5, 10, 0));
+//    cone->GetComponent<Transform>()->SetWorldOrientation(vec3(45, 0, 0));
 
     SCEHandle<Container> plane = createPlane("plane", 50.0f, vec3(0.0f, -2.0f, 2.0f));
     plane->GetComponent<Transform>()->SetWorldOrientation(vec3(-90.0f, 180.0f, 0.0f));

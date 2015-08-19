@@ -18,7 +18,7 @@ _{
     uniform vec3    SCE_LightDirection_worldspace;
     uniform float   SCE_LightReach_worldspace;
     uniform vec4    SCE_LightColor;
-    uniform float   SCE_LightMaxAngle;
+    uniform float   SCE_SpotAttenuation;
     uniform float   SCE_LightCutoff;
 
     void main(){
@@ -46,7 +46,7 @@ _{
     uniform vec3    SCE_LightDirection_worldspace;
     uniform float   SCE_LightReach_worldspace;
     uniform vec4    SCE_LightColor;
-    uniform float   SCE_LightMaxAngle;
+    uniform float   SCE_SpotAttenuation;
     uniform float   SCE_LightCutoff;
 
 #define LIGHT_SUBROUTINE_PARAMS in vec3 in_LightDirection_cameraspace,\
@@ -65,32 +65,29 @@ _{
     }
 
     //define a subroutine signature
-    subroutine vec4 SCE_ComputeLightType(LIGHT_SUBROUTINE_PARAMS);
+    subroutine vec2 SCE_ComputeLightType(LIGHT_SUBROUTINE_PARAMS);
 
     //Directional light option
-    subroutine (SCE_ComputeLightType) vec4 SCE_ComputeDirectionalLight(LIGHT_SUBROUTINE_PARAMS) {
+    subroutine (SCE_ComputeLightType) vec2 SCE_ComputeDirectionalLight(LIGHT_SUBROUTINE_PARAMS) {
 
         //Diffuse component
         vec3 dirToLight = normalize(-in_LightDirection_cameraspace);
         float NdotL     = dot(in_Normal_cameraspace, dirToLight);
         NdotL           = clamp(NdotL, 0, 1);
 
-        vec3 eyeDir         = normalize(in_EyeToFrag_cameraspace);
-        vec3 reflectedLight = reflect(dirToLight, in_Normal_cameraspace);
-        float EdotL         = clamp( dot( eyeDir, reflectedLight ), 0, 1 );
+        vec3 dirToEye       = normalize(-in_EyeToFrag_cameraspace);
+        vec3 halway         = normalize(dirToEye + dirToLight);
+        float EdotL         = clamp( dot(in_Normal_cameraspace, halway), 0.0 ,1.0 );
 
-        float distCoef  = 1.0;
+        vec2 light  = vec2(
+                    NdotL, //diffuse lighting
+                    pow(EdotL, 16.0)); //specular component
 
-        vec4 lightCol   = vec4(1, 1, 1, 1); //SCE_LightColor;
-        vec4 light      = lightCol * NdotL / (distCoef * distCoef)
-                + lightCol * pow(EdotL, 5) / (distCoef * distCoef);
-
-        //return vec4(1.0, 0.0, 0.0, 1.0);
         return light;
     }
 
     //Point light option
-    subroutine (SCE_ComputeLightType) vec4 SCE_ComputePointLight(LIGHT_SUBROUTINE_PARAMS) {
+    subroutine (SCE_ComputeLightType) vec2 SCE_ComputePointLight(LIGHT_SUBROUTINE_PARAMS) {
 
         //Diffuse component
         vec3 dirToLight = normalize(-in_LightToFrag_cameraspace);
@@ -103,31 +100,50 @@ _{
 
         float lightReach    = in_LightReach_cameraspace;
 
-        float dist              = length(in_LightToFrag_cameraspace);
+        float dist          = length(in_LightToFrag_cameraspace);
         float d = max(dist - lightReach, 0);
         // calculate basic attenuation
         float denom = d/lightReach + 1;
         float attenuation = 1 / (denom*denom);
-
-        // scale and bias attenuation such that:
-        //   attenuation == 0 at extent of max influence
-        //   attenuation == 1 when d == 0
         attenuation = (attenuation - SCE_LightCutoff) / (1 - SCE_LightCutoff);
         attenuation = max(attenuation, 0);
 
-        vec3 light  = vec3(
+        vec2 light  = vec2(
                     NdotL, //diffuse lighting
-                    pow(EdotL, 16.0), //specular component
-                    1.0);
+                    pow(EdotL, 16.0)); //specular component
 
         light *= attenuation;
-        return vec4(light, 1.0);
+        return light;
     }
 
     //Spot light option
-    subroutine (SCE_ComputeLightType) vec4 SCE_ComputeSpotLight(LIGHT_SUBROUTINE_PARAMS) {
+    subroutine (SCE_ComputeLightType) vec2 SCE_ComputeSpotLight(LIGHT_SUBROUTINE_PARAMS) {
+        //Diffuse component
+        vec3 dirToLight     = normalize(-in_LightToFrag_cameraspace);
+        vec3 invLightDir    = normalize(-in_LightDirection_cameraspace);
+        float NdotL         = dot(in_Normal_cameraspace, dirToLight);
+        NdotL               = clamp(NdotL, 0.0, 1.0);
 
-        return vec4(0.0, 1.0, 0.0, 1.0);
+        vec3 dirToEye       = normalize(-in_EyeToFrag_cameraspace);
+        vec3 halway         = normalize(dirToEye + dirToLight);
+        float EdotL         = clamp( dot(in_Normal_cameraspace, halway), 0.0 ,1.0 );
+
+        float lightReach    = in_LightReach_cameraspace;
+
+        //use very simple fallof approximation to fade spot light with distance
+        float dist          = length(in_LightToFrag_cameraspace);
+        float d             = mapToRange(0.0, lightReach, 1.0, 0.0, dist);
+        float attenuation   = d*d;
+
+        float spotAttenuation = max(dot(dirToLight, invLightDir), 0.0);
+        spotAttenuation = pow(spotAttenuation, SCE_SpotAttenuation);
+
+        vec2 light  = vec2(
+                    NdotL, //diffuse lighting
+                    pow(EdotL, 16.0)); //specular component
+
+        light *= attenuation * spotAttenuation;
+        return light;
     }
 
     //uniform variable declaration for the light function subroutine
@@ -149,13 +165,13 @@ _{
         vec2 uv = gl_FragCoord.xy / SCE_ScreenSize;
         vec3 MaterialDiffuseColor   = texture2D(DiffuseTex, uv).xyz;
         vec3 MaterialSpecularColor  = vec3(0.3,0.3,0.3);
-        vec3 Normal_cameraspace     = texture2D(NormalTex, uv).xyz;
+        vec3 Normal_cameraspace     = normalize(texture2D(NormalTex, uv).xyz);
         vec3 Position_cameraspace   = texture2D(PositionTex, uv).xyz;
 
         vec3 LightToFrag_cameraspace = Position_cameraspace - LightPosition_cameraspace;
         vec3 EyeToFrag_cameraspace = Position_cameraspace;
 
-        vec4 lightCol = SCE_ComputeLight(
+        vec2 lightCol = SCE_ComputeLight(
                     LightDirection_cameraspace,
                     Normal_cameraspace,
                     EyeToFrag_cameraspace,
@@ -164,9 +180,9 @@ _{
                     );
 
         color = vec4( //Diffuse
-                      MaterialDiffuseColor * lightCol.x * SCE_LightColor.rgb * SCE_LightColor.a +
+                      (MaterialDiffuseColor * lightCol.x * SCE_LightColor.rgb * SCE_LightColor.a)
                       //Specular
-                      + lightCol.y, 1.0);
+                      + (SCE_LightColor.rgb * lightCol.y * SCE_LightColor.a), 1.0);
 
         //gamma correction
         color = pow(color, vec4(1.0/2.2));

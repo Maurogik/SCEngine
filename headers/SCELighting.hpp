@@ -10,7 +10,8 @@
 
 #include "SCEDefines.hpp"
 #include "SCEHandle.hpp"
-#include "../headers/SCE_GBuffer.hpp"
+#include "SCE_GBuffer.hpp"
+#include <vector>
 
 namespace SCE
 {
@@ -26,14 +27,14 @@ namespace SCE
 
         static void         Init();
         static void         CleanUp();
-        static void         StartLightPass();
-        static void         EndLightPass();
-        static void         RenderLightToGBuffer(const SCEHandle<Camera>& camera,
-                                                 SCEHandle<Light> &light,
+
+        static void         RenderLightsToGBuffer(const SCEHandle<Camera>& camera,
                                                  SCE::SCE_GBuffer& gBuffer);
         static GLuint       GetLightShader();
         static GLuint       GetStencilShader();
-        static GLuint       GetTextureSamplerUniform(SCE_GBuffer::GBUFFER_TEXTURE_TYPE textureType);        
+        static GLuint       GetTextureSamplerUniform(SCE_GBuffer::GBUFFER_TEXTURE_TYPE textureType);
+        static void         RegisterLight(SCEHandle<Light> light);
+        static void         UnregisterLight(SCEHandle<Light> light);
 
     private :
 
@@ -44,9 +45,14 @@ namespace SCE
         std::string         mTexSamplerNames[SCE_GBuffer::GBUFFER_NUM_TEXTURES];
         GLuint              mTexSamplerUniforms[SCE_GBuffer::GBUFFER_NUM_TEXTURES];
 
+        std::vector<SCEHandle<Light>>   mStenciledLights;
+        std::vector<SCEHandle<Light>>   mDirectionalLights;
+
         void                initLightShader();
         void                renderLightingPass(const SCEHandle<Camera>& camera, SCEHandle<Light> &light);
         void                renderLightStencilPass(const SCEHandle<Camera>& camera, SCEHandle<Light> &light);
+        void                registerLight(SCEHandle<Light> light);
+        void                unregisterLight(SCEHandle<Light> light);
     };
 }
 

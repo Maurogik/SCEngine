@@ -19,7 +19,7 @@ using namespace std;
 SCEScene* SCEScene::s_scene = nullptr;
 
 SCE::SCEScene::SCEScene()
-    : mContainers(), mLights(), mGameObjects(), mLastId(0)
+    : mContainers(), mGameObjects(), mLastId(0)
 {    
 }
 
@@ -33,7 +33,6 @@ SCE::SCEScene::~SCEScene()
     }
     mContainers.clear();
     mGameObjects.clear();
-    mLights.clear();
 }
 
 void SCE::SCEScene::CreateEmptyScene()
@@ -229,27 +228,6 @@ void SCEScene::UnregisterGameObject(SCEHandle<GameObject> gameObject)
     }
 }
 
-void SCEScene::RegisterLight(SCEHandle<Light> light)
-{
-    if(find(begin(s_scene->mLights), end(s_scene->mLights), light) == end(s_scene->mLights)){
-        s_scene->mLights.push_back(light);
-    }
-}
-
-void SCEScene::UnregisterLight(SCEHandle<Light> light)
-{
-    auto it = find(begin(s_scene->mLights), end(s_scene->mLights), light);
-    if(it != end(s_scene->mLights)){
-        s_scene->mLights.erase(it);
-    }
-}
-
-std::vector<SCEHandle<Light> > SCEScene::FindLightsInRange(const glm::vec3 &worldPosition)
-{
-    Internal::Log("TODO : finds actual lights in range");
-    return s_scene->mLights;
-}
-
 void SCEScene::renderSceneWithCamera(const SCEHandle<Camera> &camera)
 {
     vector<Container*> objectsToRender;
@@ -261,7 +239,7 @@ void SCEScene::renderSceneWithCamera(const SCEHandle<Camera> &camera)
         }
     }
 
-    SCERender::Render(camera, mLights, &objectsToRender);
+    SCERender::Render(camera, &objectsToRender);
 }
 
 
