@@ -239,7 +239,7 @@ void SCEScene::renderSceneWithCamera(const SCEHandle<Camera> &camera)
         }
     }
 
-    SCERender::Render(camera, &objectsToRender);
+    SCERender::Render(camera, objectsToRender);
 }
 
 

@@ -14,26 +14,30 @@
 #include "SCE_GBuffer.hpp"
 #include <map>
 
-namespace SCE {
+namespace SCE
+{
 
-    enum LightUniformType {
+    enum LightUniformType
+    {
         LIGHT_POSITION = 0,
         LIGHT_DIRECTION,
         LIGHT_REACH,
         LIGHT_COLOR,
         LIGHT_SPOT_ATTENUATION,
         LIGHT_CUTOFF,
+        EYE_POSITION,
         LIGHT_UNIFORMS_COUNT
     };
 
-    enum LightType{
+    enum LightType
+    {
         DIRECTIONAL_LIGHT = 0,
         POINT_LIGHT,
         SPOT_LIGHT
     };
 
-    class Light : public Component {
-
+    class Light : public Component
+    {
     public :
 
         virtual             ~Light();
@@ -49,16 +53,17 @@ namespace SCE {
 
         LightType           GetLightType() const;
 
-        void                RenderDeffered(const SCEHandle<Camera>& camera);
-        void                RenderToStencil(const SCEHandle<Camera>& camera);
+        void                RenderDeffered(const SCECameraData& renderData);
+        void                RenderToStencil(const SCECameraData& renderData);
+
+        void                SetCastShadow(bool castShadow);
 
     protected :
 
-        Light(SCEHandle<Container>& container, const LightType &GetLightType,
+        Light(SCEHandle<Container>& container, LightType GetLightType,
                                   const std::string& typeName = "");
 
     private :
-
 
         LightType                   mLightType;
         float                       mLightReach;
@@ -70,12 +75,12 @@ namespace SCE {
         std::map<GLuint, GLuint>    mLightUniformsByShader[LIGHT_UNIFORMS_COUNT];
         SCEHandle<Mesh>             mLightMesh;
         SCEHandle<MeshRenderer>     mLightRenderer;
-        SCEHandle<MeshRenderer>     mLightStencilRenderer;
-        //tmp
-        GLuint                      mScreenSizeUniform;
 
-        void                        initRenderDataForShader(GLuint lightShaderId, GLuint stencilShaderId);
-        void                        bindRenderDataForShader(GLuint shaderId);
+        //tmp
+        GLuint                      mScreenSizeUniform;        
+
+        void                        initRenderDataForShader(GLuint lightShaderId);
+        void                        bindRenderDataForShader(GLuint shaderId, const vec3& cameraPosition);
         void                        bindLightModelForShader(GLuint shaderId);
 
         void                        generateLightMesh();

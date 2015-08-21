@@ -122,8 +122,11 @@ int main( void )
 
     SCEScene::CreateEmptyScene();
 
-    SCEHandle<Container> dirLight = createLight(vec3(4, 4, 1), vec3(30, 30, 0), LightType::DIRECTIONAL_LIGHT);
+    SCEHandle<Container> dirLight = createLight(vec3(0, 100, 0),
+                                                vec3(40, 0, 0),
+                                                LightType::DIRECTIONAL_LIGHT);
     dirLight->GetComponent<Light>()->SetLightColor(vec4(0.8, 0.8, 1.0, 0.2));
+    dirLight->GetComponent<Light>()->SetCastShadow(true);
 
     SCEHandle<Container> light1 = createLight(vec3(2, 3, -1), vec3(30, 0, 30), LightType::POINT_LIGHT);
     light1->GetComponent<Light>()->SetLightColor(vec4(1.0, 0.0, 0.0, 1.0));
@@ -150,7 +153,6 @@ int main( void )
 
         createCube("cubeObject", vec3(0.0f, 0.0f, -5.0f)
             + normalize(vec3(1.0f, 0.0f, 0.0f)) * 20.0f * float(i+1) / float(nbSpheres));
-
     }
 
 //    createCone("coneObject", 2, 45.0f, 5.0f, vec3(0.0f, 2.0f, 3.0f));

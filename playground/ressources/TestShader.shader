@@ -7,20 +7,20 @@ _{
     in vec3 vertexNormal_modelspace;
 
     out vec2 fragUV;
-    out vec3 Normal_cameraspace;
-    out vec3 Position_cameraspace;
+    out vec3 Normal_worldspace;
+    out vec3 Position_worldspace;
 
     uniform mat4 MVP;
     uniform mat4 M;
     uniform mat4 V;
     uniform mat4 P;
 
-    void main(){
-
+    void main()
+    {
         gl_Position = MVP * vec4(vertexPosition_modelspace, 1.0);
         fragUV = vertexUV;
-        Position_cameraspace = ( V * M * vec4(vertexPosition_modelspace, 1.0) ).xyz;
-        Normal_cameraspace = ( V * M * vec4(vertexNormal_modelspace, 0.0) ).xyz;
+        Position_worldspace = ( M * vec4(vertexPosition_modelspace, 1.0) ).xyz;
+        Normal_worldspace = ( M * vec4(vertexNormal_modelspace, 0.0) ).xyz;
     }
 _}
 
@@ -29,8 +29,8 @@ _{
 #version 400 core
 
     in vec2 fragUV;
-    in vec3 Normal_cameraspace;
-    in vec3 Position_cameraspace;
+    in vec3 Normal_worldspace;
+    in vec3 Position_worldspace;
 
     //out vec3 oColor;
 
@@ -42,13 +42,14 @@ _{
     uniform vec3 AmbientColor;
     uniform sampler2D MainTex;
 
-    void main(){
-
+    void main()
+    {
         oColor = texture2D(MainTex, fragUV).xyz;
-        //gamma expansion of texture because it is store gamma corrected and we will do our own gamma correction in the last shading pass
+        //gamma expansion of texture because it is store gamma corrected and we will do
+        //our own gamma correction in the last shading pass
         oColor = pow(oColor, vec3(2.2));
-        oPosition = Position_cameraspace;
-        oNormal = Normal_cameraspace;
+        oPosition = Position_worldspace;
+        oNormal = Normal_worldspace;
         //oUV = fragUV;
     }
 _}

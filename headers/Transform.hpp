@@ -178,37 +178,37 @@ namespace SCE {
 
         //-------------------- Local space constants
         /**
-         * @brief Computes and returns the local up direction vector
+         * @brief Computes and returns the local up direction vector in world space
          * @return a vector3 representing the up direction
          */
         glm::vec3               Up() const;
 
         /**
-         * @brief Computes and returns the local left direction vector
+         * @brief Computes and returns the local left direction vector in world space
          * @return a vector3 representing the left direction
          */
         glm::vec3               Left() const;
 
         /**
-         * @brief Computes and returns the local right direction vector
+         * @brief Computes and returns the local right direction vector in world space
          * @return a vector3 representing the right direction
          */
         glm::vec3               Right() const;
 
         /**
-         * @brief Computes and returns the local down direction vector
+         * @brief Computes and returns the local down direction vector in world space
          * @return a vector3 representing the down direction
          */
         glm::vec3               Down() const;
 
         /**
-         * @brief Computes and returns the local forward direction vector
+         * @brief Computes and returns the local forward direction vector in world space
          * @return a vector3 representing the forward direction
          */
         glm::vec3               Forward() const;
 
         /**
-         * @brief Computes and returns the local back direction vector
+         * @brief Computes and returns the local back direction vector in world space
          * @return a vector3 representing the back direction
          */
         glm::vec3               Back() const;

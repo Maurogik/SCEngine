@@ -151,7 +151,8 @@ SCEHandle<Mesh> SCE::Mesh::AddCustomMesh(SCEHandle<Container> &container, const 
     return container->AddComponent<Mesh>(filename);
 }
 
-//Tesselation : number of time the basic (90°) angle is divided by 2 to get the angle step, range from 0 to infinity
+//Tesselation : number of time the basic (90°) angle is divided by 2 to get the angle step,
+//range from 0 to infinity
 SCEHandle<Mesh> SCE::Mesh::AddSphereMesh(SCEHandle<Container> &container, float radius, float tesselation)
 {
     float fTess     = (float)tesselation;
@@ -205,7 +206,8 @@ SCEHandle<Mesh> SCE::Mesh::AddSphereMesh(SCEHandle<Container> &container, float 
 
             ushort vertIndices[4];
             int indCount = 0;
-            //loop over the four needed vertices to construct a quad (2 tris) in the order x1y1, x1y2, x2y1, x2y2
+            //loop over the four needed vertices to construct a quad (2 tris)
+            //in the order x1y1, x1y2, x2y1, x2y2
             for(int stepAddX = 0; stepAddX <= 1; ++stepAddX)
             {
                 for(int stepAddY = 0; stepAddY <= 1; ++stepAddY)
@@ -257,10 +259,10 @@ SCEHandle<Mesh> SCE::Mesh::AddCubeMesh(SCEHandle<Container> &container, float cu
         vec3(-size,  size,  size),
 
         // Back face
-        vec3(-size, -size, -size),
-        vec3(-size,  size, -size),
-        vec3( size,  size, -size),
-        vec3( size, -size, -size),
+        vec3(-size, -size,  -size),
+        vec3( size, -size,  -size),
+        vec3( size,  size,  -size),
+        vec3(-size,  size,  -size),
 
         // Top face
         vec3(-size,  size, -size),
@@ -269,10 +271,10 @@ SCEHandle<Mesh> SCE::Mesh::AddCubeMesh(SCEHandle<Container> &container, float cu
         vec3( size,  size, -size),
 
         // Bottom face
-        vec3(-size, -size, -size),
-        vec3( size, -size, -size),
-        vec3( size, -size,  size),
-        vec3(-size, -size,  size),
+        vec3(-size,  -size, -size),
+        vec3(-size,  -size,  size),
+        vec3( size,  -size,  size),
+        vec3( size,  -size, -size),
 
         // Right face
         vec3( size, -size, -size),
@@ -282,9 +284,9 @@ SCEHandle<Mesh> SCE::Mesh::AddCubeMesh(SCEHandle<Container> &container, float cu
 
         // Left face
         vec3(-size, -size, -size),
-        vec3(-size, -size,  size),
+        vec3(-size,  size, -size),
         vec3(-size,  size,  size),
-        vec3(-size,  size, -size)
+        vec3(-size, -size,  size),
     };
 
     vector<vec2> uvs = vector<vec2>
@@ -343,12 +345,12 @@ SCEHandle<Mesh> SCE::Mesh::AddCubeMesh(SCEHandle<Container> &container, float cu
 
     vector<ushort> indices = vector<ushort>
     {
-        0,  1,  2,      0,  2,  3,    // front
+        2,  1,  0,      3,  2,  0,    // front
         4,  5,  6,      4,  6,  7,    // back
-        8,  9,  10,     8,  10, 11,   // top
-        12, 13, 14,     12, 14, 15,   // bottom
-        16, 17, 18,     16, 18, 19,   // right
-        20, 21, 22,     20, 22, 23    // left
+        10,  8,  11,    8,  10, 9,    // top
+        15, 12, 14,     13, 14, 12,   // bottom
+        16, 19, 17,     19, 18, 17,   // right
+        21, 23, 20,     21, 22, 23    // left
     };
 
     return container->AddComponent<Mesh>(&indices,
@@ -402,7 +404,8 @@ SCEHandle<Mesh> Mesh::AddConeMesh(SCEHandle<Container> &container,
                                   float tesselation)
 {
     float fTess         = tesselation;
-    float angleStep     = glm::max(90.0f / glm::pow(2.0f, fTess), 5.0f);//atefacts appear if angleStep is to low
+    //atefacts appear if angleStep is to low so clamp to min value
+    float angleStep     = glm::max(90.0f / glm::pow(2.0f, fTess), 5.0f);
     float lengthStep    = glm::max(length / glm::pow(2.0f, fTess), 0.2f);
     int nbAngleSteps    = 360.0f / angleStep;
     int nbLengthSteps   = length / lengthStep;
@@ -464,7 +467,8 @@ SCEHandle<Mesh> Mesh::AddConeMesh(SCEHandle<Container> &container,
 
             ushort vertIndices[4];
             int indCount = 0;
-            //loop over the four needed vertices to construct a quad (2 tris) in the order x1y1, x1y2, x2y1, x2y2
+            //loop over the four needed vertices to construct a quad (2 tris)
+            //in the order x1y1, x1y2, x2y1, x2y2
             for(int subStepZAngle = 0; subStepZAngle <= 1; ++subStepZAngle)
             {
                 for(int subStepZPos = 0; subStepZPos <= 1; ++subStepZPos)

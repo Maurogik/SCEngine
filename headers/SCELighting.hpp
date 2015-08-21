@@ -13,11 +13,15 @@
 #include "SCE_GBuffer.hpp"
 #include <vector>
 
+#define SHADOW_MAP_WIDTH 1024
+#define SHADOW_MAP_HEIGHT 768
+
 namespace SCE
 {
-    //Forward declare Camera because we won't need the implementation
     class Camera;
     class Light;
+    class Container;
+    struct SCECameraData;
 
     class SCELighting
     {
@@ -28,31 +32,49 @@ namespace SCE
         static void         Init();
         static void         CleanUp();
 
-        static void         RenderLightsToGBuffer(const SCEHandle<Camera>& camera,
-                                                 SCE::SCE_GBuffer& gBuffer);
+        static void         RenderShadowsToGBuffer(const SCECameraData& camRenderData,
+                                                   std::vector<vec3> frustrumCorners,
+                                                   std::vector<SCE::Container*> objectsToRender,
+                                                   SCE::SCE_GBuffer& gBuffer);
+
+        static void         RenderLightsToGBuffer(const SCECameraData& renderData,
+                                                  SCE::SCE_GBuffer& gBuffer);
+
         static GLuint       GetLightShader();
         static GLuint       GetStencilShader();
+        static GLuint       GetShadowMapShader();
         static GLuint       GetTextureSamplerUniform(SCE_GBuffer::GBUFFER_TEXTURE_TYPE textureType);
         static void         RegisterLight(SCEHandle<Light> light);
         static void         UnregisterLight(SCEHandle<Light> light);
+        static void         SetShadowCaster(SCEHandle<Light> light);
 
     private :
 
         static SCELighting* s_instance;
 
         GLuint              mLightShader;
-        GLuint              mStencilShader;
+        GLuint              mEmptyShader;
+        GLuint              mCopyShadowShader;
         std::string         mTexSamplerNames[SCE_GBuffer::GBUFFER_NUM_TEXTURES];
         GLuint              mTexSamplerUniforms[SCE_GBuffer::GBUFFER_NUM_TEXTURES];
+        GLuint              mShadowSamplerUnifom;
+        GLuint              mShadowDepthMatUnifom;
+
+        SCEHandle<Light>                mShadowCaster;
+        glm::mat4                       mDepthConvertMat;
 
         std::vector<SCEHandle<Light>>   mStenciledLights;
         std::vector<SCEHandle<Light>>   mDirectionalLights;
 
         void                initLightShader();
-        void                renderLightingPass(const SCEHandle<Camera>& camera, SCEHandle<Light> &light);
-        void                renderLightStencilPass(const SCEHandle<Camera>& camera, SCEHandle<Light> &light);
         void                registerLight(SCEHandle<Light> light);
         void                unregisterLight(SCEHandle<Light> light);
+
+        void                renderLightingPass(const SCECameraData& renderData,
+                                               SCEHandle<Light> &light);
+
+        void                renderLightStencilPass(const SCECameraData& renderData,
+                                                   SCEHandle<Light> &light);
     };
 }
 

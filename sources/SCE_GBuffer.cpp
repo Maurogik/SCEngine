@@ -35,13 +35,14 @@ SCE_GBuffer::~SCE_GBuffer()
         glDeleteTextures(1, &mDepthTexture);
     }
 
-    if (mDepthTexture > 0)
+    if (mFinalTexture > 0)
     {
         glDeleteTextures(1, &mFinalTexture);
     }
 }
 
-bool SCE_GBuffer::Init(unsigned int windowWidth, unsigned int windowHeight)
+bool SCE_GBuffer::Init(unsigned int windowWidth, unsigned int windowHeight,
+                       unsigned int shadowMapWidth, unsigned int shadowMapHeight)
 {
     // Create the FBO
     glGenFramebuffers(1, &mFBOId);
@@ -54,10 +55,18 @@ bool SCE_GBuffer::Init(unsigned int windowWidth, unsigned int windowHeight)
 
     for (unsigned int i = 0 ; i < GBUFFER_TEXTURE_COUNT ; i++) {
         glBindTexture(GL_TEXTURE_2D, mTextures[i]);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, windowWidth, windowHeight, 0, GL_RGB, GL_FLOAT, NULL);
+        if(i == GBUFFER_TEXTURE_TYPE_SHADOW)
+        {
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, shadowMapWidth, shadowMapHeight,
+                         0, GL_RGBA, GL_FLOAT, NULL);
+        }
+        else
+        {
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, windowWidth, windowHeight, 0, GL_RGB, GL_FLOAT, NULL);
+        }
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        //set this texure as frameBufferObject color attachment i
+        //set this texture as frameBufferObject color attachment i
         glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, mTextures[i], 0);
     }
 
@@ -70,7 +79,7 @@ bool SCE_GBuffer::Init(unsigned int windowWidth, unsigned int windowHeight)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, mDepthTexture, 0);
 
-    // final textute, is needed because we need to render the light pass
+    // final texture, is needed because we need to render the light pass
     // with the stencil test into the Framebuffer where the stencil buffer was filled (this GBuffer)
     glBindTexture(GL_TEXTURE_2D, mFinalTexture);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, windowWidth, windowHeight, 0, GL_RGBA, GL_FLOAT, NULL);
@@ -135,25 +144,13 @@ void SCE_GBuffer::BindForFinalPass()
 
 void SCE_GBuffer::BindTexturesToLightShader()
 {
-    for (unsigned int i = 0; i < GBUFFER_TEXTURE_COUNT; i++) {
+    for (unsigned int i = 0; i < GBUFFER_TEXTURE_COUNT; i++)
+    {
         glActiveTexture(GL_TEXTURE0 + i);
         glBindTexture(GL_TEXTURE_2D, mTextures[i]);
         // Set the sampler uniform to the texture unit
         glUniform1i(SCELighting::GetTextureSamplerUniform(GBUFFER_TEXTURE_TYPE(i)), i);
     }
-
-    //DEBUG
-    //for depth buffer into color sampler
-    /*
-    glActiveTexture(GL_TEXTURE0 + GBUFFER_TEXTURE_TYPE_POSITION);
-    glBindTexture(GL_TEXTURE_2D, mDepthTexture);
-    // Set the sampler uniform to the texture unit
-    GLuint loc = glGetUniformLocation(SCELighting::GetStencilShader(), "PositionText");
-//    glUniform1i(SCELighting::GetTextureSamplerUniform(GBUFFER_TEXTURE_TYPE_POSITION),
-//                GBUFFER_TEXTURE_TYPE_POSITION);
-
-    glUniform1i(loc, GBUFFER_TEXTURE_TYPE_POSITION);
-*/
 }
 
 void SCE_GBuffer::SetReadBuffer(GBUFFER_TEXTURE_TYPE TextureType)

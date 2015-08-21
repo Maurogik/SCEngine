@@ -9,12 +9,19 @@
 
 #include "SCE_GBuffer.hpp"
 #include "SCEHandle.hpp"
-#include "Container.hpp"
-#include "Light.hpp"
 #include <vector>
 
 namespace SCE
 {
+    class Camera;
+    class Container;
+
+    struct SCECameraData
+    {
+        glm::mat4 viewMatrix;
+        glm::mat4 projectionMatrix;
+    };
+
     class SCERender
     {
     public :
@@ -24,8 +31,9 @@ namespace SCE
         static void         Init();
         static void         CleanUp();
         static void         Render(const SCEHandle<Camera> &camera,
-                                   std::vector<Container*>* objectsToRender);
+                                   std::vector<Container*> objectsToRender);
         static void         ResetClearColorToDefault();
+        static glm::mat4    FixOpenGLProjectionMatrix(const glm::mat4& projMat);
 
     private :
 
@@ -34,8 +42,8 @@ namespace SCE
         SCE_GBuffer         mGBuffer;
         glm::vec4           mDefaultClearColor;
 
-        void                renderGeometryPass(const SCEHandle<Camera> &camera,
-                                               std::vector<Container*>* objectsToRender);
+        void                renderGeometryPass(const SCECameraData& renderData,
+                                               std::vector<Container*> objectsToRender);
 
     };
 }

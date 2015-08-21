@@ -32,7 +32,9 @@ namespace SCE {
 
     protected :
 
-                                    Component(SCEHandle<Container>& container, const std::string& typeName, const int& guid = 0);
+                                    Component(SCEHandle<Container>& container,
+                                              const std::string& typeName,
+                                              int guid = 0);
 
     private :
 

@@ -10,6 +10,7 @@
 #include "../headers/Transform.hpp"
 #include "../headers/SCEScene.hpp"
 #include "../headers/SCELighting.hpp"
+#include "../headers/SCERender.hpp"
 #include "../headers/SCECore.hpp"
 
 using namespace std;
@@ -37,10 +38,11 @@ string s_lightUniformNames[LIGHT_UNIFORMS_COUNT] = {
     "SCE_LightReach_worldspace",
     "SCE_LightColor",
     "SCE_SpotAttenuation",
-    "SCE_LightCutoff"
+    "SCE_LightCutoff",
+    "SCE_EyePosition_worldspace"
 };
 
-Light::Light(SCEHandle<Container>& container, const LightType &lightType,
+Light::Light(SCEHandle<Container>& container, LightType lightType,
              const std::string& typeName)
     : Component(container, "Light::" + typeName),
       mLightType(lightType),
@@ -55,7 +57,7 @@ Light::Light(SCEHandle<Container>& container, const LightType &lightType,
 {
     SCELighting::RegisterLight(SCEHandle<Light>(this));
     generateLightMesh();
-    initRenderDataForShader(SCELighting::GetLightShader(), SCELighting::GetStencilShader());
+    initRenderDataForShader(SCELighting::GetLightShader());
     //change layer to avoid rendering the light mesh as a regular mesh
     container->SetLayer(LIGHTS_LAYER);
 
@@ -72,7 +74,7 @@ LightType Light::GetLightType() const
     return mLightType;
 }
 
-void Light::initRenderDataForShader(GLuint lightShaderId, GLuint stencilShaderId)
+void Light::initRenderDataForShader(GLuint lightShaderId)
 {
     glUseProgram(lightShaderId);
 
@@ -90,19 +92,17 @@ void Light::initRenderDataForShader(GLuint lightShaderId, GLuint stencilShaderId
 
     mScreenSizeUniform = glGetUniformLocation(lightShaderId, SCREEN_SIZE_UNIFORM_NAME);
 
-    mLightRenderer = GetContainer()->AddComponent<MeshRenderer>(lightShaderId);
-    mLightStencilRenderer = GetContainer()->AddComponent<MeshRenderer>(stencilShaderId);
+    mLightRenderer = GetContainer()->AddComponent<MeshRenderer>();
 }
 
-void Light::bindRenderDataForShader(GLuint shaderId)
+void Light::bindRenderDataForShader(GLuint shaderId, const vec3& cameraPosition)
 {
     glUseProgram(shaderId);
 
     SCEHandle<Transform> transform = GetContainer()->GetComponent<Transform>();
 
     vec3 lightPos = transform->GetWorldPosition();
-    vec4 tmp = transform->GetWorldTransform() * vec4(0, 0, 1, 0);
-    vec3 lightDir = vec3(tmp.x, tmp.y, tmp.z);
+    vec3 lightDir = transform->Forward();
     lightDir = glm::normalize(lightDir);
 
     //send the light data to the uniforms
@@ -129,6 +129,9 @@ void Light::bindRenderDataForShader(GLuint shaderId)
             break;
         case LIGHT_CUTOFF :
             glUniform1f(unifId, mLightCutoff);
+            break;
+        case EYE_POSITION :
+            glUniform3f(unifId, cameraPosition.x, cameraPosition.y, cameraPosition.z);
             break;
         default :
             SCE::Debug::LogError("Unknown ligth uniform type : " + type);
@@ -213,17 +216,33 @@ void Light::SetLightColor(const glm::vec4 &lightColor)
     mLightColor = lightColor;
 }
 
-void Light::RenderDeffered(const SCEHandle<Camera>& camera)
+void Light::RenderDeffered(const SCECameraData& renderData)
 {
-    bindRenderDataForShader(SCELighting::GetLightShader());
+    //compute light position to send it to the shader
+    glm::mat4 camToWorld = glm::inverse(renderData.viewMatrix);
+    vec4 camPos = camToWorld * vec4(0, 0, 0, 1);
+    bindRenderDataForShader(SCELighting::GetLightShader(), vec3(camPos.x, camPos.y, camPos.z));
     bindLightModelForShader(SCELighting::GetLightShader());
 
-    mLightRenderer->Render(camera, mLightType == DIRECTIONAL_LIGHT);
+    mLightRenderer->Render(renderData, mLightType == DIRECTIONAL_LIGHT);
 }
 
-void Light::RenderToStencil(const SCEHandle<Camera>& camera)
+void Light::RenderToStencil(const SCECameraData& renderData)
 {
-    mLightStencilRenderer->Render(camera, mLightType == DIRECTIONAL_LIGHT);
+    mLightRenderer->Render(renderData, mLightType == DIRECTIONAL_LIGHT);
+}
+
+void Light::SetCastShadow(bool castShadow)
+{
+    if(castShadow)
+    {
+        Debug::Assert(mLightType == DIRECTIONAL_LIGHT, "Shadow casting only supported for directionnal lights");
+        SCELighting::SetShadowCaster(SCEHandle<Light>(this));
+    }
+    else
+    {
+        SCELighting::SetShadowCaster(SCEHandle<Light>(nullptr));
+    }
 }
 
 float Light::GetLightMaxAngle() const
@@ -254,6 +273,7 @@ void Light::generateLightMesh()
     {
         GetContainer()->RemoveComponent<Mesh>(mLightMesh);
     }
+
     switch(mLightType)
     {
     case POINT_LIGHT:
@@ -270,7 +290,6 @@ void Light::generateLightMesh()
     if(mLightRenderer)
     {
         mLightRenderer->UpdateRenderedMesh();
-        mLightStencilRenderer->UpdateRenderedMesh();
     }
 }
 

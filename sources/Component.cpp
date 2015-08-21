@@ -12,7 +12,7 @@ using namespace SCE;
 using namespace std;
 
 
-Component::Component(SCEHandle<Container> &container, const string &typeName, const int &guid)
+Component::Component(SCEHandle<Container> &container, const string &typeName, int guid)
     : mContainer(container)
     , mTypeHash(SCE::Tools::HashFromString( "Component::"+typeName))
 {

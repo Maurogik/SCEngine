@@ -11,6 +11,8 @@
 
 namespace SCE
 {
+    struct SCECameraData;
+
     class Camera : public Component
     {
 
@@ -23,38 +25,56 @@ namespace SCE
         } typedef Type;
 
         const Type&         GetProjectionType() const;
-        mat4                GetViewMatrix() const;
+        glm::mat4           GetViewMatrix() const;
         const glm::mat4&    GetProjectionMatrix() const;
-        mat4                GetViewProjectionMatrix() const;
+        glm::mat4           GetViewProjectionMatrix() const;
+        void                SetProjectionMatrix(const glm::mat4 &projMat);
         bool                IsLayerRendered(const std::string &layer) const;
         void                AddLayerToRender(const std::string &layer);
         void                RemoveLayerToRender(const std::string &layer);
+        SCECameraData       GetRenderData() const;
+        std::vector<vec3>   GetFrustrumCorners() const;
 
     protected :
 
+        //Default (perspective)
         Camera(  SCEHandle<Container>& container  );
+        //Perspective projection contructor
         Camera(  SCEHandle<Container>& container,
-                 const float &fieldOfView
-               , const float &aspectRatio
-               , const float &nearPlane
-               , const float &farPlane
+                 float fieldOfView
+               , float aspectRatio
+               , float nearPlane
+               , float farPlane
         );
+        //Orthographic projection constructor
         Camera(  SCEHandle<Container>& container,
-                 const float &leftPlane
-               , const float &rightPlane
-               , const float &topPlane
-               , const float &bottomPlane
-               , const float &nearPlane
-               , const float &farPlane
+                 float leftPlane
+               , float rightPlane
+               , float topPlane
+               , float bottomPlane
+               , float nearPlane
+               , float farPlane
         );
 
     private :
 
         void                init();
+        void                calcConersPerspective(float near,
+                                                  float far,
+                                                  float aspectRatio,
+                                                  float fov);
+        void                calcConersOrtho(float leftPlane,
+                                            float rightPlane,
+                                            float topPlane,
+                                            float bottomPlane,
+                                            float nearPlane,
+                                            float farPlane);
 
         Type                        mType;
         std::vector<std::string>    mRenderedLayers;
         glm::mat4                   mProjectionMatrix;
+        glm::vec3                   mFarPlaneCorners[4];
+        glm::vec3                   mNearPlaneCorners[4];
 
     };
 

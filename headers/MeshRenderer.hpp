@@ -8,62 +8,78 @@
 
 #include "SCEDefines.hpp"
 #include "Component.hpp"
-#include "Camera.hpp"
-
+#include <map>
 
 #define MAX_ATTRIB_ID 10000
 
 namespace SCE {
 
-    struct attrib_data{
-        GLuint  dataBufferId;
-        void*   buffer;
-        size_t  typeSize;
-        GLuint  dataLocation;
-        int     type;
-    };
-
     class Camera;
+    struct SCECameraData;
 
     class MeshRenderer : public Component {
 
     public :
                         ~MeshRenderer();
-        void            Render(const SCEHandle<Camera> &cam, bool renderFullScreenQuad = false);
+        void            Render(const SCECameraData& renderData, bool renderFullScreenQuad = false);
         void            UpdateRenderedMesh();
 
     protected :
 
                         MeshRenderer(SCEHandle<Container>& container, const std::string& typeName = "");
-                        MeshRenderer(SCEHandle<Container>& container, GLuint shaderProgramID, const std::string& typeName = "");
 
     private :
 
-        void            initializeGLData(GLuint programID);
-        void            updateMeshData();
-        void            addAttribute(
-                            GLuint programID
-                          , const std::string &name
-                          , void* buffer
-                          , size_t size
-                          , int type
-                          , size_t typedSize
-                        );
-        void            setAttribute(
-                            attrib_data& data
-                          , void* newBuffer
-                          , size_t newSize
-                          );
+        enum ATTRIB_TYPE
+        {
+            VERTEX_POSITION = 0,
+            VERTEX_UV,
+            VERTEX_NORMAL,
+            VERTEX_TANGENT,
+            VERTEX_BITANGENT,
+            VERTEX_ATTRIB_COUNT
+        };
 
-        GLuint                      mMVPMatrixUniform;
-        GLuint                      mViewMatrixUniform;
-        GLuint                      mModelMatrixUniform;
+        struct attrib_data
+        {
+            GLuint                      dataBufferId;
+            void*                       buffer;
+            size_t                      typeSize;
+            int                         type;
+        };
+
+        //store mandatory uniforms and attributes locations per shader
+        struct shader_data
+        {
+            GLuint attribLocations[VERTEX_ATTRIB_COUNT];
+            GLuint MVPMatrixLocation;
+            GLuint ViewMatrixLocation;
+            GLuint ModelMatrixLocation;
+        };
+
+        void            initializeGLData();
+        void            initializeShaderData(GLuint programID);
+        void            updateMeshData();
+
+        void            addAttribute(void* buffer,
+                                     size_t size,
+                                     int type,
+                                     size_t typedSize);
+
+        void            setAttribute(attrib_data& data,
+                                     void* newBuffer,
+                                     size_t newSize);
+
+        std::map<GLuint,shader_data>    mShaderData;
 
         //indexation buffer
-        GLuint                      mIndiceBuffer;
+        GLuint                          mIndiceBuffer;
 
-        GLuint                      mVaoID;
-        std::vector<attrib_data>    mAttributes;
+        GLuint                          mVaoID;
+        std::vector<attrib_data>        mAttributes;
+
+        //Mesh attributes names as they appear in the shader
+        static std::string              s_AttribNames[VERTEX_ATTRIB_COUNT];
 
 
 

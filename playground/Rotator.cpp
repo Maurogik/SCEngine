@@ -20,6 +20,7 @@ void Rotator::Update()
     }*/
 
     transform->RotateAroundAxis(vec3(0, 0, 1), mSpeed * SCETime::DeltaTime());
+
     //vec3 worldPos = transform->GetWorldPosition();
     //worldPos += vec3(0.0f, 0.0f, 0.50f) * SCETime::DeltaTime();
     //transform->SetWorldPosition(worldPos);
