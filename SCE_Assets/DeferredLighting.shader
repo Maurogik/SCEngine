@@ -172,13 +172,13 @@ _{
                       + (SCE_LightColor.rgb * lightCol.y * SCE_LightColor.a), 1.0);
 
         //convert frag pos to lightspace homogeneous coordinates (but in range [0.0, 1.0])
-//        vec4 position_lightspace = DepthConvertMat * vec4(Position_worldspace, 1.0);
-//        float depth_lightspace = texture2D(ShadowTex, uv).r;
+        vec4 position_lightspace = DepthConvertMat * vec4(Position_worldspace, 1.0);
+        float depth_lightspace = texture2D(ShadowTex, position_lightspace.xy).r;
 
-//        float shadow = step(depth_lightspace, position_lightspace.z);
+        float shadow = step(depth_lightspace, position_lightspace.z);
 
-//        color.rgb *= 0.5 + depth_lightspace;//1.0 - shadow * 0.5;
-//        color.rg =  position_lightspace.xy;
+        color.rgb *= 1.0 - shadow * 0.5;
+        //color.rg =  position_lightspace.xy;
 
         //gamma correction
         color = pow(color, vec4(1.0/2.2));

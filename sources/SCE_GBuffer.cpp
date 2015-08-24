@@ -57,17 +57,20 @@ bool SCE_GBuffer::Init(unsigned int windowWidth, unsigned int windowHeight,
         glBindTexture(GL_TEXTURE_2D, mTextures[i]);
         if(i == GBUFFER_TEXTURE_TYPE_SHADOW)
         {
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, shadowMapWidth, shadowMapHeight,
-                         0, GL_RGBA, GL_FLOAT, NULL);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH32F_STENCIL8, shadowMapWidth, shadowMapHeight,
+                         0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
+            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         }
         else
         {
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, windowWidth, windowHeight, 0, GL_RGB, GL_FLOAT, NULL);
+            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            //set this texture as frameBufferObject color attachment i
+            glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, mTextures[i], 0);
         }
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        //set this texture as frameBufferObject color attachment i
-        glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, mTextures[i], 0);
     }
 
     // depth and stencil buffer
@@ -131,8 +134,22 @@ void SCE_GBuffer::BindForLightPass()
     //bind FBO for reading and drawing (because the stencil buffer used for test is the one
     // from the draw framebuffer
     glBindFramebuffer(GL_FRAMEBUFFER, mFBOId);
-
     glDrawBuffer(GL_COLOR_ATTACHMENT0 + GBUFFER_NUM_TEXTURES);
+}
+
+void SCE_GBuffer::BindForShadowPass()
+{
+    glBindFramebuffer(GL_FRAMEBUFFER, mFBOId);
+    //render depth to shadowmap
+    glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT,
+                           GL_TEXTURE_2D, mTextures[GBUFFER_TEXTURE_TYPE_SHADOW], 0);
+    glDrawBuffer(GL_NONE);
+}
+
+void SCE_GBuffer::EndShadowPass()
+{
+    //rebind the regular depth buffer
+    glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, mDepthTexture, 0);
 }
 
 void SCE_GBuffer::BindForFinalPass()

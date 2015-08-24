@@ -166,7 +166,7 @@ int main( void )
     //Camera
     SCEHandle<Container> cameraObject = SCEScene::CreateContainer("cameraObject");
     SCEHandle<Transform> cameraTransform = cameraObject->AddComponent<Transform>();
-    cameraObject->AddComponent<Camera>(40.0f, 4.0f/3.0f, 0.1f, 100.0f);
+    cameraObject->AddComponent<Camera>(40.0f, 4.0f/3.0f, 1.0f, 100.0f);
     cameraTransform->SetWorldPosition(vec3(0, 10, -25));
     cameraTransform->RotateAroundAxis(vec3(1.0f, 0.0f, 0.0f), 90.0f);
 

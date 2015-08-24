@@ -34,6 +34,7 @@ namespace SCE {
         void    BindForStencilPass();
         void    BindForLightPass();
         void    BindForShadowPass();
+        void    EndShadowPass();
         void    BindForFinalPass();
         void    BindTexturesToLightShader();
         void    SetReadBuffer(GBUFFER_TEXTURE_TYPE TextureType);

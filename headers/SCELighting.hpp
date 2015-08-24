@@ -75,6 +75,10 @@ namespace SCE
 
         void                renderLightStencilPass(const SCECameraData& renderData,
                                                    SCEHandle<Light> &light);
+
+        void                renderShadowmapPass(const SCECameraData& lightRenderData,
+                                                std::vector<SCE::Container*> objectsToRender,
+                                                SCE::SCE_GBuffer& gBuffer);
     };
 }
 

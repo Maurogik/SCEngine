@@ -67,8 +67,8 @@ void SCERender::Render(const SCEHandle<Camera>& camera,
 
     s_instance->mGBuffer.ClearFinalBuffer();
 
-    /*SCELighting::RenderShadowsToGBuffer(renderData, camera->GetFrustrumCorners(),
-                                        objectsToRender, s_instance->mGBuffer);*/
+    SCELighting::RenderShadowsToGBuffer(renderData, camera->GetFrustrumCorners(),
+                                        objectsToRender, s_instance->mGBuffer);
 
     SCELighting::RenderLightsToGBuffer(renderData, s_instance->mGBuffer);
 
@@ -94,7 +94,7 @@ void SCERender::renderGeometryPass(const SCECameraData& renderData,
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
 
-    for(SCEHandle<Container> container : objectsToRender)
+    for(Container* container : objectsToRender)
     {
         SCEHandle<Material> mat = container->GetComponent<Material>();
         // Use the shader

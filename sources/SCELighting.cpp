@@ -71,6 +71,7 @@ void SCELighting::RenderShadowsToGBuffer(const SCECameraData &camRenderData,
         return;
     }
 
+    //compute bouding box of camera frustrum in light space
     float max = std::numeric_limits<float>::max() - 1;//just a big float (the biggest !)
     float far = -max;
     float near = max;
@@ -94,6 +95,9 @@ void SCELighting::RenderShadowsToGBuffer(const SCECameraData &camRenderData,
         bottom = glm::min(bottom, corner_lightSpace.y);
     }
 
+    //near should be close
+    near = 10.0f;
+
     SCECameraData lightRenderData;
     glm::mat4 projMat = glm::ortho(left, right,
                                    bottom, top,
@@ -104,6 +108,7 @@ void SCELighting::RenderShadowsToGBuffer(const SCECameraData &camRenderData,
     lightRenderData.projectionMatrix = projMat;
 
     //render shadowMap from light point of view
+    s_instance->renderShadowmapPass(lightRenderData, objectsToRender, gBuffer);
 }
 
 void SCELighting::RenderLightsToGBuffer(const SCECameraData& renderData,
@@ -323,3 +328,25 @@ void SCELighting::renderLightingPass(const SCECameraData& renderData, SCEHandle<
     glDisable(GL_BLEND);
 }
 
+void SCELighting::renderShadowmapPass(const SCECameraData& lightRenderData, std::vector<Container*> objectsToRender, SCE_GBuffer& gBuffer)
+{
+    glUseProgram(mEmptyShader);
+    glEnable(GL_DEPTH_TEST);
+    gBuffer.BindForShadowPass();
+    glClear(GL_DEPTH_BUFFER_BIT);
+
+    for(Container* container : objectsToRender)
+    {
+        container->GetComponent<MeshRenderer>()->Render(lightRenderData);
+    }
+    gBuffer.EndShadowPass();
+
+    glm::mat4 biasMatrix(
+    0.5, 0.0, 0.0, 0.0,
+    0.0, 0.5, 0.0, 0.0,
+    0.0, 0.0, 0.5, 0.0,
+    0.5, 0.5, 0.5, 1.0
+    );
+
+    mDepthConvertMat = biasMatrix * lightRenderData.projectionMatrix * lightRenderData.viewMatrix;
+}
