@@ -16,20 +16,22 @@ using namespace std;
 
 #define LIGHT_SHADER_NAME "DeferredLighting"
 #define STENCYL_SHADER_NAME "EmptyShader"
-#define COPY_SHADOW_SHADER_NAME "CopyShadowMap"
-#define SHADOWMAP_UNIFORM_NAME "ShadowMapTexture"
+#define SHADOWMAP_UNIFORM_NAME "ShadowTex"
 #define DEPTH_MAT_UNIFORM_NAME "DepthConvertMat"
+
+#define SHADOW_MAP_WIDTH (4096)
+#define SHADOW_MAP_HEIGHT (4096)
 
 SCELighting* SCELighting::s_instance = nullptr;
 
 SCELighting::SCELighting()
     : mLightShader(-1),
       mEmptyShader(-1),
-      mCopyShadowShader(-1),
       mTexSamplerNames(),
       mTexSamplerUniforms(),
       mShadowSamplerUnifom(-1),
       mShadowDepthMatUnifom(-1),
+      mShadowMapFBO(),
       mShadowCaster(nullptr),
       mDepthConvertMat(1.0),
       mStenciledLights(),
@@ -39,7 +41,8 @@ SCELighting::SCELighting()
     mTexSamplerNames[SCE_GBuffer::GBUFFER_TEXTURE_TYPE_POSITION] = "PositionTex";
     mTexSamplerNames[SCE_GBuffer::GBUFFER_TEXTURE_TYPE_DIFFUSE] = "DiffuseTex";
     mTexSamplerNames[SCE_GBuffer::GBUFFER_TEXTURE_TYPE_NORMAL] = "NormalTex";
-    mTexSamplerNames[SCE_GBuffer::GBUFFER_TEXTURE_TYPE_SHADOW] = "ShadowTex";
+
+    mShadowMapFBO.Init(SHADOW_MAP_WIDTH, SHADOW_MAP_HEIGHT);
 }
 
 void SCELighting::Init()
@@ -55,7 +58,6 @@ void SCELighting::CleanUp()
     //unload shader
     glDeleteProgram(s_instance->mLightShader);
     glDeleteProgram(s_instance->mEmptyShader);
-    glDeleteProgram(s_instance->mCopyShadowShader);
     delete s_instance;
 }
 
@@ -95,7 +97,7 @@ void SCELighting::RenderShadowsToGBuffer(const SCECameraData &camRenderData,
         bottom = glm::min(bottom, corner_lightSpace.y);
     }
 
-    //near should be close
+    //near should be close (actually, it should be the closest occluder, but we don't know where it is yet)
     near = 10.0f;
 
     SCECameraData lightRenderData;
@@ -108,7 +110,7 @@ void SCELighting::RenderShadowsToGBuffer(const SCECameraData &camRenderData,
     lightRenderData.projectionMatrix = projMat;
 
     //render shadowMap from light point of view
-    s_instance->renderShadowmapPass(lightRenderData, objectsToRender, gBuffer);
+    s_instance->renderShadowmapPass(lightRenderData, objectsToRender);
 }
 
 void SCELighting::RenderLightsToGBuffer(const SCECameraData& renderData,
@@ -131,7 +133,7 @@ void SCELighting::RenderLightsToGBuffer(const SCECameraData& renderData,
         glUseProgram(s_instance->mLightShader);
         gBuffer.BindForLightPass();
         gBuffer.BindTexturesToLightShader();
-        glUniformMatrix4fv(s_instance->mShadowDepthMatUnifom, 1, GL_FALSE, &(s_instance->mDepthConvertMat[0][0]));
+
         s_instance->renderLightingPass(renderData, light);
     }
 
@@ -144,7 +146,13 @@ void SCELighting::RenderLightsToGBuffer(const SCECameraData& renderData,
         glUseProgram(s_instance->mLightShader);
         gBuffer.BindForLightPass();
         gBuffer.BindTexturesToLightShader();
+
+        //bind the shadowmap to the next free texture unit
+        s_instance->mShadowMapFBO.BindTextureToLightShader(SCE_GBuffer::GBUFFER_NUM_TEXTURES);
+
+        //bind the world-to-depth convertion matrix
         glUniformMatrix4fv(s_instance->mShadowDepthMatUnifom, 1, GL_FALSE, &(s_instance->mDepthConvertMat[0][0]));
+
         s_instance->renderLightingPass(renderData, light);
     }
 
@@ -176,6 +184,12 @@ GLuint SCELighting::GetTextureSamplerUniform(SCE_GBuffer::GBUFFER_TEXTURE_TYPE t
 {
     Debug::Assert(s_instance, "No Lighting system instance found, Init the system before using it");
     return s_instance->mTexSamplerUniforms[textureType];
+}
+
+GLuint SCELighting::GetShadowmapSamplerUniform()
+{
+    Debug::Assert(s_instance, "No Lighting system instance found, Init the system before using it");
+    return s_instance->mShadowSamplerUnifom;
 }
 
 void SCELighting::RegisterLight(SCEHandle<Light> light)
@@ -212,11 +226,6 @@ void SCELighting::initLightShader()
         mEmptyShader = ShaderTools::CompileShader(STENCYL_SHADER_NAME);
     }
 
-    if(mCopyShadowShader == (GLuint) -1)
-    {
-        mCopyShadowShader = ShaderTools::CompileShader(COPY_SHADOW_SHADER_NAME);
-    }
-
     glUseProgram(mLightShader);
 
     for (unsigned int i = 0; i < SCE_GBuffer::GBUFFER_NUM_TEXTURES; i++)
@@ -224,10 +233,7 @@ void SCELighting::initLightShader()
         mTexSamplerUniforms[i] = glGetUniformLocation(mLightShader, mTexSamplerNames[i].c_str());
     }
     mShadowDepthMatUnifom = glGetUniformLocation(mLightShader, DEPTH_MAT_UNIFORM_NAME);
-
-    glUseProgram(mCopyShadowShader);
-
-    mShadowSamplerUnifom = glGetUniformLocation(mCopyShadowShader, SHADOWMAP_UNIFORM_NAME);
+    mShadowSamplerUnifom = glGetUniformLocation(mLightShader, SHADOWMAP_UNIFORM_NAME);
 }
 
 void SCELighting::registerLight(SCEHandle<Light> light)
@@ -316,7 +322,6 @@ void SCELighting::renderLightingPass(const SCECameraData& renderData, SCEHandle<
     glStencilFunc(GL_NOTEQUAL, 0, 0xFF);//only render pixels with stendil value > 0
 
     glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-
     glDisable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glCullFace(GL_FRONT);
@@ -328,18 +333,28 @@ void SCELighting::renderLightingPass(const SCECameraData& renderData, SCEHandle<
     glDisable(GL_BLEND);
 }
 
-void SCELighting::renderShadowmapPass(const SCECameraData& lightRenderData, std::vector<Container*> objectsToRender, SCE_GBuffer& gBuffer)
+void SCELighting::renderShadowmapPass(const SCECameraData& lightRenderData,
+                                      std::vector<Container*> objectsToRender)
 {
+    GLint viewportDims[4];
+    glGetIntegerv( GL_VIEWPORT, viewportDims );
+
+//    glEnable(GL_SCISSOR_TEST);
+//    glScissor(0, 0, SHADOW_MAP_WIDTH, SHADOW_MAP_HEIGHT);
+
+    glViewport(0, 0, SHADOW_MAP_WIDTH, SHADOW_MAP_HEIGHT);
+
     glUseProgram(mEmptyShader);
     glEnable(GL_DEPTH_TEST);
-    gBuffer.BindForShadowPass();
-    glClear(GL_DEPTH_BUFFER_BIT);
+
+    mShadowMapFBO.BindForShadowPass();
+
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     for(Container* container : objectsToRender)
     {
         container->GetComponent<MeshRenderer>()->Render(lightRenderData);
     }
-    gBuffer.EndShadowPass();
 
     glm::mat4 biasMatrix(
     0.5, 0.0, 0.0, 0.0,
@@ -348,5 +363,32 @@ void SCELighting::renderShadowmapPass(const SCECameraData& lightRenderData, std:
     0.5, 0.5, 0.5, 1.0
     );
 
-    mDepthConvertMat = biasMatrix * lightRenderData.projectionMatrix * lightRenderData.viewMatrix;
+//    glReadBuffer(GL_COLOR_ATTACHMENT0 + 3);
+//    float* pixels = new float[SHADOW_MAP_WIDTH * SHADOW_MAP_HEIGHT];
+//    glReadPixels(0, 0,
+//                 SHADOW_MAP_WIDTH, SHADOW_MAP_HEIGHT,
+//                 GL_DEPTH_COMPONENT, GL_FLOAT,
+//                 pixels);
+
+//    string str = "";
+//    for(int x = 0; x < SHADOW_MAP_WIDTH; ++x)
+//    {
+//        for(int y = 0; y < SHADOW_MAP_HEIGHT; ++y)
+//        {
+//            float pix = pixels[x * SHADOW_MAP_HEIGHT + y];
+//            string pixStr = std::to_string(pix);
+//            pixStr.erase ( pixStr.find_last_not_of('0') + 1, std::string::npos );
+//            str += pixStr + ", ";
+//        }
+//        str += "\n";
+//    }
+
+//    Debug::Log(str);
+
+    mDepthConvertMat = biasMatrix * lightRenderData.projectionMatrix
+                       * lightRenderData.viewMatrix;
+
+
+    glViewport(viewportDims[0], viewportDims[1], viewportDims[2], viewportDims[3]);
 }
+

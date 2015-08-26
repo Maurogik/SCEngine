@@ -21,14 +21,12 @@ namespace SCE {
             GBUFFER_TEXTURE_TYPE_POSITION = 0,
             GBUFFER_TEXTURE_TYPE_DIFFUSE,
             GBUFFER_TEXTURE_TYPE_NORMAL,
-            GBUFFER_TEXTURE_TYPE_SHADOW,
             GBUFFER_NUM_TEXTURES
         };
 
                 SCE_GBuffer();
                 ~SCE_GBuffer();
-        bool    Init(unsigned int windowWidth, unsigned int windowHeight,
-                     unsigned int shadowMapWidth, unsigned int shadowMapHeight);
+        bool    Init(unsigned int windowWidth, unsigned int windowHeight);
         void    ClearFinalBuffer();
         void    BindForGeometryPass();
         void    BindForStencilPass();

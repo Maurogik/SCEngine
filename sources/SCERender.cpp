@@ -31,8 +31,7 @@ SCERender::SCERender()
     glEnable(GL_CULL_FACE);
 
     //initialize the Gbuffer used to deferred lighting
-    mGBuffer.Init(SCECore::GetWindowWidth(), SCECore::GetWindowHeight(),
-                  SHADOW_MAP_WIDTH, SHADOW_MAP_HEIGHT);
+    mGBuffer.Init(SCECore::GetWindowWidth(), SCECore::GetWindowHeight());
 }
 
 void SCERender::Init()
@@ -58,17 +57,17 @@ void SCERender::Render(const SCEHandle<Camera>& camera,
     //extract data used for rendering
     SCECameraData renderData = camera->GetRenderData();
 
-
     // Clear the screen (default framebuffer)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    //render shadows to shadowmap
+    SCELighting::RenderShadowsToGBuffer(renderData, camera->GetFrustrumCorners(),
+                                        objectsToRender, s_instance->mGBuffer);
 
     //render objects without lighting
     s_instance->renderGeometryPass(renderData, objectsToRender);
 
     s_instance->mGBuffer.ClearFinalBuffer();
-
-    SCELighting::RenderShadowsToGBuffer(renderData, camera->GetFrustrumCorners(),
-                                        objectsToRender, s_instance->mGBuffer);
 
     SCELighting::RenderLightsToGBuffer(renderData, s_instance->mGBuffer);
 
@@ -116,7 +115,8 @@ void SCERender::ResetClearColorToDefault()
 
 mat4 SCERender::FixOpenGLProjectionMatrix(const mat4& projMat)
 {
-    //Needed because opengl camera renders along the negative Z axis and I want it to render along the positiv axis
+    //Needed because opengl camera renders along the negative Z axis and
+    //I want it to render along the positive axis
    return glm::scale(projMat, glm::vec3(1, 1, -1));
 }
 

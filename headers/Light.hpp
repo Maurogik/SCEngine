@@ -26,6 +26,7 @@ namespace SCE
         LIGHT_SPOT_ATTENUATION,
         LIGHT_CUTOFF,
         EYE_POSITION,
+        SHADOW_STRENGTH,
         LIGHT_UNIFORMS_COUNT
     };
 
@@ -71,6 +72,7 @@ namespace SCE
         float                       mSpotAttenuation;
         float                       mLightCutoff;
         glm::vec4                   mLightColor;
+        bool                        mCastShadow;
         //array containing a map of uniforms Id by shader ID, for each light uniform type
         std::map<GLuint, GLuint>    mLightUniformsByShader[LIGHT_UNIFORMS_COUNT];
         SCEHandle<Mesh>             mLightMesh;

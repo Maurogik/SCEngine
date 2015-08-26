@@ -29,7 +29,8 @@ SCEHandle<Container> createSphere(const string& name, const float& tesselation, 
     return object;
 }
 
-SCEHandle<Container> createCone(const string& name, const float& tesselation, float angle, float length, const vec3& pos){
+SCEHandle<Container> createCone(const string& name, const float& tesselation,
+                                float angle, float length, const vec3& pos){
     //cube model
     SCEHandle<Container> object = SCEScene::CreateContainer(name);
 
@@ -92,7 +93,7 @@ SCEHandle<Container> createModel(const string& objectName, const string& filenam
 
 SCEHandle<Container> createLight(vec3 pos, vec3 orientation, LightType type){
     //Light
-    SCEHandle<Container> lightObject = SCEScene::CreateContainer("lightObject");  
+    SCEHandle<Container> lightObject = SCEScene::CreateContainer("lightObject");
 
     SCEHandle<Transform> lightTransform = lightObject->AddComponent<Transform>();
     SCEHandle<Light> light = lightObject->AddComponent<Light>(type);
@@ -128,22 +129,21 @@ int main( void )
     dirLight->GetComponent<Light>()->SetLightColor(vec4(0.8, 0.8, 1.0, 0.2));
     dirLight->GetComponent<Light>()->SetCastShadow(true);
 
-    SCEHandle<Container> light1 = createLight(vec3(2, 3, -1), vec3(30, 0, 30), LightType::POINT_LIGHT);
-    light1->GetComponent<Light>()->SetLightColor(vec4(1.0, 0.0, 0.0, 1.0));
-    light1->GetComponent<Light>()->SetLightReach(2.0f);
+//    SCEHandle<Container> light1 = createLight(vec3(2, 3, -1), vec3(30, 0, 30), LightType::POINT_LIGHT);
+//    light1->GetComponent<Light>()->SetLightColor(vec4(1.0, 0.0, 0.0, 1.0));
+//    light1->GetComponent<Light>()->SetLightReach(2.0f);
 
-    SCEHandle<Container> light2 = createLight(vec3(-5, 10, -5), vec3(60, 0, 0), LightType::SPOT_LIGHT);
-    light2->GetComponent<Light>()->SetLightReach(40.0f);
-    light2->GetComponent<Light>()->SetLightMaxAngle(45.0f);
-    light2->GetComponent<Light>()->SetLightColor(vec4(0.0, 1.0, 0.0, 1.0));
+//    SCEHandle<Container> light2 = createLight(vec3(-5, 10, -5), vec3(60, 0, 0), LightType::SPOT_LIGHT);
+//    light2->GetComponent<Light>()->SetLightReach(40.0f);
+//    light2->GetComponent<Light>()->SetLightMaxAngle(45.0f);
+//    light2->GetComponent<Light>()->SetLightColor(vec4(0.0, 1.0, 0.0, 1.0));
 
-//    createCone("coneObject", 2, vec3(-5, 4, -5))->GetComponent<Transform>()->SetWorldOrientation(vec3(30, 0, 30));
 
     //Suzanne model
     SCEHandle<Container> suz = createModel("suzanneObject", "suzanne.obj", vec3(0, 0, 0));
     suz->GetComponent<Transform>()->RotateAroundAxis(vec3(0.0f, 1.0f, 0.0f), 180.0f);
 
-    int nbSpheres = 5;
+    /*int nbSpheres = 5;
     for(int i = 0; i < nbSpheres; ++i){
         createSphere("sphereObject", i+2, vec3(0.0f, 0.0f, 0.0f)
             + normalize(vec3(-1.0f, 0.0f, 0.0f)) * 20.0f * float(i+1) / float(nbSpheres));
@@ -153,14 +153,14 @@ int main( void )
 
         createCube("cubeObject", vec3(0.0f, 0.0f, -5.0f)
             + normalize(vec3(1.0f, 0.0f, 0.0f)) * 20.0f * float(i+1) / float(nbSpheres));
-    }
+    }*/
 
 //    createCone("coneObject", 2, 45.0f, 5.0f, vec3(0.0f, 2.0f, 3.0f));
 
 //    SCEHandle<Container> cone = createCone("coneObject", 4, 45.0f, 20.0f, vec3(-5, 10, 0));
 //    cone->GetComponent<Transform>()->SetWorldOrientation(vec3(45, 0, 0));
 
-    SCEHandle<Container> plane = createPlane("plane", 50.0f, vec3(0.0f, -2.0f, 2.0f));
+    SCEHandle<Container> plane = createPlane("plane", 150.0f, vec3(0.0f, -2.0f, 2.0f));
     plane->GetComponent<Transform>()->SetWorldOrientation(vec3(-90.0f, 180.0f, 0.0f));
 
     //Camera

@@ -22,12 +22,12 @@ FragmentShader :
 _{
 #version 430 core
 
-    uniform sampler2D ShadowMapTexture;
-    out vec4 color;
+//    uniform sampler2D ShadowMapTexture;
+    out vec3 color;
 
     void main()
     {
-        vec2 uv = gl_FragCoord.xy / vec2(1024, 768);
-        color = vec4(0.0, 1.0, 0.0, 1.0);//texture2D(ShadowMapTexture, uv);
+//        vec2 uv = gl_FragCoord.xy / vec2(1024, 768);
+        color = vec3(gl_FragCoord.z, 1.0, 0.0);//texture2D(ShadowMapTexture, uv);
     }
 _}

@@ -18,8 +18,8 @@ _{
     uniform float   SCE_SpotAttenuation;
     uniform float   SCE_LightCutoff;
 
-    void main(){
-
+    void main()
+    {
         gl_Position                 = MVP * vec4(vertexPosition_modelspace, 1.0);
     }
 _}
@@ -36,6 +36,7 @@ _{
     uniform vec4    SCE_LightColor;
     uniform float   SCE_SpotAttenuation;
     uniform float   SCE_LightCutoff;
+    uniform float   SCE_ShadowStrength;
 
 #define LIGHT_SUBROUTINE_PARAMS \
     in vec3 in_LightDirection_worldspace,\
@@ -57,8 +58,8 @@ _{
     subroutine vec2 SCE_ComputeLightType(LIGHT_SUBROUTINE_PARAMS);
 
     //Directional light option
-    subroutine (SCE_ComputeLightType) vec2 SCE_ComputeDirectionalLight(LIGHT_SUBROUTINE_PARAMS) {
-
+    subroutine (SCE_ComputeLightType) vec2 SCE_ComputeDirectionalLight(LIGHT_SUBROUTINE_PARAMS)
+    {
         //Diffuse component
         vec3 dirToLight = normalize(-in_LightDirection_worldspace);
         float NdotL     = dot(in_Normal_worldspace, dirToLight);
@@ -76,8 +77,8 @@ _{
     }
 
     //Point light option
-    subroutine (SCE_ComputeLightType) vec2 SCE_ComputePointLight(LIGHT_SUBROUTINE_PARAMS) {
-
+    subroutine (SCE_ComputeLightType) vec2 SCE_ComputePointLight(LIGHT_SUBROUTINE_PARAMS)
+    {
         //Diffuse component
         vec3 dirToLight = normalize(-in_LightToFrag_worldspace);
         float NdotL     = dot(in_Normal_worldspace, dirToLight);
@@ -106,7 +107,8 @@ _{
     }
 
     //Spot light option
-    subroutine (SCE_ComputeLightType) vec2 SCE_ComputeSpotLight(LIGHT_SUBROUTINE_PARAMS) {
+    subroutine (SCE_ComputeLightType) vec2 SCE_ComputeSpotLight(LIGHT_SUBROUTINE_PARAMS)
+    {
         //Diffuse component
         vec3 dirToLight     = normalize(-in_LightToFrag_worldspace);
         vec3 invLightDir    = normalize(-in_LightDirection_worldspace);
@@ -175,11 +177,10 @@ _{
         vec4 position_lightspace = DepthConvertMat * vec4(Position_worldspace, 1.0);
         float depth_lightspace = texture2D(ShadowTex, position_lightspace.xy).r;
 
-        float shadow = step(depth_lightspace, position_lightspace.z);
+        float shadow = step(depth_lightspace + 0.001, position_lightspace.z);
 
-        color.rgb *= 1.0 - shadow * 0.5;
-        //color.rg =  position_lightspace.xy;
-
+        color.rgb *= 1.0 - shadow * SCE_ShadowStrength;
+//        color.rgb = texture2D(ShadowTex, uv).rgb * SCE_ShadowStrength;
         //gamma correction
         color = pow(color, vec4(1.0/2.2));
     }

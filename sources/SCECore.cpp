@@ -64,6 +64,9 @@ void SCECore::InitEngine(const std::string &windowName)
         Debug::RaiseError("Failed to initialize GLEW.");
     }
 
+    //enable v-sync
+    glfwSwapInterval(1);
+
     UpdateWindow();
 
     // Ensure we can capture the escape key being pressed below
@@ -88,6 +91,12 @@ void SCECore::InitEngine(const std::string &windowName)
     glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 
 #endif
+    //read and empty the error queue
+    GLenum errorCode;
+    while((errorCode = glGetError()) != GL_NO_ERROR)
+    {
+        Debug::Log("Warning : OpenGL error found : " + std::to_string(errorCode));
+    }
 
     //Init Engine subcomponents in order
     SCETime::Init();
@@ -97,8 +106,8 @@ void SCECore::InitEngine(const std::string &windowName)
 
 void SCECore::RunEngine()
 {
-
-    do {
+    do
+    {
         SCETime::Update();
         SCEScene::Run();
 

@@ -37,7 +37,7 @@ _{
     layout (location = 0) out vec3 oPosition;
     layout (location = 1) out vec3 oColor;
     layout (location = 2) out vec3 oNormal;
-    //layout (location = 3) out vec3 oUV;
+//    layout (location = 3) out vec3 oShadow;
 
     uniform vec3 AmbientColor;
     uniform sampler2D MainTex;
@@ -50,6 +50,6 @@ _{
         oColor = pow(oColor, vec3(2.2));
         oPosition = Position_worldspace;
         oNormal = Normal_worldspace;
-        //oUV = fragUV;
+//        oShadow = vec3(0.0, 1.0, 0.0);
     }
 _}

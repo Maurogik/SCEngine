@@ -11,10 +11,8 @@
 #include "SCEDefines.hpp"
 #include "SCEHandle.hpp"
 #include "SCE_GBuffer.hpp"
+#include "SCEShadowMap.hpp"
 #include <vector>
-
-#define SHADOW_MAP_WIDTH 1024
-#define SHADOW_MAP_HEIGHT 768
 
 namespace SCE
 {
@@ -44,6 +42,7 @@ namespace SCE
         static GLuint       GetStencilShader();
         static GLuint       GetShadowMapShader();
         static GLuint       GetTextureSamplerUniform(SCE_GBuffer::GBUFFER_TEXTURE_TYPE textureType);
+        static GLuint       GetShadowmapSamplerUniform();
         static void         RegisterLight(SCEHandle<Light> light);
         static void         UnregisterLight(SCEHandle<Light> light);
         static void         SetShadowCaster(SCEHandle<Light> light);
@@ -54,11 +53,12 @@ namespace SCE
 
         GLuint              mLightShader;
         GLuint              mEmptyShader;
-        GLuint              mCopyShadowShader;
         std::string         mTexSamplerNames[SCE_GBuffer::GBUFFER_NUM_TEXTURES];
         GLuint              mTexSamplerUniforms[SCE_GBuffer::GBUFFER_NUM_TEXTURES];
         GLuint              mShadowSamplerUnifom;
         GLuint              mShadowDepthMatUnifom;
+
+        SCEShadowMap        mShadowMapFBO;
 
         SCEHandle<Light>                mShadowCaster;
         glm::mat4                       mDepthConvertMat;
@@ -77,8 +77,7 @@ namespace SCE
                                                    SCEHandle<Light> &light);
 
         void                renderShadowmapPass(const SCECameraData& lightRenderData,
-                                                std::vector<SCE::Container*> objectsToRender,
-                                                SCE::SCE_GBuffer& gBuffer);
+                                                std::vector<SCE::Container*> objectsToRender);
     };
 }
 

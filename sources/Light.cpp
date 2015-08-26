@@ -39,7 +39,8 @@ string s_lightUniformNames[LIGHT_UNIFORMS_COUNT] = {
     "SCE_LightColor",
     "SCE_SpotAttenuation",
     "SCE_LightCutoff",
-    "SCE_EyePosition_worldspace"
+    "SCE_EyePosition_worldspace",
+    "SCE_ShadowStrength"
 };
 
 Light::Light(SCEHandle<Container>& container, LightType lightType,
@@ -51,6 +52,7 @@ Light::Light(SCEHandle<Container>& container, LightType lightType,
       mSpotAttenuation(1.0f),
       mLightCutoff(POINT_LIGHT_CUTOFF),
       mLightColor(COLOR_DEFAULT),
+      mCastShadow(false),
       mLightUniformsByShader(),
       mLightMesh(nullptr),
       mLightRenderer(nullptr)
@@ -133,6 +135,9 @@ void Light::bindRenderDataForShader(GLuint shaderId, const vec3& cameraPosition)
         case EYE_POSITION :
             glUniform3f(unifId, cameraPosition.x, cameraPosition.y, cameraPosition.z);
             break;
+        case SHADOW_STRENGTH :
+            glUniform1f(unifId, mCastShadow ? 1.0f : 0.0f);
+            break;
         default :
             SCE::Debug::LogError("Unknown ligth uniform type : " + type);
         }
@@ -146,7 +151,7 @@ void Light::bindLightModelForShader(GLuint shaderId)
     glUseProgram(shaderId);
 
     //set subroutine according to light type
-    GLuint shaderType = GL_FRAGMENT_SHADER; //always fragment shader for lighting computations (for now)
+    GLuint shaderType = GL_FRAGMENT_SHADER; //always fragment shader for lighting computations
 
     //get the index of the subroutine uniform (form 0 to nb of subroutines uniforms)
     GLuint lightSubroutineUniform = glGetSubroutineUniformLocation(shaderId,
@@ -243,6 +248,7 @@ void Light::SetCastShadow(bool castShadow)
     {
         SCELighting::SetShadowCaster(SCEHandle<Light>(nullptr));
     }
+    mCastShadow = castShadow;
 }
 
 float Light::GetLightMaxAngle() const

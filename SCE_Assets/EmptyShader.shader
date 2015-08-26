@@ -26,6 +26,6 @@ _{
 
     void main()
     {
-        color = vec4(1.0, 0.0, 0.0, 1.0);
+        color = vec4(gl_FragCoord.z, 0.0, 0.0, 1.0);
     }
 _}
