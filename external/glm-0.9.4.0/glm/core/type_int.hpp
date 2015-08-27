@@ -128,7 +128,7 @@ namespace detail
 	/// Unsigned integer type. 
 	/// 
 	/// @see <a href="http://www.opengl.org/registry/doc/GLSLangSpec.4.20.8.pdf">GLSL 4.20.8 specification, section 4.1.3 Integers</a>
-	typedef uint_t								uint;
+    typedef unsigned int uint_t ;
 
 	/// @}
 }//namespace glm

@@ -96,7 +96,7 @@ CState::~CState()
 {
     if( m_StateBlock )
     {
-        UINT rc = m_StateBlock->Release();
+        unsigned int rc = m_StateBlock->Release();
         assert( rc==0 ); (void)rc;
         m_StateBlock = NULL;
     }
@@ -256,7 +256,7 @@ void CTwGraphDirect3D9::Restore()
     if( m_State )
         if( m_State->m_StateBlock )
         {
-            UINT rc = m_State->m_StateBlock->Release();
+            unsigned int rc = m_State->m_StateBlock->Release();
             assert( rc==0 ); (void)rc;
             m_State->m_StateBlock = NULL;
         }

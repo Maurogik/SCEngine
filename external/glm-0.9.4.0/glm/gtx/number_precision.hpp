@@ -52,7 +52,7 @@ namespace glm{
 namespace gtx
 {
 	/////////////////////////////
-	// Unsigned int vector types 
+	// unsigned int vector types 
 
 	/// @addtogroup gtx_number_precision
 	/// @{

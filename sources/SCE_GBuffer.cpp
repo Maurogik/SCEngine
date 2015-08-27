@@ -41,7 +41,7 @@ SCE_GBuffer::~SCE_GBuffer()
     }
 }
 
-bool SCE_GBuffer::Init(unsigned int windowWidth, unsigned int windowHeight)
+bool SCE_GBuffer::Init(uint windowWidth, uint windowHeight)
 {
 
     // Create the FBO
@@ -53,7 +53,7 @@ bool SCE_GBuffer::Init(unsigned int windowWidth, unsigned int windowHeight)
     glGenTextures(1, &mDepthTexture);
     glGenTextures(1, &mFinalTexture);
 
-    for (unsigned int i = 0 ; i < GBUFFER_TEXTURE_COUNT ; i++) {
+    for (uint i = 0 ; i < GBUFFER_TEXTURE_COUNT ; i++) {
         glBindTexture(GL_TEXTURE_2D, mTextures[i]);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, windowWidth, windowHeight, 0, GL_RGB, GL_FLOAT, NULL);
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -104,7 +104,7 @@ void SCE_GBuffer::BindForGeometryPass()
     glBindFramebuffer(GL_FRAMEBUFFER, mFBOId);
     //reset the color attachment buffers that have been removed for stencil pass
     GLenum drawBuffers[GBUFFER_TEXTURE_COUNT];
-    for (unsigned int i = 0 ; i < GBUFFER_TEXTURE_COUNT ; i++) {
+    for (uint i = 0 ; i < GBUFFER_TEXTURE_COUNT ; i++) {
         drawBuffers[i] = GL_COLOR_ATTACHMENT0 + i;
     }
     //set the attachment with the drawBuffers array
@@ -135,7 +135,7 @@ void SCE_GBuffer::BindForFinalPass()
 
 void SCE_GBuffer::BindTexturesToLightShader()
 {
-    for (unsigned int i = 0; i < GBUFFER_TEXTURE_COUNT; i++)
+    for (uint i = 0; i < GBUFFER_TEXTURE_COUNT; i++)
     {
         glActiveTexture(GL_TEXTURE0 + i);
         glBindTexture(GL_TEXTURE_2D, mTextures[i]);

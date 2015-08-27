@@ -140,15 +140,46 @@ _{
     //uniform variable declaration for the light function subroutine
     subroutine uniform SCE_ComputeLightType SCE_ComputeLight;
 
+
+    #define CASCADE_COUNT 4
+
     out vec4 color;
 
-    uniform mat4        DepthConvertMat;
+    uniform mat4        DepthConvertMat[CASCADE_COUNT];
+    uniform mat4        V;
+    uniform float       FarSplits_cameraspace[CASCADE_COUNT];
 
     uniform sampler2D   PositionTex;
     uniform sampler2D   DiffuseTex;
     uniform sampler2D   NormalTex;
-    uniform sampler2D   ShadowTex;
+//    uniform sampler2D   ShadowTex;
+    uniform sampler2DArray ShadowTex;
 
+
+
+    float sampleMyTex(vec2 uv, int i)
+    {
+        return texture(ShadowTex, vec3(uv, float(i)));
+    }
+
+
+    float getShadowDepth(vec3 worldPos)
+    {
+        vec3 cameraPos = (V * vec4(worldPos, 1.0)).xyz;
+
+        for(int i = 0; i < CASCADE_COUNT; ++i)
+        {
+            if(cameraPos.z <= FarSplits_cameraspace[i])
+            {
+                vec4 position_lightspace = DepthConvertMat[i] * vec4(worldPos, 1.0);
+                float depth_lightspace = sampleMyTex(vec2(position_lightspace.xy), i);
+                return step(depth_lightspace + 0.001, position_lightspace.z);
+                //return float(i+1) / float(CASCADE_COUNT);
+            }
+            //texture2D(ShadowTex, position_lightspace.xy).r;
+        }
+        return 0.0f;
+    }
 
     void main()
     {
@@ -173,14 +204,35 @@ _{
                       //Specular
                       + (SCE_LightColor.rgb * lightCol.y * SCE_LightColor.a), 1.0);
 
-        //convert frag pos to lightspace homogeneous coordinates (but in range [0.0, 1.0])
-        vec4 position_lightspace = DepthConvertMat * vec4(Position_worldspace, 1.0);
-        float depth_lightspace = texture2D(ShadowTex, position_lightspace.xy).r;
-
-        float shadow = step(depth_lightspace + 0.001, position_lightspace.z);
+        float shadow = getShadowDepth(Position_worldspace);
 
         color.rgb *= 1.0 - shadow * SCE_ShadowStrength;
 //        color.rgb = texture2D(ShadowTex, uv).rgb * SCE_ShadowStrength;
+
+//        color.rgb *= getShadowDepth(Position_worldspace);
+
+        /*vec2 uv2 = uv * 0.5;
+
+        if(uv.x < 0.5 && uv.y < 0.5)
+        {
+            color.rgb *=  0.5 + sampleMyTex(uv2, 0).r;
+        }
+
+        if(uv.x > 0.5 && uv.y < 0.5)
+        {
+            color.rgb *=  0.5 + sampleMyTex(uv2, 1).r;
+        }
+
+        if(uv.x < 0.5 && uv.y > 0.5)
+        {
+            color.rgb *=  0.5 + sampleMyTex(uv2, 2).r;
+        }
+
+        if(uv.x > 0.5 && uv.y > 0.5)
+        {
+            color.rgb *=  0.5 + sampleMyTex(uv2, 3).r;
+        }*/
+
         //gamma correction
         color = pow(color, vec4(1.0/2.2));
     }

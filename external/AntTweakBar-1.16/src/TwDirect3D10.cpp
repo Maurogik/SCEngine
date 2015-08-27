@@ -31,8 +31,8 @@ const char *g_ErrCreateBuffer10  = "Direct3D10 vertex buffer creation failed";
 
 // Dynamically loaded D3D10 functions (to avoid static linkage with d3d10.lib)
 HMODULE g_D3D10Module = NULL;
-typedef HRESULT (WINAPI *D3D10CompileEffectFromMemoryProc)(void *pData, SIZE_T DataLength, LPCSTR pSrcFileName, CONST D3D10_SHADER_MACRO *pDefines, ID3D10Include *pInclude, UINT HLSLFlags, UINT FXFlags, ID3D10Blob **ppCompiledEffect, ID3D10Blob **ppErrors);
-typedef HRESULT (WINAPI *D3D10CreateEffectFromMemoryProc)(void *pData, SIZE_T DataLength, UINT FXFlags, ID3D10Device *pDevice, ID3D10EffectPool *pEffectPool, ID3D10Effect **ppEffect);
+typedef HRESULT (WINAPI *D3D10CompileEffectFromMemoryProc)(void *pData, SIZE_T DataLength, LPCSTR pSrcFileName, CONST D3D10_SHADER_MACRO *pDefines, ID3D10Include *pInclude, unsigned int HLSLFlags, unsigned int FXFlags, ID3D10Blob **ppCompiledEffect, ID3D10Blob **ppErrors);
+typedef HRESULT (WINAPI *D3D10CreateEffectFromMemoryProc)(void *pData, SIZE_T DataLength, unsigned int FXFlags, ID3D10Device *pDevice, ID3D10EffectPool *pEffectPool, ID3D10Effect **ppEffect);
 typedef HRESULT (WINAPI *D3D10StateBlockMaskEnableAllProc)(D3D10_STATE_BLOCK_MASK *pMask);
 typedef HRESULT (WINAPI *D3D10CreateStateBlockProc)(ID3D10Device *pDevice, D3D10_STATE_BLOCK_MASK *pStateBlockMask, ID3D10StateBlock **ppStateBlock);
 D3D10CompileEffectFromMemoryProc _D3D10CompileEffectFromMemory = NULL;
@@ -174,7 +174,7 @@ CState10::~CState10()
 {
     if( m_StateBlock )
     {
-        UINT rc = m_StateBlock->Release();
+        unsigned int rc = m_StateBlock->Release();
         assert( rc==0 ); (void)rc;
         m_StateBlock = NULL;
     }
@@ -651,7 +651,7 @@ void CTwGraphDirect3D10::Restore()
     {
         if( m_State->m_StateBlock )
         {
-            UINT rc = m_State->m_StateBlock->Release();
+            unsigned int rc = m_State->m_StateBlock->Release();
             assert( rc==0 ); (void)rc;
             m_State->m_StateBlock = NULL;
         }
@@ -723,8 +723,8 @@ void CTwGraphDirect3D10::DrawLine(int _X0, int _Y0, int _X1, int _Y1, color32 _C
         m_D3DDev->IASetInputLayout(m_LineRectVertexLayout);
 
         // Set vertex buffer
-        UINT stride = sizeof(CLineRectVtx);
-        UINT offset = 0;
+        unsigned int stride = sizeof(CLineRectVtx);
+        unsigned int offset = 0;
         m_D3DDev->IASetVertexBuffers(0, 1, &m_LineVertexBuffer, &stride, &offset);
 
         // Set primitive topology
@@ -733,7 +733,7 @@ void CTwGraphDirect3D10::DrawLine(int _X0, int _Y0, int _X1, int _Y1, color32 _C
         // Render the line
         D3D10_TECHNIQUE_DESC techDesc;
         m_LineRectTech->GetDesc(&techDesc);
-        for(UINT p=0; p<techDesc.Passes; ++p)
+        for(unsigned int p=0; p<techDesc.Passes; ++p)
         {
             m_LineRectTech->GetPassByIndex(p)->Apply(0);
             m_D3DDev->Draw(2, 0);
@@ -801,8 +801,8 @@ void CTwGraphDirect3D10::DrawRect(int _X0, int _Y0, int _X1, int _Y1, color32 _C
         m_D3DDev->IASetInputLayout(m_LineRectVertexLayout);
 
         // Set vertex buffer
-        UINT stride = sizeof(CLineRectVtx);
-        UINT offset = 0;
+        unsigned int stride = sizeof(CLineRectVtx);
+        unsigned int offset = 0;
         m_D3DDev->IASetVertexBuffers(0, 1, &m_RectVertexBuffer, &stride, &offset);
 
         // Set primitive topology
@@ -811,7 +811,7 @@ void CTwGraphDirect3D10::DrawRect(int _X0, int _Y0, int _X1, int _Y1, color32 _C
         // Render the rect
         D3D10_TECHNIQUE_DESC techDesc;
         m_LineRectTech->GetDesc(&techDesc);
-        for(UINT p=0; p<techDesc.Passes; ++p)
+        for(unsigned int p=0; p<techDesc.Passes; ++p)
         {
             m_LineRectTech->GetPassByIndex(p)->Apply(0);
             m_D3DDev->Draw(4, 0);
@@ -1070,8 +1070,8 @@ void CTwGraphDirect3D10::DrawText(void *_TextObj, int _X, int _Y, color32 _Color
         m_D3DDev->IASetInputLayout(m_LineRectVertexLayout);
 
         // Set vertex buffer
-        UINT stride = sizeof(CLineRectVtx);
-        UINT offset = 0;
+        unsigned int stride = sizeof(CLineRectVtx);
+        unsigned int offset = 0;
         m_D3DDev->IASetVertexBuffers(0, 1, &textObj->m_BgVertexBuffer, &stride, &offset);
 
         // Set primitive topology
@@ -1085,7 +1085,7 @@ void CTwGraphDirect3D10::DrawText(void *_TextObj, int _X, int _Y, color32 _Color
             tech = m_LineRectTech;
         D3D10_TECHNIQUE_DESC techDesc;
         tech->GetDesc(&techDesc);
-        for( UINT p=0; p<techDesc.Passes; ++p )
+        for( unsigned int p=0; p<techDesc.Passes; ++p )
         {
             tech->GetPassByIndex(p)->Apply(0);
             m_D3DDev->Draw(textObj->m_NbBgVerts, 0);
@@ -1104,8 +1104,8 @@ void CTwGraphDirect3D10::DrawText(void *_TextObj, int _X, int _Y, color32 _Color
         m_D3DDev->IASetInputLayout(m_TextVertexLayout);
 
         // Set vertex buffer
-        UINT stride = sizeof(CTextVtx);
-        UINT offset = 0;
+        unsigned int stride = sizeof(CTextVtx);
+        unsigned int offset = 0;
         m_D3DDev->IASetVertexBuffers(0, 1, &textObj->m_TextVertexBuffer, &stride, &offset);
 
         // Set primitive topology
@@ -1119,7 +1119,7 @@ void CTwGraphDirect3D10::DrawText(void *_TextObj, int _X, int _Y, color32 _Color
             tech = m_TextTech;
         D3D10_TECHNIQUE_DESC techDesc;
         tech->GetDesc(&techDesc);
-        for( UINT p=0; p<techDesc.Passes; ++p )
+        for( unsigned int p=0; p<techDesc.Passes; ++p )
         {
             tech->GetPassByIndex(p)->Apply(0);
             m_D3DDev->Draw(textObj->m_NbTextVerts, 0);
@@ -1258,8 +1258,8 @@ void CTwGraphDirect3D10::DrawTriangles(int _NumTriangles, int *_Vertices, color3
         m_D3DDev->IASetInputLayout(m_LineRectVertexLayout);
 
         // Set vertex buffer
-        UINT stride = sizeof(CLineRectVtx);
-        UINT offset = 0;
+        unsigned int stride = sizeof(CLineRectVtx);
+        unsigned int offset = 0;
         m_D3DDev->IASetVertexBuffers(0, 1, &m_TrianglesVertexBuffer, &stride, &offset);
 
         // Set primitive topology
@@ -1273,7 +1273,7 @@ void CTwGraphDirect3D10::DrawTriangles(int _NumTriangles, int *_Vertices, color3
         // Render the triangles
         D3D10_TECHNIQUE_DESC techDesc;
         m_LineRectTech->GetDesc(&techDesc);
-        for(UINT p=0; p<techDesc.Passes; ++p)
+        for(unsigned int p=0; p<techDesc.Passes; ++p)
         {
             m_LineRectTech->GetPassByIndex(p)->Apply(0);
             m_D3DDev->Draw(3*_NumTriangles, 0);

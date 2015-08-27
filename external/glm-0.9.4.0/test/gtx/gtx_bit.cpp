@@ -32,7 +32,7 @@ namespace extractField
 		result		Result;
 	};
 
-	typedef type<glm::uint64, glm::uint> typeU64;
+	typedef type<glm::uint64, glm::unsigned int> typeU64;
 
 #if(((GLM_COMPILER & GLM_COMPILER_GCC) == GLM_COMPILER_GCC) && (GLM_COMPILER < GLM_COMPILER_GCC44))
 	typeU64 const Data64[] =

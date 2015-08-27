@@ -55,14 +55,15 @@ void SCERender::Render(const SCEHandle<Camera>& camera,
     GLsizei height = SCECore::GetWindowHeight();
 
     //extract data used for rendering
-    SCECameraData renderData = camera->GetRenderData();
+    CameraRenderData renderData = camera->GetRenderData();
 
     // Clear the screen (default framebuffer)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     //render shadows to shadowmap
-    SCELighting::RenderShadowsToGBuffer(renderData, camera->GetFrustrumCorners(),
-                                        objectsToRender, s_instance->mGBuffer);
+    glm::mat4 camToWorld = camera->GetContainer()->GetComponent<Transform>()->GetWorldTransform();
+    SCELighting::RenderCascadedShadowMap(renderData, camera->GetFrustrumData(),
+                                        camToWorld, objectsToRender);
 
     //render objects without lighting
     s_instance->renderGeometryPass(renderData, objectsToRender);
@@ -82,7 +83,7 @@ void SCERender::Render(const SCEHandle<Camera>& camera,
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void SCERender::renderGeometryPass(const SCECameraData& renderData,
+void SCERender::renderGeometryPass(const CameraRenderData& renderData,
                                    std::vector<Container*> objectsToRender)
 {
     mGBuffer.BindForGeometryPass();

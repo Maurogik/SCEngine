@@ -79,7 +79,7 @@ PLY::EDataType PLY::Property::ParseDataType(const char* pCur,const char** pCurOu
 	{
 		eOut = PLY::EDT_Int;
 	}
-	else if (TokenMatch(pCur,"uint32",6) || TokenMatch(pCur,"uint",4))
+	else if (TokenMatch(pCur,"uint32",6) || TokenMatch(pCur,"unsigned int",4))
 	{
 		eOut = PLY::EDT_UInt;
 	}

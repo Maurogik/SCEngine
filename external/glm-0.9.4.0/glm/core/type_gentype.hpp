@@ -138,7 +138,7 @@ namespace detail
 
 		//////////////////////////////////////
 		// Conversions
-		template <typename vU, uint cU, uint rU, profile pU>
+		template <typename vU, unsigned int cU, unsigned int rU, profile pU>
 		explicit base(base<vU, cU, rU, pU> const & m);
 
 		//////////////////////////////////////

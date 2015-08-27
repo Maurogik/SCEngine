@@ -10,6 +10,7 @@
 #include "../headers/Container.hpp"
 #include "../headers/SCERender.hpp"
 #include "../headers/Transform.hpp"
+#include "../headers/Camera.hpp"
 
 using namespace SCE;
 using namespace std;
@@ -18,9 +19,12 @@ using namespace std;
 #define STENCYL_SHADER_NAME "EmptyShader"
 #define SHADOWMAP_UNIFORM_NAME "ShadowTex"
 #define DEPTH_MAT_UNIFORM_NAME "DepthConvertMat"
+#define FAR_SPLIT_UNIFORM_NAME "FarSplits_cameraspace"
 
-#define SHADOW_MAP_WIDTH (4096)
-#define SHADOW_MAP_HEIGHT (4096)
+#define SHADOW_MAP_WIDTH (2048)
+#define SHADOW_MAP_HEIGHT (2048)
+
+#define CASCADE_COUNT 4
 
 SCELighting* SCELighting::s_instance = nullptr;
 
@@ -31,9 +35,11 @@ SCELighting::SCELighting()
       mTexSamplerUniforms(),
       mShadowSamplerUnifom(-1),
       mShadowDepthMatUnifom(-1),
+      mShadowFarSplitUnifom(-1),
       mShadowMapFBO(),
       mShadowCaster(nullptr),
-      mDepthConvertMat(1.0),
+      mDepthConvertMatrices(CASCADE_COUNT),
+      mFarSplit_cameraspace(CASCADE_COUNT),
       mStenciledLights(),
       mDirectionalLights()
 {
@@ -42,7 +48,14 @@ SCELighting::SCELighting()
     mTexSamplerNames[SCE_GBuffer::GBUFFER_TEXTURE_TYPE_DIFFUSE] = "DiffuseTex";
     mTexSamplerNames[SCE_GBuffer::GBUFFER_TEXTURE_TYPE_NORMAL] = "NormalTex";
 
-    mShadowMapFBO.Init(SHADOW_MAP_WIDTH, SHADOW_MAP_HEIGHT);
+    mShadowMapFBO.Init(SHADOW_MAP_WIDTH, SHADOW_MAP_HEIGHT, CASCADE_COUNT);
+
+    //initialize per-cascade data
+    for(int i = 0; i < CASCADE_COUNT; ++i)
+    {
+        mDepthConvertMatrices.push_back(glm::mat4(1.0));
+        mFarSplit_cameraspace.push_back(0.0f);
+    }
 }
 
 void SCELighting::Init()
@@ -61,10 +74,10 @@ void SCELighting::CleanUp()
     delete s_instance;
 }
 
-void SCELighting::RenderShadowsToGBuffer(const SCECameraData &camRenderData,
-                                         std::vector<vec3> frustrumCorners,
-                                         std::vector<Container*> objectsToRender,
-                                         SCE_GBuffer& gBuffer)
+void SCELighting::RenderCascadedShadowMap(const CameraRenderData &camRenderData,
+                                         FrustrumData camFrustrumData,
+                                         glm::mat4 camToWorldMat,
+                                         std::vector<Container*> objectsToRender)
 {
     Debug::Assert(s_instance, "No Lighting system instance found, Init the system before using it");
 
@@ -73,47 +86,20 @@ void SCELighting::RenderShadowsToGBuffer(const SCECameraData &camRenderData,
         return;
     }
 
-    //compute bouding box of camera frustrum in light space
-    float max = std::numeric_limits<float>::max() - 1;//just a big float (the biggest !)
-    float far = -max;
-    float near = max;
-    float top = -max;
-    float bottom = max;
-    float left = max;
-    float right = -max;
+    //Julie ! Do the thing !
+    vector<CameraRenderData> splitShadowFrustrums
+            = s_instance->computeCascadedLightFrustrums(camFrustrumData,
+                                                        camToWorldMat,
+                                                        CASCADE_COUNT);
 
-    glm::mat4 lightToWorld = s_instance->mShadowCaster->GetContainer()->GetComponent<Transform>()->GetWorldTransform();
-    glm::mat4 worldToLight = glm::inverse(lightToWorld);
-
-    for(vec3& corner : frustrumCorners)
+    for(uint i = 0; i < splitShadowFrustrums.size(); ++i)
     {
-        vec4 corner_lightSpace = worldToLight * vec4(corner, 1.0);
-
-        far = glm::max(far, corner_lightSpace.z);
-        near = glm::min(near, corner_lightSpace.z);
-        right = glm::max(right, corner_lightSpace.x);
-        left = glm::min(left, corner_lightSpace.x);
-        top = glm::max(top, corner_lightSpace.y);
-        bottom = glm::min(bottom, corner_lightSpace.y);
+        //render shadowMap from light point of view
+        s_instance->renderShadowmapPass(splitShadowFrustrums[i], objectsToRender, i);
     }
-
-    //near should be close (actually, it should be the closest occluder, but we don't know where it is yet)
-    near = 10.0f;
-
-    SCECameraData lightRenderData;
-    glm::mat4 projMat = glm::ortho(left, right,
-                                   bottom, top,
-                                   near, far);
-
-    projMat = SCERender::FixOpenGLProjectionMatrix(projMat);
-    lightRenderData.viewMatrix = worldToLight;
-    lightRenderData.projectionMatrix = projMat;
-
-    //render shadowMap from light point of view
-    s_instance->renderShadowmapPass(lightRenderData, objectsToRender);
 }
 
-void SCELighting::RenderLightsToGBuffer(const SCECameraData& renderData,
+void SCELighting::RenderLightsToGBuffer(const CameraRenderData& renderData,
                                        SCE_GBuffer& gBuffer)
 {
     Debug::Assert(s_instance, "No Lighting system instance found, Init the system before using it");   
@@ -134,6 +120,12 @@ void SCELighting::RenderLightsToGBuffer(const SCECameraData& renderData,
         gBuffer.BindForLightPass();
         gBuffer.BindTexturesToLightShader();
 
+        //bind for shadow calculations even if there won't be shadows on screen
+        s_instance->mShadowMapFBO.BindTextureToLightShader(SCE_GBuffer::GBUFFER_NUM_TEXTURES);
+        glUniformMatrix4fv(s_instance->mShadowDepthMatUnifom, CASCADE_COUNT, GL_FALSE,
+                           &(s_instance->mDepthConvertMatrices[0][0][0]));
+        glUniform1fv(s_instance->mShadowFarSplitUnifom, CASCADE_COUNT, &(s_instance->mFarSplit_cameraspace[0]));
+
         s_instance->renderLightingPass(renderData, light);
     }
 
@@ -150,8 +142,13 @@ void SCELighting::RenderLightsToGBuffer(const SCECameraData& renderData,
         //bind the shadowmap to the next free texture unit
         s_instance->mShadowMapFBO.BindTextureToLightShader(SCE_GBuffer::GBUFFER_NUM_TEXTURES);
 
-        //bind the world-to-depth convertion matrix
-        glUniformMatrix4fv(s_instance->mShadowDepthMatUnifom, 1, GL_FALSE, &(s_instance->mDepthConvertMat[0][0]));
+        //bind the world-to-depth convertion matrices
+        //glUniformMatrix4fv(s_instance->mShadowDepthMatUnifom, 1, GL_FALSE, &(s_instance->mDepthConvertMatrixes[0][0]));
+        glUniformMatrix4fv(s_instance->mShadowDepthMatUnifom, CASCADE_COUNT, GL_FALSE,
+                           &(s_instance->mDepthConvertMatrices[0][0][0]));
+
+        //bind the far split planes usd to pick a cascade level
+        glUniform1fv(s_instance->mShadowFarSplitUnifom, CASCADE_COUNT, &(s_instance->mFarSplit_cameraspace[0]));
 
         s_instance->renderLightingPass(renderData, light);
     }
@@ -228,12 +225,13 @@ void SCELighting::initLightShader()
 
     glUseProgram(mLightShader);
 
-    for (unsigned int i = 0; i < SCE_GBuffer::GBUFFER_NUM_TEXTURES; i++)
+    for (uint i = 0; i < SCE_GBuffer::GBUFFER_NUM_TEXTURES; i++)
     {
         mTexSamplerUniforms[i] = glGetUniformLocation(mLightShader, mTexSamplerNames[i].c_str());
     }
     mShadowDepthMatUnifom = glGetUniformLocation(mLightShader, DEPTH_MAT_UNIFORM_NAME);
     mShadowSamplerUnifom = glGetUniformLocation(mLightShader, SHADOWMAP_UNIFORM_NAME);
+    mShadowFarSplitUnifom = glGetUniformLocation(mLightShader, FAR_SPLIT_UNIFORM_NAME);
 }
 
 void SCELighting::registerLight(SCEHandle<Light> light)
@@ -288,7 +286,7 @@ void SCELighting::unregisterLight(SCEHandle<Light> light)
     targetVector->erase(lightIt);
 }
 
-void SCELighting::renderLightStencilPass(const SCECameraData& renderData, SCEHandle<Light> &light)
+void SCELighting::renderLightStencilPass(const CameraRenderData& renderData, SCEHandle<Light> &light)
 {
     //avoid writting in color buffer in stencyl pass
     glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
@@ -311,7 +309,7 @@ void SCELighting::renderLightStencilPass(const SCECameraData& renderData, SCEHan
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 }
 
-void SCELighting::renderLightingPass(const SCECameraData& renderData, SCEHandle<Light> &light)
+void SCELighting::renderLightingPass(const CameraRenderData& renderData, SCEHandle<Light> &light)
 {    
     //setup blending between lighting results
     glEnable(GL_BLEND);
@@ -333,8 +331,9 @@ void SCELighting::renderLightingPass(const SCECameraData& renderData, SCEHandle<
     glDisable(GL_BLEND);
 }
 
-void SCELighting::renderShadowmapPass(const SCECameraData& lightRenderData,
-                                      std::vector<Container*> objectsToRender)
+void SCELighting::renderShadowmapPass(const CameraRenderData& lightRenderData,
+                                      std::vector<Container*> objectsToRender,
+                                      uint shadowmapId)
 {
     GLint viewportDims[4];
     glGetIntegerv( GL_VIEWPORT, viewportDims );
@@ -346,8 +345,9 @@ void SCELighting::renderShadowmapPass(const SCECameraData& lightRenderData,
 
     glUseProgram(mEmptyShader);
     glEnable(GL_DEPTH_TEST);
+    glCullFace(GL_FRONT);//render only back faces to avoid some shadow acnee
 
-    mShadowMapFBO.BindForShadowPass();
+    mShadowMapFBO.BindForShadowPass(shadowmapId);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -385,10 +385,96 @@ void SCELighting::renderShadowmapPass(const SCECameraData& lightRenderData,
 
 //    Debug::Log(str);
 
-    mDepthConvertMat = biasMatrix * lightRenderData.projectionMatrix
+    mDepthConvertMatrices[shadowmapId] = biasMatrix * lightRenderData.projectionMatrix
                        * lightRenderData.viewMatrix;
 
 
+    glCullFace(GL_BACK);
     glViewport(viewportDims[0], viewportDims[1], viewportDims[2], viewportDims[3]);
+}
+
+std::vector<CameraRenderData> SCELighting::computeCascadedLightFrustrums(FrustrumData cameraFrustrum,
+                                                                         glm::mat4 camToWorldMat,
+                                                                         uint cascadeCount)
+{
+    glm::mat4 lightToWorld = s_instance->mShadowCaster->GetContainer()->GetComponent<Transform>()->GetWorldTransform();
+    glm::mat4 worldToLight = glm::inverse(lightToWorld);
+
+    vector<CameraRenderData> lightFrustrums;
+
+    float lambda    = 0.75f;//split correction strength
+    float near      = cameraFrustrum.near;
+    float far       = cameraFrustrum.far;
+    float ratio     = far / near;
+
+    //compute where the camera frustrum will be split
+    vec2 zSplits[cascadeCount]; //x is near dist, y is far dist
+
+    zSplits[0].x = near;
+
+    for(uint i = 1; i < cascadeCount; ++i)
+    {
+        float si = i / (float)cascadeCount;
+
+        zSplits[i].x = lambda * (near * glm::pow(ratio, si))
+                       + (1.0f - lambda) * (near + (far - near) * si);
+        zSplits[i - 1].y = zSplits[i].x * 1.005f;//slightly offset to fix holes ?
+    }
+
+    zSplits[cascadeCount - 1].y = far;
+
+    for(uint i = 0; i < cascadeCount; ++i)
+    {
+        //compute bouding box of camera frustrum in light space
+        float max       = std::numeric_limits<float>::max() - 1;//just a big float (the biggest !)
+        float far       = -max;
+        float near      = max;
+        float top       = -max;
+        float bottom    = max;
+        float left      = max;
+        float right     = -max;
+
+        float splitCamNearZ  = zSplits[i].x;
+        float splitCamFarZ   = zSplits[i].y;
+
+        FrustrumData splitFrustrum = cameraFrustrum;
+        splitFrustrum.near = splitCamNearZ;
+        splitFrustrum.far = splitCamFarZ;
+
+        //get the points that enclose the splitted frustrum
+        vector<vec3> frustrumCorners(Camera::GetFrustrumCorners(splitFrustrum, camToWorldMat));
+
+        for(vec3& corner : frustrumCorners)
+        {
+            vec4 corner_lightSpace = worldToLight * vec4(corner, 1.0);
+
+            far     = glm::max(far, corner_lightSpace.z);
+            near    = glm::min(near, corner_lightSpace.z);
+            right   = glm::max(right, corner_lightSpace.x);
+            left    = glm::min(left, corner_lightSpace.x);
+            top     = glm::max(top, corner_lightSpace.y);
+            bottom  = glm::min(bottom, corner_lightSpace.y);
+        }
+
+        //near should be close (actually, it should be the closest occluder, but we don't know where it is yet)
+        near = 10.0f;
+
+        //create an orthographic projection enclosing all points between the light and the splitted camera frustrum
+        CameraRenderData lightRenderData;
+        glm::mat4 projMat = glm::ortho(left, right,
+                                       bottom, top,
+                                       near, far);
+
+        projMat = SCERender::FixOpenGLProjectionMatrix(projMat);
+        lightRenderData.viewMatrix = worldToLight;
+        lightRenderData.projectionMatrix = projMat;
+
+        lightFrustrums.push_back(lightRenderData);
+
+        //store the far split to check against it in sahder in order to pick cascade
+        mFarSplit_cameraspace[i] = splitCamFarZ;
+    }
+
+    return lightFrustrums;
 }
 

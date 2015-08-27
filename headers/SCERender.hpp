@@ -9,18 +9,13 @@
 
 #include "SCE_GBuffer.hpp"
 #include "SCEHandle.hpp"
+#include "SCERenderStructs.hpp"
 #include <vector>
 
 namespace SCE
 {
     class Camera;
     class Container;
-
-    struct SCECameraData
-    {
-        glm::mat4 viewMatrix;
-        glm::mat4 projectionMatrix;
-    };
 
     class SCERender
     {
@@ -42,7 +37,7 @@ namespace SCE
         SCE_GBuffer         mGBuffer;
         glm::vec4           mDefaultClearColor;
 
-        void                renderGeometryPass(const SCECameraData& renderData,
+        void                renderGeometryPass(const CameraRenderData& renderData,
                                                std::vector<Container*> objectsToRender);
 
     };

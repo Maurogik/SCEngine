@@ -180,7 +180,7 @@ namespace glm
 
 
 	/////////////////////////////
-	// Unsigned int vector types 
+	// unsigned int vector types 
 
 	/// 8 bit unsigned integer type. 
 	/// @see gtc_type_precision

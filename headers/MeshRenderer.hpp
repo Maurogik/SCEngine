@@ -15,13 +15,13 @@
 namespace SCE {
 
     class Camera;
-    struct SCECameraData;
+    struct CameraRenderData;
 
     class MeshRenderer : public Component {
 
     public :
                         ~MeshRenderer();
-        void            Render(const SCECameraData& renderData, bool renderFullScreenQuad = false);
+        void            Render(const CameraRenderData& renderData, bool renderFullScreenQuad = false);
         void            UpdateRenderedMesh();
 
     protected :

@@ -48,7 +48,7 @@ void InitD3D()
 
 
 // Win32 MessageProc callback
-LRESULT CALLBACK MessageProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK MessageProc(HWND wnd, unsigned int msg, WPARAM wParam, LPARAM lParam)
 {
     // Send event message to AntTweakBar
     if( TwEventWin(wnd, msg, wParam, lParam) )

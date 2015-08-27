@@ -155,7 +155,7 @@ PlyExporter :: PlyExporter(const char* _filename, const aiScene* pScene)
 	}
 
 	mOutput << "element face " << faces << endl;
-	mOutput << "property list uint uint vertex_indices" << endl;
+	mOutput << "property list unsigned int unsigned int vertex_indices" << endl;
 	mOutput << "end_header" << endl;
 
 	for (unsigned int i = 0; i < pScene->mNumMeshes; ++i) {

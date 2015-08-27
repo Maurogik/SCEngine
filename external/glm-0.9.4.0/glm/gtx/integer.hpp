@@ -82,19 +82,19 @@ namespace glm
 
 	//! Returns x raised to the y power.
 	//! From GLM_GTX_integer extension.
-	uint pow(uint x, uint y);
+	unsigned int pow(unsigned int x, unsigned int y);
 
 	//! Returns the positive square root of x. 
 	//! From GLM_GTX_integer extension.
-	uint sqrt(uint x);
+	unsigned int sqrt(unsigned int x);
 
 	//! Modulus. Returns x - y * floor(x / y) for each component in x using the floating point value y.
 	//! From GLM_GTX_integer extension.
-	uint mod(uint x, uint y);
+	unsigned int mod(unsigned int x, unsigned int y);
 
 	//! Returns the number of leading zeros.
 	//! From GLM_GTX_integer extension.
-	uint nlz(uint x);
+	unsigned int nlz(unsigned int x);
 
 	/// @}
 }//namespace glm

@@ -122,7 +122,7 @@ int test_packHalf2x16()
 	for(std::size_t i = 0; i < A.size(); ++i)
 	{
 		glm::vec2 B(A[i]);
-		glm::uint C = glm::packHalf2x16(B);
+		glm::unsigned int C = glm::packHalf2x16(B);
 		glm::vec2 D = glm::unpackHalf2x16(C);
 		//Error += B == D ? 0 : 1;
 		Error += glm::all(glm::epsilonEqual(B, D, 1.0f / 127.f)) ? 0 : 1;

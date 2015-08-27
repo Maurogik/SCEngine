@@ -3,8 +3,8 @@
 /*********AUTHOR:Gwenn AUBERT**********/
 /********FILE:SCEShadowMap.hpp*********/
 /**************************************/
-#ifndef SCE_SCE_SHADOW_MAP_HPP
-#define SCE_SCE_SHADOW_MAP_HPP
+#ifndef SCE_SHADOW_MAP_HPP
+#define SCE_SHADOW_MAP_HPP
 
 #include "SCEDefines.hpp"
 
@@ -17,8 +17,8 @@ namespace SCE
         SCEShadowMap();
         ~SCEShadowMap();
 
-        bool        Init(GLuint shadowmapWidth, GLuint shadowmapHeight);
-        void        BindForShadowPass();
+        bool        Init(GLuint shadowmapWidth, GLuint shadowmapHeight, GLuint cascadeCount);
+        void        BindForShadowPass(GLuint cascadeId);
         void        BindTextureToLightShader(GLuint textureUnit);
 
     private :

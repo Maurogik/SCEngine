@@ -18,8 +18,8 @@ int test_floor_log2()
 
 	for(std::size_t i = 1; i < 1000000; ++i)
 	{
-		glm::uint A = glm::floor_log2(glm::uint(i));
-		glm::uint B = glm::uint(glm::floor(glm::log2(double(i)))); // Will fail with float, lack of accuracy
+		glm::unsigned int A = glm::floor_log2(glm::unsigned int(i));
+		glm::unsigned int B = glm::unsigned int(glm::floor(glm::log2(double(i)))); // Will fail with float, lack of accuracy
 
 		Error += A == B ? 0 : 1;
 		assert(!Error);
@@ -34,8 +34,8 @@ int test_log2()
 
 	for(std::size_t i = 1; i < 24; ++i)
 	{
-		glm::uint A = glm::log2(glm::uint(1 << i));
-		glm::uint B = glm::uint(glm::log2(double(1 << i)));
+		glm::unsigned int A = glm::log2(glm::unsigned int(1 << i));
+		glm::unsigned int B = glm::unsigned int(glm::log2(double(1 << i)));
 
 		//Error += glm::equalEpsilon(double(A), B, 1.0) ? 0 : 1;
 		Error += glm::abs(double(A) - B) <= 24 ? 0 : 1;
@@ -53,8 +53,8 @@ int test_nlz()
 {
 	int Error = 0;
 
-	for(glm::uint i = 1; i < glm::uint(33); ++i)
-		Error += glm::nlz(i) == glm::uint(31u) - glm::findMSB(i) ? 0 : 1;
+	for(glm::unsigned int i = 1; i < glm::unsigned int(33); ++i)
+		Error += glm::nlz(i) == glm::unsigned int(31u) - glm::findMSB(i) ? 0 : 1;
 		//printf("%d, %d\n", glm::nlz(i), 31u - glm::findMSB(i));
 
 	return Error;

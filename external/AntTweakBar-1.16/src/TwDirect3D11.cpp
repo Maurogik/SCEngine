@@ -133,46 +133,46 @@ struct CState11
 {
     ID3D11ComputeShader *   m_CSShader;
     ID3D11ClassInstance **  m_CSClassInstances;
-    UINT                    m_CSNumClassInstances;
+    unsigned int                    m_CSNumClassInstances;
     ID3D11DomainShader *    m_DSShader;
     ID3D11ClassInstance **  m_DSClassInstances;
-    UINT                    m_DSNumClassInstances;
+    unsigned int                    m_DSNumClassInstances;
     ID3D11GeometryShader *  m_GSShader;
     ID3D11ClassInstance **  m_GSClassInstances;
-    UINT                    m_GSNumClassInstances;
+    unsigned int                    m_GSNumClassInstances;
     ID3D11HullShader *      m_HSShader;
     ID3D11ClassInstance **  m_HSClassInstances;
-    UINT                    m_HSNumClassInstances;
+    unsigned int                    m_HSNumClassInstances;
     ID3D11PixelShader *     m_PSShader;
     ID3D11ClassInstance **  m_PSClassInstances;
-    UINT                    m_PSNumClassInstances;
+    unsigned int                    m_PSNumClassInstances;
     ID3D11Buffer *          m_PSConstantBuffer; // backup the first constant buffer only
     ID3D11SamplerState *    m_PSSampler; // backup the first sampler only
     ID3D11ShaderResourceView*m_PSShaderResourceView; // backup the first shader resource only
     ID3D11VertexShader *    m_VSShader;
     ID3D11ClassInstance **  m_VSClassInstances;
-    UINT                    m_VSNumClassInstances;
+    unsigned int                    m_VSNumClassInstances;
     ID3D11Buffer *          m_VSConstantBuffer; // backup the first constant buffer only
 
     ID3D11Buffer *          m_IAIndexBuffer;
     DXGI_FORMAT             m_IAIndexBufferFormat;
-    UINT                    m_IAIndexBufferOffset;
+    unsigned int                    m_IAIndexBufferOffset;
     ID3D11InputLayout *     m_IAInputLayout;
     D3D11_PRIMITIVE_TOPOLOGY m_IATopology;
     ID3D11Buffer *          m_IAVertexBuffer; // backup the first buffer only
-    UINT                    m_IAVertexBufferStride;
-    UINT                    m_IAVertexBufferOffset;
+    unsigned int                    m_IAVertexBufferStride;
+    unsigned int                    m_IAVertexBufferOffset;
 
     ID3D11BlendState *      m_OMBlendState;
     FLOAT                   m_OMBlendFactor[4];
-    UINT                    m_OMSampleMask;
+    unsigned int                    m_OMSampleMask;
     ID3D11DepthStencilState*m_OMDepthStencilState;
-    UINT                    m_OMStencilRef;
+    unsigned int                    m_OMStencilRef;
 
-    UINT                    m_RSScissorNumRects;
+    unsigned int                    m_RSScissorNumRects;
     D3D11_RECT              m_RSScissorRects[D3D11_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE];
     ID3D11RasterizerState * m_RSRasterizerState;
-    UINT                    m_RSNumViewports;
+    unsigned int                    m_RSNumViewports;
     D3D11_VIEWPORT          m_RSViewports[D3D11_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE];
 
     void                    Save();
@@ -218,7 +218,7 @@ void CState11::Save()
     if (m_CSNumClassInstances > 0) 
     {
         m_CSClassInstances = new ID3D11ClassInstance*[m_CSNumClassInstances];
-        for (UINT i = 0; i < m_CSNumClassInstances; i++)
+        for (unsigned int i = 0; i < m_CSNumClassInstances; i++)
             m_CSClassInstances[i] = NULL;
         m_D3DDevImmContext->CSGetShader(&m_CSShader, m_CSClassInstances, &m_CSNumClassInstances);
         if (m_CSShader != NULL) 
@@ -232,7 +232,7 @@ void CState11::Save()
     if (m_DSNumClassInstances > 0) 
     {
         m_DSClassInstances = new ID3D11ClassInstance*[m_DSNumClassInstances];
-        for (UINT i = 0; i < m_DSNumClassInstances; i++)
+        for (unsigned int i = 0; i < m_DSNumClassInstances; i++)
             m_DSClassInstances[i] = NULL;
         m_D3DDevImmContext->DSGetShader(&m_DSShader, m_DSClassInstances, &m_DSNumClassInstances);
         if (m_DSShader != NULL) 
@@ -246,7 +246,7 @@ void CState11::Save()
     if (m_GSNumClassInstances > 0) 
     {
         m_GSClassInstances = new ID3D11ClassInstance*[m_GSNumClassInstances];
-        for (UINT i = 0; i < m_GSNumClassInstances; i++)
+        for (unsigned int i = 0; i < m_GSNumClassInstances; i++)
             m_GSClassInstances[i] = NULL;
         m_D3DDevImmContext->GSGetShader(&m_GSShader, m_GSClassInstances, &m_GSNumClassInstances);
         if (m_GSShader != NULL) 
@@ -260,7 +260,7 @@ void CState11::Save()
     if (m_HSNumClassInstances > 0) 
     {
         m_HSClassInstances = new ID3D11ClassInstance*[m_HSNumClassInstances];
-        for (UINT i = 0; i < m_HSNumClassInstances; i++)
+        for (unsigned int i = 0; i < m_HSNumClassInstances; i++)
             m_HSClassInstances[i] = NULL;
         m_D3DDevImmContext->HSGetShader(&m_HSShader, m_HSClassInstances, &m_HSNumClassInstances);
         if (m_HSShader != NULL) 
@@ -274,7 +274,7 @@ void CState11::Save()
     if (m_PSNumClassInstances > 0) 
     {
         m_PSClassInstances = new ID3D11ClassInstance*[m_PSNumClassInstances];
-        for (UINT i = 0; i < m_PSNumClassInstances; i++)
+        for (unsigned int i = 0; i < m_PSNumClassInstances; i++)
             m_PSClassInstances[i] = NULL;
         m_D3DDevImmContext->PSGetShader(&m_PSShader, m_PSClassInstances, &m_PSNumClassInstances);
         if (m_PSShader != NULL) 
@@ -291,7 +291,7 @@ void CState11::Save()
     if (m_VSNumClassInstances > 0) 
     {
         m_VSClassInstances = new ID3D11ClassInstance*[m_VSNumClassInstances];
-        for (UINT i = 0; i < m_VSNumClassInstances; i++)
+        for (unsigned int i = 0; i < m_VSNumClassInstances; i++)
             m_VSClassInstances[i] = NULL;
         m_D3DDevImmContext->VSGetShader(&m_VSShader, m_VSClassInstances, &m_VSNumClassInstances);
         if (m_VSShader != NULL) 
@@ -355,7 +355,7 @@ void CState11::Release()
 
     if (m_CSClassInstances != NULL) 
     {
-        for (UINT i = 0; i < m_CSNumClassInstances; i++)
+        for (unsigned int i = 0; i < m_CSNumClassInstances; i++)
             if (m_CSClassInstances[i] != NULL) 
                 m_CSClassInstances[i]->Release();
         delete[] m_CSClassInstances;
@@ -370,7 +370,7 @@ void CState11::Release()
 
     if (m_DSClassInstances != NULL) 
     {
-        for (UINT i = 0; i < m_DSNumClassInstances; i++)
+        for (unsigned int i = 0; i < m_DSNumClassInstances; i++)
             if (m_DSClassInstances[i] != NULL) 
                 m_DSClassInstances[i]->Release();
         delete[] m_DSClassInstances;
@@ -385,7 +385,7 @@ void CState11::Release()
 
     if (m_GSClassInstances != NULL) 
     {
-        for (UINT i = 0; i < m_GSNumClassInstances; i++)
+        for (unsigned int i = 0; i < m_GSNumClassInstances; i++)
             if (m_GSClassInstances[i] != NULL) 
                 m_GSClassInstances[i]->Release();
         delete[] m_GSClassInstances;
@@ -400,7 +400,7 @@ void CState11::Release()
 
     if (m_HSClassInstances != NULL) 
     {
-        for (UINT i = 0; i < m_HSNumClassInstances; i++)
+        for (unsigned int i = 0; i < m_HSNumClassInstances; i++)
             if (m_HSClassInstances[i] != NULL) 
                 m_HSClassInstances[i]->Release();
         delete[] m_HSClassInstances;
@@ -415,7 +415,7 @@ void CState11::Release()
 
     if (m_PSClassInstances != NULL) 
     {
-        for (UINT i = 0; i < m_PSNumClassInstances; i++)
+        for (unsigned int i = 0; i < m_PSNumClassInstances; i++)
             if (m_PSClassInstances[i] != NULL) 
                 m_PSClassInstances[i]->Release();
         delete[] m_PSClassInstances;
@@ -445,7 +445,7 @@ void CState11::Release()
 
     if (m_VSClassInstances != NULL) 
     {
-        for (UINT i = 0; i < m_VSNumClassInstances; i++)
+        for (unsigned int i = 0; i < m_VSNumClassInstances; i++)
             if (m_VSClassInstances[i] != NULL) 
                 m_VSClassInstances[i]->Release();
         delete[] m_VSClassInstances;
@@ -1062,8 +1062,8 @@ void CTwGraphDirect3D11::DrawLine(int _X0, int _Y0, int _X1, int _Y1, color32 _C
         m_D3DDevImmContext->IASetInputLayout(m_LineRectVertexLayout);
 
         // Set vertex buffer
-        UINT stride = sizeof(CLineRectVtx);
-        UINT offset = 0;
+        unsigned int stride = sizeof(CLineRectVtx);
+        unsigned int offset = 0;
         m_D3DDevImmContext->IASetVertexBuffers(0, 1, &m_LineVertexBuffer, &stride, &offset);
 
         // Set primitive topology
@@ -1147,8 +1147,8 @@ void CTwGraphDirect3D11::DrawRect(int _X0, int _Y0, int _X1, int _Y1, color32 _C
         m_D3DDevImmContext->IASetInputLayout(m_LineRectVertexLayout);
 
         // Set vertex buffer
-        UINT stride = sizeof(CLineRectVtx);
-        UINT offset = 0;
+        unsigned int stride = sizeof(CLineRectVtx);
+        unsigned int offset = 0;
         m_D3DDevImmContext->IASetVertexBuffers(0, 1, &m_RectVertexBuffer, &stride, &offset);
 
         // Set primitive topology
@@ -1426,8 +1426,8 @@ void CTwGraphDirect3D11::DrawText(void *_TextObj, int _X, int _Y, color32 _Color
         m_D3DDevImmContext->IASetInputLayout(m_LineRectVertexLayout);
 
         // Set vertex buffer
-        UINT stride = sizeof(CLineRectVtx);
-        UINT offset = 0;
+        unsigned int stride = sizeof(CLineRectVtx);
+        unsigned int offset = 0;
         m_D3DDevImmContext->IASetVertexBuffers(0, 1, &textObj->m_BgVertexBuffer, &stride, &offset);
 
         // Set primitive topology
@@ -1465,8 +1465,8 @@ void CTwGraphDirect3D11::DrawText(void *_TextObj, int _X, int _Y, color32 _Color
         m_D3DDevImmContext->IASetInputLayout(m_TextVertexLayout);
 
         // Set vertex buffer
-        UINT stride = sizeof(CTextVtx);
-        UINT offset = 0;
+        unsigned int stride = sizeof(CTextVtx);
+        unsigned int offset = 0;
         m_D3DDevImmContext->IASetVertexBuffers(0, 1, &textObj->m_TextVertexBuffer, &stride, &offset);
 
         // Set primitive topology
@@ -1626,8 +1626,8 @@ void CTwGraphDirect3D11::DrawTriangles(int _NumTriangles, int *_Vertices, color3
         m_D3DDevImmContext->IASetInputLayout(m_LineRectVertexLayout);
 
         // Set vertex buffer
-        UINT stride = sizeof(CLineRectVtx);
-        UINT offset = 0;
+        unsigned int stride = sizeof(CLineRectVtx);
+        unsigned int offset = 0;
         m_D3DDevImmContext->IASetVertexBuffers(0, 1, &m_TrianglesVertexBuffer, &stride, &offset);
 
         // Set primitive topology

@@ -16,18 +16,24 @@ using namespace std;
 
 Camera::Camera(SCEHandle<Container> &container)
     : Component(container, "Camera::"),
-      mType (PERSPECTIVE),
       mRenderedLayers(),
-      mProjectionMatrix()
+      mProjectionMatrix(),
+      mFrustrumData()
 {
     mProjectionMatrix  = glm::perspective(
                 90.0f //Fov
               , 4.0f / 3.0f //aspect ratio
-              , 0.1f //near plane distance
+              , 1.0f //near plane distance
               , 100.0f //far plane distance
         );
+
+    mFrustrumData.type          = PERSPECTIVE;
+    mFrustrumData.near          = 1.0f;
+    mFrustrumData.far           = 100.0f;
+    mFrustrumData.fov           = 90.0f;
+    mFrustrumData.aspectRatio   = 4.0f / 3.0f;
+
     init();
-    calcConersPerspective(0.1f, 100.0f, 4.0f / 3.0f, 90.0f);
 }
 
 Camera::Camera(SCEHandle<Container> &container
@@ -35,9 +41,9 @@ Camera::Camera(SCEHandle<Container> &container
         , float aspectRatio
         , float nearPlane, float farPlane)
     : Component(container, "Camera::"),
-      mType (PERSPECTIVE),
       mRenderedLayers(),
-      mProjectionMatrix()
+      mProjectionMatrix(),
+      mFrustrumData()
 {
     mProjectionMatrix  = glm::perspective(
                   fieldOfView
@@ -45,8 +51,14 @@ Camera::Camera(SCEHandle<Container> &container
                 , nearPlane
                 , farPlane
           );
+
+    mFrustrumData.type          = PERSPECTIVE;
+    mFrustrumData.near          = nearPlane;
+    mFrustrumData.far           = farPlane;
+    mFrustrumData.fov           = fieldOfView;
+    mFrustrumData.aspectRatio   = aspectRatio;
+
     init();
-    calcConersPerspective(nearPlane, farPlane, aspectRatio, fieldOfView);
 }
 
 Camera::Camera(SCEHandle<Container> &container,
@@ -57,9 +69,9 @@ Camera::Camera(SCEHandle<Container> &container,
         , float nearPlane
         , float farPlane)
     : Component(container, "Camera::"),
-      mType (ORTHOGRAPHIC),
       mRenderedLayers(),
-      mProjectionMatrix()
+      mProjectionMatrix(),
+      mFrustrumData()
 {
     mProjectionMatrix = glm::ortho(
                 leftPlane,
@@ -69,9 +81,16 @@ Camera::Camera(SCEHandle<Container> &container,
                 nearPlane,
                 farPlane
             );
-    init();
-    calcConersOrtho(leftPlane, rightPlane, topPlane,
-                    bottomPlane, nearPlane, farPlane);
+
+    mFrustrumData.type = ORTHOGRAPHIC;
+    mFrustrumData.near = nearPlane;
+    mFrustrumData.far = farPlane;
+    mFrustrumData.right = rightPlane;
+    mFrustrumData.left = leftPlane;
+    mFrustrumData.bottom = bottomPlane;
+    mFrustrumData.top = topPlane;
+
+    init();    
 }
 
 void Camera::init()
@@ -80,9 +99,11 @@ void Camera::init()
     mRenderedLayers.push_back(DEFAULT_LAYER);
 }
 
-void Camera::calcConersPerspective(float near, float far, float aspectRatio, float fov)
+vector<vec3> Camera::calcConersPerspective(float near, float far, float aspectRatio, float fov)
 {
     glm::quat fovRot    = glm::angleAxis(fov, glm::vec3(0, 1, 0));
+
+    vector<vec3> corners;
 
     vec3 leftNearMiddle = fovRot * glm::vec3(0.0f, 0.0f, near);
     //grow vector to reach plane (rotation move it off the near plane)
@@ -97,33 +118,41 @@ void Camera::calcConersPerspective(float near, float far, float aspectRatio, flo
     float topNear   = leftNearMiddle.x / aspectRatio;
     float topFar    = leftFarMiddle.x / aspectRatio;
 
-    mFarPlaneCorners[0] = glm::vec3(leftFarMiddle.x, topFar, far);
-    mFarPlaneCorners[1] = glm::vec3(-leftFarMiddle.x, topFar, far);
-    mFarPlaneCorners[2] = glm::vec3(leftFarMiddle.x, -topFar, far);
-    mFarPlaneCorners[3] = glm::vec3(-leftFarMiddle.x, -topFar, far);
+    corners.push_back( glm::vec3(leftNearMiddle.x, topNear, near) );
+    corners.push_back( glm::vec3(-leftNearMiddle.x, topNear, near) );
+    corners.push_back( glm::vec3(leftNearMiddle.x, -topNear, near) );
+    corners.push_back( glm::vec3(-leftNearMiddle.x, -topNear, near) );
 
-    mNearPlaneCorners[0] = glm::vec3(leftNearMiddle.x, topNear, near);
-    mNearPlaneCorners[1] = glm::vec3(-leftNearMiddle.x, topNear, near);
-    mNearPlaneCorners[2] = glm::vec3(leftNearMiddle.x, -topNear, near);
-    mNearPlaneCorners[3] = glm::vec3(-leftNearMiddle.x, -topNear, near);
+    corners.push_back( glm::vec3(leftFarMiddle.x, topFar, far) );
+    corners.push_back( glm::vec3(-leftFarMiddle.x, topFar, far) );
+    corners.push_back( glm::vec3(leftFarMiddle.x, -topFar, far) );
+    corners.push_back( glm::vec3(-leftFarMiddle.x, -topFar, far) );
+
+    return corners;
 }
 
-void Camera::calcConersOrtho(float leftPlane, float rightPlane, float topPlane, float bottomPlane, float nearPlane, float farPlane)
+vector<vec3> Camera::calcConersOrtho(float leftPlane, float rightPlane,
+                             float topPlane, float bottomPlane,
+                             float nearPlane, float farPlane)
 {
-    mFarPlaneCorners[0] = glm::vec3(rightPlane, topPlane, farPlane);
-    mFarPlaneCorners[1] = glm::vec3(leftPlane, topPlane, farPlane);
-    mFarPlaneCorners[2] = glm::vec3(rightPlane, bottomPlane, farPlane);
-    mFarPlaneCorners[3] = glm::vec3(leftPlane, bottomPlane, farPlane);
+    vector<vec3> corners;
 
-    mNearPlaneCorners[0] = glm::vec3(rightPlane, topPlane, nearPlane);
-    mNearPlaneCorners[1] = glm::vec3(leftPlane, topPlane, nearPlane);
-    mNearPlaneCorners[2] = glm::vec3(rightPlane, bottomPlane, nearPlane);
-    mNearPlaneCorners[3] = glm::vec3(leftPlane, bottomPlane, nearPlane);
+    corners.push_back( glm::vec3(rightPlane, topPlane, nearPlane) );
+    corners.push_back( glm::vec3(leftPlane, topPlane, nearPlane) );
+    corners.push_back( glm::vec3(rightPlane, bottomPlane, nearPlane) );
+    corners.push_back( glm::vec3(leftPlane, bottomPlane, nearPlane) );
+
+    corners.push_back( glm::vec3(rightPlane, topPlane, farPlane) );
+    corners.push_back( glm::vec3(leftPlane, topPlane, farPlane) );
+    corners.push_back( glm::vec3(rightPlane, bottomPlane, farPlane) );
+    corners.push_back( glm::vec3(leftPlane, bottomPlane, farPlane) );
+
+    return corners;
 }
 
-const Camera::Type &Camera::GetProjectionType() const
+ProjectionType Camera::GetProjectionType() const
 {
-    return mType;
+    return mFrustrumData.type;
 }
 
 mat4 Camera::GetViewMatrix() const
@@ -175,32 +204,46 @@ void Camera::RemoveLayerToRender(const std::string &layer)
     }
 }
 
-SCECameraData Camera::GetRenderData() const
+CameraRenderData Camera::GetRenderData() const
 {
-    SCECameraData data;
+    CameraRenderData data;
     data.viewMatrix = GetViewMatrix();
     data.projectionMatrix = GetProjectionMatrix();
 
     return data;
 }
 
-vector<vec3> Camera::GetFrustrumCorners() const
+FrustrumData Camera::GetFrustrumData() const
+{
+    return mFrustrumData;
+}
+
+std::vector<vec3> Camera::GetFrustrumCorners(FrustrumData frustrumData, glm::mat4 camToWorld)
 {
     vector<vec3> corners;
-    glm::mat4 camToWorld = GetContainer()->GetComponent<Transform>()->GetWorldTransform();
+    if(frustrumData.type == PERSPECTIVE)
+    {
+        corners = calcConersPerspective(frustrumData.near,
+                                     frustrumData.far,
+                                     frustrumData.aspectRatio,
+                                     frustrumData.fov);
+    }
+    else
+    {
+        corners = calcConersOrtho(frustrumData.left,
+                               frustrumData.right,
+                               frustrumData.top,
+                               frustrumData.bottom,
+                               frustrumData.near,
+                               frustrumData.far);
+    }
 
     vec4 worldCorner;
 
-    for(int i = 0;i < 4 ;++i)
+    for(vec3& corner : corners)
     {
-        worldCorner = camToWorld * vec4(mNearPlaneCorners[i], 1.0);
-        corners.push_back(vec3(worldCorner.x, worldCorner.y, worldCorner.z));
-    }
-
-    for(int i = 0;i < 4 ;++i)
-    {
-        worldCorner = camToWorld * vec4(mFarPlaneCorners[i], 1.0);
-        corners.push_back(vec3(worldCorner.x, worldCorner.y, worldCorner.z));
+        worldCorner = camToWorld * vec4(corner, 1.0);
+        corner = vec3(worldCorner.x, worldCorner.y, worldCorner.z);
     }
 
     return corners;

@@ -246,7 +246,7 @@ Matrix4x4 QuaternionToMatrix(const Quaternion& quat)
 HRESULT InitDevice(HWND wnd);
 HRESULT InitScene();
 void Cleanup();
-LRESULT CALLBACK MessageProc(HWND, UINT, WPARAM, LPARAM);
+LRESULT CALLBACK MessageProc(HWND, unsigned int, WPARAM, LPARAM);
 void Anim();
 void Render();
 HRESULT BuildSponge(int levelMax, bool aoEnabled);
@@ -375,11 +375,11 @@ HRESULT InitDevice(HWND wnd)
     // Get window size
     RECT rc;
     GetClientRect(wnd, &rc);
-    UINT width = rc.right - rc.left;
-    UINT height = rc.bottom - rc.top;
+    unsigned int width = rc.right - rc.left;
+    unsigned int height = rc.bottom - rc.top;
 
     // Create D3D11 device and swap chain
-    UINT createDeviceFlags = 0;
+    unsigned int createDeviceFlags = 0;
     #ifdef _DEBUG
         createDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
     #endif
@@ -595,7 +595,7 @@ void Cleanup()
 
 
 // Called every time the application receives a message
-LRESULT CALLBACK MessageProc(HWND wnd, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK MessageProc(HWND wnd, unsigned int message, WPARAM wParam, LPARAM lParam)
 {
     // Send event message to AntTweakBar
     if (TwEventWin(wnd, message, wParam, lParam))
@@ -861,7 +861,7 @@ HRESULT BuildSponge(int levelMax, bool aoEnabled)
     // Create vertex buffer
     D3D11_BUFFER_DESC bd;
     bd.Usage = D3D11_USAGE_IMMUTABLE;
-    bd.ByteWidth = (UINT)vertices.size() * sizeof(Vertex);
+    bd.ByteWidth = (unsigned int)vertices.size() * sizeof(Vertex);
     bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
     bd.CPUAccessFlags = 0;
     bd.MiscFlags = 0;
@@ -875,7 +875,7 @@ HRESULT BuildSponge(int levelMax, bool aoEnabled)
         return hr;
 
     // Create index buffer
-    bd.ByteWidth = (UINT)indices.size() * sizeof(unsigned int);
+    bd.ByteWidth = (unsigned int)indices.size() * sizeof(unsigned int);
     bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
     initData.pSysMem = &indices[0];
     hr = g_D3DDev->CreateBuffer(&bd, &initData, &g_IndexBuffer);
@@ -897,8 +897,8 @@ void DrawSponge()
         return;
 
     // Set vertex buffer
-    UINT stride = sizeof(Vertex);
-    UINT offset = 0;
+    unsigned int stride = sizeof(Vertex);
+    unsigned int offset = 0;
     g_D3DDevCtx->IASetVertexBuffers(0, 1, &g_VertexBuffer, &stride, &offset);
 
     // Set index buffer

@@ -46,7 +46,7 @@ SCEHandle<Container> createCone(const string& name, const float& tesselation,
     return object;
 }
 
-SCEHandle<Container> createCube(const string& name, const vec3& pos){
+SCEHandle<Container> createCube(const string& name, bool rotator, const vec3& pos){
     //cube model
     SCEHandle<Container> object = SCEScene::CreateContainer(name);
 
@@ -57,7 +57,10 @@ SCEHandle<Container> createCube(const string& name, const vec3& pos){
 
     Mesh::AddCubeMesh(object, 1.0f);
     object->AddComponent<MeshRenderer>();
-    object->AddComponent<Rotator>();
+    if(rotator)
+    {
+        object->AddComponent<Rotator>();
+    }
 
     return object;
 }
@@ -140,10 +143,10 @@ int main( void )
 
 
     //Suzanne model
-    SCEHandle<Container> suz = createModel("suzanneObject", "suzanne.obj", vec3(0, 0, 0));
+    SCEHandle<Container> suz = createModel("suzanneObject", "suzanne.obj", vec3(0, 3, 0));
     suz->GetComponent<Transform>()->RotateAroundAxis(vec3(0.0f, 1.0f, 0.0f), 180.0f);
 
-    /*int nbSpheres = 5;
+    int nbSpheres = 5;
     for(int i = 0; i < nbSpheres; ++i){
         createSphere("sphereObject", i+2, vec3(0.0f, 0.0f, 0.0f)
             + normalize(vec3(-1.0f, 0.0f, 0.0f)) * 20.0f * float(i+1) / float(nbSpheres));
@@ -151,9 +154,13 @@ int main( void )
         createSphere("sphereObject", i+2, vec3(0.0f, 0.0f, 0.0f)
             + normalize(vec3(1.0f, 0.0f, 0.0f)) * 20.0f * float(i+1) / float(nbSpheres));
 
-        createCube("cubeObject", vec3(0.0f, 0.0f, -5.0f)
+        createCube("cubeObject", true, vec3(0.0f, 0.0f, -5.0f)
             + normalize(vec3(1.0f, 0.0f, 0.0f)) * 20.0f * float(i+1) / float(nbSpheres));
-    }*/
+    }
+
+    SCEHandle<Container> wallObj = createCube("cubeObject", false, vec3(0.0f, 3.0f, 5.0f));
+    SCEHandle<Transform> wallTransform = wallObj->GetComponent<Transform>();
+    wallTransform->SetLocalScale(vec3(10.0f, 10.0f, 2.0f));
 
 //    createCone("coneObject", 2, 45.0f, 5.0f, vec3(0.0f, 2.0f, 3.0f));
 

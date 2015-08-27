@@ -109,9 +109,9 @@ int test_floatBitsToUint()
 	
 	{
 		float A = 1.0f;
-		glm::uint B = glm::floatBitsToUint(A);
+		glm::unsigned int B = glm::floatBitsToUint(A);
 		float C = glm::intBitsToFloat(B);
-		Error += B == *(glm::uint*)&A ? 0 : 1;
+		Error += B == *(glm::unsigned int*)&A ? 0 : 1;
 		Error += A == C? 0 : 1;
 	}
 	
@@ -119,8 +119,8 @@ int test_floatBitsToUint()
 		glm::vec2 A(1.0f, 2.0f);
 		glm::uvec2 B = glm::floatBitsToUint(A);
 		glm::vec2 C = glm::uintBitsToFloat(B);
-		Error += B.x == *(glm::uint*)&(A.x) ? 0 : 1;
-		Error += B.y == *(glm::uint*)&(A.y) ? 0 : 1;
+		Error += B.x == *(glm::unsigned int*)&(A.x) ? 0 : 1;
+		Error += B.y == *(glm::unsigned int*)&(A.y) ? 0 : 1;
 		Error += A == C ? 0 : 1;
 	}
 	
@@ -128,9 +128,9 @@ int test_floatBitsToUint()
 		glm::vec3 A(1.0f, 2.0f, 3.0f);
 		glm::uvec3 B = glm::floatBitsToUint(A);
 		glm::vec3 C = glm::uintBitsToFloat(B);
-		Error += B.x == *(glm::uint*)&(A.x) ? 0 : 1;
-		Error += B.y == *(glm::uint*)&(A.y) ? 0 : 1;
-		Error += B.z == *(glm::uint*)&(A.z) ? 0 : 1;
+		Error += B.x == *(glm::unsigned int*)&(A.x) ? 0 : 1;
+		Error += B.y == *(glm::unsigned int*)&(A.y) ? 0 : 1;
+		Error += B.z == *(glm::unsigned int*)&(A.z) ? 0 : 1;
 		Error += A == C? 0 : 1;
 	}
 	
@@ -138,10 +138,10 @@ int test_floatBitsToUint()
 		glm::vec4 A(1.0f, 2.0f, 3.0f, 4.0f);
 		glm::uvec4 B = glm::floatBitsToUint(A);
 		glm::vec4 C = glm::uintBitsToFloat(B);
-		Error += B.x == *(glm::uint*)&(A.x) ? 0 : 1;
-		Error += B.y == *(glm::uint*)&(A.y) ? 0 : 1;
-		Error += B.z == *(glm::uint*)&(A.z) ? 0 : 1;
-		Error += B.w == *(glm::uint*)&(A.w) ? 0 : 1;
+		Error += B.x == *(glm::unsigned int*)&(A.x) ? 0 : 1;
+		Error += B.y == *(glm::unsigned int*)&(A.y) ? 0 : 1;
+		Error += B.z == *(glm::unsigned int*)&(A.z) ? 0 : 1;
+		Error += B.w == *(glm::unsigned int*)&(A.w) ? 0 : 1;
 		Error += A == C? 0 : 1;
 	}
 	

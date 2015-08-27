@@ -54,8 +54,8 @@ namespace SCE
 
         LightType           GetLightType() const;
 
-        void                RenderDeffered(const SCECameraData& renderData);
-        void                RenderToStencil(const SCECameraData& renderData);
+        void                RenderDeffered(const CameraRenderData& renderData);
+        void                RenderToStencil(const CameraRenderData& renderData);
 
         void                SetCastShadow(bool castShadow);
 

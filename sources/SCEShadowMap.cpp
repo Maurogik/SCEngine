@@ -32,7 +32,7 @@ SCEShadowMap::~SCEShadowMap()
     }
 }
 
-bool SCEShadowMap::Init(GLuint shadowmapWidth, GLuint shadowmapHeight)
+bool SCEShadowMap::Init(GLuint shadowmapWidth, GLuint shadowmapHeight, GLuint cascadeCount)
 {
     // Create the FBO
     glGenFramebuffers(1, &mFBOId);
@@ -40,13 +40,26 @@ bool SCEShadowMap::Init(GLuint shadowmapWidth, GLuint shadowmapHeight)
 
     glGenTextures(1, &mDepthTexture);
     // depth and stencil buffer
-    glBindTexture(GL_TEXTURE_2D, mDepthTexture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16, shadowmapWidth, shadowmapHeight, 0,
-                 GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, mDepthTexture);
+    /*glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16, shadowmapWidth, shadowmapHeight, 0,
+                 GL_DEPTH_COMPONENT, GL_FLOAT, NULL);*/
+
+    //texture array creation
+//    glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_DEPTH_COMPONENT16,
+//                   shadowmapWidth, shadowmapHeight, cascadeCount);
+
+    glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_DEPTH_COMPONENT16,
+                 shadowmapWidth, shadowmapHeight, cascadeCount, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, mDepthTexture, 0);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY_EXT, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY_EXT, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY_EXT, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY_EXT, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+
+//    glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, mDepthTexture, 0);
+    glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, mDepthTexture, 0, 0);
 
     GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 
@@ -61,15 +74,18 @@ bool SCEShadowMap::Init(GLuint shadowmapWidth, GLuint shadowmapHeight)
     return true;
 }
 
-void SCEShadowMap::BindForShadowPass()
+void SCEShadowMap::BindForShadowPass(GLuint cascadeId)
 {
     glBindFramebuffer(GL_FRAMEBUFFER, mFBOId);
+    //bind the right level of the texture array
+//    glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, mDepthTexture, cascadeId);
+    glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, mDepthTexture, 0, cascadeId);
 }
 
 void SCEShadowMap::BindTextureToLightShader(GLuint textureUnit)
 {
     glActiveTexture(GL_TEXTURE0 + textureUnit);
-    glBindTexture(GL_TEXTURE_2D, mDepthTexture);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, mDepthTexture);
     // Set the sampler uniform to the texture unit
     glUniform1i(SCELighting::GetShadowmapSamplerUniform(), textureUnit);
 }

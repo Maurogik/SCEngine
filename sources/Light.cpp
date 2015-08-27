@@ -221,7 +221,7 @@ void Light::SetLightColor(const glm::vec4 &lightColor)
     mLightColor = lightColor;
 }
 
-void Light::RenderDeffered(const SCECameraData& renderData)
+void Light::RenderDeffered(const CameraRenderData& renderData)
 {
     //compute light position to send it to the shader
     glm::mat4 camToWorld = glm::inverse(renderData.viewMatrix);
@@ -232,7 +232,7 @@ void Light::RenderDeffered(const SCECameraData& renderData)
     mLightRenderer->Render(renderData, mLightType == DIRECTIONAL_LIGHT);
 }
 
-void Light::RenderToStencil(const SCECameraData& renderData)
+void Light::RenderToStencil(const CameraRenderData& renderData)
 {
     mLightRenderer->Render(renderData, mLightType == DIRECTIONAL_LIGHT);
 }

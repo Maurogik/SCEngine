@@ -30,7 +30,7 @@ namespace bitfieldExtract
 		result		Result;
 	};
 
-	typedef type<glm::uint, glm::uint> typeU32;
+	typedef type<glm::unsigned int, glm::unsigned int> typeU32;
 
 	typeU32 const Data32[] =
 	{
@@ -58,11 +58,11 @@ namespace bitfieldExtract
 
 	int test()
 	{
-		glm::uint count = sizeof(Data32) / sizeof(typeU32);
+		glm::unsigned int count = sizeof(Data32) / sizeof(typeU32);
 		
-		for(glm::uint i = 0; i < count; ++i)
+		for(glm::unsigned int i = 0; i < count; ++i)
 		{
-			glm::uint Return = glm::bitfieldExtract(
+			glm::unsigned int Return = glm::bitfieldExtract(
 				Data32[i].Value, 
 				Data32[i].BitFirst, 
 				Data32[i].BitCount);
@@ -92,7 +92,7 @@ namespace bitfieldReverse
 		result		Result;
 	};
 
-	typedef type<glm::uint> typeU32;
+	typedef type<glm::unsigned int> typeU32;
 
 	typeU32 const Data32[] =
 	{
@@ -103,11 +103,11 @@ namespace bitfieldReverse
 
 	int test()
 	{
-		glm::uint count = sizeof(Data32) / sizeof(typeU32);
+		glm::unsigned int count = sizeof(Data32) / sizeof(typeU32);
 		
-		for(glm::uint i = 0; i < count; ++i)
+		for(glm::unsigned int i = 0; i < count; ++i)
 		{
-			glm::uint Return = glm::bitfieldReverse(
+			glm::unsigned int Return = glm::bitfieldReverse(
 				Data32[i].Value);
 			
 			bool Compare = Data32[i].Return == Return;

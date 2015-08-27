@@ -216,7 +216,7 @@ void MeshRenderer::setAttribute(attrib_data& data, void* newBuffer, size_t newSi
     data.buffer = newBuffer;
 }
 
-void MeshRenderer::Render(const SCECameraData& renderData, bool renderFullScreenQuad)
+void MeshRenderer::Render(const CameraRenderData& renderData, bool renderFullScreenQuad)
 {
     SCEHandle<Mesh> mesh = GetContainer()->GetComponent<Mesh>();
     SCEHandle<Transform> transform = GetContainer()->GetComponent<Transform>();
@@ -246,6 +246,12 @@ void MeshRenderer::Render(const SCECameraData& renderData, bool renderFullScreen
         projectionMatrix  = renderData.projectionMatrix;
         viewMatrix        = renderData.viewMatrix;
         modelMatrix       = transform->GetWorldTransform();
+    }
+    else
+    {
+        //trick to keep a usable view matrix in shader
+        viewMatrix        = renderData.viewMatrix;
+        modelMatrix       = glm::inverse(renderData.viewMatrix);
     }
 
     glm::mat4 MVP           = projectionMatrix * viewMatrix * modelMatrix;

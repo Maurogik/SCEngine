@@ -9,6 +9,7 @@
 #define SCE_LIGHTING_HPP
 
 #include "SCEDefines.hpp"
+#include "SCERenderStructs.hpp"
 #include "SCEHandle.hpp"
 #include "SCE_GBuffer.hpp"
 #include "SCEShadowMap.hpp"
@@ -19,7 +20,6 @@ namespace SCE
     class Camera;
     class Light;
     class Container;
-    struct SCECameraData;
 
     class SCELighting
     {
@@ -30,12 +30,12 @@ namespace SCE
         static void         Init();
         static void         CleanUp();
 
-        static void         RenderShadowsToGBuffer(const SCECameraData& camRenderData,
-                                                   std::vector<vec3> frustrumCorners,
-                                                   std::vector<SCE::Container*> objectsToRender,
-                                                   SCE::SCE_GBuffer& gBuffer);
+        static void         RenderCascadedShadowMap(const CameraRenderData& camRenderData,
+                                                   FrustrumData camFrustrumData,
+                                                   mat4 camToWorldMat,
+                                                   std::vector<SCE::Container*> objectsToRender);
 
-        static void         RenderLightsToGBuffer(const SCECameraData& renderData,
+        static void         RenderLightsToGBuffer(const CameraRenderData& renderData,
                                                   SCE::SCE_GBuffer& gBuffer);
 
         static GLuint       GetLightShader();
@@ -57,11 +57,13 @@ namespace SCE
         GLuint              mTexSamplerUniforms[SCE_GBuffer::GBUFFER_NUM_TEXTURES];
         GLuint              mShadowSamplerUnifom;
         GLuint              mShadowDepthMatUnifom;
+        GLuint              mShadowFarSplitUnifom;
 
         SCEShadowMap        mShadowMapFBO;
 
         SCEHandle<Light>                mShadowCaster;
-        glm::mat4                       mDepthConvertMat;
+        std::vector<glm::mat4>          mDepthConvertMatrices;
+        std::vector<float>              mFarSplit_cameraspace;
 
         std::vector<SCEHandle<Light>>   mStenciledLights;
         std::vector<SCEHandle<Light>>   mDirectionalLights;
@@ -70,14 +72,19 @@ namespace SCE
         void                registerLight(SCEHandle<Light> light);
         void                unregisterLight(SCEHandle<Light> light);
 
-        void                renderLightingPass(const SCECameraData& renderData,
+        void                renderLightingPass(const CameraRenderData& renderData,
                                                SCEHandle<Light> &light);
 
-        void                renderLightStencilPass(const SCECameraData& renderData,
+        void                renderLightStencilPass(const CameraRenderData& renderData,
                                                    SCEHandle<Light> &light);
 
-        void                renderShadowmapPass(const SCECameraData& lightRenderData,
-                                                std::vector<SCE::Container*> objectsToRender);
+        void                renderShadowmapPass(const CameraRenderData& lightRenderData,
+                                                std::vector<SCE::Container*> objectsToRender,
+                                                uint shadowmapId);
+
+        std::vector<CameraRenderData> computeCascadedLightFrustrums(FrustrumData cameraFrustrum,
+                                                                    mat4 camToWorldMat,
+                                                                    uint cascadeCount);
     };
 }
 

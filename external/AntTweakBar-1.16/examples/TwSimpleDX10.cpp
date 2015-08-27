@@ -38,7 +38,7 @@ const int NB_VERTS = 3;
 HRESULT             InitDevice(HWND wnd);
 HRESULT             InitScene();
 void                Cleanup();
-LRESULT CALLBACK    MessageProc(HWND, UINT, WPARAM, LPARAM);
+LRESULT CALLBACK    MessageProc(HWND, unsigned int, WPARAM, LPARAM);
 void                Render();
 
 // Variables
@@ -145,10 +145,10 @@ HRESULT InitDevice(HWND wnd)
     HRESULT hr = S_OK;
     RECT rc;
     GetClientRect(wnd, &rc);
-    UINT width = rc.right - rc.left;
-    UINT height = rc.bottom - rc.top;
+    unsigned int width = rc.right - rc.left;
+    unsigned int height = rc.bottom - rc.top;
 
-    UINT createDeviceFlags = 0;
+    unsigned int createDeviceFlags = 0;
     #ifdef _DEBUG
         createDeviceFlags |= D3D10_CREATE_DEVICE_DEBUG;
     #endif
@@ -286,8 +286,8 @@ HRESULT InitScene()
         return hr;
 
     // Set vertex buffer
-    UINT stride = VERTEX_SIZE;
-    UINT offset = 0;
+    unsigned int stride = VERTEX_SIZE;
+    unsigned int offset = 0;
     g_D3DDevice->IASetVertexBuffers(0, 1, &g_VertexBuffer, &stride, &offset);
 
     // Set primitive topology
@@ -349,7 +349,7 @@ void Cleanup()
 
 
 // Called every time the application receives a message
-LRESULT CALLBACK MessageProc(HWND wnd, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK MessageProc(HWND wnd, unsigned int message, WPARAM wParam, LPARAM lParam)
 {
     // Send event message to AntTweakBar
     if( TwEventWin(wnd, message, wParam, lParam) ) 
@@ -470,7 +470,7 @@ void Render()
     // Render a triangle
     D3D10_TECHNIQUE_DESC techDesc;
     g_Technique->GetDesc(&techDesc);
-    for( UINT p=0; p<techDesc.Passes; ++p )
+    for( unsigned int p=0; p<techDesc.Passes; ++p )
     {
         g_Technique->GetPassByIndex(p)->Apply(0);
         g_D3DDevice->Draw(3, 0);

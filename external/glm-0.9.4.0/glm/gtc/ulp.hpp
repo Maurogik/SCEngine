@@ -64,22 +64,22 @@ namespace glm
 	/// Return the value(s) ULP distance after the input value(s).
 	/// @see gtc_ulp
     template <typename genType>
-    genType next_float(genType const & x, uint const & Distance);
+    genType next_float(genType const & x, unsigned int const & Distance);
         
     /// Return the value(s) ULP distance before the input value(s).
 	/// @see gtc_ulp
     template <typename genType>
-    genType prev_float(genType const & x, uint const & Distance);
+    genType prev_float(genType const & x, unsigned int const & Distance);
         
     /// Return the distance in the number of ULP between 2 scalars.
 	/// @see gtc_ulp
     template <typename T>
-    uint float_distance(T const & x, T const & y);
+    unsigned int float_distance(T const & x, T const & y);
         
     /// Return the distance in the number of ULP between 2 vectors.
 	/// @see gtc_ulp
     template<typename T, template<typename> class vecType>
-    vecType<uint> float_distance(vecType<T> const & x, vecType<T> const & y);
+    vecType<unsigned int> float_distance(vecType<T> const & x, vecType<T> const & y);
         
 	/// @}
 }// namespace glm

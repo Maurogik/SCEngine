@@ -193,7 +193,7 @@ namespace detail
 	}
 
 	//////////////////
-	// uint
+	// unsigned int
 
 	template <typename T>
 	struct is_uint

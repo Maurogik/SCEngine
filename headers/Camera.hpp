@@ -8,32 +8,29 @@
 
 #include "SCEDefines.hpp"
 #include "Component.hpp"
+#include "SCERenderStructs.hpp"
 
 namespace SCE
 {
-    struct SCECameraData;
+    struct CameraRenderData;
 
     class Camera : public Component
     {
 
     public :
 
-        enum
-        {
-            PERSPECTIVE = 0,
-            ORTHOGRAPHIC
-        } typedef Type;
+        ProjectionType          GetProjectionType() const;
+        glm::mat4               GetViewMatrix() const;
+        const glm::mat4&        GetProjectionMatrix() const;
+        glm::mat4               GetViewProjectionMatrix() const;
+        void                    SetProjectionMatrix(const glm::mat4 &projMat);
+        bool                    IsLayerRendered(const std::string &layer) const;
+        void                    AddLayerToRender(const std::string &layer);
+        void                    RemoveLayerToRender(const std::string &layer);
+        CameraRenderData        GetRenderData() const;
+        FrustrumData            GetFrustrumData() const;
 
-        const Type&         GetProjectionType() const;
-        glm::mat4           GetViewMatrix() const;
-        const glm::mat4&    GetProjectionMatrix() const;
-        glm::mat4           GetViewProjectionMatrix() const;
-        void                SetProjectionMatrix(const glm::mat4 &projMat);
-        bool                IsLayerRendered(const std::string &layer) const;
-        void                AddLayerToRender(const std::string &layer);
-        void                RemoveLayerToRender(const std::string &layer);
-        SCECameraData       GetRenderData() const;
-        std::vector<vec3>   GetFrustrumCorners() const;
+        static std::vector<vec3>   GetFrustrumCorners(FrustrumData frustrumData, mat4 camToWorld);
 
     protected :
 
@@ -58,23 +55,24 @@ namespace SCE
 
     private :
 
-        void                init();
-        void                calcConersPerspective(float near,
-                                                  float far,
-                                                  float aspectRatio,
-                                                  float fov);
-        void                calcConersOrtho(float leftPlane,
-                                            float rightPlane,
-                                            float topPlane,
-                                            float bottomPlane,
-                                            float nearPlane,
-                                            float farPlane);
+        static std::vector<vec3>                calcConersPerspective(float near,
+                                                                      float far,
+                                                                      float aspectRatio,
+                                                                      float fov);
 
-        Type                        mType;
+        static std::vector<vec3>                calcConersOrtho(float leftPlane,
+                                                                float rightPlane,
+                                                                float topPlane,
+                                                                float bottomPlane,
+                                                                float nearPlane,
+                                                                float farPlane);
+
+        void                init();
+
+
         std::vector<std::string>    mRenderedLayers;
-        glm::mat4                   mProjectionMatrix;
-        glm::vec3                   mFarPlaneCorners[4];
-        glm::vec3                   mNearPlaneCorners[4];
+        glm::mat4                   mProjectionMatrix;        
+        FrustrumData                mFrustrumData;
 
     };
 

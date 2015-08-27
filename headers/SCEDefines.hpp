@@ -28,5 +28,4 @@ using namespace glm;
 #define MATERIAL_SUFIX ".material"
 #define TEXTURE_METADATA_SUFIX ".texData"
 
-
 #endif
