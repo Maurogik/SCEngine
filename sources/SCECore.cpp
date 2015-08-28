@@ -9,6 +9,7 @@
 #include "../headers/SCEInternal.hpp"
 #include "../headers/SCELighting.hpp"
 #include "../headers/SCERender.hpp"
+#include "../headers/SCEShaders.hpp"
 
 using namespace SCE;
 using namespace std;
@@ -100,6 +101,7 @@ void SCECore::InitEngine(const std::string &windowName)
 
     //Init Engine subcomponents in order
     SCETime::Init();
+    SCEShaders::Init();
     SCELighting::Init();
     SCERender::Init();
 }
@@ -128,6 +130,7 @@ void SCECore::CleanUpEngine()
     //clean engine subcomponents
     SCERender::CleanUp();
     SCELighting::CleanUp();
+    SCEShaders::CleanUp();
     SCETime::CleanUp();
 
     // Close OpenGL window and terminate GLFW

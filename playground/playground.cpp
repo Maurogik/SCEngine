@@ -146,16 +146,16 @@ int main( void )
     SCEHandle<Container> suz = createModel("suzanneObject", "suzanne.obj", vec3(0, 3, 0));
     suz->GetComponent<Transform>()->RotateAroundAxis(vec3(0.0f, 1.0f, 0.0f), 180.0f);
 
-    int nbSpheres = 5;
-    for(int i = 0; i < nbSpheres; ++i){
-        createSphere("sphereObject", i+2, vec3(0.0f, 0.0f, 0.0f)
-            + normalize(vec3(-1.0f, 0.0f, 0.0f)) * 20.0f * float(i+1) / float(nbSpheres));
+    float spreadDist = 10.0f;
+    float nbSpheres = 2;
+    for(float x = 0.0f; x < nbSpheres * 2.0f; ++x)
+    {
+        for(float z = -nbSpheres; z < nbSpheres; ++z)
+        {
+            createSphere("sphereObject", 4, vec3(x * spreadDist, 0.0f, z * spreadDist));
 
-        createSphere("sphereObject", i+2, vec3(0.0f, 0.0f, 0.0f)
-            + normalize(vec3(1.0f, 0.0f, 0.0f)) * 20.0f * float(i+1) / float(nbSpheres));
-
-        createCube("cubeObject", true, vec3(0.0f, 0.0f, -5.0f)
-            + normalize(vec3(1.0f, 0.0f, 0.0f)) * 20.0f * float(i+1) / float(nbSpheres));
+            createCube("cubeObject", true, vec3(-x * spreadDist, 0.0f, z * spreadDist));
+        }
     }
 
     SCEHandle<Container> wallObj = createCube("cubeObject", false, vec3(0.0f, 3.0f, 5.0f));

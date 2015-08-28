@@ -8,6 +8,7 @@
 #include "../headers/SCEInternal.hpp"
 #include "../headers/SCEScene.hpp"
 #include "../headers/SCETexture.hpp"
+#include "../headers/SCEShaders.hpp"
 #include "../headers/Transform.hpp"
 
 #include "external/rapidjson/document.h" // rapidjson's DOM-style API
@@ -27,7 +28,7 @@ using namespace std;
 Material::Material(SCEHandle<Container> &container, const string &filename, const string &typeName)
     : Component(container, "Material::" + typeName) ,
       mMaterialName("Material not loaded yet"),
-      mProgramShaderId(NO_SHADER_ID),
+      mShaderProgramId(NO_SHADER_ID),
       mUniforms()
 {
     LoadMaterial(filename);
@@ -63,7 +64,7 @@ Material::~Material()
     }
 
     //unload shader
-    glDeleteProgram(mProgramShaderId);
+    SCEShaders::DeleteShaderProgram(mShaderProgramId);
 }
 
 void Material::LoadMaterial(const string &filename)
@@ -99,10 +100,10 @@ void Material::LoadMaterial(const string &filename)
         rapidjson::Value& materialData = materialRoot["Data"];
         string shaderName   = root["Shader"].GetString();
 
-        mProgramShaderId = loadShaders(shaderName);
+        mShaderProgramId = loadShaders(shaderName);
 
         //start initializing the render data as soon as the shader is loaded
-        glUseProgram(mProgramShaderId);
+        glUseProgram(mShaderProgramId);
 
         Debug::Assert(materialData.IsArray(), "Data value of Json material file should be an array");
 
@@ -140,7 +141,7 @@ void Material::LoadMaterial(const string &filename)
                 unifData.data = new vec3(Parser::StringToVec3(value));
             }
             unifData.name = name;
-            unifData.dataID = glGetUniformLocation(mProgramShaderId, name.c_str());
+            unifData.dataID = glGetUniformLocation(mShaderProgramId, name.c_str());
 
             mUniforms[name] = unifData;
         }
@@ -153,7 +154,7 @@ void Material::LoadMaterial(const string &filename)
 
 void Material::BindMaterialData()
 {
-    glUseProgram(mProgramShaderId);
+    glUseProgram(mShaderProgramId);
 
     GLuint textureUnit = 0;
 
@@ -203,12 +204,12 @@ void Material::CleanMaterial()
 
 const GLuint& Material::GetShaderProgram() const
 {
-    return mProgramShaderId;
+    return mShaderProgramId;
 }
 
 GLuint Material::loadShaders(const string &filename)
 {
-    return ShaderTools::CompileShader(filename);
+    return SCEShaders::CreateShaderProgram(filename);
 }
 
 

@@ -78,7 +78,7 @@ namespace SCE {
 
         //TODO add LOD/verions for shader ?
         std::string                             mMaterialName;
-        GLuint                                  mProgramShaderId;
+        GLuint                                  mShaderProgramId;
         std::map<std::string, uniform_data>     mUniforms;
     };
 

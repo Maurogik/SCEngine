@@ -10,6 +10,7 @@
 #include "../headers/Container.hpp"
 #include "../headers/SCERender.hpp"
 #include "../headers/Transform.hpp"
+#include "../headers/SCEShaders.hpp"
 #include "../headers/Camera.hpp"
 
 using namespace SCE;
@@ -69,8 +70,8 @@ void SCELighting::CleanUp()
 {
     Debug::Assert(s_instance, "No Lighting system instance found, Init the system before using it");
     //unload shader
-    glDeleteProgram(s_instance->mLightShader);
-    glDeleteProgram(s_instance->mEmptyShader);
+    SCEShaders::DeleteShaderProgram(s_instance->mLightShader);
+    SCEShaders::DeleteShaderProgram(s_instance->mEmptyShader);
     delete s_instance;
 }
 
@@ -215,12 +216,12 @@ void SCELighting::initLightShader()
 {
     if(mLightShader == (GLuint) -1)
     {
-        mLightShader = ShaderTools::CompileShader(LIGHT_SHADER_NAME);
+        mLightShader = SCEShaders::CreateShaderProgram(LIGHT_SHADER_NAME);
     }
 
     if(mEmptyShader == (GLuint) -1)
     {
-        mEmptyShader = ShaderTools::CompileShader(STENCYL_SHADER_NAME);
+        mEmptyShader = SCEShaders::CreateShaderProgram(STENCYL_SHADER_NAME);
     }
 
     glUseProgram(mLightShader);

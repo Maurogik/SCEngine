@@ -26,7 +26,9 @@ namespace SCE {
     public:
 
                     SCETexture(const std::string &filename, const std::string &samplerName);
-                    SCETexture(const std::string &samplerName, int width, int height, glm::vec4 color, SCETextureFormat textureFormat = DDS_FORMAT, SCETextureWrap wrapMode = CLAMP_WRAP,  bool mipmapsOn = true);
+                    SCETexture(const std::string &samplerName, int width, int height, glm::vec4 color,
+                               SCETextureFormat textureFormat = DDS_FORMAT,
+                               SCETextureWrap wrapMode = CLAMP_WRAP,  bool mipmapsOn = true);
                     ~SCETexture();
         GLuint      GetTextureId() const;
         void        BindTexture(GLuint textureUnit, GLuint samplerUniformId);
@@ -44,9 +46,11 @@ namespace SCE {
          */
         GLuint              loadTextureFromFile(const std::string &filename);
 
-        GLuint              loadTexture(const std::string &filename, SCETextureFormat format, SCETextureWrap wrapMode, bool mipmapsOn);
+        GLuint              loadTexture(const std::string &filename, SCETextureFormat format,
+                                        SCETextureWrap wrapMode, bool mipmapsOn);
 
-        GLuint              createTexture(int width, int height, vec4 color, SCETextureFormat textureFormat, SCETextureWrap wrapMode,  bool mipmapsOn);
+        GLuint              createTexture(int width, int height, vec4 color, SCETextureFormat textureFormat,
+                                          SCETextureWrap wrapMode,  bool mipmapsOn);
 
         SCETextureFormat    formatFromString(const std::string &formatString);
 

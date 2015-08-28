@@ -38,13 +38,6 @@ namespace Debug {
 
 }
 
-namespace ShaderTools {
-
-    GLuint      CompileShader(const std::string& shaderFileName);
-
-}
-
-
 }
 
 #endif
