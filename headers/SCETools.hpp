@@ -26,7 +26,7 @@ namespace Tools {
 
     int         HashFromString(const std::string& str);
     std::string ToLowerCase(const std::string &str);
-    int         floatToColorRange(float val);
+    uint floatToColorRange(float val);
 }
 
 namespace Debug {
