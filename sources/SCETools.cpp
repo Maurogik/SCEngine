@@ -102,7 +102,7 @@ namespace Tools {
         return res;
     }
 
-    int floatToColorRange(float val)
+    uint floatToColorRange(float val)
     {
         return (int)(val * 255.0f);
     }

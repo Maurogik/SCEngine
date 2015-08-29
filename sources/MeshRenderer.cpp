@@ -295,7 +295,7 @@ void MeshRenderer::Render(const CameraRenderData& renderData, bool renderFullScr
 
     glBindVertexArray(0);
 
-    //clean the attributes ?
+    //clean the attributes
     for(size_t i = 0; i < mAttributes.size(); ++i)
     {
         GLuint attribLocation = shaderData.attribLocations[i];

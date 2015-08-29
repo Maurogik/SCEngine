@@ -147,12 +147,12 @@ int main( void )
     suz->GetComponent<Transform>()->RotateAroundAxis(vec3(0.0f, 1.0f, 0.0f), 180.0f);
 
     float spreadDist = 10.0f;
-    float nbSpheres = 2;
+    float nbSpheres = 5;
     for(float x = 0.0f; x < nbSpheres * 2.0f; ++x)
     {
         for(float z = -nbSpheres; z < nbSpheres; ++z)
         {
-            createSphere("sphereObject", 4, vec3(x * spreadDist, 0.0f, z * spreadDist));
+            createSphere("sphereObject", 2, vec3(x * spreadDist, 0.0f, z * spreadDist));
 
             createCube("cubeObject", true, vec3(-x * spreadDist, 0.0f, z * spreadDist));
         }
@@ -173,7 +173,7 @@ int main( void )
     //Camera
     SCEHandle<Container> cameraObject = SCEScene::CreateContainer("cameraObject");
     SCEHandle<Transform> cameraTransform = cameraObject->AddComponent<Transform>();
-    cameraObject->AddComponent<Camera>(40.0f, 4.0f/3.0f, 1.0f, 100.0f);
+    cameraObject->AddComponent<Camera>(40.0f, 4.0f/3.0f, 1.0f, 500.0f);
     cameraTransform->SetWorldPosition(vec3(0, 10, -25));
     cameraTransform->RotateAroundAxis(vec3(1.0f, 0.0f, 0.0f), 90.0f);
 

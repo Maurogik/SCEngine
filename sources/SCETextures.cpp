@@ -1,24 +1,27 @@
 /******PROJECT:Sand Castle Engine******/
 /**************************************/
 /*********AUTHOR:Gwenn AUBERT**********/
-/*********FILE:SCETexture.cpp**********/
+/*********FILE:SCETextures.cpp*********/
 /**************************************/
 
-#include "../headers/SCETexture.hpp"
-#include "../external/SOIL/src/SOIL2.h"
-#include "../headers/SCEInternal.hpp"
+#include "../headers/SCETextures.hpp"
 #include "../headers/SCETools.hpp"
+#include "../headers/SCEInternal.hpp"
+
+#include "../external/SOIL/src/SOIL2.h"
 
 #include "external/rapidjson/document.h" // rapidjson's DOM-style API
 #include "external/rapidjson/prettywriter.h" // for stringify JSON
 #include "external/rapidjson/filestream.h" // wrapper of C stream for prettywriter as output
 
+#include <algorithm>
 #include <iostream>
 #include <fstream>
 
-
-using namespace std;
 using namespace SCE;
+using namespace std;
+
+
 
 #define FORMAT_STR "Format"
 #define DDS_STR "DDS"
@@ -30,41 +33,119 @@ using namespace SCE;
 #define REPEAT_STR "Repeat"
 
 
-SCETexture::SCETexture(const string &filename, const string &samplerName)
-    : mTextureId(0), mName(samplerName), mWidth(-1), mHeight(-1)
+SCETextures* SCETextures::s_instance = nullptr;
+
+
+SCETextures::SCETextures()
+    : mLoadedTextures(),
+      mCreatedTextures()
 {
-    mTextureId = loadTextureFromFile(filename);
+
 }
 
-SCETexture::SCETexture(const string &samplerName, int width, int height, vec4 color, SCETextureFormat textureFormat, SCETextureWrap wrapMode, bool mipmapsOn)
-    : mTextureId(0), mName(samplerName), mWidth(width), mHeight(height)
+SCETextures::~SCETextures()
 {
-    mTextureId = createTexture(width, height, color, textureFormat, wrapMode, mipmapsOn);
-}
+    Internal::Log("Cleaning up texture system, will delete loaded textures");
 
-SCETexture::~SCETexture()
-{
-    if(mTextureId != 0){
-        glDeleteTextures(1, &mTextureId);
+    auto beginIt = begin(s_instance->mLoadedTextures);
+    auto endIt = end(s_instance->mLoadedTextures);
+    for(auto iterator = beginIt; iterator != endIt; iterator++) {
+        Internal::Log("Deleting texture : " + iterator->first);
+        glDeleteTextures(1, &(iterator->second));
+    }
+
+    for(GLuint texId : s_instance->mCreatedTextures)
+    {
+        glDeleteTextures(1, &texId);
     }
 }
 
-void SCETexture::BindTexture(GLuint textureUnit, GLuint samplerUniformId)
+void SCETextures::Init()
+{
+    Debug::Assert(!s_instance, "An instance of the Texture system already exists");
+    s_instance = new SCETextures();
+}
+
+void SCETextures::CleanUp()
+{
+    Debug::Assert(s_instance, "No Texture system instance found, Init the system before using it");
+    delete s_instance;
+}
+
+GLuint SCETextures::CreateTexture(int width, int height,
+                                  vec4 color,
+                                  SCETextureFormat textureFormat, SCETextureWrap wrapMode,
+                                  bool mipmapsOn)
+{
+    Debug::Assert(s_instance, "No Texture system instance found, Init the system before using it");
+
+    GLuint texId = s_instance->createTexture(width, height,
+                                     color,
+                                     textureFormat, wrapMode,
+                                     mipmapsOn);
+    s_instance->mCreatedTextures.push_back(texId);
+
+    return texId;
+}
+
+GLuint SCETextures::LoadTexture(const string& textureName)
+{
+    Debug::Assert(s_instance, "No Texture system instance found, Init the system before using it");
+
+    //texture has already been loaded
+    if(s_instance->mLoadedTextures.count(textureName) > 0)
+    {
+        Internal::Log("Texture " + textureName + " already loaded, using it directly");
+        return s_instance->mLoadedTextures[textureName];
+    }
+
+    GLuint texId = s_instance->loadTextureFromMetadata(textureName);
+    s_instance->mLoadedTextures[textureName] = texId;
+
+    return texId;
+}
+
+void SCETextures::DeleteTexture(GLuint textureId)
+{
+    Debug::Assert(s_instance, "No Texture system instance found, Init the system before using it");
+
+    auto itLoaded = find_if(begin(s_instance->mLoadedTextures),
+                      end(s_instance->mLoadedTextures),
+                      [&textureId](std::pair<string, GLuint> entry)
+    { return entry.second == textureId; } );
+
+    //texture id was found in loaded textures
+    if(itLoaded != end(s_instance->mLoadedTextures))
+    {
+        Internal::Log("Delete texture : " + itLoaded->first);
+        glDeleteTextures(1, &(itLoaded->second));
+        s_instance->mLoadedTextures.erase(itLoaded);
+    }
+
+    auto itCreated = find(begin(s_instance->mCreatedTextures),
+                   end(s_instance->mCreatedTextures),
+                   textureId);
+
+    //texture id was found in created textures
+    if(itCreated != end(s_instance->mCreatedTextures))
+    {
+        glDeleteTextures(1, &textureId);
+        s_instance->mCreatedTextures.erase(itCreated);
+    }
+}
+
+void SCETextures::BindTexture(GLuint textureId, GLuint textureUnit, GLuint samplerUniformId)
 {
     // Bind the texture to a texture Unit
     glActiveTexture(GL_TEXTURE0 + textureUnit);
-    glBindTexture(GL_TEXTURE_2D, mTextureId);
+    glBindTexture(GL_TEXTURE_2D, textureId);
     // Set the sampler uniform to the texture unit
     glUniform1i(samplerUniformId, textureUnit);
 }
 
-GLuint SCETexture::GetTextureId() const
-{
-    return mTextureId;
-}
 
 
-GLuint SCETexture::loadTextureFromFile(const string &filename)
+GLuint SCETextures::loadTextureFromMetadata(const string &filename)
 {
     string fullTexturePath = RESSOURCE_PATH + filename;
     string metadataFile = fullTexturePath + TEXTURE_METADATA_SUFIX;
@@ -75,15 +156,18 @@ GLuint SCETexture::loadTextureFromFile(const string &filename)
     string fileStr = "";
     ifstream fileStream(metadataFile.c_str(), ios::in);
 
-    if(fileStream.is_open()){
+    if(fileStream.is_open())
+    {
         string currLine;
-        while (getline(fileStream, currLine)) {
+        while (getline(fileStream, currLine))
+        {
             fileStr += "\n" + currLine;
         }
         fileStream.close();
 
         //parse json string using rapidjson
-        if (root.Parse<0>(fileStr.c_str()).HasParseError()){
+        if (root.Parse<0>(fileStr.c_str()).HasParseError())
+        {
             Debug::RaiseError("Error reading the texture file : " + filename);
         }
 
@@ -107,13 +191,17 @@ GLuint SCETexture::loadTextureFromFile(const string &filename)
 
         return loadTexture(name, format, wrapMode, mipmapsOn);
 
-    } else {
+    }
+    else
+    {
         Debug::RaiseError("Failed to open file " + metadataFile);
         return 0;
     }
 }
 
-GLuint SCETexture::loadTexture(const string &filename, SCETextureFormat format, SCETextureWrap wrapMode, bool mipmapsOn)
+GLuint SCETextures::loadTexture(const string &filename,
+                                SCETextureFormat format, SCETextureWrap wrapMode,
+                                bool mipmapsOn)
 {
     string fullTexturePath = RESSOURCE_PATH + filename;
     uint soilFlags = getSoilFlags(format, wrapMode, mipmapsOn);
@@ -140,7 +228,10 @@ GLuint SCETexture::loadTexture(const string &filename, SCETextureFormat format, 
     return textureID;
 }
 
-GLuint SCETexture::createTexture(int width, int height, vec4 color, SCETextureFormat textureFormat, SCETextureWrap wrapMode, bool mipmapsOn)
+GLuint SCETextures::createTexture(int width, int height,
+                                  vec4 color,
+                                  SCETextureFormat textureFormat, SCETextureWrap wrapMode,
+                                  bool mipmapsOn)
 {
     int channelCount = 4;
     uint soilFlags = getSoilFlags(textureFormat, wrapMode, mipmapsOn);
@@ -157,14 +248,14 @@ GLuint SCETexture::createTexture(int width, int height, vec4 color, SCETextureFo
         }
     }
 
-    GLuint textureID = SOIL_create_OGL_texture(textureData, &mWidth, &mHeight, channelCount, 0, soilFlags);
+    GLuint textureID = SOIL_create_OGL_texture(textureData, &width, &height, channelCount, 0, soilFlags);
     //GLuint textureID = SOIL_load_OGL_texture(fullTexturePath.c_str(), 0, 0, soilFlags);
     delete[](textureData);
 
     return textureID;
 }
 
-SCETextureFormat SCETexture::formatFromString(const string &formatString)
+SCETextureFormat SCETextures::formatFromString(const string &formatString)
 {
     SCETextureFormat res = DDS_FORMAT;
     if(Tools::ToLowerCase(formatString) == Tools::ToLowerCase(DDS_STR)){
@@ -178,7 +269,7 @@ SCETextureFormat SCETexture::formatFromString(const string &formatString)
     return res;
 }
 
-SCETextureWrap SCETexture::wrapModeFromString(const string &wrapString)
+SCETextureWrap SCETextures::wrapModeFromString(const string &wrapString)
 {
     SCETextureWrap res = CLAMP_WRAP;
     if(Tools::ToLowerCase(wrapString) == Tools::ToLowerCase(CLAMP_STR)){
@@ -192,7 +283,7 @@ SCETextureWrap SCETexture::wrapModeFromString(const string &wrapString)
     return res;
 }
 
-uint SCETexture::getSoilFlags(SCETextureFormat format, SCETextureWrap wrapMode, bool mipmapsOn)
+uint SCETextures::getSoilFlags(SCETextureFormat format, SCETextureWrap wrapMode, bool mipmapsOn)
 {
     uint soilFlags = 0;
 

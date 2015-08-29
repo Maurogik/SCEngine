@@ -18,7 +18,7 @@ Transform::Transform(SCEHandle<Container> &container)
     , mOrientation(vec3(0, 0, 0))
     , mParent(nullptr)
 {
-    Internal::Log("Transform initialized");
+//    Internal::Log("Transform initialized");
 }
 
 

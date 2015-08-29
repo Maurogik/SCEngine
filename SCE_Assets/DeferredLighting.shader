@@ -142,6 +142,7 @@ _{
 
 
     #define CASCADE_COUNT 4
+    #define SHADOW_BIAS 0.00005
 
     out vec4 color;
 
@@ -156,27 +157,79 @@ _{
     uniform sampler2DArray ShadowTex;
 
 
+    vec2 poissonDisk[16] = vec2[](
+            vec2( -0.94201624, -0.39906216 ),
+            vec2( 0.94558609, -0.76890725 ),
+            vec2( -0.094184101, -0.92938870 ),
+            vec2( 0.34495938, 0.29387760 ),
+            vec2( -0.91588581, 0.45771432 ),
+            vec2( -0.81544232, -0.87912464 ),
+            vec2( -0.38277543, 0.27676845 ),
+            vec2( 0.97484398, 0.75648379 ),
+            vec2( 0.44323325, -0.97511554 ),
+            vec2( 0.53742981, -0.47373420 ),
+            vec2( -0.26496911, -0.41893023 ),
+            vec2( 0.79197514, 0.19090188 ),
+            vec2( -0.24188840, 0.99706507 ),
+            vec2( -0.81409955, 0.91437590 ),
+            vec2( 0.19984126, 0.78641367 ),
+            vec2( 0.14383161, -0.14100790 )
+         );
 
-    float sampleMyTex(vec2 uv, int i)
+//    vec2 poissonDisk[4] = vec2[](
+//      vec2( -0.94201624, -0.39906216 ),
+//      vec2( 0.94558609, -0.76890725 ),
+//      vec2( -0.094184101, -0.92938870 ),
+//      vec2( 0.34495938, 0.29387760 )
+//    );
+
+    //rand [0, 1[
+    float rand(vec4 seed4)
     {
-        return texture(ShadowTex, vec3(uv, float(i)));
+        float dot_product = dot(seed4, vec4(12.9898,78.233,45.164,94.673));
+        return fract(sin(dot_product) * 43758.5453);
     }
 
-
-    float getShadowDepth(vec3 worldPos)
+    float sampleMyTex(vec2 uv, int i, float z)
     {
-        vec3 cameraPos = (V * vec4(worldPos, 1.0)).xyz;
+        return textureGather(ShadowTex, vec3(uv, float(i)));
+    }
+
+    float getShadowDepth(vec3 pos_worldspace, vec3 normal_worldspace, vec3 lightDir_worldspace)
+    {
+        int sampleCount = 4;
+        int poissonSize = 16;
+        float poissonSpread = 1.0 / 900.0;
+        float eyeDist = distance(pos_worldspace, SCE_EyePosition_worldspace);
+
+        vec3 cameraPos = (V * vec4(pos_worldspace, 1.0)).xyz;
+
+        //float bias = SHADOW_BIAS * (1.0 - dot(lightDir_worldspace, - normal_worldspace));
+        float cosTheta = clamp(dot(-lightDir_worldspace, normal_worldspace), 0.0, 1.0);
+        float bias = SHADOW_BIAS * tan(acos(cosTheta));
 
         for(int i = 0; i < CASCADE_COUNT; ++i)
         {
             if(cameraPos.z <= FarSplits_cameraspace[i])
-            {
-                vec4 position_lightspace = DepthConvertMat[i] * vec4(worldPos, 1.0);
-                float depth_lightspace = sampleMyTex(vec2(position_lightspace.xy), i);
-                return step(depth_lightspace + 0.001, position_lightspace.z);
-                //return float(i+1) / float(CASCADE_COUNT);
+            {                
+                vec4 position_lightspace = DepthConvertMat[i] * vec4(pos_worldspace, 1.0);
+
+                float shadow = 0.0;
+                for (int off = 0; off < sampleCount; off++)
+                {
+                    float fi = float(i + 1);
+                    vec4 seed4 = vec4(floor(pos_worldspace * 500.0 / fi), off);
+                    int index = int((float(poissonSize)*rand(seed4))) % poissonSize;
+                    vec2 uv = position_lightspace.xy + poissonDisk[index] * poissonSpread / fi;
+                    float depth_lightspace = sampleMyTex(uv, i, position_lightspace.z);
+
+                    shadow += step(depth_lightspace + bias, position_lightspace.z) * 1.0/float(sampleCount);
+                }
+
+                return shadow;
+//                float depthCenter = sampleMyTex(position_lightspace.xy, i, position_lightspace.z);
+//                return step(depthCenter + bias, position_lightspace.z);
             }
-            //texture2D(ShadowTex, position_lightspace.xy).r;
         }
         return 0.0f;
     }
@@ -204,7 +257,7 @@ _{
                       //Specular
                       + (SCE_LightColor.rgb * lightCol.y * SCE_LightColor.a), 1.0);
 
-        float shadow = getShadowDepth(Position_worldspace);
+        float shadow = getShadowDepth(Position_worldspace, Normal_worldspace, SCE_LightDirection_worldspace);
 
         color.rgb *= 1.0 - shadow * SCE_ShadowStrength;
 //        color.rgb = texture2D(ShadowTex, uv).rgb * SCE_ShadowStrength;

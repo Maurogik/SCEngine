@@ -19,13 +19,13 @@ Container::Container(const string &name, int id)
     , mName(name)
     , mContainerId(id)
 {
-    Internal::Log("New container");
+//    Internal::Log("New container");
 }
 
 Container::~Container()
 {
-    Internal::Log("delete container");
-    Internal::Log("delete components");
+//    Internal::Log("delete container");
+//    Internal::Log("delete components");
     for(Component* compo : mComponents)
     {
         delete(compo);

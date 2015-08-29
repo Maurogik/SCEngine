@@ -7,7 +7,7 @@
 #include "../headers/Material.hpp"
 #include "../headers/SCEInternal.hpp"
 #include "../headers/SCEScene.hpp"
-#include "../headers/SCETexture.hpp"
+#include "../headers/SCETextures.hpp"
 #include "../headers/SCEShaders.hpp"
 #include "../headers/Transform.hpp"
 
@@ -58,7 +58,8 @@ Material::~Material()
         }
         else if (data.type == UNIFORM_TEXTURE2D)
         {
-            SCETexture* fData = (SCETexture*) data.data;
+            GLuint* fData = (GLuint*) data.data;
+            SCETextures::DeleteTexture(*fData);
             delete(fData);
         }
     }
@@ -119,10 +120,8 @@ void Material::LoadMaterial(const string &filename)
 
             if(type == "Texture2D")
             {
-                //do additional texture work (fetch sampler & stuff)
-                //load texture here
-                SCETexture* texture = new SCETexture(value, name);
-                unifData.data = (void*)texture;
+                GLuint* texId = new GLuint(SCETextures::LoadTexture(value));
+                unifData.data = (void*)texId;
                 unifData.type = UNIFORM_TEXTURE2D;
             }
             else if(type == "float")
@@ -171,8 +170,8 @@ void Material::BindMaterialData()
         }
         case UNIFORM_TEXTURE2D :
         {
-            SCETexture* texture = (SCETexture*)uniform.data;
-            texture->BindTexture(textureUnit, uniform.dataID);
+            GLuint texId = *((GLuint*)uniform.data);
+            SCETextures::BindTexture(texId, textureUnit, uniform.dataID);
             ++textureUnit;
             break;
         }
