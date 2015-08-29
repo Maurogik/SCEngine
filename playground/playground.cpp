@@ -22,7 +22,7 @@ SCEHandle<Container> createSphere(const string& name, const float& tesselation, 
     SCEHandle<Transform> transform = object->AddComponent<Transform>();
     transform->SetWorldPosition(pos);
 
-    Mesh::AddSphereMesh(object, 1.0f, tesselation);
+    Mesh::AddSphereMesh(object, tesselation);
     object->AddComponent<MeshRenderer>();
     object->AddComponent<Rotator>();
 
@@ -39,7 +39,7 @@ SCEHandle<Container> createCone(const string& name, const float& tesselation,
     SCEHandle<Transform> transform = object->AddComponent<Transform>();
     transform->SetWorldPosition(pos);
 
-    Mesh::AddConeMesh(object, length, angle, tesselation);
+    Mesh::AddConeMesh(object, angle, tesselation);
     object->AddComponent<MeshRenderer>();
     object->AddComponent<Rotator>();
 
@@ -55,7 +55,7 @@ SCEHandle<Container> createCube(const string& name, bool rotator, const vec3& po
     SCEHandle<Transform> transform = object->AddComponent<Transform>();
     transform->SetWorldPosition(pos);
 
-    Mesh::AddCubeMesh(object, 1.0f);
+    Mesh::AddCubeMesh(object);
     object->AddComponent<MeshRenderer>();
     if(rotator)
     {
@@ -73,8 +73,9 @@ SCEHandle<Container> createPlane(const string& name, float size, const vec3& pos
 
     SCEHandle<Transform> transform = object->AddComponent<Transform>();
     transform->SetWorldPosition(pos);
+    transform->SetLocalScale(vec3(size, size, 1.0f));
 
-    Mesh::AddQuadMesh(object, size, size);
+    Mesh::AddQuadMesh(object);
     object->AddComponent<MeshRenderer>();
 
     return object;
@@ -107,18 +108,6 @@ SCEHandle<Container> createLight(vec3 pos, vec3 orientation, LightType type){
     return lightObject;
 }
 
-SCEHandle<Container> createLightSphere(vec3 pos, vec4 color){
-
-    SCEHandle<Container> light =createLight(pos, vec3(0, 0, 0), LightType::POINT_LIGHT);
-    light->GetComponent<Light>()->SetLightColor(color);
-    light->AddComponent<Material>(MATERIAL);
-
-    Mesh::AddSphereMesh(light, 1.0f, 3.0f);
-    light->AddComponent<MeshRenderer>();
-
-    return light;
-}
-
 int main( void )
 {
     SCECore engine;
@@ -126,7 +115,7 @@ int main( void )
 
     SCEScene::CreateEmptyScene();
 
-    SCEHandle<Container> dirLight = createLight(vec3(0, 100, 0),
+    SCEHandle<Container> dirLight = createLight(vec3(0, 200, -200),
                                                 vec3(40, 0, 0),
                                                 LightType::DIRECTIONAL_LIGHT);
     dirLight->GetComponent<Light>()->SetLightColor(vec4(0.8, 0.8, 1.0, 0.2));
@@ -147,7 +136,7 @@ int main( void )
     suz->GetComponent<Transform>()->RotateAroundAxis(vec3(0.0f, 1.0f, 0.0f), 180.0f);
 
     float spreadDist = 10.0f;
-    float nbSpheres = 5;
+    float nbSpheres = 7;
     for(float x = 0.0f; x < nbSpheres * 2.0f; ++x)
     {
         for(float z = -nbSpheres; z < nbSpheres; ++z)

@@ -293,16 +293,17 @@ void Light::generateLightMesh()
         break;
     }
 
-    if(mLightRenderer)
-    {
-        mLightRenderer->UpdateRenderedMesh();
-    }
+//    if(mLightRenderer)
+//    {
+//        mLightRenderer->UpdateRenderedMesh();
+//    }
 }
 
 void Light::generateDirectionalLightMesh()
 {
     SCEHandle<Container> container = GetContainer();
-    mLightMesh = Mesh::AddQuadMesh(container, 2.0f, 2.0f);
+//    mLightMesh = Mesh::AddQuadMesh(container, 2.0f, 2.0f);
+    mLightMesh = Mesh::AddQuadMesh(container);
 }
 
 void Light::generateSpotLightMesh()
@@ -314,7 +315,11 @@ void Light::generateSpotLightMesh()
     mSpotAttenuation = log(mLightCutoff) / log(maxDot) * 2.0;
 
     SCEHandle<Container> container = GetContainer();
-    mLightMesh = Mesh::AddConeMesh(container, mLightReach, mLightMaxAngle, 4.0f);
+//    mLightMesh = Mesh::AddConeMesh(container, mLightReach, mLightMaxAngle, 4.0f);
+    mLightMesh = Mesh::AddConeMesh(container, mLightMaxAngle, 4.0f);
+
+    SCEHandle<Transform> transform = container->GetComponent<Transform>();
+    transform->SetLocalScale(vec3(mLightReach));
 }
 
 void Light::generatePointLightMesh()
@@ -330,5 +335,9 @@ void Light::generatePointLightMesh()
     lightSphereRadius = (-2.0f * mLightReach  + sqrt(delta))/2.0f;
 
     SCEHandle<Container> container = GetContainer();
-    mLightMesh = Mesh::AddSphereMesh(container, lightSphereRadius, 4.0f);
+//    mLightMesh = Mesh::AddSphereMesh(container, lightSphereRadius, 4.0f);
+    mLightMesh = Mesh::AddSphereMesh(container, 4.0f);
+
+    SCEHandle<Transform> transform = container->GetComponent<Transform>();
+    transform->SetLocalScale(vec3(lightSphereRadius));
 }

@@ -11,68 +11,52 @@
 
 namespace SCE {
 
+    struct MeshData;
+
     class Mesh  : public Component {
 
     public :
 
-        ~Mesh();
-
-        std::vector<ushort> *GetIndices();
-        std::vector<vec3>   *GetVertices();
-        //optional
-        std::vector<vec3>   *GetNormals();
-        std::vector<vec2>   *GetUvs();
-        std::vector<vec3>   *GetTangents();
-        std::vector<vec3>   *GetBitangents();
+        const MeshData&        GetMeshData() const;
+        uint                   GetMeshId();
 
         /*****Static*****/
 
-        static SCEHandle<Mesh> AddCustomMesh (  SCEHandle<Container>& container, const std::string &filename);
-        static SCEHandle<Mesh> AddSphereMesh (  SCEHandle<Container>& container, float radius, float tesselation);
-        static SCEHandle<Mesh> AddCubeMesh   (  SCEHandle<Container>& container, float cubeSize);
-        static SCEHandle<Mesh> AddQuadMesh   (  SCEHandle<Container>& container, float width, float height);
-        static SCEHandle<Mesh> AddConeMesh   (  SCEHandle<Container>& container, float length, float angle, float tesselation);
         static SCEHandle<Mesh> AddCustomMesh (  SCEHandle<Container>& container,
-                                                std::vector<ushort> *indices,
-                                                std::vector<vec3>   *vertices,
-                                                std::vector<vec3>   *normals,
-                                                std::vector<vec2>   *uvs,
-                                                std::vector<vec3>   *tangents,
-                                                std::vector<vec3>   *bitangents
-                                            );
+                                                const std::string &filename);
+        static SCEHandle<Mesh> AddSphereMesh (  SCEHandle<Container>& container,
+                                                float tesselation);
+        static SCEHandle<Mesh> AddCubeMesh   (  SCEHandle<Container>& container);
 
-    protected :
+        static SCEHandle<Mesh> AddQuadMesh   (  SCEHandle<Container>& container);
 
-        std::vector<ushort>     *mIndices;
-        std::vector<vec3>       *mVertices;
-        //optional
-        std::vector<vec3>       *mNormals;
-        std::vector<vec2>       *mUvs;
-        std::vector<vec3>       *mTangents;
-        std::vector<vec3>       *mBitangents;
+        static SCEHandle<Mesh> AddConeMesh   (  SCEHandle<Container>& container,
+                                                float angle, float tesselation);
+        static SCEHandle<Mesh> AddCustomMesh (  SCEHandle<Container>& container,
+                                                const std::vector<ushort> &indices,
+                                                const std::vector<vec3>   &vertices,
+                                                const std::vector<vec3>   &normals,
+                                                const std::vector<vec2>   &uvs,
+                                                const std::vector<vec3>   &tangents,
+                                                const std::vector<vec3>   &bitangents
+                                             );
 
     protected :
 
         Mesh(   SCEHandle<Container>& container, const std::string& filename);
         Mesh(   SCEHandle<Container>& container,
-                std::vector<ushort> *indices,
-                std::vector<vec3>   *vertices,
-                std::vector<vec3>   *normals,
-                std::vector<vec2>   *uvs,
-                std::vector<vec3>   *tangents,
-                std::vector<vec3>   *bitangents
+                const std::vector<ushort> &indices,
+                const std::vector<vec3>   &vertices,
+                const std::vector<vec3>   &normals,
+                const std::vector<vec2>   &uvs,
+                const std::vector<vec3>   &tangents,
+                const std::vector<vec3>   &bitangents
                 );
+        Mesh(   SCEHandle<Container>& container, uint meshId);
 
     private :
 
-        void                initMeshData(   std::vector<ushort> *indices,
-                                            std::vector<vec3> *vertices,
-                                            std::vector<vec3> *normals,
-                                            std::vector<vec2> *uvs,
-                                            std::vector<vec3> *tangents,
-                                            std::vector<vec3> *bitangents
-                                            );
-        void                resetMeshData();
+        uint        mMeshId;
     };
 
 }

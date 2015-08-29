@@ -11,6 +11,8 @@
 #include "../headers/SCERender.hpp"
 #include "../headers/SCEShaders.hpp"
 #include "../headers/SCETextures.hpp"
+#include "../headers/SCEMeshLoader.hpp"
+#include "../headers/SCEMeshRender.hpp"
 
 using namespace SCE;
 using namespace std;
@@ -106,6 +108,8 @@ void SCECore::InitEngine(const std::string &windowName)
     SCETime::Init();
     SCEShaders::Init();
     SCETextures::Init();
+    SCEMeshLoader::Init();
+    SCEMeshRender::Init();
     SCELighting::Init();
     SCERender::Init();
 }
@@ -134,6 +138,8 @@ void SCECore::CleanUpEngine()
     //clean engine subcomponents
     SCERender::CleanUp();
     SCELighting::CleanUp();
+    SCEMeshRender::CleanUp();
+    SCEMeshLoader::CleanUp();
     SCETextures::CleanUp();
     SCEShaders::CleanUp();
     SCETime::CleanUp();

@@ -255,7 +255,7 @@ _{
         color = vec4( //Diffuse
                       (MaterialDiffuseColor * lightCol.x * SCE_LightColor.rgb * SCE_LightColor.a)
                       //Specular
-                      + (SCE_LightColor.rgb * lightCol.y * SCE_LightColor.a), 1.0);
+                      + (SCE_LightColor.rgb * lightCol.y * lightCol.x * SCE_LightColor.a), 1.0);
 
         float shadow = getShadowDepth(Position_worldspace, Normal_worldspace, SCE_LightDirection_worldspace);
 

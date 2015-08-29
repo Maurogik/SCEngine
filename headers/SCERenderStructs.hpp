@@ -6,6 +6,9 @@
 #ifndef SCE_RENDER_STRUCTS_HPP
 #define SCE_RENDER_STRUCTS_HPP
 
+#include "SCEDefines.hpp"
+#include <vector>
+
 namespace SCE
 {
     struct CameraRenderData
@@ -44,6 +47,17 @@ namespace SCE
         float                       top;
         float                       fov;
         float                       aspectRatio;
+    };
+
+    struct MeshData
+    {
+        MeshData() : indices(), vertices(), normals(), uvs(), tangents(0), bitangents(0) {}
+        std::vector<ushort>     indices;
+        std::vector<vec3>       vertices;
+        std::vector<vec3>       normals;
+        std::vector<vec2>       uvs;
+        std::vector<vec3>       tangents;
+        std::vector<vec3>       bitangents;
     };
 
 }
