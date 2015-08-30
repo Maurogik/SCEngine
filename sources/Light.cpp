@@ -52,7 +52,7 @@ Light::Light(SCEHandle<Container>& container, LightType lightType,
       mSpotAttenuation(1.0f),
       mLightCutoff(POINT_LIGHT_CUTOFF),
       mLightColor(COLOR_DEFAULT),
-      mCastShadow(false),
+      mIsSunLight(false),
       mLightUniformsByShader(),
       mLightMesh(nullptr),
       mLightRenderer(nullptr)
@@ -136,7 +136,7 @@ void Light::bindRenderDataForShader(GLuint shaderId, const vec3& cameraPosition)
             glUniform3f(unifId, cameraPosition.x, cameraPosition.y, cameraPosition.z);
             break;
         case SHADOW_STRENGTH :
-            glUniform1f(unifId, mCastShadow ? 1.0f : 0.0f);
+            glUniform1f(unifId, mIsSunLight ? 1.0f : 0.0f);
             break;
         default :
             SCE::Debug::LogError("Unknown ligth uniform type : " + type);
@@ -221,7 +221,7 @@ void Light::SetLightColor(const glm::vec4 &lightColor)
     mLightColor = lightColor;
 }
 
-void Light::RenderDeffered(const CameraRenderData& renderData)
+void Light::RenderWithLightData(const CameraRenderData& renderData)
 {
     //compute light position to send it to the shader
     glm::mat4 camToWorld = glm::inverse(renderData.viewMatrix);
@@ -232,23 +232,23 @@ void Light::RenderDeffered(const CameraRenderData& renderData)
     mLightRenderer->Render(renderData, mLightType == DIRECTIONAL_LIGHT);
 }
 
-void Light::RenderToStencil(const CameraRenderData& renderData)
+void Light::RenderWithoutLightData(const CameraRenderData& renderData)
 {
     mLightRenderer->Render(renderData, mLightType == DIRECTIONAL_LIGHT);
 }
 
-void Light::SetCastShadow(bool castShadow)
+void Light::SetIsSunLight(bool isSunLight)
 {
-    if(castShadow)
+    if(isSunLight)
     {
         Debug::Assert(mLightType == DIRECTIONAL_LIGHT, "Shadow casting only supported for directionnal lights");
-        SCELighting::SetShadowCaster(SCEHandle<Light>(this));
+        SCELighting::SetSunLight(SCEHandle<Light>(this));
     }
     else
     {
-        SCELighting::SetShadowCaster(SCEHandle<Light>(nullptr));
+        SCELighting::SetSunLight(SCEHandle<Light>(nullptr));
     }
-    mCastShadow = castShadow;
+    mIsSunLight = isSunLight;
 }
 
 float Light::GetLightMaxAngle() const

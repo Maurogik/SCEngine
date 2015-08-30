@@ -169,9 +169,10 @@ void SCEMeshRender::initializeShaderData(MeshRenderData& renderData, GLuint prog
 {
     ShaderData& data = renderData.shaderData[programID];
 
-    data.MVPMatrixLocation    = glGetUniformLocation(programID, "MVP");
-    data.ViewMatrixLocation   = glGetUniformLocation(programID, "V");
-    data.ModelMatrixLocation  = glGetUniformLocation(programID, "M");
+    data.MVPMatrixLocation          = glGetUniformLocation(programID, "MVP");
+    data.ViewMatrixLocation         = glGetUniformLocation(programID, "V");
+    data.ModelMatrixLocation        = glGetUniformLocation(programID, "M");
+    data.ProjectionMatrixLocation   = glGetUniformLocation(programID, "P");
 
     //preload attribute locations
     for(int i = 0; i < VERTEX_ATTRIB_COUNT; ++i)

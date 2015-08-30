@@ -54,10 +54,10 @@ namespace SCE
 
         LightType           GetLightType() const;
 
-        void                RenderDeffered(const CameraRenderData& renderData);
-        void                RenderToStencil(const CameraRenderData& renderData);
+        void                RenderWithLightData(const CameraRenderData& renderData);
+        void                RenderWithoutLightData(const CameraRenderData& renderData);
 
-        void                SetCastShadow(bool castShadow);
+        void                SetIsSunLight(bool isSunLight);
 
     protected :
 
@@ -72,14 +72,14 @@ namespace SCE
         float                       mSpotAttenuation;
         float                       mLightCutoff;
         glm::vec4                   mLightColor;
-        bool                        mCastShadow;
+        bool                        mIsSunLight;
         //array containing a map of uniforms Id by shader ID, for each light uniform type
-        std::map<GLuint, GLuint>    mLightUniformsByShader[LIGHT_UNIFORMS_COUNT];
+        std::map<GLuint, GLint>     mLightUniformsByShader[LIGHT_UNIFORMS_COUNT];
         SCEHandle<Mesh>             mLightMesh;
         SCEHandle<MeshRenderer>     mLightRenderer;
 
         //tmp
-        GLuint                      mScreenSizeUniform;        
+        GLint                       mScreenSizeUniform;
 
         void                        initRenderDataForShader(GLuint lightShaderId);
         void                        bindRenderDataForShader(GLuint shaderId, const vec3& cameraPosition);

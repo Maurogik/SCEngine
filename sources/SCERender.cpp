@@ -65,11 +65,13 @@ void SCERender::Render(const SCEHandle<Camera>& camera,
     SCELighting::RenderCascadedShadowMap(renderData, camera->GetFrustrumData(),
                                         camToWorld, objectsToRender);
 
+    SCELighting::RenderSkyToGBuffer(renderData, s_instance->mGBuffer);
+
     //render objects without lighting
     s_instance->renderGeometryPass(renderData, objectsToRender);
 
-    s_instance->mGBuffer.ClearFinalBuffer();
 
+    s_instance->mGBuffer.ClearFinalBuffer();
     SCELighting::RenderLightsToGBuffer(renderData, s_instance->mGBuffer);
 
     //Render final image from GBuffer to window framebuffer
@@ -89,8 +91,7 @@ void SCERender::renderGeometryPass(const CameraRenderData& renderData,
     mGBuffer.BindForGeometryPass();
     // The geometry pass updates the depth buffer
     glDepthMask(GL_TRUE);
-    glEnable(GL_DEPTH_TEST);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glEnable(GL_DEPTH_TEST);    
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
 

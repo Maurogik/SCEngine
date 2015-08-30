@@ -32,6 +32,7 @@ namespace SCE {
         void    BindForStencilPass();
         void    BindForLightPass();
         void    BindForShadowPass();
+        void    BindForSkyPass();
         void    EndShadowPass();
         void    BindForFinalPass();
         void    BindTexturesToLightShader();

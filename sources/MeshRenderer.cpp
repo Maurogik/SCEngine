@@ -67,26 +67,26 @@ void MeshRenderer::Render(const CameraRenderData& renderData, bool renderFullScr
     glm::mat4 viewMatrix        = mat4(1.0);
     glm::mat4 modelMatrix       = mat4(1.0);
 
+    projectionMatrix  = renderData.projectionMatrix;
+    viewMatrix        = renderData.viewMatrix;
+
     if(!renderFullScreenQuad)
     {
-        projectionMatrix  = renderData.projectionMatrix;
-        viewMatrix        = renderData.viewMatrix;
-        modelMatrix       = transform->GetWorldTransform();
+        modelMatrix     = transform->GetWorldTransform();
     }
     else
     {
-        //trick to keep a usable view matrix in shader
-        viewMatrix        = renderData.viewMatrix;
-        modelMatrix       = glm::inverse(renderData.viewMatrix);
+        modelMatrix     = glm::inverse(projectionMatrix * viewMatrix);
     }
 
-    glm::mat4 MVP           = projectionMatrix * viewMatrix * modelMatrix;
+    glm::mat4 MVP       = projectionMatrix * viewMatrix * modelMatrix;
 
     // Send our transformation to the currently bound shader,
     // in the "MVP" uniform
     glUniformMatrix4fv(shaderData.MVPMatrixLocation, 1, GL_FALSE, &MVP[0][0]);
     glUniformMatrix4fv(shaderData.ModelMatrixLocation, 1, GL_FALSE, &modelMatrix[0][0]);
     glUniformMatrix4fv(shaderData.ViewMatrixLocation, 1, GL_FALSE, &viewMatrix[0][0]);
+    glUniformMatrix4fv(shaderData.ProjectionMatrixLocation, 1, GL_FALSE, &projectionMatrix[0][0]);
 
     //set the attributes
     for(size_t i = 0; i < attributes.size(); ++i)

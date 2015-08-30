@@ -119,13 +119,13 @@ int main( void )
                                                 vec3(40, 0, 0),
                                                 LightType::DIRECTIONAL_LIGHT);
     dirLight->GetComponent<Light>()->SetLightColor(vec4(0.8, 0.8, 1.0, 0.2));
-    dirLight->GetComponent<Light>()->SetCastShadow(true);
+    dirLight->GetComponent<Light>()->SetIsSunLight(true);
 
 //    SCEHandle<Container> light1 = createLight(vec3(2, 3, -1), vec3(30, 0, 30), LightType::POINT_LIGHT);
 //    light1->GetComponent<Light>()->SetLightColor(vec4(1.0, 0.0, 0.0, 1.0));
 //    light1->GetComponent<Light>()->SetLightReach(2.0f);
 
-//    SCEHandle<Container> light2 = createLight(vec3(-5, 10, -5), vec3(60, 0, 0), LightType::SPOT_LIGHT);
+//    SCEHandle<Container> light2 = createLight(vec3(-15, 2, -5), vec3(25, 0, 0), LightType::SPOT_LIGHT);
 //    light2->GetComponent<Light>()->SetLightReach(40.0f);
 //    light2->GetComponent<Light>()->SetLightMaxAngle(45.0f);
 //    light2->GetComponent<Light>()->SetLightColor(vec4(0.0, 1.0, 0.0, 1.0));
@@ -136,7 +136,7 @@ int main( void )
     suz->GetComponent<Transform>()->RotateAroundAxis(vec3(0.0f, 1.0f, 0.0f), 180.0f);
 
     float spreadDist = 10.0f;
-    float nbSpheres = 7;
+    float nbSpheres = 5;
     for(float x = 0.0f; x < nbSpheres * 2.0f; ++x)
     {
         for(float z = -nbSpheres; z < nbSpheres; ++z)

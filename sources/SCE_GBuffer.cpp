@@ -110,6 +110,12 @@ void SCE_GBuffer::BindForGeometryPass()
     //set the attachment with the drawBuffers array
     glDrawBuffers(GBUFFER_TEXTURE_COUNT, drawBuffers);
 
+    glClear(GL_DEPTH_BUFFER_BIT);
+    //clear everything but the diffuse color buffer which was filled in the sky pass
+    vec4 clearColor = vec4(0.0, 0.0, 0.0, 1.0);
+    glClearBufferfv(GL_COLOR, GBUFFER_TEXTURE_TYPE_POSITION, &clearColor[0]);
+    glClearBufferfv(GL_COLOR, GBUFFER_TEXTURE_TYPE_NORMAL, &clearColor[0]);
+
 }
 
 void SCE_GBuffer::BindForStencilPass()
@@ -124,6 +130,13 @@ void SCE_GBuffer::BindForLightPass()
     // from the draw framebuffer
     glBindFramebuffer(GL_FRAMEBUFFER, mFBOId);
     glDrawBuffer(GL_COLOR_ATTACHMENT0 + GBUFFER_NUM_TEXTURES);
+}
+
+void SCE_GBuffer::BindForSkyPass()
+{
+    glBindFramebuffer(GL_FRAMEBUFFER, mFBOId);
+    glDrawBuffer(GL_COLOR_ATTACHMENT0 + GBUFFER_TEXTURE_TYPE_DIFFUSE);
+    glClear(GL_COLOR_BUFFER_BIT);
 }
 
 void SCE_GBuffer::BindForFinalPass()

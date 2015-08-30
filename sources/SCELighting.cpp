@@ -18,9 +18,11 @@ using namespace std;
 
 #define LIGHT_SHADER_NAME "DeferredLighting"
 #define STENCYL_SHADER_NAME "EmptyShader"
+#define SKY_SHADER_NAME "SkyShader"
 #define SHADOWMAP_UNIFORM_NAME "ShadowTex"
 #define DEPTH_MAT_UNIFORM_NAME "DepthConvertMat"
 #define FAR_SPLIT_UNIFORM_NAME "FarSplits_cameraspace"
+#define SUN_POS_UNIFORM_NAME "SunPosition_worldspace"
 
 #define SHADOW_MAP_WIDTH (2048)
 #define SHADOW_MAP_HEIGHT (2048)
@@ -32,13 +34,15 @@ SCELighting* SCELighting::s_instance = nullptr;
 SCELighting::SCELighting()
     : mLightShader(-1),
       mEmptyShader(-1),
+      mSkyShader(-1),
       mTexSamplerNames(),
       mTexSamplerUniforms(),
       mShadowSamplerUnifom(-1),
       mShadowDepthMatUnifom(-1),
       mShadowFarSplitUnifom(-1),
+      mSunPositionUniform(-1),
       mShadowMapFBO(),
-      mShadowCaster(nullptr),
+      mMainLight(nullptr),
       mDepthConvertMatrices(CASCADE_COUNT),
       mFarSplit_cameraspace(CASCADE_COUNT),
       mStenciledLights(),
@@ -72,6 +76,7 @@ void SCELighting::CleanUp()
     //unload shader
     SCEShaders::DeleteShaderProgram(s_instance->mLightShader);
     SCEShaders::DeleteShaderProgram(s_instance->mEmptyShader);
+    SCEShaders::DeleteShaderProgram(s_instance->mSkyShader);
     delete s_instance;
 }
 
@@ -82,7 +87,7 @@ void SCELighting::RenderCascadedShadowMap(const CameraRenderData &camRenderData,
 {
     Debug::Assert(s_instance, "No Lighting system instance found, Init the system before using it");
 
-    if(!s_instance->mShadowCaster)
+    if(!s_instance->mMainLight)
     {
         return;
     }
@@ -105,14 +110,14 @@ void SCELighting::RenderLightsToGBuffer(const CameraRenderData& renderData,
 {
     Debug::Assert(s_instance, "No Lighting system instance found, Init the system before using it");   
 
+    glDepthMask(GL_FALSE);
+
     //Render with stencil test and no writting to depth buffer
     glEnable(GL_STENCIL_TEST);
-    glDepthMask(GL_FALSE);
 
     //render lights needing a stencil pass (Point and Spot lights)
     for(SCEHandle<Light> light : s_instance->mStenciledLights)
     {
-        //use (almost) empty shader for stencil pass
         glUseProgram(s_instance->mEmptyShader);
         gBuffer.BindForStencilPass();
         s_instance->renderLightStencilPass(renderData, light);
@@ -144,7 +149,6 @@ void SCELighting::RenderLightsToGBuffer(const CameraRenderData& renderData,
         s_instance->mShadowMapFBO.BindTextureToLightShader(SCE_GBuffer::GBUFFER_NUM_TEXTURES);
 
         //bind the world-to-depth convertion matrices
-        //glUniformMatrix4fv(s_instance->mShadowDepthMatUnifom, 1, GL_FALSE, &(s_instance->mDepthConvertMatrixes[0][0]));
         glUniformMatrix4fv(s_instance->mShadowDepthMatUnifom, CASCADE_COUNT, GL_FALSE,
                            &(s_instance->mDepthConvertMatrices[0][0][0]));
 
@@ -154,9 +158,23 @@ void SCELighting::RenderLightsToGBuffer(const CameraRenderData& renderData,
         s_instance->renderLightingPass(renderData, light);
     }
 
+
     //reset depth writting to default
     glDepthMask(GL_TRUE);
 }
+
+void SCELighting::RenderSkyToGBuffer(const CameraRenderData& renderData, SCE_GBuffer& gBuffer)
+{
+    glDepthMask(GL_FALSE);
+    if(s_instance->mMainLight)
+    {
+        gBuffer.BindForSkyPass();
+        s_instance->renderSkyPass(renderData);
+    }
+    //reset depth writting to default
+    glDepthMask(GL_TRUE);
+}
+
 
 GLuint SCELighting::GetLightShader()
 {
@@ -202,14 +220,14 @@ void SCELighting::UnregisterLight(SCEHandle<Light> light)
     s_instance->unregisterLight(light);
 }
 
-void SCELighting::SetShadowCaster(SCEHandle<Light> light)
+void SCELighting::SetSunLight(SCEHandle<Light> light)
 {
     Debug::Assert(s_instance, "No Lighting system instance found, Init the system before using it");
-    Debug::Assert(!s_instance->mShadowCaster, "A shadow caster has already been set");
+    Debug::Assert(!s_instance->mMainLight, "A shadow caster has already been set");
     Debug::Assert(light->GetLightType() == DIRECTIONAL_LIGHT,
                   "Shadow casting is only supported for directional lights");
 
-    s_instance->mShadowCaster = light;
+    s_instance->mMainLight = light;
 }
 
 void SCELighting::initLightShader()
@@ -224,7 +242,10 @@ void SCELighting::initLightShader()
         mEmptyShader = SCEShaders::CreateShaderProgram(STENCYL_SHADER_NAME);
     }
 
-    glUseProgram(mLightShader);
+    if(mSkyShader == (GLuint) -1)
+    {
+        mSkyShader = SCEShaders::CreateShaderProgram(SKY_SHADER_NAME);
+    }
 
     for (uint i = 0; i < SCE_GBuffer::GBUFFER_NUM_TEXTURES; i++)
     {
@@ -233,6 +254,8 @@ void SCELighting::initLightShader()
     mShadowDepthMatUnifom = glGetUniformLocation(mLightShader, DEPTH_MAT_UNIFORM_NAME);
     mShadowSamplerUnifom = glGetUniformLocation(mLightShader, SHADOWMAP_UNIFORM_NAME);
     mShadowFarSplitUnifom = glGetUniformLocation(mLightShader, FAR_SPLIT_UNIFORM_NAME);
+
+    mSunPositionUniform = glGetUniformLocation(mSkyShader, SUN_POS_UNIFORM_NAME);
 }
 
 void SCELighting::registerLight(SCEHandle<Light> light)
@@ -287,6 +310,25 @@ void SCELighting::unregisterLight(SCEHandle<Light> light)
     targetVector->erase(lightIt);
 }
 
+void SCELighting::renderSkyPass(const CameraRenderData& renderData)
+{
+    glUseProgram(mSkyShader);
+    glDisable(GL_DEPTH_TEST);
+    glCullFace(GL_FRONT);
+
+    vec3 sunPosition = mMainLight->GetContainer()->GetComponent<Transform>()->GetWorldPosition();
+    //only a screen space quad, don't need depth testing
+
+    if(mSunPositionUniform >= 0)
+    {
+        glUniform3f(mSunPositionUniform, sunPosition.x, sunPosition.y, sunPosition.z);
+    }
+    mMainLight->RenderWithoutLightData(renderData);
+
+    glCullFace(GL_BACK);
+    glEnable(GL_DEPTH_TEST);
+}
+
 void SCELighting::renderLightStencilPass(const CameraRenderData& renderData, SCEHandle<Light> &light)
 {
     //avoid writting in color buffer in stencyl pass
@@ -304,7 +346,7 @@ void SCELighting::renderLightStencilPass(const CameraRenderData& renderData, SCE
     glStencilOpSeparate(GL_FRONT, GL_KEEP, GL_DECR_WRAP, GL_KEEP);
 
     //Render
-    light->RenderToStencil(renderData);
+    light->RenderWithoutLightData(renderData);
 
     //re enable color writting
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
@@ -326,7 +368,7 @@ void SCELighting::renderLightingPass(const CameraRenderData& renderData, SCEHand
     glCullFace(GL_FRONT);
 
     //render light
-    light->RenderDeffered(renderData);
+    light->RenderWithLightData(renderData);
 
     glCullFace(GL_BACK);
     glDisable(GL_BLEND);
@@ -398,7 +440,7 @@ std::vector<CameraRenderData> SCELighting::computeCascadedLightFrustrums(Frustru
                                                                          glm::mat4 camToWorldMat,
                                                                          uint cascadeCount)
 {
-    glm::mat4 lightToWorld = s_instance->mShadowCaster->GetContainer()->GetComponent<Transform>()->GetWorldTransform();
+    glm::mat4 lightToWorld = s_instance->mMainLight->GetContainer()->GetComponent<Transform>()->GetWorldTransform();
     glm::mat4 worldToLight = glm::inverse(lightToWorld);
 
     vector<CameraRenderData> lightFrustrums;

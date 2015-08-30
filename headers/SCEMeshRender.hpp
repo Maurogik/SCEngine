@@ -35,10 +35,11 @@ namespace SCE
     //store mandatory uniforms and attributes locations per shader
     struct ShaderData
     {
-        GLuint attribLocations[VERTEX_ATTRIB_COUNT];
-        GLuint MVPMatrixLocation;
-        GLuint ViewMatrixLocation;
-        GLuint ModelMatrixLocation;
+        GLint attribLocations[VERTEX_ATTRIB_COUNT];
+        GLint MVPMatrixLocation;
+        GLint ProjectionMatrixLocation;
+        GLint ViewMatrixLocation;
+        GLint ModelMatrixLocation;
     };
 
     //Per mesh data

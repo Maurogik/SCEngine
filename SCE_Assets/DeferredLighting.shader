@@ -148,6 +148,8 @@ _{
 
     uniform mat4        DepthConvertMat[CASCADE_COUNT];
     uniform mat4        V;
+    uniform mat4        P;
+
     uniform float       FarSplits_cameraspace[CASCADE_COUNT];
 
     uniform sampler2D   PositionTex;
@@ -202,7 +204,7 @@ _{
         float poissonSpread = 1.0 / 900.0;
         float eyeDist = distance(pos_worldspace, SCE_EyePosition_worldspace);
 
-        vec3 cameraPos = (V * vec4(pos_worldspace, 1.0)).xyz;
+        vec3 pos_cameraspace = (V * vec4(pos_worldspace, 1.0)).xyz;
 
         //float bias = SHADOW_BIAS * (1.0 - dot(lightDir_worldspace, - normal_worldspace));
         float cosTheta = clamp(dot(-lightDir_worldspace, normal_worldspace), 0.0, 1.0);
@@ -210,7 +212,7 @@ _{
 
         for(int i = 0; i < CASCADE_COUNT; ++i)
         {
-            if(cameraPos.z <= FarSplits_cameraspace[i])
+            if(pos_cameraspace.z <= FarSplits_cameraspace[i])
             {                
                 vec4 position_lightspace = DepthConvertMat[i] * vec4(pos_worldspace, 1.0);
 
@@ -241,50 +243,30 @@ _{
         vec3 Normal_worldspace      = normalize(texture2D(NormalTex, uv).xyz);
         vec3 Position_worldspace    = texture2D(PositionTex, uv).xyz;
 
-        vec3 LightToFrag_cameraspace = Position_worldspace - SCE_LightPosition_worldspace;
-        vec3 EyeToFrag_cameraspace = Position_worldspace - SCE_EyePosition_worldspace;
+        color = vec4(MaterialDiffuseColor, 1.0);
 
-        vec2 lightCol = SCE_ComputeLight(
-                    SCE_LightDirection_worldspace,
-                    Normal_worldspace,
-                    EyeToFrag_cameraspace,
-                    LightToFrag_cameraspace,
-                    SCE_LightReach_worldspace
-                    );
-
-        color = vec4( //Diffuse
-                      (MaterialDiffuseColor * lightCol.x * SCE_LightColor.rgb * SCE_LightColor.a)
-                      //Specular
-                      + (SCE_LightColor.rgb * lightCol.y * lightCol.x * SCE_LightColor.a), 1.0);
-
-        float shadow = getShadowDepth(Position_worldspace, Normal_worldspace, SCE_LightDirection_worldspace);
-
-        color.rgb *= 1.0 - shadow * SCE_ShadowStrength;
-//        color.rgb = texture2D(ShadowTex, uv).rgb * SCE_ShadowStrength;
-
-//        color.rgb *= getShadowDepth(Position_worldspace);
-
-        /*vec2 uv2 = uv * 0.5;
-
-        if(uv.x < 0.5 && uv.y < 0.5)
+        //Position worldspace (0,0,0), no object rendered here, use color directly;
+        if(dot(Position_worldspace, Position_worldspace) >= 0.01)
         {
-            color.rgb *=  0.5 + sampleMyTex(uv2, 0).r;
+            vec3 LightToFrag_cameraspace = Position_worldspace - SCE_LightPosition_worldspace;
+            vec3 EyeToFrag_cameraspace = Position_worldspace - SCE_EyePosition_worldspace;
+
+            vec2 lightCol = SCE_ComputeLight(
+                        SCE_LightDirection_worldspace,
+                        Normal_worldspace,
+                        EyeToFrag_cameraspace,
+                        LightToFrag_cameraspace,
+                        SCE_LightReach_worldspace
+                        );
+
+            color.rgb = //Diffuse
+                    (MaterialDiffuseColor * lightCol.x * SCE_LightColor.rgb * SCE_LightColor.a)
+                          //Specular
+                    + (SCE_LightColor.rgb * lightCol.y * lightCol.x * SCE_LightColor.a);
+
+            float shadow = getShadowDepth(Position_worldspace, Normal_worldspace, SCE_LightDirection_worldspace);
+            color.rgb *= 1.0 - shadow * SCE_ShadowStrength;
         }
-
-        if(uv.x > 0.5 && uv.y < 0.5)
-        {
-            color.rgb *=  0.5 + sampleMyTex(uv2, 1).r;
-        }
-
-        if(uv.x < 0.5 && uv.y > 0.5)
-        {
-            color.rgb *=  0.5 + sampleMyTex(uv2, 2).r;
-        }
-
-        if(uv.x > 0.5 && uv.y > 0.5)
-        {
-            color.rgb *=  0.5 + sampleMyTex(uv2, 3).r;
-        }*/
 
         //gamma correction
         color = pow(color, vec4(1.0/2.2));

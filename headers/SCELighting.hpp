@@ -38,6 +38,9 @@ namespace SCE
         static void         RenderLightsToGBuffer(const CameraRenderData& renderData,
                                                   SCE::SCE_GBuffer& gBuffer);
 
+        static void         RenderSkyToGBuffer(const CameraRenderData& renderData,
+                                                  SCE::SCE_GBuffer& gBuffer);
+
         static GLuint       GetLightShader();
         static GLuint       GetStencilShader();
         static GLuint       GetShadowMapShader();
@@ -45,7 +48,7 @@ namespace SCE
         static GLuint       GetShadowmapSamplerUniform();
         static void         RegisterLight(SCEHandle<Light> light);
         static void         UnregisterLight(SCEHandle<Light> light);
-        static void         SetShadowCaster(SCEHandle<Light> light);
+        static void         SetSunLight(SCEHandle<Light> light);
 
     private :
 
@@ -53,15 +56,17 @@ namespace SCE
 
         GLuint              mLightShader;
         GLuint              mEmptyShader;
+        GLuint              mSkyShader;
         std::string         mTexSamplerNames[SCE_GBuffer::GBUFFER_NUM_TEXTURES];
-        GLuint              mTexSamplerUniforms[SCE_GBuffer::GBUFFER_NUM_TEXTURES];
-        GLuint              mShadowSamplerUnifom;
-        GLuint              mShadowDepthMatUnifom;
-        GLuint              mShadowFarSplitUnifom;
+        GLint               mTexSamplerUniforms[SCE_GBuffer::GBUFFER_NUM_TEXTURES];
+        GLint               mShadowSamplerUnifom;
+        GLint               mShadowDepthMatUnifom;
+        GLint               mShadowFarSplitUnifom;
+        GLint               mSunPositionUniform;
 
         SCEShadowMap        mShadowMapFBO;
 
-        SCEHandle<Light>                mShadowCaster;
+        SCEHandle<Light>                mMainLight;
         std::vector<glm::mat4>          mDepthConvertMatrices;
         std::vector<float>              mFarSplit_cameraspace;
 
@@ -71,6 +76,8 @@ namespace SCE
         void                initLightShader();
         void                registerLight(SCEHandle<Light> light);
         void                unregisterLight(SCEHandle<Light> light);
+
+        void                renderSkyPass(const CameraRenderData& renderData);
 
         void                renderLightingPass(const CameraRenderData& renderData,
                                                SCEHandle<Light> &light);
