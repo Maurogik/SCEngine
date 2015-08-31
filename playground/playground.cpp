@@ -12,6 +12,8 @@ using namespace std;
 #define TEST_MAT "TestMaterial"
 #define DEBUG_MAT "Debug" //"TestMaterial"
 #define MATERIAL "TestMaterial"
+#define GROUND_MATERIAL "GroundMaterial"
+#define WALL_MATERIAL "WallMaterial"
 
 SCEHandle<Container> createSphere(const string& name, const float& tesselation, const vec3& pos){
     //cube model
@@ -46,11 +48,12 @@ SCEHandle<Container> createCone(const string& name, const float& tesselation,
     return object;
 }
 
-SCEHandle<Container> createCube(const string& name, bool rotator, const vec3& pos){
+SCEHandle<Container> createCube(const string& name, bool rotator, const vec3& pos,
+                                const string& material){
     //cube model
     SCEHandle<Container> object = SCEScene::CreateContainer(name);
 
-    object->AddComponent<Material>(MATERIAL);
+    object->AddComponent<Material>(material);
 
     SCEHandle<Transform> transform = object->AddComponent<Transform>();
     transform->SetWorldPosition(pos);
@@ -69,7 +72,7 @@ SCEHandle<Container> createPlane(const string& name, float size, const vec3& pos
     //cube model
     SCEHandle<Container> object = SCEScene::CreateContainer(name);
 
-    object->AddComponent<Material>(MATERIAL);
+    object->AddComponent<Material>(GROUND_MATERIAL);
 
     SCEHandle<Transform> transform = object->AddComponent<Transform>();
     transform->SetWorldPosition(pos);
@@ -141,28 +144,31 @@ int main( void )
     {
         for(float z = -nbSpheres; z < nbSpheres; ++z)
         {
-            createSphere("sphereObject", 2, vec3(x * spreadDist, 0.0f, z * spreadDist));
+            createSphere("sphereObject", 2, vec3(2.0 + x * spreadDist, 0.0f, z * spreadDist));
 
-            createCube("cubeObject", true, vec3(-x * spreadDist, 0.0f, z * spreadDist));
+            createCube("cubeObject", true, vec3(-2.0 - x * spreadDist, 0.0f, z * spreadDist),
+                       MATERIAL);
         }
     }
 
-    SCEHandle<Container> wallObj = createCube("cubeObject", false, vec3(0.0f, 3.0f, 5.0f));
+    SCEHandle<Container> wallObj = createCube("cubeObject", false, vec3(0.0f, 3.0f, 5.0f),
+                                              WALL_MATERIAL);
     SCEHandle<Transform> wallTransform = wallObj->GetComponent<Transform>();
     wallTransform->SetLocalScale(vec3(10.0f, 10.0f, 2.0f));
+    wallTransform->RotateAroundAxis(vec3(0.0, 0.0, 1.0), 90.0);
 
 //    createCone("coneObject", 2, 45.0f, 5.0f, vec3(0.0f, 2.0f, 3.0f));
 
 //    SCEHandle<Container> cone = createCone("coneObject", 4, 45.0f, 20.0f, vec3(-5, 10, 0));
 //    cone->GetComponent<Transform>()->SetWorldOrientation(vec3(45, 0, 0));
 
-    SCEHandle<Container> plane = createPlane("plane", 150.0f, vec3(0.0f, -2.0f, 2.0f));
+    SCEHandle<Container> plane = createPlane("plane", 500.0f, vec3(0.0f, -2.0f, 2.0f));
     plane->GetComponent<Transform>()->SetWorldOrientation(vec3(-90.0f, 180.0f, 0.0f));
 
     //Camera
     SCEHandle<Container> cameraObject = SCEScene::CreateContainer("cameraObject");
     SCEHandle<Transform> cameraTransform = cameraObject->AddComponent<Transform>();
-    cameraObject->AddComponent<Camera>(40.0f, 4.0f/3.0f, 1.0f, 500.0f);
+    cameraObject->AddComponent<Camera>(40.0f, 16.0f/9.0f, 1.0f, 500.0f);
     cameraTransform->SetWorldPosition(vec3(0, 10, -25));
     cameraTransform->RotateAroundAxis(vec3(1.0f, 0.0f, 0.0f), 90.0f);
 

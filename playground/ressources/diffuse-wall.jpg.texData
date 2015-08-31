@@ -1,0 +1,9 @@
+{
+    "Name": "diffuse-wall.jpg",
+    "Texture": {
+        "Format": "DDS",
+        "Mipmaps": true,
+        "Wrapping": "Repeat"
+	}
+}
+

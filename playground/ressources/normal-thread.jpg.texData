@@ -1,0 +1,9 @@
+{
+    "Name": "normal-thread.jpg",
+    "Texture": {
+        "Format": "DDS",
+        "Mipmaps": true,
+        "Wrapping": "Repeat"
+	}
+}
+

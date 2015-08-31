@@ -1,0 +1,9 @@
+{
+    "Name": "normal-wall.jpg",
+    "Texture": {
+        "Format": "DDS",
+        "Mipmaps": true,
+        "Wrapping": "Repeat"
+	}
+}
+
