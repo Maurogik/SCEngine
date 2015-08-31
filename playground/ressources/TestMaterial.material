@@ -3,7 +3,6 @@
     "Shader": "TestShader",
     "Material": {
 		"Data": [  
-            {"Name": "AmbientColor", "Type": "vec3", "Value": "(1.0, 0.0, 1.0)"},
             {"Name": "MainTex", "Type": "Texture2D", "Value": "diffuse-bubble.jpg"},
             {"Name": "NormalMap", "Type": "Texture2D", "Value": "normal-bubble.jpg"},
             {"Name": "ScaleU", "Type": "float", "Value": "0.25"},

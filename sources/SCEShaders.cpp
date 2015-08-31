@@ -7,6 +7,7 @@
 #include "../headers/SCEShaders.hpp"
 #include "../headers/SCETools.hpp"
 #include "../headers/SCEInternal.hpp"
+#include "../headers/SCECore.hpp"
 
 #include <algorithm>
 #include <iostream>
@@ -16,12 +17,15 @@ using namespace SCE;
 using namespace std;
 
 
+#define SCREEN_SIZE_UNIFORM_NAME "SCE_ScreenSize"
+
+
+
 SCEShaders* SCEShaders::s_instance = nullptr;
 
-
-
 SCEShaders::SCEShaders()
-    : mCompiledShaderPrograms()
+    : mCompiledShaderPrograms(),
+      mDefaultUniforms()
 {
 
 }
@@ -169,6 +173,10 @@ GLuint SCEShaders::CreateShaderProgram(const string& shaderFileName)
 
     s_instance->mCompiledShaderPrograms[shaderFileName] = programID;
 
+    DefaultUniforms uniforms;
+    uniforms.screenSizeUniform = glGetUniformLocation(programID, SCREEN_SIZE_UNIFORM_NAME);
+    s_instance->mDefaultUniforms[programID] = uniforms;
+
     return programID;
 }
 
@@ -187,6 +195,22 @@ void SCEShaders::DeleteShaderProgram(GLuint shaderId)
         glDeleteProgram(it->second);
         s_instance->mCompiledShaderPrograms.erase(it);
     }
+
+    auto itUniform = s_instance->mDefaultUniforms.find(shaderId);
+    if(itUniform != end(s_instance->mDefaultUniforms))
+    {
+        s_instance->mDefaultUniforms.erase(itUniform);
+    }
+}
+
+void SCEShaders::BindDefaultUniforms(GLuint shaderId)
+{
+    Debug::Assert(s_instance, "No Shader system instance found, Init the system before using it");
+
+    float width = SCECore::GetWindowWidth();
+    float height = SCECore::GetWindowHeight();
+
+    glUniform2f(s_instance->mDefaultUniforms[shaderId].screenSizeUniform, width, height);
 }
 
 

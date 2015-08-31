@@ -11,10 +11,6 @@ _{
     in vec3 vertexPosition_modelspace;
     in vec3 vertexNormal_modelspace;
 
-//    out vec3 vertexPosition_worldspace;
-//    out vec3 eyePosition_worldspace;
-    out vec3 vertexPosition_model;
-
     uniform mat4 MVP;
     uniform mat4 M;
     uniform mat4 V;
@@ -23,9 +19,6 @@ _{
     void main()
     {
         gl_Position                 = MVP * vec4(vertexPosition_modelspace, 1.0);
-//        vertexPosition_worldspace   = (M * vec4(vertexPosition_modelspace, 1.0)).xyz;
-//        eyePosition_worldspace      = (inverse(V) * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
-        vertexPosition_model = vertexPosition_modelspace;
     }
 _}
 
@@ -33,14 +26,12 @@ FragmentShader :
 _{
 #version 430 core
 
-    uniform vec3 SunPosition_worldspace;
+    uniform vec2        SCE_ScreenSize;
+    uniform vec3        SunPosition_worldspace;
+    uniform sampler2D   PositionTex;
 
     uniform mat4 V;
     uniform mat4 P;
-
-//    in vec3 vertexPosition_worldspace;
-//    in vec3 eyePosition_worldspace;
-    in vec3 vertexPosition_model;
 
     out vec4 color;
 
@@ -54,20 +45,42 @@ _{
         return frag_worldspace;
     }
 
-    vec3 getSkyColor()
+    vec3 getSkyColor(vec2 nbcUv)
     {
-        vec3 frag_worldspace = ndcToFarWorldspace(vertexPosition_model.xy);
+        vec3 frag_worldspace = ndcToFarWorldspace(nbcUv);
         vec3 fade = vec3(normalize(frag_worldspace).y + 0.1);
         fade = clamp(fade, vec3(0.0), vec3(0.7));
         fade = vec3(1.0) - pow(vec3(1.0) - fade, vec3(7.0, 7.0, 5.0));
 
         vec3 lowerColor = vec3(0.65, 0.9, 1.0);
         vec3 upperColor = vec3(0.06, 0.4, 0.85);
-        return mix(lowerColor, upperColor, fade);
+        vec3 skyColor = mix(lowerColor, upperColor, fade);
+
+        vec3 sun_cameraspace = (V * vec4(SunPosition_worldspace, 1.0)).xyz;
+
+        vec3 eyeToSun = normalize(sun_cameraspace);
+        vec3 eyeToSky = normalize(vec3(nbcUv, 1.0));
+
+        float sun = clamp(dot(eyeToSun, eyeToSky), 0.0, 1.0);
+        sun =  pow(sun - 0.06, 10.0) + pow(sun, 10.0) * 0.5;
+        sun = clamp(sun, 0.0, 1.0);
+
+        vec3 sunColor = vec3(1.0, 1.0, 0.9);
+        return mix(skyColor, sunColor, sun);
     }
 
     void main()
     {
-        color = vec4(getSkyColor(), 1.0);
+        //use position in model space as uv since we are rendering a simple quad
+        vec2 uv = gl_FragCoord.xy / SCE_ScreenSize;
+        vec3 Position_worldpsace = texture2D(PositionTex, uv).xyz;//vec4(getSkyColor(), 1.0);
+
+        float fogStr = 0.001;
+        float dist = abs((V * vec4(Position_worldpsace, 1.0)).z);
+        float fogAmount = 1.0 - exp( -dist * fogStr );
+        fogAmount = min(1.0, fogAmount + step(dot(Position_worldpsace, Position_worldpsace), 0.01));
+
+        color.rgb = getSkyColor(uv * 2.0 - vec2(1.0));
+        color.a = fogAmount;
     }
 _}

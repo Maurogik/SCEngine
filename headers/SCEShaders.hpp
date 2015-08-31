@@ -11,6 +11,7 @@
 
 namespace SCE
 {
+
     class SCEShaders
     {
 
@@ -23,12 +24,19 @@ namespace SCE
         static void         CleanUp();
         static GLuint       CreateShaderProgram(const std::string &shaderFileName);
         static void         DeleteShaderProgram(GLuint shaderId);
+        static void         BindDefaultUniforms(GLuint shaderId);
 
     private :
 
-        static SCEShaders*              s_instance;
+        struct DefaultUniforms
+        {
+            GLint screenSizeUniform;
+        };
 
-        std::map<std::string, GLuint>   mCompiledShaderPrograms;
+        static SCEShaders*                  s_instance;
+
+        std::map<std::string, GLuint>       mCompiledShaderPrograms;
+        std::map<GLuint, DefaultUniforms>   mDefaultUniforms;
 
     };
 }

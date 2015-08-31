@@ -62,7 +62,7 @@ namespace SCE
         GLint               mShadowSamplerUnifom;
         GLint               mShadowDepthMatUnifom;
         GLint               mShadowFarSplitUnifom;
-        GLint               mSunPositionUniform;
+        GLint               mSunPositionUniform;        
 
         SCEShadowMap        mShadowMapFBO;
 

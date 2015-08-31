@@ -26,7 +26,6 @@ using namespace SCE;
 
 #define LIGHT_ROUTINE_COUNT 1
 
-#define SCREEN_SIZE_UNIFORM_NAME        "SCE_ScreenSize"
 #define COMPUTE_LIGHT_UNIFORM_NAME      "SCE_ComputeLight"
 #define COMPUTE_DIRECTIONAL_LIGHT_NAME  "SCE_ComputeDirectionalLight"
 #define COMPUTE_POINT_LIGHT_NAME        "SCE_ComputePointLight"
@@ -92,8 +91,6 @@ void Light::initRenderDataForShader(GLuint lightShaderId)
         }
     }
 
-    mScreenSizeUniform = glGetUniformLocation(lightShaderId, SCREEN_SIZE_UNIFORM_NAME);
-
     mLightRenderer = GetContainer()->AddComponent<MeshRenderer>();
 }
 
@@ -142,8 +139,6 @@ void Light::bindRenderDataForShader(GLuint shaderId, const vec3& cameraPosition)
             SCE::Debug::LogError("Unknown ligth uniform type : " + type);
         }
     }
-
-    glUniform2f(mScreenSizeUniform, SCECore::GetWindowWidth(), SCECore::GetWindowHeight());
 }
 
 void Light::bindLightModelForShader(GLuint shaderId)

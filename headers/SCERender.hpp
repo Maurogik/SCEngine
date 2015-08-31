@@ -17,6 +17,7 @@ namespace SCE
     class Camera;
     class Container;
 
+
     class SCERender
     {
     public :

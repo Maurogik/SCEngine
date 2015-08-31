@@ -78,9 +78,6 @@ namespace SCE
         SCEHandle<Mesh>             mLightMesh;
         SCEHandle<MeshRenderer>     mLightRenderer;
 
-        //tmp
-        GLint                       mScreenSizeUniform;
-
         void                        initRenderDataForShader(GLuint lightShaderId);
         void                        bindRenderDataForShader(GLuint shaderId, const vec3& cameraPosition);
         void                        bindLightModelForShader(GLuint shaderId);

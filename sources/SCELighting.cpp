@@ -118,11 +118,12 @@ void SCELighting::RenderLightsToGBuffer(const CameraRenderData& renderData,
     //render lights needing a stencil pass (Point and Spot lights)
     for(SCEHandle<Light> light : s_instance->mStenciledLights)
     {
-        glUseProgram(s_instance->mEmptyShader);
+        glUseProgram(s_instance->mEmptyShader);        
         gBuffer.BindForStencilPass();
         s_instance->renderLightStencilPass(renderData, light);
 
         glUseProgram(s_instance->mLightShader);
+        SCEShaders::BindDefaultUniforms(s_instance->mLightShader);
         gBuffer.BindForLightPass();
         gBuffer.BindTexturesToLightShader();
 
@@ -142,6 +143,7 @@ void SCELighting::RenderLightsToGBuffer(const CameraRenderData& renderData,
     for(SCEHandle<Light> light : s_instance->mDirectionalLights)
     {
         glUseProgram(s_instance->mLightShader);
+        SCEShaders::BindDefaultUniforms(s_instance->mLightShader);
         gBuffer.BindForLightPass();
         gBuffer.BindTexturesToLightShader();
 
@@ -313,8 +315,12 @@ void SCELighting::unregisterLight(SCEHandle<Light> light)
 void SCELighting::renderSkyPass(const CameraRenderData& renderData)
 {
     glUseProgram(mSkyShader);
+    SCEShaders::BindDefaultUniforms(mSkyShader);
     glDisable(GL_DEPTH_TEST);
     glCullFace(GL_FRONT);
+    glEnable(GL_BLEND);
+    glBlendEquation(GL_FUNC_ADD);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     vec3 sunPosition = mMainLight->GetContainer()->GetComponent<Transform>()->GetWorldPosition();
     //only a screen space quad, don't need depth testing
@@ -327,6 +333,7 @@ void SCELighting::renderSkyPass(const CameraRenderData& renderData)
 
     glCullFace(GL_BACK);
     glEnable(GL_DEPTH_TEST);
+    glDisable(GL_BLEND);
 }
 
 void SCELighting::renderLightStencilPass(const CameraRenderData& renderData, SCEHandle<Light> &light)

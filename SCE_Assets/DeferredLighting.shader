@@ -236,23 +236,6 @@ _{
         return 0.0f;
     }
 
-    vec3 getSky(vec2 uv)
-    {
-        uv = uv * 2.0 - 1.0;
-        mat4 ndcToWorld = inverse(P*V);
-        vec4 frag_ndc = vec4(uv, 1.0, 1.0);
-        frag_ndc /= gl_FragCoord.w;
-
-        vec3 frag_worldspace = (ndcToWorld * frag_ndc).xyz;
-        vec3 fade = vec3(normalize(frag_worldspace).y + 0.1);
-        fade = clamp(fade, vec3(0.0), vec3(0.7));
-        fade = vec3(1.0) - pow(vec3(1.0) - fade, vec3(7.0, 7.0, 5.0));
-
-        vec3 lowerColor = vec3(0.65, 0.9, 1.0);
-        vec3 upperColor = vec3(0.06, 0.4, 0.85);
-        return mix(lowerColor, upperColor, fade);
-    }
-
     void main()
     {
         vec2 uv = gl_FragCoord.xy / SCE_ScreenSize;
@@ -283,13 +266,7 @@ _{
 
             float shadow = getShadowDepth(Position_worldspace, Normal_worldspace, SCE_LightDirection_worldspace);
             color.rgb *= 1.0 - shadow * SCE_ShadowStrength;
-
-            float fogStr = 0.0001;
-            float dist = distance(Position_worldspace, SCE_EyePosition_worldspace);
-            float fogAmount = 1.0 - exp( -dist * fogStr );
-            color.rgb = mix(color.rgb, getSky(uv), fogAmount );
         }
-
 
         //gamma correction
         color = pow(color, vec4(1.0/2.2));

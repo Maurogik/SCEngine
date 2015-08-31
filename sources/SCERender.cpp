@@ -65,7 +65,7 @@ void SCERender::Render(const SCEHandle<Camera>& camera,
     SCELighting::RenderCascadedShadowMap(renderData, camera->GetFrustrumData(),
                                         camToWorld, objectsToRender);
 
-    SCELighting::RenderSkyToGBuffer(renderData, s_instance->mGBuffer);
+//    SCELighting::RenderSkyToGBuffer(renderData, s_instance->mGBuffer);
 
     //render objects without lighting
     s_instance->renderGeometryPass(renderData, objectsToRender);
@@ -73,6 +73,8 @@ void SCERender::Render(const SCEHandle<Camera>& camera,
 
     s_instance->mGBuffer.ClearFinalBuffer();
     SCELighting::RenderLightsToGBuffer(renderData, s_instance->mGBuffer);
+
+    SCELighting::RenderSkyToGBuffer(renderData, s_instance->mGBuffer);
 
     //Render final image from GBuffer to window framebuffer
     s_instance->mGBuffer.BindForFinalPass();

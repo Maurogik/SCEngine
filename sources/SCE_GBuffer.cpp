@@ -58,6 +58,7 @@ bool SCE_GBuffer::Init(uint windowWidth, uint windowHeight)
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, windowWidth, windowHeight, 0, GL_RGB, GL_FLOAT, NULL);
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
         //set this texture as frameBufferObject color attachment i
         glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, mTextures[i], 0);
     }
@@ -69,6 +70,7 @@ bool SCE_GBuffer::Init(uint windowWidth, uint windowHeight)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
     glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, mDepthTexture, 0);
 
     // final texture, is needed because we need to render the light pass
@@ -110,11 +112,11 @@ void SCE_GBuffer::BindForGeometryPass()
     //set the attachment with the drawBuffers array
     glDrawBuffers(GBUFFER_TEXTURE_COUNT, drawBuffers);
 
-    glClear(GL_DEPTH_BUFFER_BIT);
+    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
     //clear everything but the diffuse color buffer which was filled in the sky pass
-    vec4 clearColor = vec4(0.0, 0.0, 0.0, 1.0);
+    /*vec4 clearColor = vec4(0.0, 0.0, 0.0, 1.0);
     glClearBufferfv(GL_COLOR, GBUFFER_TEXTURE_TYPE_POSITION, &clearColor[0]);
-    glClearBufferfv(GL_COLOR, GBUFFER_TEXTURE_TYPE_NORMAL, &clearColor[0]);
+    glClearBufferfv(GL_COLOR, GBUFFER_TEXTURE_TYPE_NORMAL, &clearColor[0]);*/
 
 }
 
@@ -135,8 +137,13 @@ void SCE_GBuffer::BindForLightPass()
 void SCE_GBuffer::BindForSkyPass()
 {
     glBindFramebuffer(GL_FRAMEBUFFER, mFBOId);
-    glDrawBuffer(GL_COLOR_ATTACHMENT0 + GBUFFER_TEXTURE_TYPE_DIFFUSE);
-    glClear(GL_COLOR_BUFFER_BIT);
+//    glDrawBuffer(GL_COLOR_ATTACHMENT0 + GBUFFER_TEXTURE_TYPE_DIFFUSE);
+//    glClear(GL_COLOR_BUFFER_BIT);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, mTextures[GBUFFER_TEXTURE_TYPE_POSITION]);
+    //send uniform ? -> not needed because there is only one texture
+    glDrawBuffer(GL_COLOR_ATTACHMENT0 + GBUFFER_NUM_TEXTURES);
 }
 
 void SCE_GBuffer::BindForFinalPass()
