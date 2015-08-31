@@ -36,7 +36,7 @@ void SCECore::InitEngine(const std::string &windowName)
        Debug::RaiseError("Failed to initialize GLFW");
     }
 
-    glfwWindowHint(GLFW_SAMPLES, 4); // 4x antialiasing
+//    glfwWindowHint(GLFW_SAMPLES, 4); // 4x antialiasing
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3); // We want OpenGL 3.3
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // To make MacOS happy; should not be needed
@@ -46,6 +46,7 @@ void SCECore::InitEngine(const std::string &windowName)
     glfwWindowHint(GLFW_DEPTH_BITS, 32);
     glfwWindowHint(GLFW_STENCIL_BITS, 8);
 
+//    glfwWindowHint(GLFW_REFRESH_RATE, 60);
 
 #ifdef SCE_DEBUG
     // Create a debug OpenGL context or tell your OpenGL library (GLFW, SDL) to do so.
@@ -53,7 +54,8 @@ void SCECore::InitEngine(const std::string &windowName)
 #endif
 
     // Open a window and create its OpenGL context
-    s_window = glfwCreateWindow( 1024, 768, windowName.c_str(), NULL, NULL);
+//    s_window = glfwCreateWindow( 1280, 720, windowName.c_str(), NULL, NULL);
+    s_window = glfwCreateWindow( 1920, 1080, windowName.c_str(), glfwGetPrimaryMonitor(), NULL);
     Internal::Log("Window created");
 
     if( s_window == NULL ){

@@ -123,7 +123,7 @@ void SCEScene::UpdateScene()
 
     float xRotateSpeed = 360.0f;
     float yRotateSpeed = 180.0f;
-    float speed = 5.0f;
+    float speed = 10.0f;
 
     vec3 position = transform->GetWorldPosition();
 //    transform->RotateAroundAxis(vec3(0, 1, 0), xDelta * rotateSpeed);

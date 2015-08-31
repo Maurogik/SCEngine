@@ -72,22 +72,32 @@ uint SCEMeshLoader::CreateMeshFromFile(const string& meshFileName)
                , normals
                , false)) //load with CCW winding order
     {
+        vector<vec3> tangents;
+        vector<vec3> bitangents;
+        computeTangentBasis(vertices, uvs, normals,
+                            tangents, bitangents);
+
         vector<ushort> indices;
         vector<vec3>   out_vert;
         vector<vec2>   out_uvs;
         vector<vec3>   out_norm;
+        vector<vec3>   out_tangent;
+        vector<vec3>   out_bitangent;
 
-        indexVBO(vertices,
-                 uvs,
-                 normals,
-                 indices,
-                 out_vert,
-                 out_uvs,
-                 out_norm);
+        indexVBO_TBN(vertices,
+                    uvs,
+                    normals,
+                    tangents,
+                    bitangents,
+                    indices,
+                    out_vert,
+                    out_uvs,
+                    out_norm,
+                    out_tangent,
+                    out_bitangent);
 
-        vector<vec3> tangent(0);
-        vector<vec3> bitangent(0);
-        id = s_instance->addMeshData(meshFileName, indices, out_vert, out_norm, out_uvs, tangent, bitangent);
+        id = s_instance->addMeshData(meshFileName, indices, out_vert, out_norm, out_uvs,
+                                     out_tangent, out_bitangent);
     }
 
     return id;
@@ -191,10 +201,12 @@ uint SCEMeshLoader::CreateSphereMesh(float tesselation)
         }
     }
 
-    vector<vec3> tangent(0);
-    vector<vec3> bitangent(0);
+    vector<vec3> tangents;
+    vector<vec3> bitangents;
+    computeTangentBasisIndexed(indices, vertices, uvs, normals,
+                               tangents, bitangents);
 
-    return s_instance->addMeshData(meshName, indices, vertices, normals, uvs, tangent, bitangent);
+    return s_instance->addMeshData(meshName, indices, vertices, normals, uvs, tangents, bitangents);
 }
 
 uint SCEMeshLoader::CreateConeMesh(float angle, float tesselation)
@@ -316,10 +328,12 @@ uint SCEMeshLoader::CreateConeMesh(float angle, float tesselation)
         }
     }
 
-    vector<vec3> tangent(0);
-    vector<vec3> bitangent(0);
+    vector<vec3> tangents;
+    vector<vec3> bitangents;
+    computeTangentBasisIndexed(indices, vertices, uvs, normals,
+                               tangents, bitangents);
 
-    return s_instance->addMeshData(meshName, indices, vertices, normals, uvs, tangent, bitangent);
+    return s_instance->addMeshData(meshName, indices, vertices, normals, uvs, tangents, bitangents);
 }
 
 uint SCEMeshLoader::CreateQuadMesh()
@@ -361,10 +375,12 @@ uint SCEMeshLoader::CreateQuadMesh()
         2,  1,  0,      0,  3,  2
     };
 
-    vector<vec3> tangent(0);
-    vector<vec3> bitangent(0);
+    vector<vec3> tangents;
+    vector<vec3> bitangents;
+    computeTangentBasisIndexed(indices, vertices, uvs, normals,
+                               tangents, bitangents);
 
-    return s_instance->addMeshData(meshName, indices, vertices, normals, uvs, tangent, bitangent);
+    return s_instance->addMeshData(meshName, indices, vertices, normals, uvs, tangents, bitangents);
 }
 
 uint SCEMeshLoader::CreateCubeMesh()
@@ -481,10 +497,12 @@ uint SCEMeshLoader::CreateCubeMesh()
         21, 23, 20,     21, 22, 23    // left
     };
 
-    vector<vec3> tangent(0);
-    vector<vec3> bitangent(0);
+    vector<vec3> tangents;
+    vector<vec3> bitangents;
+    computeTangentBasisIndexed(indices, vertices, uvs, normals,
+                               tangents, bitangents);
 
-    return s_instance->addMeshData(meshName, indices, vertices, normals, uvs, tangent, bitangent);
+    return s_instance->addMeshData(meshName, indices, vertices, normals, uvs, tangents, bitangents);
 }
 
 uint SCEMeshLoader::CreateCustomMesh(const std::vector<ushort>& indices,
@@ -494,14 +512,16 @@ uint SCEMeshLoader::CreateCustomMesh(const std::vector<ushort>& indices,
                                      const std::vector<vec3>& tangents,
                                      const std::vector<vec3>& bitangents)
 {
-    Debug::Assert(s_instance, "No Mesh loader system instance found, Init the system before using it");
+    Debug::Assert(s_instance,
+                  "No Mesh loader system instance found, Init the system before using it");
     string meshName = "Custom" + std::to_string(s_instance->mNextId);
     return s_instance->addMeshData(meshName, indices, vertices, normals, uvs, tangents, bitangents);
 }
 
 void SCEMeshLoader::DeleteMesh(uint meshId)
 {
-    Debug::Assert(s_instance, "No Mesh loader system instance found, Init the system before using it");
+    Debug::Assert(s_instance,
+                  "No Mesh loader system instance found, Init the system before using it");
 
     auto it = find_if(begin(s_instance->mMeshIds),
                       end  (s_instance->mMeshIds),

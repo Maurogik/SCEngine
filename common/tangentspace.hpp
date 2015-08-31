@@ -11,5 +11,14 @@ void computeTangentBasis(
 	std::vector<glm::vec3> & bitangents
 );
 
+void computeTangentBasisIndexed(// inputs
+    std::vector<unsigned short>& indices,
+    std::vector<glm::vec3> & vertices,
+    std::vector<glm::vec2> & uvs,
+    std::vector<glm::vec3> & normals,
+    // outputs
+    std::vector<glm::vec3> & tangents,
+    std::vector<glm::vec3> & bitangents
+);
 
 #endif

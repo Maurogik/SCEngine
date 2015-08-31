@@ -58,7 +58,9 @@ namespace SCE {
 
     protected :
 
-                            Material(SCEHandle<Container>& container, const std::string &filename, const std::string& typeName = "");
+                            Material(SCEHandle<Container>& container,
+                                     const std::string &filename,
+                                     const std::string& typeName = "");
 
     private :
 
