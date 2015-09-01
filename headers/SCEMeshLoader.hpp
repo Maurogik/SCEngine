@@ -19,7 +19,7 @@ namespace SCE
         static void         Init();
         static void         CleanUp();
 
-        static uint         CreateMeshFromFile  ( const std::string &meshFileName);
+        static uint         CreateMeshFromFile  (const std::string &meshFileName, bool windCW);
 
         static uint         CreateSphereMesh    ( float tesselation);
 

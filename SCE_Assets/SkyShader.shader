@@ -48,7 +48,7 @@ _{
     vec3 getSkyColor(vec2 nbcUv)
     {
         vec3 frag_worldspace = ndcToFarWorldspace(nbcUv);
-        vec3 fade = vec3(normalize(frag_worldspace).y + 0.1);
+        vec3 fade = vec3(normalize(frag_worldspace).y);
         fade = clamp(fade, vec3(0.0), vec3(0.7));
         fade = vec3(1.0) - pow(vec3(1.0) - fade, vec3(7.0, 7.0, 5.0));
 

@@ -41,10 +41,9 @@ include_directories(SYSTEM
     external/glfw-3.0.3/include/GLFW/
     external/glm-0.9.4.0/
     external/glew-1.9.0/include/
-#    external/assimp-3.0.1270/include/
+    external/assimp-3.0.1270/include/
     external/bullet-2.81-rev2613/src/
     external/rapidjson/
-#    ${CMAKE_CURRENT_SOURCE_DIR}/external/SOIL/
     .
 )
 
@@ -52,6 +51,7 @@ set(ALL_LIBS
     ${OPENGL_LIBRARY}
     GLFW_303
     GLEW_190
+    assimp
     #SOIL
 )
 

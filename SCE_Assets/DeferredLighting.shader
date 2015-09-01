@@ -238,6 +238,8 @@ _{
 
     void main()
     {
+        vec3 ambiantColor = vec3(0.7, 0.7, 1.0) * 0.001;
+
         vec2 uv = gl_FragCoord.xy / SCE_ScreenSize;
         vec3 MaterialDiffuseColor   = texture2D(DiffuseTex, uv).xyz;
         vec3 Normal_worldspace      = normalize(texture2D(NormalTex, uv).xyz);
@@ -259,16 +261,15 @@ _{
                         SCE_LightReach_worldspace
                         );
 
-            color.rgb = //Diffuse
+            color.rgb = ambiantColor * (1.0 - lightCol.x) +
+                    //Diffuse
                     (MaterialDiffuseColor * lightCol.x * SCE_LightColor.rgb * SCE_LightColor.a)
                           //Specular
                     + (SCE_LightColor.rgb * lightCol.y * lightCol.x * SCE_LightColor.a);
 
             float shadow = getShadowDepth(Position_worldspace, Normal_worldspace, SCE_LightDirection_worldspace);
-            color.rgb *= 1.0 - shadow * SCE_ShadowStrength;
+            shadow *= SCE_ShadowStrength;
+            color.rgb = color.rgb * (1.0 - shadow) + ambiantColor * shadow;
         }
-
-        //gamma correction
-        color = pow(color, vec4(1.0/2.2));
     }
 _}

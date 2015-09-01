@@ -43,7 +43,7 @@ namespace SCE {
 
     protected :
 
-        Mesh(   SCEHandle<Container>& container, const std::string& filename);
+        Mesh(   SCEHandle<Container>& container, const std::string& filename, bool windCW = false);
         Mesh(   SCEHandle<Container>& container,
                 const std::vector<ushort> &indices,
                 const std::vector<vec3>   &vertices,
