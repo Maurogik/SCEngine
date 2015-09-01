@@ -59,10 +59,11 @@ _{
         vec3 sun_cameraspace = (V * vec4(SunPosition_worldspace, 1.0)).xyz;
 
         vec3 eyeToSun = normalize(sun_cameraspace);
-        vec3 eyeToSky = normalize(vec3(nbcUv, 1.0));
+        vec2 fixedNdc = nbcUv * vec2(1.0, SCE_ScreenSize.y/SCE_ScreenSize.x); //compensate for aspect ratio
+        vec3 eyeToSky = normalize(vec3(fixedNdc, 1.0));
 
         float sun = clamp(dot(eyeToSun, eyeToSky), 0.0, 1.0);
-        sun =  pow(sun - 0.06, 10.0) + pow(sun, 10.0) * 0.5;
+        sun = pow(sun, 2.0) * 0.5 + smoothstep(0.0, 0.0035, sun - 0.996);
         sun = clamp(sun, 0.0, 1.0);
 
         vec3 sunColor = vec3(1.0, 1.0, 0.9);

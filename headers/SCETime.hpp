@@ -14,9 +14,6 @@ namespace SCE {
 
     public :
 
-        SCETime();
-        ~SCETime();
-
         static void     Init();
         static void     CleanUp();
         static void     Update();
@@ -27,6 +24,9 @@ namespace SCE {
         static void     SetTimeSpeed(float value);
 
     private :
+
+        SCETime();
+        ~SCETime();
 
         void            update();
 

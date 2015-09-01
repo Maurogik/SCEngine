@@ -20,9 +20,7 @@ namespace SCE
 
     class SCERender
     {
-    public :
-
-        SCERender();
+    public :        
 
         static void         Init();
         static void         CleanUp();
@@ -37,6 +35,8 @@ namespace SCE
 
         SCE_GBuffer         mGBuffer;
         glm::vec4           mDefaultClearColor;
+
+        SCERender();
 
         void                renderGeometryPass(const CameraRenderData& renderData,
                                                std::vector<Container*> objectsToRender);

@@ -18,8 +18,7 @@ namespace SCE {
     class SCEScene {
 
     public :
-        SCEScene();
-        ~SCEScene();
+
         void            RenderScene();
         void            UpdateScene();
 
@@ -42,6 +41,9 @@ namespace SCE {
         static void                                 UnregisterGameObject(SCEHandle<GameObject> gameObject);
 
     private :
+
+        SCEScene();
+        ~SCEScene();
 
         static void     RemoveContainer(int objId);
 

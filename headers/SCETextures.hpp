@@ -28,9 +28,6 @@ namespace SCE
 
     public :
 
-        SCETextures();
-        ~SCETextures();
-
         static void         Init();
         static void         CleanUp();
         static GLuint       CreateTexture(int width, int height,
@@ -48,6 +45,9 @@ namespace SCE
 
         std::map<std::string, GLuint>       mLoadedTextures;
         std::vector<GLuint>                 mCreatedTextures;
+
+        SCETextures();
+        ~SCETextures();
 
         GLuint              loadTextureFromMetadata(const std::string &filename);
 

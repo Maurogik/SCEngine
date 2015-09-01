@@ -63,9 +63,6 @@ namespace SCE
     {
     public :
 
-        SCEMeshRender();
-        ~SCEMeshRender();
-
         static void             Init();
         static void             CleanUp();
 
@@ -78,6 +75,9 @@ namespace SCE
         static SCEMeshRender*         s_instance;
 
         std::map<uint, MeshRenderData>  mMeshRenderData;
+
+        SCEMeshRender();
+        ~SCEMeshRender();
 
         void            initializeGLData(uint meshId);
         void            initializeShaderData(MeshRenderData& renderData, GLuint programID);

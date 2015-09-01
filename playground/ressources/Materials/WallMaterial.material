@@ -1,0 +1,12 @@
+{
+    "Name": "TestMaterial",
+    "Shader": "Shaders/White",
+    "Material": {
+		"Data": [  
+            {"Name": "MainTex", "Type": "Texture2D", "Value": "Textures/diffuse-bubble"},
+            {"Name": "NormalMap", "Type": "Texture2D", "Value": "Textures/diffuse-bubble"},
+            {"Name": "ScaleU", "Type": "float", "Value": "1.0"},
+            {"Name": "ScaleV", "Type": "float", "Value": "1.0"}
+		]
+	}
+}

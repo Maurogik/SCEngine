@@ -9,11 +9,9 @@
 using namespace SCE;
 using namespace std;
 
-#define TEST_MAT "TestMaterial"
-#define DEBUG_MAT "Debug" //"TestMaterial"
-#define MATERIAL "TestMaterial"
-#define GROUND_MATERIAL "GroundMaterial"
-#define WALL_MATERIAL "WallMaterial"
+#define MATERIAL "Materials/TestMaterial"
+#define GROUND_MATERIAL "Materials/GroundMaterial"
+#define WALL_MATERIAL "Materials/WallMaterial"
 
 SCEHandle<Container> createSphere(const string& name, const float& tesselation, const vec3& pos){
     //cube model
@@ -135,7 +133,7 @@ int main( void )
 
 
     //Suzanne model
-    SCEHandle<Container> suz = createModel("suzanneObject", "suzanne.obj", vec3(0, 3, 0));
+    SCEHandle<Container> suz = createModel("suzanneObject", "Meshes/suzanne.obj", vec3(0, 3, 0));
     suz->GetComponent<Transform>()->RotateAroundAxis(vec3(0.0f, 1.0f, 0.0f), 180.0f);
 
     float spreadDist = 10.0f;

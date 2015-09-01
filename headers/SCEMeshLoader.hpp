@@ -16,8 +16,6 @@ namespace SCE
     {
     public :
 
-        SCEMeshLoader();
-
         static void         Init();
         static void         CleanUp();
 
@@ -50,6 +48,8 @@ namespace SCE
         std::map<std::string, uint>     mMeshIds;
         std::map<uint, MeshData>        mMeshData;
         uint                            mNextId;
+
+        SCEMeshLoader();
 
         uint                addMeshData(const std::string &meshName,
                                         const std::vector<ushort> &indices,

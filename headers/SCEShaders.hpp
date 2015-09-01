@@ -17,9 +17,6 @@ namespace SCE
 
     public :
 
-        SCEShaders();
-        ~SCEShaders();
-
         static void         Init();
         static void         CleanUp();
         static GLuint       CreateShaderProgram(const std::string &shaderFileName);
@@ -38,6 +35,8 @@ namespace SCE
         std::map<std::string, GLuint>       mCompiledShaderPrograms;
         std::map<GLuint, DefaultUniforms>   mDefaultUniforms;
 
+        SCEShaders();
+        ~SCEShaders();
     };
 }
 

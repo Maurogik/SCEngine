@@ -25,8 +25,6 @@ namespace SCE
     {
     public :
 
-        SCELighting();
-
         static void         Init();
         static void         CleanUp();
 
@@ -72,6 +70,8 @@ namespace SCE
 
         std::vector<SCEHandle<Light>>   mStenciledLights;
         std::vector<SCEHandle<Light>>   mDirectionalLights;
+
+        SCELighting();
 
         void                initLightShader();
         void                registerLight(SCEHandle<Light> light);
