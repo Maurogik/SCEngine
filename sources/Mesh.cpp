@@ -25,10 +25,10 @@
 using namespace SCE;
 using namespace std;
 
-SCE::Mesh::Mesh(SCEHandle<Container> &container, const string& filename)
+SCE::Mesh::Mesh(SCEHandle<Container> &container, const string& filename, bool windCW)
     : Component(container, "Mesh::")
 {
-    mMeshId = SCEMeshLoader::CreateMeshFromFile(filename);
+    mMeshId = SCEMeshLoader::CreateMeshFromFile(filename, windCW);
 }
 
 SCE::Mesh::Mesh(SCEHandle<Container> &container

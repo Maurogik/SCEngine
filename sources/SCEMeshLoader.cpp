@@ -8,6 +8,7 @@
 #include "../headers/SCEMeshLoader.hpp"
 #include "../headers/SCETools.hpp"
 #include "../headers/SCEInternal.hpp"
+#include "../headers/SCEAssimpLoader.hpp"
 
 #include <common/objloader.hpp>
 #include <common/vboindexer.hpp>
@@ -50,7 +51,7 @@ void SCEMeshLoader::CleanUp()
     delete s_instance;
 }
 
-uint SCEMeshLoader::CreateMeshFromFile(const string& meshFileName)
+uint SCEMeshLoader::CreateMeshFromFile(const string& meshFileName, bool windCW)
 {
     Debug::Assert(s_instance, "No Mesh loader system instance found, Init the system before using it");
 
@@ -60,7 +61,7 @@ uint SCEMeshLoader::CreateMeshFromFile(const string& meshFileName)
     }
 
     string fullPath = RESSOURCE_PATH + meshFileName;
-    vector<vec3> vertices;
+    /*vector<vec3> vertices;
     vector<vec2> uvs;
     vector<vec3> normals;
 
@@ -98,9 +99,26 @@ uint SCEMeshLoader::CreateMeshFromFile(const string& meshFileName)
 
         id = s_instance->addMeshData(meshFileName, indices, out_vert, out_norm, out_uvs,
                                      out_tangent, out_bitangent);
-    }
+    }*/
 
-    return id;
+    vector<ushort> out_indices;
+    vector<vec3>   out_verts;
+    vector<vec2>   out_uvs;
+    vector<vec3>   out_norms;
+    vector<vec3>   out_tangents;
+    vector<vec3>   out_bitangents;
+
+    AssimpLoader::LoadModel(fullPath,
+                            out_indices,
+                            out_verts,
+                            out_norms,
+                            out_uvs,
+                            out_tangents,
+                            out_bitangents,
+                            windCW);
+
+    return s_instance->addMeshData(meshFileName, out_indices, out_verts, out_norms, out_uvs,
+                                   out_tangents, out_bitangents);;
 }
 
 uint SCEMeshLoader::CreateSphereMesh(float tesselation)
