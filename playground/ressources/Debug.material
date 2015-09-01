@@ -1,8 +1,0 @@
-{
-    "Name": "Debug",
-    "Shader": "Debug",
-    "Material": {
-		"Data": [  
-		]
-	}
-}

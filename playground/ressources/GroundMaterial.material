@@ -1,9 +1,0 @@
-{
-    "Name": "TestMaterial",
-    "Shader": "GroundShader",
-    "Material": {
-		"Data": [  
-
-		]
-	}
-}

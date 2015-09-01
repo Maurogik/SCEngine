@@ -1,9 +1,0 @@
-{
-    "Name": "texture.jpg",
-    "Texture": {
-        "Format": "UNCOMPRESSED",
-        "Mipmaps": true,
-        "Wrapping": "Clamp"
-	}
-}
-

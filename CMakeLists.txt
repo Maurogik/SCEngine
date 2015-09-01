@@ -31,11 +31,6 @@ endif()
 # Compile external dependencies (needs a cMakeList)
 add_subdirectory (external)
 
-# On Visual 2005 and above, this module can set the debug working directory
-#list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/external/rpavlik-cmake-modules-1c73e35")
-#include(CreateLaunchers)
-#include(MSVCMultipleProcessCompile) # /MP
-
 if(INCLUDE_DISTRIB)
     add_subdirectory(distrib)
 endif(INCLUDE_DISTRIB)
@@ -85,9 +80,17 @@ file(GLOB TEMPLATES
 )
 
 file(GLOB RESSOURCES
-    "${TARGET}/ressources/*.shader"
     "${TARGET}/ressources/*.material"
+    "${TARGET}/ressources/*/*.material"
+    "${TARGET}/ressources/*/*/*.material"
+
+    "${TARGET}/ressources/*.shader"
+    "${TARGET}/ressources/*/*.shader"
+    "${TARGET}/ressources/*/*/*.shader"
+
     "${TARGET}/ressources/*.texData"
+    "${TARGET}/ressources/*/*.texData"
+    "${TARGET}/ressources/*/*/*.texData"
 )
 
 file(GLOB SCE_ASSETS
