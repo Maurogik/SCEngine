@@ -20,7 +20,7 @@ namespace SCE {
     class MeshRenderer : public Component {
 
     public :
-                        ~MeshRenderer();
+
         void            Render(const CameraRenderData& renderData, bool renderFullScreenQuad = false);
         void            UpdateRenderedMesh();
 

@@ -35,10 +35,6 @@ MeshRenderer::MeshRenderer(SCEHandle<Container> &container, const string &typeNa
     }
 }
 
-MeshRenderer::~MeshRenderer()
-{
-}
-
 void MeshRenderer::UpdateRenderedMesh()
 {
     SCEHandle<Mesh> mesh = GetContainer()->GetComponent<Mesh>();
