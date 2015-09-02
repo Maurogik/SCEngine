@@ -310,7 +310,6 @@ void Light::generateSpotLightMesh()
     mSpotAttenuation = log(mLightCutoff) / log(maxDot) * 2.0;
 
     SCEHandle<Container> container = GetContainer();
-//    mLightMesh = Mesh::AddConeMesh(container, mLightReach, mLightMaxAngle, 4.0f);
     mLightMesh = Mesh::AddConeMesh(container, mLightMaxAngle, 4.0f);
 
     SCEHandle<Transform> transform = container->GetComponent<Transform>();
@@ -320,9 +319,6 @@ void Light::generateSpotLightMesh()
 void Light::generatePointLightMesh()
 {
     //Compute radius at which light intensity goes under some threshold
-//    float lightSphereRadius2 = sqrt(mLightReach / POINT_LIGHT_CUTOFF);
-
-    //Compute radius at which light intensity goes under some threshold
     //using solution to quadratic equation 1/square(x/r + 1) = cutoff(c)
     //s = (-2*r + sqrt(4*r*r/c))/2
     float lightSphereRadius = 0.0f;
@@ -330,7 +326,6 @@ void Light::generatePointLightMesh()
     lightSphereRadius = (-2.0f * mLightReach  + sqrt(delta))/2.0f;
 
     SCEHandle<Container> container = GetContainer();
-//    mLightMesh = Mesh::AddSphereMesh(container, lightSphereRadius, 4.0f);
     mLightMesh = Mesh::AddSphereMesh(container, 4.0f);
 
     SCEHandle<Transform> transform = container->GetComponent<Transform>();
