@@ -54,10 +54,10 @@ _{
         float maxSize = max(SCE_ScreenSize.x, SCE_ScreenSize.y);
         float numLevels = 1.0 + floor(log2(maxSize));
 
-        vec3 whitePoint = vec3(10.0);
+        vec3 whitePoint = vec3(7.0);
 
         float lum = textureLod(LuminanceTex, uv, numLevels-1).r;
-        float exposure = 2.0 / lum;
+        float exposure = 1.4 / lum;
         vec3 hdrColor = sceneColor.xyz;
         color.rgb = hdrColor;
         color.rgb = Uncharted2Tonemap(hdrColor * exposure) / Uncharted2Tonemap(whitePoint);
