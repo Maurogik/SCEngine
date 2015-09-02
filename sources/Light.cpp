@@ -297,7 +297,6 @@ void Light::generateLightMesh()
 void Light::generateDirectionalLightMesh()
 {
     SCEHandle<Container> container = GetContainer();
-//    mLightMesh = Mesh::AddQuadMesh(container, 2.0f, 2.0f);
     mLightMesh = Mesh::AddQuadMesh(container);
 }
 

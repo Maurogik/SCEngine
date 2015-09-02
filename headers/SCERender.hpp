@@ -17,6 +17,20 @@ namespace SCE
     class Camera;
     class Container;
 
+    struct ToneMappingData
+    {
+        ToneMappingData()
+            : toneMapShader(-1), luminanceShader(-1),
+              exposureUniform(-1), maxBrightnessUniform(-1),
+              exposure(1.0f), maxBrightness(10.0f) {}
+
+        GLuint  toneMapShader;
+        GLuint  luminanceShader;
+        GLint   exposureUniform;
+        GLint   maxBrightnessUniform;
+        float   exposure;
+        float   maxBrightness;
+    };
 
     class SCERender
     {
@@ -28,6 +42,7 @@ namespace SCE
                                    std::vector<Container*> objectsToRender);
         static void         ResetClearColorToDefault();
         static glm::mat4    FixOpenGLProjectionMatrix(const glm::mat4& projMat);
+        static void         RenderFullScreenPass(glm::mat4 &projectionMatrix, glm::mat4 &viewMatrix);
 
     private :
 
@@ -35,6 +50,8 @@ namespace SCE
 
         SCE_GBuffer         mGBuffer;
         glm::vec4           mDefaultClearColor;
+        ui16                mQuadMeshId;
+        ToneMappingData     mToneMapData;
 
         SCERender();
 

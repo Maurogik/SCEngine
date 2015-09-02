@@ -26,22 +26,44 @@ _{
 #version 430 core
 
     uniform vec2        SCE_ScreenSize;
-    uniform sampler2D   finalTex;
+    uniform float       SCE_Exposure;
+    uniform float       SCE_MaxBrightness;
+    layout (location = 0) uniform sampler2D   FinalColorTex;
+    layout (location = 1) uniform sampler2D   LuminanceTex;
 
     out vec4 color;
 
+    float A = 0.15;
+    float B = 0.50;
+    float C = 0.10;
+    float D = 0.20;
+    float E = 0.02;
+    float F = 0.30;
+    float W = 11.2;
+
+    vec3 Uncharted2Tonemap(vec3 x)
+    {
+        return ((x*(A*x+C*B)+D*E)/(x*(A*x+B)+D*F))-E/F;
+    }
+
     void main()
     {
-        float brightMax = 10.0;
-        float exposure = 1.0;
+        vec2 uv = gl_FragCoord.xy / SCE_ScreenSize;
+        vec4 sceneColor = texture(FinalColorTex, uv);
 
-        vec4 sceneColor = texture(finalTex, gl_FragCoord.xy / SCE_ScreenSize);
+        float maxSize = max(SCE_ScreenSize.x, SCE_ScreenSize.y);
+        float numLevels = 1.0 + floor(log2(maxSize));
 
-        float Y = dot(vec4(0.30, 0.59, 0.11, 0.0), sceneColor);
-        float YD = exposure * (exposure/brightMax + 1.0) / (exposure + 1.0);
-        color = sceneColor * YD;
+        vec3 whitePoint = vec3(10.0);
+
+        float lum = textureLod(LuminanceTex, uv, numLevels-1).r;
+        float exposure = 2.0 / lum;
+        vec3 hdrColor = sceneColor.xyz;
+        color.rgb = hdrColor;
+        color.rgb = Uncharted2Tonemap(hdrColor * exposure) / Uncharted2Tonemap(whitePoint);
 
         //gamma correction
-        color = pow(color, vec4(1.0/2.2));
+        color.rgb = pow(color.rgb, vec3(1.0/2.2));
+        color.a = 1.0;
     }
 _}

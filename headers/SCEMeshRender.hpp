@@ -71,9 +71,9 @@ namespace SCE
         static void             DeleteMeshRenderData(uint meshId);
 
         static void             RenderMesh(ui16 meshId,
-                                           const mat4 projectionMatrix,
-                                           const mat4 viewMatrix,
-                                           const mat4 modelMatrix);
+                                           const mat4& projectionMatrix,
+                                           const mat4& viewMatrix,
+                                           const mat4& modelMatrix);
 
     private :
 

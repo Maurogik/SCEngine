@@ -8,15 +8,25 @@
 #include "../headers/SCELighting.hpp"
 #include "../headers/SCECore.hpp"
 #include "../headers/SCETools.hpp"
+#include "../headers/SCEMeshLoader.hpp"
+#include "../headers/SCEMeshRender.hpp"
+#include "../headers/SCEShaders.hpp"
+
 
 using namespace SCE;
 using namespace std;
+
+
+#define TONEMAP_EXPOSURE_NAME "SCE_Exposure"
+#define TONEMAP_MAX_BRIGHTNESS_NAME "SCE_MaxBrightness"
+
 
 SCERender* SCERender::s_instance = nullptr;
 
 SCERender::SCERender()
     : mGBuffer(),
-      mDefaultClearColor(0.0f, 0.0f, 0.0f, 1.0f)
+      mDefaultClearColor(0.0f, 0.0f, 0.0f, 1.0f),
+      mQuadMeshId(-1)
 {
     glClearColor(mDefaultClearColor.r,
                  mDefaultClearColor.g,
@@ -32,6 +42,15 @@ SCERender::SCERender()
 
     //initialize the Gbuffer used to deferred lighting
     mGBuffer.Init(SCECore::GetWindowWidth(), SCECore::GetWindowHeight());
+
+    mQuadMeshId = SCEMeshLoader::CreateQuadMesh();
+
+    mToneMapData.toneMapShader = SCEShaders::CreateShaderProgram("ToneMapping");
+    mToneMapData.luminanceShader = SCEShaders::CreateShaderProgram("LuminanceShader");
+    mToneMapData.exposureUniform = glGetUniformLocation(mToneMapData.toneMapShader,
+                                                        TONEMAP_EXPOSURE_NAME);
+    mToneMapData.maxBrightnessUniform = glGetUniformLocation(mToneMapData.toneMapShader,
+                                                             TONEMAP_MAX_BRIGHTNESS_NAME);
 }
 
 void SCERender::Init()
@@ -65,23 +84,38 @@ void SCERender::Render(const SCEHandle<Camera>& camera,
     SCELighting::RenderCascadedShadowMap(renderData, camera->GetFrustrumData(),
                                         camToWorld, objectsToRender);
 
-//    SCELighting::RenderSkyToGBuffer(renderData, s_instance->mGBuffer);
-
     //render objects without lighting
     s_instance->renderGeometryPass(renderData, objectsToRender);
 
-
+    //lighting & sky
     s_instance->mGBuffer.ClearFinalBuffer();
     SCELighting::RenderLightsToGBuffer(renderData, s_instance->mGBuffer);
-
     SCELighting::RenderSkyToGBuffer(renderData, s_instance->mGBuffer);
 
-    //Render final image from GBuffer to window framebuffer
-    s_instance->mGBuffer.BindForFinalPass();
+    //luminance
+    ToneMappingData& tonemap = s_instance->mToneMapData;
+    glDisable(GL_DEPTH_TEST);
+    glCullFace(GL_FRONT);
+    glUseProgram(tonemap.luminanceShader);
+    SCEShaders::BindDefaultUniforms(tonemap.luminanceShader);
+    s_instance->mGBuffer.BindForLuminancePass();
+    RenderFullScreenPass(renderData.projectionMatrix, renderData.viewMatrix);
+    s_instance->mGBuffer.GenerateLuminanceMimap();
 
+    //Tonemapping & render to back buffer
+    glUseProgram(tonemap.toneMapShader);
+    s_instance->mGBuffer.BindForToneMapPass();
+    SCEShaders::BindDefaultUniforms(tonemap.toneMapShader);
+    glUniform1f(tonemap.exposureUniform, tonemap.exposure);
+    glUniform1f(tonemap.maxBrightnessUniform, tonemap.maxBrightness);
+    RenderFullScreenPass(renderData.projectionMatrix, renderData.viewMatrix);
+
+    glEnable(GL_DEPTH_TEST);
+    glCullFace(GL_BACK);
+//    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
     //TODO hook post-processing pipeline here
-    glBlitFramebuffer(0, 0, width, height,
-                      0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+//    glBlitFramebuffer(0, 0, width, height,
+//                      0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 
     //reset to default framebufffer
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -121,7 +155,13 @@ mat4 SCERender::FixOpenGLProjectionMatrix(const mat4& projMat)
 {
     //Needed because opengl camera renders along the negative Z axis and
     //I want it to render along the positive axis
-   return glm::scale(projMat, glm::vec3(1, 1, -1));
+    return glm::scale(projMat, glm::vec3(1, 1, -1));
+}
+
+void SCERender::RenderFullScreenPass(mat4& projectionMatrix, mat4& viewMatrix)
+{
+    glm::mat4 modelMatrix = inverse(projectionMatrix * viewMatrix);
+    SCEMeshRender::RenderMesh(s_instance->mQuadMeshId, projectionMatrix, viewMatrix, modelMatrix);
 }
 
 

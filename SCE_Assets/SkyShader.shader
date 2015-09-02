@@ -63,10 +63,10 @@ _{
         vec3 eyeToSky = normalize(vec3(fixedNdc, 1.0));
 
         float sun = clamp(dot(eyeToSun, eyeToSky), 0.0, 1.0);
-        sun = pow(sun, 2.0) * 0.5 + smoothstep(0.0, 0.0035, sun - 0.996);
+        sun = pow(sun, 6.0) * 0.2 + smoothstep(0.0, 0.0035, sun - 0.996);
         sun = clamp(sun, 0.0, 1.0);
 
-        vec3 sunColor = vec3(1.0, 1.0, 0.9);
+        vec3 sunColor = vec3(1.0, 1.0, 0.9) * 10.0;
         return mix(skyColor, sunColor, sun);
     }
 
@@ -74,7 +74,7 @@ _{
     {
         //use position in model space as uv since we are rendering a simple quad
         vec2 uv = gl_FragCoord.xy / SCE_ScreenSize;
-        vec3 Position_worldpsace = texture2D(PositionTex, uv).xyz;//vec4(getSkyColor(), 1.0);
+        vec3 Position_worldpsace = texture2D(PositionTex, uv).xyz;
 
         float fogStr = 0.001;
         float dist = abs((V * vec4(Position_worldpsace, 1.0)).z);

@@ -34,7 +34,9 @@ namespace SCE {
         void    BindForShadowPass();
         void    BindForSkyPass();
         void    EndShadowPass();
-        void    BindForFinalPass();
+        void    BindForLuminancePass();
+        void    GenerateLuminanceMimap();
+        void    BindForToneMapPass();
         void    BindTexturesToLightShader();
         void    SetReadBuffer(GBUFFER_TEXTURE_TYPE TextureType);
 
@@ -44,6 +46,7 @@ namespace SCE {
         GLuint      mTextures[GBUFFER_TEXTURE_COUNT];
         GLuint      mDepthTexture;
         GLuint      mFinalTexture;
+        GLuint      mLuminanceTexture;
     };
 }
 

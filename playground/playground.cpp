@@ -247,7 +247,7 @@ int main( void )
     SCEHandle<Container> dirLight = createLight(vec3(0, 200, -200),
                                                 vec3(40, 0, 0),
                                                 LightType::DIRECTIONAL_LIGHT);
-    dirLight->GetComponent<Light>()->SetLightColor(vec4(0.8, 0.8, 1.0, 0.2));
+    dirLight->GetComponent<Light>()->SetLightColor(vec4(0.8, 0.8, 1.0, 0.7));
     dirLight->GetComponent<Light>()->SetIsSunLight(true);
 
 //    SCEHandle<Container> light1 = createLight(vec3(2, 3, -1), vec3(30, 0, 30), LightType::POINT_LIGHT);
