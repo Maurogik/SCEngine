@@ -10,8 +10,6 @@
 #include "Component.hpp"
 #include <map>
 
-#define MAX_ATTRIB_ID 10000
-
 namespace SCE {
 
     class Camera;

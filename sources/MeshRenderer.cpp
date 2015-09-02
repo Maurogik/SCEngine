@@ -20,6 +20,10 @@
 #include "../headers/Mesh.hpp"
 #include "../headers/Material.hpp"
 
+
+#define MAX_ATTRIB_ID 10000
+
+
 using namespace SCE;
 using namespace std;
 
@@ -47,85 +51,16 @@ void MeshRenderer::Render(const CameraRenderData& renderData, bool renderFullScr
 {
     SCEHandle<Transform> transform = GetContainer()->GetComponent<Transform>();
 
-    GLint shaderProgram;
-    glGetIntegerv(GL_CURRENT_PROGRAM, &shaderProgram);
+    glm::mat4 modelMatrx;
 
-    MeshRenderData& meshRenderData = SCEMeshRender::GetMeshRenderData(mMeshId, shaderProgram);
-    const ShaderData &shaderData = meshRenderData.shaderData[shaderProgram];
-    const vector<AttributeData>& attributes = meshRenderData.attributes;
-    GLuint indiceCount = meshRenderData.indiceCount;
-    GLuint indiceBuffer = meshRenderData.indiceBuffer;
-
-    //bind mesh data
-    glBindVertexArray(meshRenderData.vaoID);
-
-    glm::mat4 projectionMatrix  = mat4(1.0);
-    glm::mat4 viewMatrix        = mat4(1.0);
-    glm::mat4 modelMatrix       = mat4(1.0);
-
-    projectionMatrix  = renderData.projectionMatrix;
-    viewMatrix        = renderData.viewMatrix;
-
-    if(!renderFullScreenQuad)
+    if(renderFullScreenQuad)
     {
-        modelMatrix     = transform->GetWorldTransform();
+         modelMatrx = glm::inverse(renderData.projectionMatrix * renderData.viewMatrix);
     }
     else
     {
-        modelMatrix     = glm::inverse(projectionMatrix * viewMatrix);
+         modelMatrx = transform->GetWorldTransform();
     }
-
-    glm::mat4 MVP       = projectionMatrix * viewMatrix * modelMatrix;
-
-    // Send our transformation to the currently bound shader,
-    // in the "MVP" uniform
-    glUniformMatrix4fv(shaderData.MVPMatrixLocation, 1, GL_FALSE, &MVP[0][0]);
-    glUniformMatrix4fv(shaderData.ModelMatrixLocation, 1, GL_FALSE, &modelMatrix[0][0]);
-    glUniformMatrix4fv(shaderData.ViewMatrixLocation, 1, GL_FALSE, &viewMatrix[0][0]);
-    glUniformMatrix4fv(shaderData.ProjectionMatrixLocation, 1, GL_FALSE, &projectionMatrix[0][0]);
-
-    //set the attributes
-    for(size_t i = 0; i < attributes.size(); ++i)
-    {
-        GLuint attribLocation = shaderData.attribLocations[i];
-
-        if(attribLocation < MAX_ATTRIB_ID)
-        {
-            glEnableVertexAttribArray(attribLocation);
-            glBindBuffer(GL_ARRAY_BUFFER, attributes[i].dataBufferId);
-            glVertexAttribPointer(
-                        attribLocation,             // The attribute we want to configure
-                        attributes[i].typeSize,     // size
-                        attributes[i].type,         // typeC
-                        GL_FALSE,                   // normalized?
-                        0,                          // stride
-                        (void*)0                    // array buffer offset
-                        );
-        }
-    }
-
-    // Index buffer
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indiceBuffer);
-
-    // Draw the triangles !
-    glDrawElements(
-                GL_TRIANGLES,       // mode
-                indiceCount,       // count
-                GL_UNSIGNED_SHORT,  // type
-                (void*)0            // element array buffer offset
-                );
-
-    glBindVertexArray(0);
-
-    //clean the attributes
-    for(size_t i = 0; i < attributes.size(); ++i)
-    {
-        GLuint attribLocation = shaderData.attribLocations[i];
-        if(attribLocation < MAX_ATTRIB_ID)
-        {
-            glDisableVertexAttribArray(attribLocation);
-        }
-    }
-
+    SCEMeshRender::RenderMesh(mMeshId, renderData.projectionMatrix, renderData.viewMatrix, modelMatrx);
 }
 

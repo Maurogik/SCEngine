@@ -94,6 +94,76 @@ void SCEMeshRender::DeleteMeshRenderData(uint meshId)
     s_instance->mMeshRenderData.erase(it);
 }
 
+void SCEMeshRender::RenderMesh(ui16 meshId,
+                               const glm::mat4 projectionMatrix,
+                               const glm::mat4 viewMatrix,
+                               const glm::mat4 modelMatrix)
+{
+    GLint shaderProgram;
+    glGetIntegerv(GL_CURRENT_PROGRAM, &shaderProgram);
+
+    MeshRenderData& meshRenderData = SCEMeshRender::GetMeshRenderData(meshId, shaderProgram);
+    const ShaderData &shaderData = meshRenderData.shaderData[shaderProgram];
+    const vector<AttributeData>& attributes = meshRenderData.attributes;
+    GLuint indiceCount = meshRenderData.indiceCount;
+    GLuint indiceBuffer = meshRenderData.indiceBuffer;
+
+    //bind mesh data
+    glBindVertexArray(meshRenderData.vaoID);
+
+    glm::mat4 MVP       = projectionMatrix * viewMatrix * modelMatrix;
+
+    // Send our transformation to the currently bound shader,
+    // in the "MVP" uniform
+    glUniformMatrix4fv(shaderData.MVPMatrixLocation, 1, GL_FALSE, &(MVP[0][0]));
+    glUniformMatrix4fv(shaderData.ModelMatrixLocation, 1, GL_FALSE, &(modelMatrix[0][0]));
+    glUniformMatrix4fv(shaderData.ViewMatrixLocation, 1, GL_FALSE, &(viewMatrix[0][0]));
+    glUniformMatrix4fv(shaderData.ProjectionMatrixLocation, 1, GL_FALSE, &(projectionMatrix[0][0]));
+
+    //set the attributes
+    for(size_t i = 0; i < attributes.size(); ++i)
+    {
+        GLuint attribLocation = shaderData.attribLocations[i];
+
+        if(attribLocation < (GLuint)-1)
+        {
+            glEnableVertexAttribArray(attribLocation);
+            glBindBuffer(GL_ARRAY_BUFFER, attributes[i].dataBufferId);
+            glVertexAttribPointer(
+                        attribLocation,             // The attribute we want to configure
+                        attributes[i].nbValues,     // size
+                        attributes[i].type,         // typeC
+                        GL_FALSE,                   // normalized?
+                        0,                          // stride
+                        (void*)0                    // array buffer offset
+                        );
+        }
+    }
+
+    // Index buffer
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indiceBuffer);
+
+    // Draw the triangles !
+    glDrawElements(
+                GL_TRIANGLES,       // mode
+                indiceCount,       // count
+                GL_UNSIGNED_SHORT,  // type
+                (void*)0            // element array buffer offset
+                );
+
+    glBindVertexArray(0);
+
+    //clean the attributes
+    for(size_t i = 0; i < attributes.size(); ++i)
+    {
+        GLuint attribLocation = shaderData.attribLocations[i];
+        if(attribLocation < (GLuint)-1)
+        {
+            glDisableVertexAttribArray(attribLocation);
+        }
+    }
+}
+
 void SCEMeshRender::initializeGLData(uint meshId)
 {
     Internal::Log("Initializing mesh renderer data");
@@ -185,8 +255,8 @@ void SCEMeshRender::initializeShaderData(MeshRenderData& renderData, GLuint prog
 void SCEMeshRender::addAttribute(MeshRenderData& renderData,
                                  void* buffer,
                                  size_t size,
-                                 int type,
-                                 size_t typedSize)
+                                 GLenum type,
+                                 size_t nbValues)
 {
     AttributeData attribData;
 
@@ -197,7 +267,7 @@ void SCEMeshRender::addAttribute(MeshRenderData& renderData,
                  , buffer, GL_STATIC_DRAW);
 
     attribData.type = type;
-    attribData.typeSize= typedSize;
+    attribData.nbValues = nbValues;
     attribData.buffer = buffer;
     renderData.attributes.push_back(attribData);
 }

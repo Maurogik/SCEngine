@@ -260,8 +260,8 @@ int main( void )
 //    light2->GetComponent<Light>()->SetLightColor(vec4(0.0, 1.0, 0.0, 1.0));
 
 
-//    scene1();
-    scene2();
+    scene1();
+//    scene2();
 
     //Camera
     SCEHandle<Container> cameraObject = SCEScene::CreateContainer("cameraObject");

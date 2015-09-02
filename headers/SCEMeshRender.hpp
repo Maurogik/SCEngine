@@ -28,8 +28,8 @@ namespace SCE
     {
         GLuint                      dataBufferId;
         void*                       buffer;
-        size_t                      typeSize;
-        int                         type;
+        size_t                      nbValues;
+        GLenum                      type;
     };
 
     //store mandatory uniforms and attributes locations per shader
@@ -70,6 +70,11 @@ namespace SCE
         static MeshRenderData&  GetMeshRenderData(uint meshId, GLuint shaderProgram);
         static void             DeleteMeshRenderData(uint meshId);
 
+        static void             RenderMesh(ui16 meshId,
+                                           const mat4 projectionMatrix,
+                                           const mat4 viewMatrix,
+                                           const mat4 modelMatrix);
+
     private :
 
         static SCEMeshRender*         s_instance;
@@ -84,8 +89,8 @@ namespace SCE
         void            addAttribute(MeshRenderData& renderData,
                                      void* buffer,
                                      size_t size,
-                                     int type,
-                                     size_t typedSize);
+                                     GLenum type,
+                                     size_t nbValues);
         void            cleanupGLRenderData(MeshRenderData& renderData);
     };
 }
