@@ -44,25 +44,29 @@ _{
 
     layout (location = 0) out vec3 oPosition;
     layout (location = 1) out vec3 oColor;
-    layout (location = 2) out vec3 oNormal;
+    layout (location = 2) out vec4 oNormal;
 
     uniform sampler2D MainTex;
     uniform sampler2D NormalMap;
+    uniform float Specularity;
     uniform float ScaleU;
     uniform float ScaleV;
 
     void main()
     {
-        oColor = texture2D(MainTex, fragUV * vec2(ScaleU, ScaleV)).xyz;
-        //gamma expansion of texture because it is store gamma corrected and we will do
-        //our own gamma correction in the last shading pass
+        vec2 uv = vec2(fragUV);
+        oColor = texture2D(MainTex, uv * vec2(ScaleU, ScaleV)).xyz;
+        //convert color to linear space
+        //will do gamma correction in the last shading pass
         oColor = pow(oColor, vec3(2.2));
 
         oPosition = Position_worldspace;
 
-        vec3 normal = texture2D(NormalMap, fragUV * vec2(ScaleU, ScaleV)).xyz;
-//        normal = normal * 2.0 - vec3(1.0);
+        vec3 normal = texture2D(NormalMap, uv * vec2(ScaleU, ScaleV)).xyz;
+        normal = normal * 2.0 - vec3(1.0);
         normal = normalize(tangentToWorldspace * normal);
-        oNormal = normal;
+        oNormal.xyz = normal;
+        //specularity
+        oNormal.a = Specularity;
     }
 _}

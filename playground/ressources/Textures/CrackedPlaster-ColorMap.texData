@@ -1,9 +1,9 @@
 {
-    "Name": "Textures/diffuse-bubble.jpg",
+    "Name": "Textures/CrackedPlaster/color.png",
     "Texture": {
         "Format": "DDS",
         "Mipmaps": true,
         "Wrapping": "Repeat"
-	}
+    }
 }
 

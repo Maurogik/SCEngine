@@ -1,9 +1,13 @@
 {
-    "Name": "TestMaterial",
-    "Shader": "Shaders/White",
+    "Name": "GroundMaterial",
+    "Shader": "Shaders/TexturedNormal",
     "Material": {
-		"Data": [  
-
-		]
-	}
+        "Data": [
+            {"Name": "MainTex", "Type": "Texture2D", "Value": "Textures/GraniteWall-ColorMap"},
+            {"Name": "NormalMap", "Type": "Texture2D", "Value": "Textures/GraniteWall-NormalMap"},
+            {"Name": "ScaleU", "Type": "float", "Value": "150.0"},
+            {"Name": "ScaleV", "Type": "float", "Value": "150.0"},
+            {"Name": "Specularity", "Type": "float", "Value": "16.0"}
+        ]
+    }
 }

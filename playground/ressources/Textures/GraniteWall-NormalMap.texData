@@ -1,9 +1,9 @@
 {
-    "Name": "Textures/diffuse-bubble.jpg",
+    "Name": "Textures/GraniteWall/normal.png",
     "Texture": {
         "Format": "DDS",
         "Mipmaps": true,
         "Wrapping": "Repeat"
-	}
+    }
 }
 
