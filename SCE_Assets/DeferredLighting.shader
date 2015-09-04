@@ -80,7 +80,7 @@ _{
 
         vec3 light  = vec3(
                     NdotL, //diffuse lighting
-                    pow(EdotL, in_Light_Specular), //specular component
+                    pow(EdotL, 16.0) * in_Light_Specular, //specular component
                     shadow);
 
         return light;
@@ -110,7 +110,7 @@ _{
 
         vec3 light  = vec3(
                     NdotL, //diffuse lighting
-                    pow(EdotL, in_Light_Specular), //specular component
+                    pow(EdotL, 16.0) * in_Light_Specular, //specular component
                     0.0);
 
         light *= attenuation;
@@ -142,7 +142,7 @@ _{
 
         vec3 light  = vec3(
                     NdotL, //diffuse lighting
-                    pow(EdotL, in_Light_Specular), //specular component
+                    pow(EdotL, 16.0) * in_Light_Specular, //specular component
                     0.0);
 
         light *= attenuation * spotAttenuation;
@@ -154,7 +154,7 @@ _{
 
 
     #define CASCADE_COUNT 4
-    #define SHADOW_BIAS 0.00005
+    #define SHADOW_BIAS 0.0005
     #define SHADOW_MAP_SIZE 2048.0
 
     out vec4 color;
@@ -246,9 +246,9 @@ _{
         int sampleCount = 4;
         float eyeDist = distance(pos_worldspace, SCE_EyePosition_worldspace);
         vec3 pos_cameraspace = (V * vec4(pos_worldspace, 1.0)).xyz;
-        //float bias = SHADOW_BIAS * (1.0 - dot(lightDir_worldspace, - normal_worldspace));
-        float cosTheta = clamp(dot(-lightDir_worldspace, normal_worldspace), 0.0, 1.0);
-        float bias = SHADOW_BIAS * tan(acos(cosTheta));
+
+        /*float biasOffset = 1.0 - clamp(dot(-lightDir_worldspace, normal_worldspace), 0.0, 1.0);
+        float bias = SHADOW_BIAS * biasOffset;*/
 
         float shadow = 0.0;
         vec4 position_depthspace = vec4(0.0);
