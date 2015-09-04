@@ -454,35 +454,35 @@ uint SCEMeshLoader::CreateCubeMesh()
     vector<vec2> uvs = vector<vec2>
     {
            // Front face
-           vec2(0.33f, 0.25f),
-           vec2(0.66f, 0.25f),
-           vec2(0.66f, 0.00f),
-           vec2(0.33f, 0.00f),
+           vec2(0.0f, 0.0f),
+           vec2(1.0f, 0.0f),
+           vec2(1.0f, 1.0f),
+           vec2(0.0f, 1.0f),
            // Back face
-           vec2(0.33f, 0.50f),
-           vec2(0.33f, 0.75f),
-           vec2(0.66f, 0.75f),
-           vec2(0.66f, 0.50f),
+           vec2(0.0f, 0.0f),
+           vec2(1.0f, 0.0f),
+           vec2(1.0f, 1.0f),
+           vec2(0.0f, 1.0f),
            // Top face
-           vec2(0.33f, 1.00f),
-           vec2(0.33f, 0.75f),
-           vec2(0.66f, 1.00f),
-           vec2(0.66f, 0.75f),
+           vec2(0.0f, 0.0f),
+           vec2(1.0f, 0.0f),
+           vec2(1.0f, 1.0f),
+           vec2(0.0f, 1.0f),
            // Bottom face
-           vec2(0.33f, 0.25f),
-           vec2(0.66f, 0.25f),
-           vec2(0.66f, 0.50f),
-           vec2(0.33f, 0.50f),
+           vec2(0.0f, 0.0f),
+           vec2(1.0f, 0.0f),
+           vec2(1.0f, 1.0f),
+           vec2(0.0f, 1.0f),
            // Right face
-           vec2(0.66f, 0.25f),
-           vec2(1.00f, 0.25f),
-           vec2(1.00f, 0.50f),
-           vec2(0.66f, 0.50f),
+           vec2(0.0f, 0.0f),
+           vec2(1.0f, 0.0f),
+           vec2(1.0f, 1.0f),
+           vec2(0.0f, 1.0f),
            // Left face
-           vec2(0.33f, 0.25f),
-           vec2(0.33f, 0.50f),
-           vec2(0.00f, 0.50f),
-           vec2(0.00f, 0.25f)
+           vec2(0.0f, 0.0f),
+           vec2(1.0f, 0.0f),
+           vec2(1.0f, 1.0f),
+           vec2(0.0f, 1.0f)
     };
 
     vec3 normalArray[8]

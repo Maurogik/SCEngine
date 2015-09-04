@@ -3,6 +3,7 @@
 /*********AUTHOR:Gwenn AUBERT**********/
 /********FILE:SkyShader.shader*********/
 /**************************************/
+/**************** 800µs ***************/
 
 VertexShader :
 _{
@@ -57,7 +58,7 @@ _{
         vec3 whitePoint = vec3(7.0);
 
         float lum = textureLod(LuminanceTex, uv, numLevels-1).r;
-        float exposure = 1.4 / lum;
+        float exposure = 1.5 / lum;
         vec3 hdrColor = sceneColor.xyz;
         color.rgb = hdrColor;
         color.rgb = Uncharted2Tonemap(hdrColor * exposure) / Uncharted2Tonemap(whitePoint);

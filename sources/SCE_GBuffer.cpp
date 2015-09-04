@@ -59,7 +59,14 @@ bool SCE_GBuffer::Init(uint windowWidth, uint windowHeight)
 
     for (uint i = 0 ; i < GBUFFER_TEXTURE_COUNT ; i++) {
         glBindTexture(GL_TEXTURE_2D, mTextures[i]);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, windowWidth, windowHeight, 0, GL_RGB, GL_FLOAT, NULL);
+        if(i == GBUFFER_TEXTURE_TYPE_NORMAL_SPEC)
+        {
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, windowWidth, windowHeight, 0, GL_RGBA, GL_FLOAT, NULL);
+        }
+        else
+        {
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, windowWidth, windowHeight, 0, GL_RGB, GL_FLOAT, NULL);
+        }
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
@@ -150,7 +157,13 @@ void SCE_GBuffer::BindForSkyPass()
     glBindFramebuffer(GL_FRAMEBUFFER, mFBOId);
 
     glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, mFinalTexture);
+    glUniform1i(0, 0);//FinalColorTex is sampler0
+
+    glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, mTextures[GBUFFER_TEXTURE_TYPE_POSITION]);
+    glUniform1i(1, 1);//PositionTex is sampler1
+
     glDrawBuffer(GL_COLOR_ATTACHMENT0 + FINAL_TEXT_ATTACHMENT);
 }
 

@@ -17,6 +17,7 @@ using namespace SCE;
 using namespace std;
 
 #define LIGHT_SHADER_NAME "DeferredLighting"
+//#define LIGHT_SHADER_NAME "DirectionalLight"
 #define STENCYL_SHADER_NAME "EmptyShader"
 #define SKY_SHADER_NAME "SkyShader"
 #define SHADOWMAP_UNIFORM_NAME "ShadowTex"
@@ -51,7 +52,7 @@ SCELighting::SCELighting()
     //the names ofthe tex sampler uniforms as they appear
     mTexSamplerNames[SCE_GBuffer::GBUFFER_TEXTURE_TYPE_POSITION] = "PositionTex";
     mTexSamplerNames[SCE_GBuffer::GBUFFER_TEXTURE_TYPE_DIFFUSE] = "DiffuseTex";
-    mTexSamplerNames[SCE_GBuffer::GBUFFER_TEXTURE_TYPE_NORMAL] = "NormalTex";
+    mTexSamplerNames[SCE_GBuffer::GBUFFER_TEXTURE_TYPE_NORMAL_SPEC] = "NormalTex";
 
     mShadowMapFBO.Init(SHADOW_MAP_WIDTH, SHADOW_MAP_HEIGHT, CASCADE_COUNT);
 
@@ -170,6 +171,7 @@ void SCELighting::RenderSkyToGBuffer(const CameraRenderData& renderData, SCE_GBu
     glDepthMask(GL_FALSE);
     if(s_instance->mMainLight)
     {
+        glUseProgram(s_instance->mSkyShader);
         gBuffer.BindForSkyPass();
         s_instance->renderSkyPass(renderData);
     }
@@ -313,14 +315,10 @@ void SCELighting::unregisterLight(SCEHandle<Light> light)
 }
 
 void SCELighting::renderSkyPass(const CameraRenderData& renderData)
-{
-    glUseProgram(mSkyShader);
+{    
     SCEShaders::BindDefaultUniforms(mSkyShader);
     glDisable(GL_DEPTH_TEST);
     glCullFace(GL_FRONT);
-    glEnable(GL_BLEND);
-    glBlendEquation(GL_FUNC_ADD);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     vec3 sunPosition = mMainLight->GetContainer()->GetComponent<Transform>()->GetWorldPosition();
     //only a screen space quad, don't need depth testing
@@ -333,7 +331,6 @@ void SCELighting::renderSkyPass(const CameraRenderData& renderData)
 
     glCullFace(GL_BACK);
     glEnable(GL_DEPTH_TEST);
-    glDisable(GL_BLEND);
 }
 
 void SCELighting::renderLightStencilPass(const CameraRenderData& renderData, SCEHandle<Light> &light)

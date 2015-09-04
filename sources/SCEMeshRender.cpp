@@ -151,8 +151,6 @@ void SCEMeshRender::RenderMesh(ui16 meshId,
                 (void*)0            // element array buffer offset
                 );
 
-    glBindVertexArray(0);
-
     //clean the attributes
     for(size_t i = 0; i < attributes.size(); ++i)
     {
@@ -162,6 +160,9 @@ void SCEMeshRender::RenderMesh(ui16 meshId,
             glDisableVertexAttribArray(attribLocation);
         }
     }
+
+    glBindVertexArray(0);
+
 }
 
 void SCEMeshRender::initializeGLData(uint meshId)

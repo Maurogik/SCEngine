@@ -8,6 +8,7 @@
 #include "../headers/SCETools.hpp"
 
 #include <common/vboindexer.hpp>
+#include <common/tangentspace.hpp>
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
@@ -38,6 +39,10 @@ void addNodeMeshIndexed(const aiScene* scenePointer,
                  std::vector<vec3>&      out_tangents,
                  std::vector<vec3>&      out_bitangents);
 
+
+
+
+
 void SCE::AssimpLoader::LoadModel(const std::string&      path,
                                     std::vector<ushort>&    out_indices,
                                     std::vector<vec3>&      out_vertices,
@@ -53,7 +58,8 @@ void SCE::AssimpLoader::LoadModel(const std::string&      path,
 //                                                    | aiProcess_JoinIdenticalVertices
                                                     | aiProcess_GenSmoothNormals
                                                     | aiProcess_CalcTangentSpace
-                                                    | aiProcess_GenUVCoords
+//                                                    | aiProcess_GenUVCoords
+//                                                    | aiProcess_FlipUVs
                                                     | aiProcess_SortByPType
 //                                                    | aiProcess_OptimizeGraph
 //                                                    | aiProcess_OptimizeMeshes
@@ -75,6 +81,10 @@ void SCE::AssimpLoader::LoadModel(const std::string&      path,
     addNodeMesh(scenePointer, scenePointer->mRootNode, aiMatrix4x4(), winCW,
                 tmp_indices, tmp_vertices, tmp_normals, tmp_uvs, tmp_tangents, tmp_bitangents);
 
+
+//    computeTangentBasis(tmp_vertices, tmp_uvs, tmp_normals, tmp_tangents, tmp_bitangents);
+
+    //do our own indexing because assimp give weird result on some meshes
     indexVBO_TBN(tmp_vertices, tmp_uvs, tmp_normals, tmp_tangents, tmp_bitangents,
                  out_indices, out_vertices, out_uvs, out_normals, out_tangents, out_bitangents);
 

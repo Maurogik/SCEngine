@@ -60,15 +60,15 @@ SCEHandle<Container> createCube(const string& name, const vec3& pos,
     return object;
 }
 
-SCEHandle<Container> createPlane(const string& name, float size, const vec3& pos){
+SCEHandle<Container> createPlane(const string& name, const string& mat, float size, const vec3& pos){
     //cube model
     SCEHandle<Container> object = SCEScene::CreateContainer(name);
 
-    object->AddComponent<Material>(GROUND_MATERIAL);
+    object->AddComponent<Material>(mat);
 
     SCEHandle<Transform> transform = object->AddComponent<Transform>();
     transform->SetWorldPosition(pos);
-    transform->SetLocalScale(vec3(size, size, 1.0f));
+    transform->SetLocalScale(vec3(size, size, size));
 
     Mesh::AddQuadMesh(object);
     object->AddComponent<MeshRenderer>();
@@ -76,11 +76,12 @@ SCEHandle<Container> createPlane(const string& name, float size, const vec3& pos
     return object;
 }
 
-SCEHandle<Container> createModel(const string& objectName, const string& filename, const vec3& pos,
+SCEHandle<Container> createModel(const string& objectName, const string& filename,  const string& mat,
+                                 const vec3& pos,
                                  bool windCW = false){
     SCEHandle<Container> object = SCEScene::CreateContainer(objectName);
 
-    object->AddComponent<Material>(MATERIAL);
+    object->AddComponent<Material>(mat);
 
     SCEHandle<Transform> transform = object->AddComponent<Transform>();
     transform->SetWorldPosition(pos);
@@ -88,6 +89,11 @@ SCEHandle<Container> createModel(const string& objectName, const string& filenam
     object->AddComponent<MeshRenderer>();
 
     return object;
+}
+
+SCEHandle<Container> createModel(const string& objectName, const string& filename, const vec3& pos,
+                                 bool windCW = false){
+    return createModel(objectName, filename, string(MATERIAL), pos, windCW);
 }
 
 SCEHandle<Container> createLight(vec3 pos, vec3 orientation, LightType type){
@@ -108,11 +114,10 @@ void scene1()
     SCEHandle<Container> wallObj = createCube("cubeObject", vec3(0.0f, 3.0f, 5.0f),
                                               WALL_MATERIAL);
     SCEHandle<Transform> wallTransform = wallObj->GetComponent<Transform>();
-    wallTransform->SetLocalScale(vec3(10.0f, 10.0f, 2.0f));
-    wallTransform->RotateAroundAxis(vec3(0.0, 0.0, 1.0), 90.0);
+    wallTransform->SetLocalScale(vec3(10.0f, 10.0f, 10.0f));
 
 
-    SCEHandle<Container> plane = createPlane("plane", 500.0f, vec3(0.0f, -2.0f, 2.0f));
+    SCEHandle<Container> plane = createPlane("plane", GROUND_MATERIAL, 500.0f, vec3(0.0f, -2.0f, 2.0f));
     plane->GetComponent<Transform>()->SetWorldOrientation(vec3(-90.0f, 180.0f, 0.0f));
 
     //Suzanne model
@@ -138,11 +143,9 @@ void scene1()
 
 void scene2()
 {
-    SCEHandle<Container> wallObj = createCube("cubeObject", vec3(0.0f, 3.0f, 5.0f),
-                                              WALL_MATERIAL);
+    SCEHandle<Container> wallObj = createPlane("plane", WALL_MATERIAL, 500.0f, vec3(0.0f, -2.0f, 2.0f));
     SCEHandle<Transform> wallTransform = wallObj->GetComponent<Transform>();
-    wallTransform->SetLocalScale(vec3(10.0f, 10.0f, 2.0f));
-    wallTransform->RotateAroundAxis(vec3(0.0, 0.0, 1.0), 90.0);
+    wallTransform->SetLocalScale(vec3(10.0f, 10.0f, 10.0f));
 
     SCEHandle<Container> cubeObj = createCube("cubeObject", vec3(0.0f, -0.9f, 0.0f),
                                               WALL_MATERIAL);
@@ -150,7 +153,7 @@ void scene2()
     cube->SetLocalScale(vec3(2.0f, 2.0f, 2.0f));
 
 
-    SCEHandle<Container> plane = createPlane("plane", 500.0f, vec3(0.0f, -2.0f, 2.0f));
+    SCEHandle<Container> plane = createPlane("plane", GROUND_MATERIAL, 500.0f, vec3(0.0f, -2.0f, 2.0f));
     plane->GetComponent<Transform>()->SetWorldOrientation(vec3(-90.0f, 180.0f, 0.0f));
 
     float tileScale = 0.5;
@@ -237,6 +240,51 @@ void scene2()
 
 }
 
+void scene3()
+{
+    SCEHandle<Container> wallObj = createPlane("wall", WALL_MATERIAL, 500.0f, vec3(0.0f, 3.0f, 3.0f));
+    SCEHandle<Transform> wallTransform = wallObj->GetComponent<Transform>();
+    wallTransform->SetLocalScale(vec3(5.0f));
+    wallTransform->SetWorldOrientation(vec3(0.0f, 180.0f, 0.0f));
+
+    SCEHandle<Material> wallMat = wallObj->GetComponent<Material>();
+    wallMat->SetUniformValue("ScaleU", 2.0f);
+    wallMat->SetUniformValue("ScaleV", 2.0f);
+
+    SCEHandle<Container> cubeObj = createCube("cubeObject", vec3(0.0f, -0.9f, 0.0f), WALL_MATERIAL);
+    SCEHandle<Transform> cube = cubeObj->GetComponent<Transform>();
+    cube->SetLocalScale(vec3(2.0f, 2.0f, 2.0f));
+
+
+    SCEHandle<Container> plane = createPlane("plane", GROUND_MATERIAL, 500.0f, vec3(0.0f, -2.0f, 0.0f));
+    plane->GetComponent<Transform>()->SetWorldOrientation(vec3(-90.0f, 180.0f, 0.0f));
+
+
+    SCEHandle<Container> house = createModel("house", "Meshes/house_obj.obj",
+                                              vec3(-15.0f, -2.1f, 15.0f));
+    house->GetComponent<Transform>()->SetLocalScale(vec3(0.015f));
+    house->GetComponent<Transform>()->RotateAroundAxis(vec3(0.0, 1.0, 0.0), 180.0f);
+
+
+    SCEHandle<Container> avion = createModel("avion", "Meshes/Eurofighter.obj", "Materials/Plane",
+                                              vec3(10.0f, 5.0f, 0.0f), false);
+    avion->GetComponent<Transform>()->SetLocalScale(vec3(1.0f));
+
+
+    SCEHandle<Container> trex = createModel("t-rex",
+                                              "Meshes/T_REX.OBJ", "Materials/Rex",
+                                              vec3(-20.0f, -1.9f, 0.0f), false);
+    trex->GetComponent<Transform>()->SetLocalScale(vec3(1.0f));
+    trex->GetComponent<Transform>()->RotateAroundAxis(vec3(0.0, 1.0, 0.0), 135.0f);
+
+
+    SCEHandle<Container> scorpion = createModel("scorpion",
+                                              "Meshes/SCORPION.OBJ", string("Materials/Scorpion"),
+                                              vec3(-15.0f, -1.87f, -5.0f), false);
+    scorpion->GetComponent<Transform>()->SetLocalScale(vec3(30.0f));
+    scorpion->GetComponent<Transform>()->RotateAroundAxis(vec3(0.0, 1.0, 0.0), -45.0f);
+}
+
 int main( void )
 {
     SCECore engine;
@@ -247,7 +295,7 @@ int main( void )
     SCEHandle<Container> dirLight = createLight(vec3(0, 200, -200),
                                                 vec3(40, 0, 0),
                                                 LightType::DIRECTIONAL_LIGHT);
-    dirLight->GetComponent<Light>()->SetLightColor(vec4(0.8, 0.8, 1.0, 0.7));
+    dirLight->GetComponent<Light>()->SetLightColor(vec4(1.0, 1.0, 0.8, 0.7));
     dirLight->GetComponent<Light>()->SetIsSunLight(true);
 
 //    SCEHandle<Container> light1 = createLight(vec3(2, 3, -1), vec3(30, 0, 30), LightType::POINT_LIGHT);
@@ -260,8 +308,9 @@ int main( void )
 //    light2->GetComponent<Light>()->SetLightColor(vec4(0.0, 1.0, 0.0, 1.0));
 
 
-    scene1();
+//    scene1();
 //    scene2();
+    scene3();
 
     //Camera
     SCEHandle<Container> cameraObject = SCEScene::CreateContainer("cameraObject");

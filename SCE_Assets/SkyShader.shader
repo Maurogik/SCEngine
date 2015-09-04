@@ -3,6 +3,7 @@
 /*********AUTHOR:Gwenn AUBERT**********/
 /********FILE:SkyShader.shader*********/
 /**************************************/
+/**************** 1700µs **************/
 
 VertexShader :
 _{
@@ -28,7 +29,8 @@ _{
 
     uniform vec2        SCE_ScreenSize;
     uniform vec3        SunPosition_worldspace;
-    uniform sampler2D   PositionTex;
+    layout (location = 0) uniform sampler2D   FinalColorTex;
+    layout (location = 1) uniform sampler2D   PositionTex;
 
     uniform mat4 V;
     uniform mat4 P;
@@ -63,7 +65,7 @@ _{
         vec3 eyeToSky = normalize(vec3(fixedNdc, 1.0));
 
         float sun = clamp(dot(eyeToSun, eyeToSky), 0.0, 1.0);
-        sun = pow(sun, 6.0) * 0.2 + smoothstep(0.0, 0.0035, sun - 0.996);
+        sun = pow(sun, 6.0) * 0.2 + smoothstep(0.0, 0.0035, sun - 0.997);
         sun = clamp(sun, 0.0, 1.0);
 
         vec3 sunColor = vec3(1.0, 1.0, 0.9) * 10.0;
@@ -75,13 +77,15 @@ _{
         //use position in model space as uv since we are rendering a simple quad
         vec2 uv = gl_FragCoord.xy / SCE_ScreenSize;
         vec3 Position_worldpsace = texture2D(PositionTex, uv).xyz;
+        vec4 sceneColor = texture(FinalColorTex, uv);
 
         float fogStr = 0.001;
         float dist = abs((V * vec4(Position_worldpsace, 1.0)).z);
         float fogAmount = 1.0 - exp( -dist * fogStr );
-        fogAmount = min(1.0, fogAmount + step(dot(Position_worldpsace, Position_worldpsace), 0.01));
+        fogAmount = min(1.0, fogAmount + step(dot(Position_worldpsace, Position_worldpsace), 0.0001));
 
-        color.rgb = getSkyColor(uv * 2.0 - vec2(1.0));
-        color.a = fogAmount;
+        vec4 skyColor = vec4(getSkyColor(uv * 2.0 - vec2(1.0)), 1.0);
+
+        color = mix(sceneColor, skyColor, fogAmount);
     }
 _}

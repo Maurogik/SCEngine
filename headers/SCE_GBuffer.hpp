@@ -20,7 +20,7 @@ namespace SCE {
         enum GBUFFER_TEXTURE_TYPE {
             GBUFFER_TEXTURE_TYPE_POSITION = 0,
             GBUFFER_TEXTURE_TYPE_DIFFUSE,
-            GBUFFER_TEXTURE_TYPE_NORMAL,
+            GBUFFER_TEXTURE_TYPE_NORMAL_SPEC,
             GBUFFER_NUM_TEXTURES
         };
 
