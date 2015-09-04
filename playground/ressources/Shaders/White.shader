@@ -40,6 +40,6 @@ _{
         //compressed normal
         oNormal.xyz = normalize(Normal_worldspace);
         //specularity
-        oNormal.a = 16.0;
+        oNormal.a = 1.0;
     }
 _}

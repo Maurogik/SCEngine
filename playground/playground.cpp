@@ -109,6 +109,34 @@ SCEHandle<Container> createLight(vec3 pos, vec3 orientation, LightType type){
     return lightObject;
 }
 
+float simpleGround()
+{
+    SCEHandle<Container> plane = createPlane("plane", GROUND_MATERIAL, 500.0f, vec3(0.0f, -2.0f, 0.0f));
+    plane->GetComponent<Transform>()->SetWorldOrientation(vec3(-90.0f, 180.0f, 0.0f));
+    return -2.0f;
+}
+
+float complexGround()
+{
+    //stones
+    float tileScale = 1.0;
+    float tileSize = 9.192f * tileScale;
+    float groundHalfWidth = 40.0f;
+    for(float x = -groundHalfWidth; x < groundHalfWidth; x += tileSize)
+    {
+        for(float z = -groundHalfWidth; z < groundHalfWidth; z += tileSize)
+        {
+            SCEHandle<Container> groundObj = createModel("groundObject",
+                                                         "Meshes/CobbleStones2.obj", "Materials/CobbleStone2",
+                                                         vec3(x, -2.1f, z));
+            groundObj->GetComponent<Transform>()->SetLocalScale(vec3(tileScale));
+        }
+
+    }
+
+    return -1.6f;
+}
+
 void scene1()
 {
     SCEHandle<Container> wallObj = createCube("cubeObject", vec3(0.0f, 3.0f, 5.0f),
@@ -141,7 +169,7 @@ void scene1()
     }
 }
 
-void scene2()
+/*void scene2()
 {
     SCEHandle<Container> wallObj = createPlane("plane", WALL_MATERIAL, 500.0f, vec3(0.0f, -2.0f, 2.0f));
     SCEHandle<Transform> wallTransform = wallObj->GetComponent<Transform>();
@@ -239,6 +267,7 @@ void scene2()
     mecha->GetComponent<Transform>()->RotateAroundAxis(vec3(0.0, 0.0, 1.0), 30.0f);
 
 }
+*/
 
 void scene3()
 {
@@ -255,13 +284,12 @@ void scene3()
     SCEHandle<Transform> cube = cubeObj->GetComponent<Transform>();
     cube->SetLocalScale(vec3(2.0f, 2.0f, 2.0f));
 
+    //ground
+    float groundY = simpleGround();//complexGround();
 
-    SCEHandle<Container> plane = createPlane("plane", GROUND_MATERIAL, 500.0f, vec3(0.0f, -2.0f, 0.0f));
-    plane->GetComponent<Transform>()->SetWorldOrientation(vec3(-90.0f, 180.0f, 0.0f));
-
-
+    //house
     SCEHandle<Container> house = createModel("house", "Meshes/house_obj.obj",
-                                              vec3(-15.0f, -2.1f, 15.0f));
+                                              vec3(-15.0f, groundY - 0.15f, 15.0f));
     house->GetComponent<Transform>()->SetLocalScale(vec3(0.015f));
     house->GetComponent<Transform>()->RotateAroundAxis(vec3(0.0, 1.0, 0.0), 180.0f);
 
@@ -273,14 +301,14 @@ void scene3()
 
     SCEHandle<Container> trex = createModel("t-rex",
                                               "Meshes/T_REX.OBJ", "Materials/Rex",
-                                              vec3(-20.0f, -1.9f, 0.0f), false);
+                                              vec3(-20.0f, groundY - 0.1f, 0.0f), false);
     trex->GetComponent<Transform>()->SetLocalScale(vec3(1.0f));
     trex->GetComponent<Transform>()->RotateAroundAxis(vec3(0.0, 1.0, 0.0), 135.0f);
 
 
     SCEHandle<Container> scorpion = createModel("scorpion",
                                               "Meshes/SCORPION.OBJ", string("Materials/Scorpion"),
-                                              vec3(-15.0f, -1.87f, -5.0f), false);
+                                              vec3(-15.0f, groundY, -5.0f), false);
     scorpion->GetComponent<Transform>()->SetLocalScale(vec3(30.0f));
     scorpion->GetComponent<Transform>()->RotateAroundAxis(vec3(0.0, 1.0, 0.0), -45.0f);
 }

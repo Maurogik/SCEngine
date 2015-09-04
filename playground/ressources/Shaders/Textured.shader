@@ -44,7 +44,7 @@ _{
 
     void main()
     {
-        vec2 uv = vec2(fragUV.y, fragUV.x);
+        vec2 uv = vec2(fragUV.x, fragUV.y);
         oColor = texture2D(MainTex, uv * vec2(ScaleU, ScaleV)).xyz;
         //gamma expansion of texture because it is store gamma corrected and we will do
         //our own gamma correction in the last shading pass

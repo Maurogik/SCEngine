@@ -1,0 +1,9 @@
+{
+    "Name": "Textures/CobbleStone2/normal.png",
+    "Texture": {
+        "Format": "DDS",
+        "Mipmaps": true,
+        "Wrapping": "Repeat"
+    }
+}
+
