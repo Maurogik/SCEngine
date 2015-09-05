@@ -7,7 +7,7 @@
         {"Name": "MainColor", "Type": "vec3", "Value": "(10.0, 10.0, 10.0)"},
         {"Name": "ScaleU", "Type": "float", "Value": "1.0"},
         {"Name": "ScaleV", "Type": "float", "Value": "1.0"},
-        {"Name": "Specularity", "Type": "float", "Value": "0.7"}
+        {"Name": "Specularity", "Type": "float", "Value": "0.3"}
 		]
 	}
 }

@@ -65,7 +65,8 @@ _{
         vec3 eyeToSky = normalize(vec3(fixedNdc, 1.0));
 
         float sun = clamp(dot(eyeToSun, eyeToSky), 0.0, 1.0);
-        sun = pow(sun, 6.0) * 0.2 + smoothstep(0.0, 0.0035, sun - 0.997);
+        sun = pow(sun - 0.085, 6.0) * 0.3 + smoothstep(0.0, 0.010, sun - 0.995);
+//        sun = pow(sun, 6.0) * 0.2 + smoothstep(0.0, 0.0035, sun - 0.997);
         sun = clamp(sun, 0.0, 1.0);
 
         vec3 sunColor = vec3(1.0, 1.0, 0.9) * 10.0;

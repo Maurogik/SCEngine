@@ -58,7 +58,6 @@ bool SCEShadowMap::Init(GLuint shadowmapWidth, GLuint shadowmapHeight, GLuint ca
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
 
-//    glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, mDepthTexture, 0);
     glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, mDepthTexture, 0, 0);
 
     GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
@@ -78,7 +77,6 @@ void SCEShadowMap::BindForShadowPass(GLuint cascadeId)
 {
     glBindFramebuffer(GL_FRAMEBUFFER, mFBOId);
     //bind the right level of the texture array
-//    glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, mDepthTexture, cascadeId);
     glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, mDepthTexture, 0, cascadeId);
 }
 

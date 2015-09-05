@@ -46,6 +46,7 @@ void SCECore::InitEngine(const std::string &windowName)
     glfwWindowHint(GLFW_DEPTH_BITS, 32);
     glfwWindowHint(GLFW_STENCIL_BITS, 8);
 
+
 //    glfwWindowHint(GLFW_REFRESH_RATE, 60);
 
 #ifdef SCE_DEBUG
