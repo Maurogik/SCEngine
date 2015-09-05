@@ -151,6 +151,30 @@ void SCEScene::UpdateScene()
     }
 
     transform->SetWorldPosition(position);
+
+
+    float brightnessSpeed = 1.0f;
+    float exposureSpeed = 0.2f;
+
+    if (glfwGetKey( window, GLFW_KEY_L ) == GLFW_PRESS)
+    {
+        SCERender::s_instance->mToneMapData.maxBrightness += brightnessSpeed * deltaTime;
+    }
+    else if (glfwGetKey( window, GLFW_KEY_U ) == GLFW_PRESS)
+    {
+        SCERender::s_instance->mToneMapData.maxBrightness -= brightnessSpeed * deltaTime;
+    }
+
+    if (glfwGetKey( window, GLFW_KEY_E ) == GLFW_PRESS)
+    {
+        SCERender::s_instance->mToneMapData.exposure += exposureSpeed * deltaTime;
+    }
+    else if (glfwGetKey( window, GLFW_KEY_F ) == GLFW_PRESS)
+    {
+        SCERender::s_instance->mToneMapData.exposure -= exposureSpeed * deltaTime;
+    }
+
+
     /** End of temporary**/
 }
 

@@ -22,7 +22,7 @@ namespace SCE
         ToneMappingData()
             : toneMapShader(-1), luminanceShader(-1),
               exposureUniform(-1), maxBrightnessUniform(-1),
-              exposure(1.0f), maxBrightness(10.0f) {}
+              exposure(0.85f), maxBrightness(3.5f) {}
 
         GLuint  toneMapShader;
         GLuint  luminanceShader;
@@ -44,14 +44,14 @@ namespace SCE
         static glm::mat4    FixOpenGLProjectionMatrix(const glm::mat4& projMat);
         static void         RenderFullScreenPass(glm::mat4 &projectionMatrix, glm::mat4 &viewMatrix);
 
+        ToneMappingData     mToneMapData;
+        static SCERender*   s_instance;
     private :
 
-        static SCERender*   s_instance;
 
         SCE_GBuffer         mGBuffer;
         glm::vec4           mDefaultClearColor;
         ui16                mQuadMeshId;
-        ToneMappingData     mToneMapData;
 
         SCERender();
 
