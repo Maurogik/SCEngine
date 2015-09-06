@@ -27,6 +27,9 @@ if( CMAKE_BINARY_DIR MATCHES " " )
     message( "Your Build Directory contains spaces. If you experience problems when compiling, this can be the cause." )
 endif()
 
+#include unity build system
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/CMake_Modules/")
+include(cotire)
 
 # Compile external dependencies (needs a cMakeList)
 add_subdirectory (external)
@@ -42,7 +45,7 @@ include_directories(SYSTEM
     external/glm-0.9.4.0/
     external/glew-1.9.0/include/
     external/assimp-3.0.1270/include/
-    external/bullet-2.81-rev2613/src/
+#    external/bullet-2.81-rev2613/src/
     external/rapidjson/
     .
 )
@@ -154,3 +157,5 @@ set(QMAKE_LFLAGS "${QMAKE_LFLAGS} -std=c++11")
 
 file( COPY "${TARGET}/ressources" DESTINATION "." )
 file( COPY "${SCE_PATH}/SCE_Assets" DESTINATION "." )
+
+cotire(${TARGET})
