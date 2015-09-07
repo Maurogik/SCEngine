@@ -22,7 +22,7 @@ namespace SCE
         ToneMappingData()
             : toneMapShader(-1), luminanceShader(-1),
               exposureUniform(-1), maxBrightnessUniform(-1),
-              exposure(0.85f), maxBrightness(3.5f) {}
+              exposure(0.85f), maxBrightness(15.5f) {}
 
         GLuint  toneMapShader;
         GLuint  luminanceShader;

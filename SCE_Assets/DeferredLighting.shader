@@ -10,14 +10,6 @@ _{
     uniform mat4 V;
     uniform mat4 P;
 
-    uniform vec3    SCE_EyePosition_worldspace;
-    uniform vec3    SCE_LightPosition_worldspace;
-    uniform vec3    SCE_LightDirection_worldspace;
-    uniform float   SCE_LightReach_worldspace;
-    uniform vec4    SCE_LightColor;
-    uniform float   SCE_SpotAttenuation;
-    uniform float   SCE_LightCutoff;
-
     void main()
     {
         gl_Position                 = MVP * vec4(vertexPosition_modelspace, 1.0);
@@ -28,15 +20,34 @@ FragmentShader :
 _{
 #version 430 core
 
+    #define CASCADE_COUNT 4
+    #define SHADOW_BIAS 0.0005
+    #define SHADOW_MAP_SIZE 2048.0
+
+
     uniform vec2    SCE_ScreenSize;
     uniform vec3    SCE_EyePosition_worldspace;
     uniform vec3    SCE_LightPosition_worldspace;
     uniform vec3    SCE_LightDirection_worldspace;
     uniform float   SCE_LightReach_worldspace;
     uniform vec4    SCE_LightColor;
-    uniform float   SCE_SpotAttenuation;
-    uniform float   SCE_LightCutoff;
+    uniform float   SCE_LightMaxDotAngle;
     uniform float   SCE_ShadowStrength;
+
+    uniform mat4        DepthConvertMat[CASCADE_COUNT];
+    uniform mat4        V;
+    uniform mat4        P;
+
+    uniform float       FarSplits_cameraspace[CASCADE_COUNT];
+
+    uniform sampler2D   PositionTex;
+    uniform sampler2D   DiffuseTex;
+    uniform sampler2D   NormalTex;
+    //    uniform sampler2D   ShadowTex;
+    uniform sampler2DArrayShadow ShadowTex;
+
+    out vec4 color;
+
 
 #define LIGHT_SUBROUTINE_PARAMS \
     in vec3 in_Position_worldspace,\
@@ -100,13 +111,10 @@ _{
 
         float lightReach    = in_LightReach_worldspace;
 
+        //hackish attenuation, but works well
         float dist          = length(in_LightToFrag_worldspace);
-        float d = max(dist - lightReach, 0);
-        // calculate basic attenuation
-        float denom = d/lightReach + 1;
-        float attenuation = 1 / (denom*denom);
-        attenuation = (attenuation - SCE_LightCutoff) / (1 - SCE_LightCutoff);
-        attenuation = max(attenuation, 0);
+        float d             = mapToRange(0.0, lightReach, 1.0, 0.0, dist);
+        float attenuation   = d*d;
 
         vec3 light  = vec3(
                     NdotL, //diffuse lighting
@@ -137,8 +145,11 @@ _{
         float d             = mapToRange(0.0, lightReach, 1.0, 0.0, dist);
         float attenuation   = d*d;
 
-        float spotAttenuation = max(dot(dirToLight, invLightDir), 0.0);
-        spotAttenuation = pow(spotAttenuation, SCE_SpotAttenuation);
+        float fragDotL = dot(dirToLight, invLightDir);
+        float surfDotL = SCE_LightMaxDotAngle;
+
+        float spotAttenuation = mapToRange(surfDotL, 1.0, 0.0, 1.0, fragDotL);
+        spotAttenuation = pow(spotAttenuation, 4.0);
 
         vec3 light  = vec3(
                     NdotL, //diffuse lighting
@@ -151,25 +162,6 @@ _{
 
     //uniform variable declaration for the light function subroutine
     subroutine uniform SCE_ComputeLightType SCE_ComputeLight;
-
-
-    #define CASCADE_COUNT 4
-    #define SHADOW_BIAS 0.0005
-    #define SHADOW_MAP_SIZE 2048.0
-
-    out vec4 color;
-
-    uniform mat4        DepthConvertMat[CASCADE_COUNT];
-    uniform mat4        V;
-    uniform mat4        P;
-
-    uniform float       FarSplits_cameraspace[CASCADE_COUNT];
-
-    uniform sampler2D   PositionTex;
-    uniform sampler2D   DiffuseTex;
-    uniform sampler2D   NormalTex;
-    //    uniform sampler2D   ShadowTex;
-    uniform sampler2DArrayShadow ShadowTex;
 
 
     vec2 poissonDisk[16] = vec2[](

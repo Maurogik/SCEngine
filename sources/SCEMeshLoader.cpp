@@ -267,7 +267,7 @@ uint SCEMeshLoader::CreateConeMesh(float angle, float tesselation)
     uvs.push_back(vec2(0.0, 0.0));
     short endVertexIndex = 0;
 
-    glm::quat coneRotation = glm::angleAxis(angle, 1.0f, 0.0f, 0.0f);
+    glm::quat coneRotation = glm::angleAxis(angle, vec3(1.0f, 0.0f, 0.0f));
 
     //Generate vertices for cone surface
     //loop over all the angles to make a full 360 around the cone's Z axis

@@ -61,7 +61,7 @@ _{
         float exposure = 1.0 / (lum * SCE_Exposure);
         vec3 hdrColor = sceneColor.xyz;
         color.rgb = hdrColor;// * step(0.5, uv.x);
-        color.rgb = Uncharted2Tonemap(hdrColor * exposure) / Uncharted2Tonemap(whitePoint);// * step(uv.x, 0.5);
+//        color.rgb = Uncharted2Tonemap(hdrColor * exposure) / Uncharted2Tonemap(whitePoint);// * step(uv.x, 0.5);
 
         //gamma correction
         color.rgb = pow(color.rgb, vec3(1.0/2.2));

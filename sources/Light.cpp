@@ -36,8 +36,7 @@ string s_lightUniformNames[LIGHT_UNIFORMS_COUNT] = {
     "SCE_LightDirection_worldspace",
     "SCE_LightReach_worldspace",
     "SCE_LightColor",
-    "SCE_SpotAttenuation",
-    "SCE_LightCutoff",
+    "SCE_LightMaxDotAngle",
     "SCE_EyePosition_worldspace",
     "SCE_ShadowStrength"
 };
@@ -48,8 +47,6 @@ Light::Light(SCEHandle<Container>& container, LightType lightType,
       mLightType(lightType),
       mLightReach(REACH_DEFAULT),
       mLightMaxAngle(ANGLE_DEFAULT),
-      mSpotAttenuation(1.0f),
-      mLightCutoff(POINT_LIGHT_CUTOFF),
       mLightColor(COLOR_DEFAULT),
       mIsSunLight(false),
       mLightUniformsByShader(),
@@ -61,8 +58,6 @@ Light::Light(SCEHandle<Container>& container, LightType lightType,
     initRenderDataForShader(SCELighting::GetLightShader());
     //change layer to avoid rendering the light mesh as a regular mesh
     container->SetLayer(LIGHTS_LAYER);
-
-    mLightCutoff = mLightType == SPOT_LIGHT ? SPOT_LIGHT_CUTOFF : POINT_LIGHT_CUTOFF;
 }
 
 Light::~Light()
@@ -104,6 +99,11 @@ void Light::bindRenderDataForShader(GLuint shaderId, const vec3& cameraPosition)
     vec3 lightDir = transform->Forward();
     lightDir = glm::normalize(lightDir);
 
+    /* half angle because we want the dot from light Z to cone surfcade*/
+    vec3 rotatedZ = glm::angleAxis(mLightMaxAngle * 0.5f , vec3(1.0, 0.0, 0.0)) * vec3(0.0, 0.0, 1.0);
+    rotatedZ = normalize(rotatedZ);
+    float maxDot = dot(rotatedZ, vec3(0.0, 0.0, 1.0));
+
     //send the light data to the uniforms
     for(int type = LIGHT_POSITION; type < LIGHT_UNIFORMS_COUNT; ++ type)
     {
@@ -123,17 +123,14 @@ void Light::bindRenderDataForShader(GLuint shaderId, const vec3& cameraPosition)
         case LIGHT_COLOR :
             glUniform4f(unifId, mLightColor.r, mLightColor.g, mLightColor.b, mLightColor.a);
             break;
-        case LIGHT_SPOT_ATTENUATION :
-            glUniform1f(unifId, mSpotAttenuation);
-            break;
-        case LIGHT_CUTOFF :
-            glUniform1f(unifId, mLightCutoff);
-            break;
         case EYE_POSITION :
             glUniform3f(unifId, cameraPosition.x, cameraPosition.y, cameraPosition.z);
             break;
         case SHADOW_STRENGTH :
             glUniform1f(unifId, mIsSunLight ? 1.0f : 0.0f);
+            break;
+        case LIGHT_MAX_DOT :
+            glUniform1f(unifId, maxDot);
             break;
         default :
             SCE::Debug::LogError("Unknown ligth uniform type : " + type);
@@ -288,10 +285,10 @@ void Light::generateLightMesh()
         break;
     }
 
-//    if(mLightRenderer)
-//    {
-//        mLightRenderer->UpdateRenderedMesh();
-//    }
+    if(mLightRenderer)
+    {
+        mLightRenderer->UpdateRenderedMesh();
+    }
 }
 
 void Light::generateDirectionalLightMesh()
@@ -303,10 +300,10 @@ void Light::generateDirectionalLightMesh()
 void Light::generateSpotLightMesh()
 {
     //compute spot attenuation
-    vec3 spotDir(0.0, 0.0, 1.0);
-    vec3 spotAngleDir = normalize(angleAxis(mLightMaxAngle, vec3(1.0, 0.0, 0.0)) * spotDir);
-    float maxDot = dot(spotDir, spotAngleDir);
-    mSpotAttenuation = log(mLightCutoff) / log(maxDot) * 2.0;
+//    vec3 spotDir(0.0, 0.0, 1.0);
+//    vec3 spotAngleDir = normalize(angleAxis(mLightMaxAngle, vec3(1.0, 0.0, 0.0)) * spotDir);
+//    float maxDot = dot(spotDir, spotAngleDir);
+//    mSpotAttenuation = log(mLightCutoff) / log(maxDot) * 2.0;
 
     SCEHandle<Container> container = GetContainer();
     mLightMesh = Mesh::AddConeMesh(container, mLightMaxAngle, 4.0f);
@@ -321,8 +318,10 @@ void Light::generatePointLightMesh()
     //using solution to quadratic equation 1/square(x/r + 1) = cutoff(c)
     //s = (-2*r + sqrt(4*r*r/c))/2
     float lightSphereRadius = 0.0f;
-    float delta = (4.0f * mLightReach * mLightReach)/mLightCutoff;
-    lightSphereRadius = (-2.0f * mLightReach  + sqrt(delta))/2.0f;
+//    float delta = (4.0f * mLightReach * mLightReach)/mLightCutoff;
+//    lightSphereRadius = (-2.0f * mLightReach  + sqrt(delta))/2.0f;
+
+    lightSphereRadius = mLightReach;
 
     SCEHandle<Container> container = GetContainer();
     mLightMesh = Mesh::AddSphereMesh(container, 4.0f);

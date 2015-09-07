@@ -23,8 +23,7 @@ namespace SCE
         LIGHT_DIRECTION,
         LIGHT_REACH,
         LIGHT_COLOR,
-        LIGHT_SPOT_ATTENUATION,
-        LIGHT_CUTOFF,
+        LIGHT_MAX_DOT,
         EYE_POSITION,
         SHADOW_STRENGTH,
         LIGHT_UNIFORMS_COUNT
@@ -69,8 +68,6 @@ namespace SCE
         LightType                   mLightType;
         float                       mLightReach;
         float                       mLightMaxAngle;
-        float                       mSpotAttenuation;
-        float                       mLightCutoff;
         glm::vec4                   mLightColor;
         bool                        mIsSunLight;
         //array containing a map of uniforms Id by shader ID, for each light uniform type

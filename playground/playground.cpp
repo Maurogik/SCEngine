@@ -320,20 +320,20 @@ int main( void )
 
     SCEScene::CreateEmptyScene();
 
-    SCEHandle<Container> dirLight = createLight(vec3(0, 200, -200),
-                                                vec3(40, 0, 0),
-                                                LightType::DIRECTIONAL_LIGHT);
-    dirLight->GetComponent<Light>()->SetLightColor(vec4(1.0, 1.0, 0.8, 0.7));
-    dirLight->GetComponent<Light>()->SetIsSunLight(true);
+//    SCEHandle<Container> dirLight = createLight(vec3(0, 200, -200),
+//                                                vec3(40, 0, 0),
+//                                                LightType::DIRECTIONAL_LIGHT);
+//    dirLight->GetComponent<Light>()->SetLightColor(vec4(1.0, 1.0, 0.8, 0.7));
+//    dirLight->GetComponent<Light>()->SetIsSunLight(true);
 
-//    SCEHandle<Container> light1 = createLight(vec3(2, 3, -1), vec3(30, 0, 30), LightType::POINT_LIGHT);
-//    light1->GetComponent<Light>()->SetLightColor(vec4(1.0, 0.0, 0.0, 1.0));
-//    light1->GetComponent<Light>()->SetLightReach(2.0f);
+    SCEHandle<Container> light1 = createLight(vec3(2, 3, -1), vec3(30, 0, 30), LightType::POINT_LIGHT);
+    light1->GetComponent<Light>()->SetLightColor(vec4(1.0, 0.0, 0.0, 1.0));
+    light1->GetComponent<Light>()->SetLightReach(30.0f);
 
-//    SCEHandle<Container> light2 = createLight(vec3(-15, 2, -5), vec3(25, 0, 0), LightType::SPOT_LIGHT);
-//    light2->GetComponent<Light>()->SetLightReach(40.0f);
-//    light2->GetComponent<Light>()->SetLightMaxAngle(45.0f);
-//    light2->GetComponent<Light>()->SetLightColor(vec4(0.0, 1.0, 0.0, 1.0));
+    SCEHandle<Container> light2 = createLight(vec3(-15, 5, -5), vec3(45, 0, 0), LightType::SPOT_LIGHT);
+    light2->GetComponent<Light>()->SetLightReach(40.0f);
+    light2->GetComponent<Light>()->SetLightMaxAngle(75.0f);
+    light2->GetComponent<Light>()->SetLightColor(vec4(0.0, 1.0, 0.0, 1.0));
 
 
 //    scene1();
