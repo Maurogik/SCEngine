@@ -65,7 +65,7 @@ _{
         vec2 ndcToSun = sun_projectionspace.xy - fixedNdc;
         float sun = clamp(1.0 - length(ndcToSun), 0.0, 1.0);
         sun = pow(sun, 4.0) * 0.8 + smoothstep(0.0, 0.050, sun - 0.92) * 3.0;
-        float sunStrength = 3.0;
+        float sunStrength = 10.0;
         sun = clamp(sun, 0.0, sunStrength);
         return mix(skyColor, sunColor, sun);
     }

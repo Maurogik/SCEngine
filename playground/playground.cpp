@@ -313,19 +313,17 @@ void scene3()
     scorpion->GetComponent<Transform>()->RotateAroundAxis(vec3(0.0, 1.0, 0.0), -45.0f);
 }
 
-int main( void )
+void lightOutdoor()
 {
-    SCECore engine;
-    engine.InitEngine("Playground scene for SCE");
+        SCEHandle<Container> dirLight = createLight(vec3(0, 200, -200),
+                                                    vec3(40, 0, 0),
+                                                    LightType::DIRECTIONAL_LIGHT);
+        dirLight->GetComponent<Light>()->SetLightColor(vec4(1.0, 1.0, 0.8, 0.7));
+        dirLight->GetComponent<Light>()->SetIsSunLight(true);
+}
 
-    SCEScene::CreateEmptyScene();
-
-//    SCEHandle<Container> dirLight = createLight(vec3(0, 200, -200),
-//                                                vec3(40, 0, 0),
-//                                                LightType::DIRECTIONAL_LIGHT);
-//    dirLight->GetComponent<Light>()->SetLightColor(vec4(1.0, 1.0, 0.8, 0.7));
-//    dirLight->GetComponent<Light>()->SetIsSunLight(true);
-
+void redAndGreen()
+{
     SCEHandle<Container> light1 = createLight(vec3(2, 3, -1), vec3(30, 0, 30), LightType::POINT_LIGHT);
     light1->GetComponent<Light>()->SetLightColor(vec4(1.0, 0.0, 0.0, 1.0));
     light1->GetComponent<Light>()->SetLightReach(30.0f);
@@ -335,6 +333,35 @@ int main( void )
     light2->GetComponent<Light>()->SetLightMaxAngle(75.0f);
     light2->GetComponent<Light>()->SetLightColor(vec4(0.0, 1.0, 0.0, 1.0));
 
+}
+
+void streetLights()
+{
+    float nbLights = 5.0;
+    float offset = 25.0f;
+    for(float x = -nbLights / 2.0f; x < nbLights / 2.0f; ++x)
+    {
+        for(float z = -nbLights / 2.0f; z < nbLights / 2.0f; ++z)
+        {
+            SCEHandle<Container> light = createLight(vec3(x * offset, 15, z * offset), vec3(90, 0, 0), LightType::SPOT_LIGHT);
+            light->GetComponent<Light>()->SetLightReach(30.0f);
+            light->GetComponent<Light>()->SetLightMaxAngle(75.0f);
+            light->GetComponent<Light>()->SetLightColor(vec4(0.5, 1.0, 0.0, 1.0));
+        }
+    }
+}
+
+int main( void )
+{
+    SCECore engine;
+    engine.InitEngine("Playground scene for SCE");
+
+    SCEScene::CreateEmptyScene();
+
+
+//    lightOutdoor();
+    redAndGreen();
+    streetLights();
 
 //    scene1();
 //    scene2();
