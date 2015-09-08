@@ -169,7 +169,7 @@ void scene1()
     }
 }
 
-/*void scene2()
+void scene2()
 {
     SCEHandle<Container> wallObj = createPlane("plane", WALL_MATERIAL, 500.0f, vec3(0.0f, -2.0f, 2.0f));
     SCEHandle<Transform> wallTransform = wallObj->GetComponent<Transform>();
@@ -199,75 +199,58 @@ void scene1()
 
     }
 
-
-//    SCEHandle<Container> tmp = createModel("tmp",
-//                                              "Meshes/Goku.obj",
-//                                              vec3(-2.0f, -1.75f, 2.0f), true);
-//    tmp->GetComponent<Transform>()->SetLocalScale(vec3(0.105f));
-//    tmp->GetComponent<Transform>()->RotateAroundAxis(vec3(0.0, 1.0, 0.0), 180.0f);
-
     SCEHandle<Container> eagle1 = createModel("eagle1",
                                               "Meshes/EAGLE_2.OBJ",
                                               vec3(0.0f, 4.0f, 0.0f));
-    eagle1->GetComponent<Transform>()->SetLocalScale(vec3(3));
     eagle1->GetComponent<Transform>()->RotateAroundAxis(vec3(0.0, 1.0, 0.0), 180.0f);
 
     SCEHandle<Container> eagle2 = createModel("eagle2",
                                               "Meshes/EAGLE_3.OBJ",
                                               vec3(-15.23f, 5.42f, 7.62f));
-    eagle2->GetComponent<Transform>()->SetLocalScale(vec3(3));
     eagle2->GetComponent<Transform>()->RotateAroundAxis(vec3(0.0, 1.0, 0.0), 180.0f);
 
     SCEHandle<Container> house = createModel("house", "Meshes/house_obj.obj",
                                               vec3(-15.0f, -2.1f, 15.0f));
-    house->GetComponent<Transform>()->SetLocalScale(vec3(0.015f));
     house->GetComponent<Transform>()->RotateAroundAxis(vec3(0.0, 1.0, 0.0), 180.0f);
 
 
     SCEHandle<Container> wolf = createModel("wolf", "Meshes/Wolf.obj",
                                               vec3(-8.0f, -1.9f, 0.0f));
-    wolf->GetComponent<Transform>()->SetLocalScale(vec3(0.5f));
 
 
     SCEHandle<Container> avion = createModel("avion", "Meshes/Eurofighter.obj",
                                               vec3(10.0f, 5.0f, 0.0f), false);
-    avion->GetComponent<Transform>()->SetLocalScale(vec3(1.0f));
 
 
     SCEHandle<Container> goku = createModel("goku", "Meshes/Goku.obj",
                                               vec3(-2.0f, -1.85f, 2.0f), true);
-    goku->GetComponent<Transform>()->SetLocalScale(vec3(0.105f));
     goku->GetComponent<Transform>()->RotateAroundAxis(vec3(0.0, 1.0, 0.0), 180.0f);
 
     SCEHandle<Container> trex = createModel("t-rex",
                                               "Meshes/T_REX.OBJ",
                                               vec3(-20.0f, -1.9f, 0.0f), false);
-    trex->GetComponent<Transform>()->SetLocalScale(vec3(1.0f));
     trex->GetComponent<Transform>()->RotateAroundAxis(vec3(0.0, 1.0, 0.0), 135.0f);
 
 
     SCEHandle<Container> scorpion = createModel("scorpion",
                                               "Meshes/SCORPION.OBJ",
                                               vec3(-15.0f, -1.87f, -5.0f), false);
-    scorpion->GetComponent<Transform>()->SetLocalScale(vec3(30.0f));
     scorpion->GetComponent<Transform>()->RotateAroundAxis(vec3(0.0, 1.0, 0.0), -45.0f);
 
 
     SCEHandle<Container> dragon = createModel("dragon",
                                               "Meshes/GringottsDragon.obj",
-                                              vec3(-20.0f, 50.0f, 10.0f), false);
-    dragon->GetComponent<Transform>()->SetLocalScale(vec3(30.0f));
+                                              vec3(-20.0f, 50.0f, 10.0f), false);  
     dragon->GetComponent<Transform>()->RotateAroundAxis(vec3(1.0, 0.0, 0.0), -90.0f);
 
     SCEHandle<Container> mecha = createModel("mecha",
                                               "Meshes/RB-SideSwipe.obj",
                                               vec3(-25.0f, -2.0f, -10.0f));
-    mecha->GetComponent<Transform>()->SetLocalScale(vec3(0.025f));
     mecha->GetComponent<Transform>()->RotateAroundAxis(vec3(1.0, 0.0, 0.0), -90.0f);
     mecha->GetComponent<Transform>()->RotateAroundAxis(vec3(0.0, 0.0, 1.0), 30.0f);
 
 }
-*/
+
 
 void scene3()
 {
@@ -290,26 +273,22 @@ void scene3()
     //house
     SCEHandle<Container> house = createModel("house", "Meshes/house_obj.obj",
                                               vec3(-15.0f, groundY - 0.15f, 15.0f));
-    house->GetComponent<Transform>()->SetLocalScale(vec3(0.015f));
     house->GetComponent<Transform>()->RotateAroundAxis(vec3(0.0, 1.0, 0.0), 180.0f);
 
 
     SCEHandle<Container> avion = createModel("avion", "Meshes/Eurofighter.obj", "Materials/Plane",
                                               vec3(10.0f, 5.0f, 0.0f), false);
-    avion->GetComponent<Transform>()->SetLocalScale(vec3(1.0f));
 
 
     SCEHandle<Container> trex = createModel("t-rex",
                                               "Meshes/T_REX.OBJ", "Materials/Rex",
                                               vec3(-20.0f, groundY - 0.1f, 0.0f), false);
-    trex->GetComponent<Transform>()->SetLocalScale(vec3(1.0f));
     trex->GetComponent<Transform>()->RotateAroundAxis(vec3(0.0, 1.0, 0.0), 135.0f);
 
 
     SCEHandle<Container> scorpion = createModel("scorpion",
                                               "Meshes/SCORPION.OBJ", string("Materials/Scorpion"),
                                               vec3(-15.0f, groundY, -5.0f), false);
-    scorpion->GetComponent<Transform>()->SetLocalScale(vec3(30.0f));
     scorpion->GetComponent<Transform>()->RotateAroundAxis(vec3(0.0, 1.0, 0.0), -45.0f);
 }
 
@@ -359,9 +338,9 @@ int main( void )
     SCEScene::CreateEmptyScene();
 
 
-//    lightOutdoor();
+    lightOutdoor();
     redAndGreen();
-    streetLights();
+//    streetLights();
 
 //    scene1();
 //    scene2();
@@ -370,7 +349,7 @@ int main( void )
     //Camera
     SCEHandle<Container> cameraObject = SCEScene::CreateContainer("cameraObject");
     SCEHandle<Transform> cameraTransform = cameraObject->AddComponent<Transform>();
-    cameraObject->AddComponent<Camera>(40.0f, 16.0f/9.0f, 1.0f, 500.0f);
+    cameraObject->AddComponent<Camera>(40.0f, 16.0f/9.0f, 1.0f, 200.0f);
     cameraTransform->SetWorldPosition(vec3(0, 2, -25));
 //    cameraTransform->RotateAroundAxis(vec3(1.0f, 0.0f, 0.0f), 90.0f);
 

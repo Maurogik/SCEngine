@@ -8,7 +8,6 @@
 #include "../headers/SCEMeshLoader.hpp"
 #include "../headers/SCETools.hpp"
 #include "../headers/SCEInternal.hpp"
-#include "../headers/SCEAssimpLoader.hpp"
 
 #include <common/objloader.hpp>
 #include <common/vboindexer.hpp>
@@ -20,12 +19,84 @@
 #include <glm/gtx/transform.hpp>
 #include <glm/gtx/constants.hpp>
 
+#include <fstream>
 #include <sstream>
-
+#include <algorithm>
 
 using namespace SCE;
 using namespace std;
 
+
+//File scope functions
+namespace
+{
+    #define SEP ';'
+
+    template<typename T>
+    T readLine(string& line)
+    {
+        return T();
+    }
+
+    template<>
+    ushort readLine(string &line)
+    {
+        Debug::Assert(std::count(begin(line), end(line), SEP) == 0, "Can't parse line");
+
+        return std::stoi(line);
+    }
+
+    template<>
+    glm::vec2 readLine(string &line)
+    {
+        Debug::Assert(std::count(begin(line), end(line), SEP) == 1, "Can't parse line");
+
+        int sepPos = line.find_first_of(SEP);
+        string strX = line.substr(0, sepPos);
+        string strY = line.substr(sepPos + 1);
+        vec2 res;
+        res.x = stof(strX);
+        res.y = stof(strY);
+
+        return res;
+    }
+
+    template<>
+    glm::vec3 readLine(string &line)
+    {
+        Debug::Assert(std::count(begin(line), end(line), SEP) == 2, "Can't parse line");
+        int sepPos = line.find_first_of(SEP);
+        int sepPos2 = line.find_last_of(SEP);
+        string strX = line.substr(0, sepPos);
+        string strY = line.substr(sepPos + 1, sepPos2 - sepPos - 1);
+        string strZ = line.substr(sepPos2 + 1);
+        vec3 res;
+        res.x = stof(strX);
+        res.y = stof(strY);
+        res.z = stof(strZ);
+
+        return res;
+    }
+
+    template<typename T>
+    void loadVector(vector<T>& vect, const string& filePath)
+    {
+        ifstream file(filePath, ios::in);
+        if(file.is_open())
+        {
+            string line;
+            while(getline(file, line))
+            {
+                vect.push_back(readLine<T>(line));
+            }
+            file.close();
+        }
+        else
+        {
+            Debug::RaiseError("Could not open file : " + filePath);
+        }
+    }
+}
 
 
 SCEMeshLoader* SCEMeshLoader::s_instance = nullptr;
@@ -60,46 +131,7 @@ uint SCEMeshLoader::CreateMeshFromFile(const string& meshFileName, bool windCW)
         return s_instance->mMeshIds[meshFileName];
     }
 
-    string fullPath = RESSOURCE_PATH + meshFileName;
-    /*vector<vec3> vertices;
-    vector<vec2> uvs;
-    vector<vec3> normals;
-
-    uint id = -1;
-
-    if(loadOBJ(fullPath.c_str()
-               , vertices
-               , uvs
-               , normals
-               , false)) //load with CCW winding order
-    {
-        vector<vec3> tangents;
-        vector<vec3> bitangents;
-        computeTangentBasis(vertices, uvs, normals,
-                            tangents, bitangents);
-
-        vector<ushort> indices;
-        vector<vec3>   out_vert;
-        vector<vec2>   out_uvs;
-        vector<vec3>   out_norm;
-        vector<vec3>   out_tangent;
-        vector<vec3>   out_bitangent;
-
-        indexVBO_TBN(vertices,
-                    uvs,
-                    normals,
-                    tangents,
-                    bitangents,
-                    indices,
-                    out_vert,
-                    out_uvs,
-                    out_norm,
-                    out_tangent,
-                    out_bitangent);
-
-        id = s_instance->addMeshData(meshFileName, indices, out_vert, out_norm, out_uvs,
-                                     out_tangent, out_bitangent);
-    }*/
+    string fullPath = RESSOURCE_PATH + meshFileName + "_convert";
 
     vector<ushort> out_indices;
     vector<vec3>   out_verts;
@@ -108,14 +140,19 @@ uint SCEMeshLoader::CreateMeshFromFile(const string& meshFileName, bool windCW)
     vector<vec3>   out_tangents;
     vector<vec3>   out_bitangents;
 
-    AssimpLoader::LoadModel(fullPath,
-                            out_indices,
-                            out_verts,
-                            out_norms,
-                            out_uvs,
-                            out_tangents,
-                            out_bitangents,
-                            windCW);
+    string indiceFile       = fullPath + ".indices";
+    string verticeFile      = fullPath + ".vertices";
+    string normalFile       = fullPath + ".normals";
+    string uvFile           = fullPath + ".uvs";
+    string tangentFile      = fullPath + ".tangents";
+    string bitangentFile    = fullPath + ".bitangents";
+
+    loadVector<ushort>(out_indices, indiceFile);
+    loadVector<vec3>(out_verts, verticeFile);
+    loadVector<vec3>(out_norms, normalFile);
+    loadVector<vec2>(out_uvs, uvFile);
+    loadVector<vec3>(out_tangents, tangentFile);
+    loadVector<vec3>(out_bitangents, bitangentFile);
 
     return s_instance->addMeshData(meshFileName, out_indices, out_verts, out_norms, out_uvs,
                                    out_tangents, out_bitangents);;

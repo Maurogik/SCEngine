@@ -40,12 +40,9 @@ endif(INCLUDE_DISTRIB)
 
 
 include_directories(SYSTEM
-#    external/AntTweakBar-1.16/include/
     external/glfw-3.0.3/include/GLFW/
     external/glm-0.9.4.0/
     external/glew-1.9.0/include/
-    external/assimp-3.0.1270/include/
-#    external/bullet-2.81-rev2613/src/
     external/rapidjson/
     .
 )
@@ -53,10 +50,10 @@ include_directories(SYSTEM
 set(ALL_LIBS
     ${OPENGL_LIBRARY}
     GLFW_303
-    GLEW_190
-    assimp
+    GLEW_190    
     #SOIL
 )
+
 
 add_definitions(
     -DTW_STATIC
@@ -105,7 +102,6 @@ file(GLOB GLM_HEADERS
 )
 
 
-
 # User playground
 add_executable(${TARGET}
     ${APP_SOURCES}
@@ -122,7 +118,6 @@ target_link_libraries(${TARGET}
 )
 
 target_link_libraries(${TARGET}
-#    ${CMAKE_SOURCE_DIR}/external/SOIL/libSOIL.a
     SOIL
 )
 
@@ -133,27 +128,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -Wall -Wno-long-long -Wno-var
 set(QMAKE_CXXFLAGS "${QMAKE_CXXFLAGS} -std=c++11")
 set(QMAKE_LFLAGS "${QMAKE_LFLAGS} -std=c++11")
 
-# Xcode and Visual working directories
-#set_target_properties(${TARGET} PROPERTIES XCODE_ATTRIBUTE_CONFIGURATION_BUILD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/${TARGET}/")
-#create_target_launcher(${TARGET} WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${TARGET}/")
-
-#message("${CMAKE_CURRENT_SOURCE_DIR}/playground/")
-
-
-#SOURCE_GROUP(common REGULAR_EXPRESSION ".*/common/.*" )
-#SOURCE_GROUP(shaders REGULAR_EXPRESSION ".*/.*shader*" )
-
-
-#if (NOT ${CMAKE_GENERATOR} MATCHES "Xcode" )
-#add_custom_command(
-#   TARGET ${TARGET} POST_BUILD
-#   COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${TARGET}${CMAKE_EXECUTABLE_SUFFIX}" "${CMAKE_CURRENT_SOURCE_DIR}/${TARGET}/"
-#)
-
-
-#elseif (${CMAKE_GENERATOR} MATCHES "Xcode" )
-
-#endif (NOT ${CMAKE_GENERATOR} MATCHES "Xcode" )
 
 file( COPY "${TARGET}/ressources" DESTINATION "." )
 file( COPY "${SCE_PATH}/SCE_Assets" DESTINATION "." )
