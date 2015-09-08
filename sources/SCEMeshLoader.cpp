@@ -122,7 +122,7 @@ void SCEMeshLoader::CleanUp()
     delete s_instance;
 }
 
-uint SCEMeshLoader::CreateMeshFromFile(const string& meshFileName, bool windCW)
+uint SCEMeshLoader::CreateMeshFromFile(const string& meshFileName)
 {
     Debug::Assert(s_instance, "No Mesh loader system instance found, Init the system before using it");
 

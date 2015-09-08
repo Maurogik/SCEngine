@@ -77,23 +77,21 @@ SCEHandle<Container> createPlane(const string& name, const string& mat, float si
 }
 
 SCEHandle<Container> createModel(const string& objectName, const string& filename,  const string& mat,
-                                 const vec3& pos,
-                                 bool windCW = false){
+                                 const vec3& pos){
     SCEHandle<Container> object = SCEScene::CreateContainer(objectName);
 
     object->AddComponent<Material>(mat);
 
     SCEHandle<Transform> transform = object->AddComponent<Transform>();
     transform->SetWorldPosition(pos);
-    object->AddComponent<Mesh>(filename, windCW);
+    object->AddComponent<Mesh>(filename);
     object->AddComponent<MeshRenderer>();
 
     return object;
 }
 
-SCEHandle<Container> createModel(const string& objectName, const string& filename, const vec3& pos,
-                                 bool windCW = false){
-    return createModel(objectName, filename, string(MATERIAL), pos, windCW);
+SCEHandle<Container> createModel(const string& objectName, const string& filename, const vec3& pos){
+    return createModel(objectName, filename, string(MATERIAL), pos);
 }
 
 SCEHandle<Container> createLight(vec3 pos, vec3 orientation, LightType type){
@@ -219,28 +217,28 @@ void scene2()
 
 
     SCEHandle<Container> avion = createModel("avion", "Meshes/Eurofighter.obj",
-                                              vec3(10.0f, 5.0f, 0.0f), false);
+                                              vec3(10.0f, 5.0f, 0.0f));
 
 
     SCEHandle<Container> goku = createModel("goku", "Meshes/Goku.obj",
-                                              vec3(-2.0f, -1.85f, 2.0f), true);
+                                              vec3(-2.0f, -1.85f, 2.0f));
     goku->GetComponent<Transform>()->RotateAroundAxis(vec3(0.0, 1.0, 0.0), 180.0f);
 
     SCEHandle<Container> trex = createModel("t-rex",
                                               "Meshes/T_REX.OBJ",
-                                              vec3(-20.0f, -1.9f, 0.0f), false);
+                                              vec3(-20.0f, -1.9f, 0.0f));
     trex->GetComponent<Transform>()->RotateAroundAxis(vec3(0.0, 1.0, 0.0), 135.0f);
 
 
     SCEHandle<Container> scorpion = createModel("scorpion",
                                               "Meshes/SCORPION.OBJ",
-                                              vec3(-15.0f, -1.87f, -5.0f), false);
+                                              vec3(-15.0f, -1.87f, -5.0f));
     scorpion->GetComponent<Transform>()->RotateAroundAxis(vec3(0.0, 1.0, 0.0), -45.0f);
 
 
     SCEHandle<Container> dragon = createModel("dragon",
                                               "Meshes/GringottsDragon.obj",
-                                              vec3(-20.0f, 50.0f, 10.0f), false);  
+                                              vec3(-20.0f, 50.0f, 10.0f));
     dragon->GetComponent<Transform>()->RotateAroundAxis(vec3(1.0, 0.0, 0.0), -90.0f);
 
     SCEHandle<Container> mecha = createModel("mecha",
@@ -277,18 +275,18 @@ void scene3()
 
 
     SCEHandle<Container> avion = createModel("avion", "Meshes/Eurofighter.obj", "Materials/Plane",
-                                              vec3(10.0f, 5.0f, 0.0f), false);
+                                              vec3(10.0f, 5.0f, 0.0f));
 
 
     SCEHandle<Container> trex = createModel("t-rex",
                                               "Meshes/T_REX.OBJ", "Materials/Rex",
-                                              vec3(-20.0f, groundY - 0.1f, 0.0f), false);
+                                              vec3(-20.0f, groundY - 0.1f, 0.0f));
     trex->GetComponent<Transform>()->RotateAroundAxis(vec3(0.0, 1.0, 0.0), 135.0f);
 
 
     SCEHandle<Container> scorpion = createModel("scorpion",
                                               "Meshes/SCORPION.OBJ", string("Materials/Scorpion"),
-                                              vec3(-15.0f, groundY, -5.0f), false);
+                                              vec3(-15.0f, groundY, -5.0f));
     scorpion->GetComponent<Transform>()->RotateAroundAxis(vec3(0.0, 1.0, 0.0), -45.0f);
 }
 
@@ -339,7 +337,7 @@ int main( void )
 
 
     lightOutdoor();
-    redAndGreen();
+//    redAndGreen();
 //    streetLights();
 
 //    scene1();
