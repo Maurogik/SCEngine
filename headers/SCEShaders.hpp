@@ -25,6 +25,15 @@ namespace SCE
 
     private :
 
+        enum ShaderType
+        {
+            FRAGMENT_SHADER = 0,
+            VERTEX_SHADER,
+            TESSELATION_EVALUATION_SHADER,
+            TESSELATION_CONTROL_SHADER,
+            SHADER_TYPE_COUNT
+        };
+
         struct DefaultUniforms
         {
             GLint screenSizeUniform;
