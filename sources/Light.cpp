@@ -17,6 +17,8 @@ using namespace std;
 using namespace glm;
 using namespace SCE;
 
+//#define LIGHT_BOUNDS_COMPLEX
+
 #define REACH_DEFAULT 1.0f
 #define COLOR_DEFAULT vec4(1.0f, 1.0f, 1.0f, 1.0f)
 #define ANGLE_DEFAULT 45.0f
@@ -300,10 +302,12 @@ void Light::generateDirectionalLightMesh()
 void Light::generateSpotLightMesh()
 {
     //compute spot attenuation
-//    vec3 spotDir(0.0, 0.0, 1.0);
-//    vec3 spotAngleDir = normalize(angleAxis(mLightMaxAngle, vec3(1.0, 0.0, 0.0)) * spotDir);
-//    float maxDot = dot(spotDir, spotAngleDir);
-//    mSpotAttenuation = log(mLightCutoff) / log(maxDot) * 2.0;
+#ifdef LIGHT_BOUNDS_COMPLEX
+    vec3 spotDir(0.0, 0.0, 1.0);
+    vec3 spotAngleDir = normalize(angleAxis(mLightMaxAngle, vec3(1.0, 0.0, 0.0)) * spotDir);
+    float maxDot = dot(spotDir, spotAngleDir);
+    mSpotAttenuation = log(mLightCutoff) / log(maxDot) * 2.0;
+#endif
 
     SCEHandle<Container> container = GetContainer();
     mLightMesh = Mesh::AddConeMesh(container, mLightMaxAngle, 4.0f);
@@ -314,14 +318,17 @@ void Light::generateSpotLightMesh()
 
 void Light::generatePointLightMesh()
 {
+
+#ifdef LIGHT_BOUNDS_COMPLEX
     //Compute radius at which light intensity goes under some threshold
     //using solution to quadratic equation 1/square(x/r + 1) = cutoff(c)
     //s = (-2*r + sqrt(4*r*r/c))/2
     float lightSphereRadius = 0.0f;
-//    float delta = (4.0f * mLightReach * mLightReach)/mLightCutoff;
-//    lightSphereRadius = (-2.0f * mLightReach  + sqrt(delta))/2.0f;
-
-    lightSphereRadius = mLightReach;
+    float delta = (4.0f * mLightReach * mLightReach)/mLightCutoff;
+    lightSphereRadius = (-2.0f * mLightReach  + sqrt(delta))/2.0f;
+#else
+    float lightSphereRadius = mLightReach;
+#endif
 
     SCEHandle<Container> container = GetContainer();
     mLightMesh = Mesh::AddSphereMesh(container, 4.0f);

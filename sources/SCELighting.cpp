@@ -385,9 +385,6 @@ void SCELighting::renderShadowmapPass(const CameraRenderData& lightRenderData,
     GLint viewportDims[4];
     glGetIntegerv( GL_VIEWPORT, viewportDims );
 
-//    glEnable(GL_SCISSOR_TEST);
-//    glScissor(0, 0, SHADOW_MAP_WIDTH, SHADOW_MAP_HEIGHT);
-
     glViewport(0, 0, SHADOW_MAP_WIDTH, SHADOW_MAP_HEIGHT);
 
     glUseProgram(mEmptyShader);
@@ -410,31 +407,8 @@ void SCELighting::renderShadowmapPass(const CameraRenderData& lightRenderData,
     0.5, 0.5, 0.5, 1.0
     );
 
-//    glReadBuffer(GL_COLOR_ATTACHMENT0 + 3);
-//    float* pixels = new float[SHADOW_MAP_WIDTH * SHADOW_MAP_HEIGHT];
-//    glReadPixels(0, 0,
-//                 SHADOW_MAP_WIDTH, SHADOW_MAP_HEIGHT,
-//                 GL_DEPTH_COMPONENT, GL_FLOAT,
-//                 pixels);
-
-//    string str = "";
-//    for(int x = 0; x < SHADOW_MAP_WIDTH; ++x)
-//    {
-//        for(int y = 0; y < SHADOW_MAP_HEIGHT; ++y)
-//        {
-//            float pix = pixels[x * SHADOW_MAP_HEIGHT + y];
-//            string pixStr = std::to_string(pix);
-//            pixStr.erase ( pixStr.find_last_not_of('0') + 1, std::string::npos );
-//            str += pixStr + ", ";
-//        }
-//        str += "\n";
-//    }
-
-//    Debug::Log(str);
-
     mDepthConvertMatrices[shadowmapId] = biasMatrix * lightRenderData.projectionMatrix
                        * lightRenderData.viewMatrix;
-
 
     glCullFace(GL_BACK);
     glViewport(viewportDims[0], viewportDims[1], viewportDims[2], viewportDims[3]);

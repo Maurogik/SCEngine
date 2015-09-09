@@ -48,16 +48,6 @@ void SCETime::Update()
 
 void SCETime::update()
 {
-    /*clock_t currClock = clock();
-    SCE_DEBUG_LOG("clock : %d", (int)currClock);
-    double deltaTicks = currClock - last_clock;
-    s_deltaTime = deltaTicks / CLOCKS_PER_SEC;
-    s_deltaTime *= timeSpeed;
-    last_clock = currClock;
-    double ticks = currClock - start_clock;
-    s_realTimeInSeconds = ticks / CLOCKS_PER_SEC;
-    s_timeInSeconds += s_deltaTime;*/
-
     double currentTime = glfwGetTime();
     mDeltaTime = currentTime - mLastTime;
     mDeltaTime *= mTimeSpeed;

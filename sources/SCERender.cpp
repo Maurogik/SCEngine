@@ -70,9 +70,6 @@ void SCERender::Render(const SCEHandle<Camera>& camera,
 {
     Debug::Assert(s_instance, "No Render system instance found, Init the system before using it");
 
-    GLsizei width = SCECore::GetWindowWidth();
-    GLsizei height = SCECore::GetWindowHeight();
-
     //extract data used for rendering
     CameraRenderData renderData = camera->GetRenderData();
 
@@ -112,10 +109,6 @@ void SCERender::Render(const SCEHandle<Camera>& camera,
 
     glEnable(GL_DEPTH_TEST);
     glCullFace(GL_BACK);
-//    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-    //TODO hook post-processing pipeline here
-//    glBlitFramebuffer(0, 0, width, height,
-//                      0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 
     //reset to default framebufffer
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -153,7 +146,7 @@ void SCERender::ResetClearColorToDefault()
 
 mat4 SCERender::FixOpenGLProjectionMatrix(const mat4& projMat)
 {
-    //Needed because opengl camera renders along the negative Z axis and
+    //Needed because opengl/glm camera renders along the negative Z axis and
     //I want it to render along the positive axis
     return glm::scale(projMat, glm::vec3(1, 1, -1));
 }

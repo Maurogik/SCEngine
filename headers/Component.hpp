@@ -12,7 +12,7 @@
 
 namespace SCE {
 
-    class Container;//forward declaration of container
+    class Container;
 
     class Component : public SCEHandleTarget {
 

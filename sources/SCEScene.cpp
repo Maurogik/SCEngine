@@ -83,7 +83,6 @@ void SCEScene::UpdateScene()
     /************************************************************
      * Temporary
      **/
-    //SCEInternal::InternalMessage("move control code to appropriate location");
 
     //move camera
 
@@ -110,15 +109,6 @@ void SCEScene::UpdateScene()
     xMouse /= SCECore::GetWindowWidth();
     yMouse /= SCECore::GetWindowHeight();
 
-    /*static double prevX = 0.0;
-    static double prevY = 0.0;
-
-    double xDelta = xMouse - prevX;
-    double yDelta = yMouse - prevY;
-
-    prevX = xMouse;
-    prevY = yMouse;*/
-
     float deltaTime = SCETime::DeltaTime();
 
     float xRotateSpeed = 360.0f;
@@ -126,8 +116,6 @@ void SCEScene::UpdateScene()
     float speed = 10.0f;
 
     vec3 position = transform->GetWorldPosition();
-//    transform->RotateAroundAxis(vec3(0, 1, 0), xDelta * rotateSpeed);
-//    transform->RotateAroundAxis(vec3(1, 0, 0), yDelta * rotateSpeed);
     transform->SetWorldOrientation(vec3((yMouse - 0.5) * yRotateSpeed, (xMouse - 0.5) * xRotateSpeed, 0.0));
 
     vec3 forward = transform->Forward();
