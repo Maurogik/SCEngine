@@ -55,7 +55,6 @@ void SCECore::InitEngine(const std::string &windowName)
 #endif
 
     // Open a window and create its OpenGL context
-//    s_window = glfwCreateWindow( 1280, 720, windowName.c_str(), NULL, NULL);
     s_window = glfwCreateWindow( 1920, 1080, windowName.c_str(), glfwGetPrimaryMonitor(), NULL);
     Internal::Log("Window created");
 

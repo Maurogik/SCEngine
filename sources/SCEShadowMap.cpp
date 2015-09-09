@@ -11,6 +11,7 @@
 using namespace SCE;
 using namespace std;
 
+#define USE_PCF
 
 SCEShadowMap::SCEShadowMap()
     : mFBOId(-1),
@@ -46,11 +47,13 @@ bool SCEShadowMap::Init(GLuint shadowmapWidth, GLuint shadowmapHeight, GLuint ca
     glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_DEPTH_COMPONENT16,
                  shadowmapWidth, shadowmapHeight, cascadeCount, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 
-//    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_COMPARE_MODE, GL_NONE);
-
+#ifdef USE_PCF
     //to allow PCF shadows
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+#else
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_COMPARE_MODE, GL_NONE);
+#endif
 
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);

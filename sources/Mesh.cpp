@@ -10,17 +10,6 @@
 #include "../headers/Mesh.hpp"
 #include "../headers/SCEMeshLoader.hpp"
 
-#include <common/objloader.hpp>
-#include <common/vboindexer.hpp>
-#include <common/tangentspace.hpp>
-
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/quaternion.hpp>
-#include <glm/gtx/quaternion.hpp>
-#include <glm/gtx/transform.hpp>
-#include <glm/gtx/constants.hpp>
-
-#include <sstream>
 
 using namespace SCE;
 using namespace std;

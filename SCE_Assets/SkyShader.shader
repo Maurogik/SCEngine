@@ -70,6 +70,9 @@ _{
         return mix(skyColor, sunColor, sun);
     }
 
+//#define LIGHT_SHAFTS
+#if LIGHT_SHAFTS
+
     float computeVolumetricLight(vec2 uv, vec2 sunUV)
     {
         int nbSamples = 32;
@@ -95,6 +98,7 @@ _{
 
         return illum;
     }
+#endif
 
     void main()
     {
@@ -118,14 +122,14 @@ _{
 
         vec4 skyColor = vec4(getSkyColor(ndcUv, sun_projectionspace.xyz), 1.0);
 
-        /*float scaterring = 0.0;
-//        float scaterringStrength = pow(max(0.0, dot(normalize(sun_cameraspace), vec3(0.0, 0.0, 1.0))), 2.0);
-
+#if LIGHT_SHAFTS
+        float scaterring = 0.0;
         float scaterringStrength = 1.0 - dot(sun_projectionspace.xy, sun_projectionspace.xy) * 0.2;
         if(scaterringStrength > 0.0)
         {
             scaterring = computeVolumetricLight(uv, sunUV) * scaterringStrength;
-        }*/
+        }
+#endif
 
         color = mix(sceneColor, skyColor, fogAmount);
         //color.rgb += sunColor * scaterring;

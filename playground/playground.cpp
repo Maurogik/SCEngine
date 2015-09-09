@@ -252,16 +252,7 @@ void scene2()
 
 void scene3()
 {
-    SCEHandle<Container> wallObj = createPlane("wall", WALL_MATERIAL, 500.0f, vec3(0.0f, 3.0f, 3.0f));
-    SCEHandle<Transform> wallTransform = wallObj->GetComponent<Transform>();
-    wallTransform->SetLocalScale(vec3(5.0f));
-    wallTransform->SetWorldOrientation(vec3(0.0f, 180.0f, 0.0f));
-
-    SCEHandle<Material> wallMat = wallObj->GetComponent<Material>();
-    wallMat->SetUniformValue("ScaleU", 2.0f);
-    wallMat->SetUniformValue("ScaleV", 2.0f);
-
-    SCEHandle<Container> cubeObj = createCube("cubeObject", vec3(0.0f, -0.9f, 0.0f), WALL_MATERIAL);
+    SCEHandle<Container> cubeObj = createCube("cubeObject", vec3(5.0f, -1.0f, -5.0f), WALL_MATERIAL);
     SCEHandle<Transform> cube = cubeObj->GetComponent<Transform>();
     cube->SetLocalScale(vec3(2.0f, 2.0f, 2.0f));
 
@@ -269,9 +260,9 @@ void scene3()
     float groundY = simpleGround();//complexGround();
 
     //house
-    SCEHandle<Container> house = createModel("house", "Meshes/house_obj.obj",
-                                              vec3(-15.0f, groundY - 0.15f, 15.0f));
-    house->GetComponent<Transform>()->RotateAroundAxis(vec3(0.0, 1.0, 0.0), 180.0f);
+    SCEHandle<Container> house = createModel("house", "Meshes/house_obj.obj", "Materials/House",
+                                              vec3(-5.0f, groundY - 0.15f, 5.0f));
+    house->GetComponent<Transform>()->RotateAroundAxis(vec3(0.0, 1.0, 0.0), 195.0f);
 
 
     SCEHandle<Container> avion = createModel("avion", "Meshes/Eurofighter.obj", "Materials/Plane",
@@ -280,13 +271,13 @@ void scene3()
 
     SCEHandle<Container> trex = createModel("t-rex",
                                               "Meshes/T_REX.OBJ", "Materials/Rex",
-                                              vec3(-20.0f, groundY - 0.1f, 0.0f));
+                                              vec3(-10.0f, groundY - 0.1f, -5.0f));
     trex->GetComponent<Transform>()->RotateAroundAxis(vec3(0.0, 1.0, 0.0), 135.0f);
 
 
     SCEHandle<Container> scorpion = createModel("scorpion",
                                               "Meshes/SCORPION.OBJ", string("Materials/Scorpion"),
-                                              vec3(-15.0f, groundY, -5.0f));
+                                              vec3(-5.0f, groundY, -10.0f));
     scorpion->GetComponent<Transform>()->RotateAroundAxis(vec3(0.0, 1.0, 0.0), -45.0f);
 }
 
@@ -305,7 +296,7 @@ void redAndGreen()
     light1->GetComponent<Light>()->SetLightColor(vec4(1.0, 0.0, 0.0, 1.0));
     light1->GetComponent<Light>()->SetLightReach(30.0f);
 
-    SCEHandle<Container> light2 = createLight(vec3(-15, 5, -5), vec3(45, 0, 0), LightType::SPOT_LIGHT);
+    SCEHandle<Container> light2 = createLight(vec3(-5, 10, -13), vec3(45, -45, 0), LightType::SPOT_LIGHT);
     light2->GetComponent<Light>()->SetLightReach(40.0f);
     light2->GetComponent<Light>()->SetLightMaxAngle(75.0f);
     light2->GetComponent<Light>()->SetLightColor(vec4(0.0, 1.0, 0.0, 1.0));
@@ -336,9 +327,9 @@ int main( void )
     SCEScene::CreateEmptyScene();
 
 
-    lightOutdoor();
-//    redAndGreen();
-//    streetLights();
+//    lightOutdoor();
+    redAndGreen();
+    streetLights();
 
 //    scene1();
 //    scene2();

@@ -213,18 +213,6 @@ GLuint SCETextures::loadTexture(const string &filename,
     //reuse texture : 0 = create new texture
     GLuint textureID = SOIL_load_OGL_texture(fullTexturePath.c_str(), 0, 0, soilFlags);
 
-//    GLuint textureID = 0;
-//    int width, height;
-//    SCEInternal::InternalMessage("try to load texture : " + fullTexturePath);
-//    unsigned char* image = SOIL_load_image(fullTexturePath.c_str(), &width, &height, 0, SOIL_LOAD_RGB);
-
-//    glGenTextures(1, &textureID);
-//    glBindTexture(GL_TEXTURE_2D, textureID);
-//    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB,
-//                  GL_UNSIGNED_BYTE, image);
-
-//    SOIL_free_image_data(image);
-
     glBindTexture(GL_TEXTURE_2D, textureID);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
