@@ -4,7 +4,7 @@
 /*******FILE:emptyShader.shader********/
 /**************************************/
 
-VertexShader :
+[VertexShader]
 _{
 #version 430 core
 
@@ -18,7 +18,7 @@ _{
     }
 _}
 
-FragmentShader :
+[FragmentShader]
 _{
 #version 430 core
 

@@ -1,4 +1,4 @@
-VertexShader : 
+[VertexShader]
 _{
 #version 400 core
 
@@ -24,7 +24,7 @@ _{
     }
 _}
 
-FragmentShader : 
+[FragmentShader]
 _{
 #version 400 core
 

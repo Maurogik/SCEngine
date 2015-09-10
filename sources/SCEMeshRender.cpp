@@ -95,9 +95,9 @@ void SCEMeshRender::DeleteMeshRenderData(uint meshId)
 }
 
 void SCEMeshRender::RenderMesh(ui16 meshId,
-                               const glm::mat4 &projectionMatrix,
-                               const glm::mat4 &viewMatrix,
-                               const glm::mat4 &modelMatrix)
+                               const glm::mat4& projectionMatrix,
+                               const glm::mat4& viewMatrix,
+                               const glm::mat4& modelMatrix)
 {
     GLint shaderProgram;
     glGetIntegerv(GL_CURRENT_PROGRAM, &shaderProgram);
@@ -162,7 +162,6 @@ void SCEMeshRender::RenderMesh(ui16 meshId,
     }
 
     glBindVertexArray(0);
-
 }
 
 void SCEMeshRender::initializeGLData(uint meshId)

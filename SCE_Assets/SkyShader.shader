@@ -5,7 +5,7 @@
 /**************************************/
 /**************** 1700µs **************/
 
-VertexShader :
+[VertexShader]
 _{
 #version 430 core
 
@@ -23,7 +23,7 @@ _{
     }
 _}
 
-FragmentShader :
+[FragmentShader]
 _{
 #version 430 core
 
@@ -132,6 +132,7 @@ _{
 #endif
 
         color = mix(sceneColor, skyColor, fogAmount);
+//        color = sceneColor;
         //color.rgb += sunColor * scaterring;
     }
 _}

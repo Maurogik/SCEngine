@@ -23,19 +23,24 @@ SCE_GBuffer::SCE_GBuffer()
 
 SCE_GBuffer::~SCE_GBuffer()
 {
-    if (mTextures[0] >= 0)
+    if (mTextures[0] != GLuint(-1))
     {
         glDeleteTextures(GBUFFER_TEXTURE_COUNT, mTextures);
     }
 
-    if (mDepthTexture >= 0)
+    if (mDepthTexture != GLuint(-1))
     {
         glDeleteTextures(1, &mDepthTexture);
     }
 
-    if (mFinalTexture >= 0)
+    if (mFinalTexture != GLuint(-1))
     {
         glDeleteTextures(1, &mFinalTexture);
+    }
+
+    if (mLuminanceTexture != GLuint(-1))
+    {
+        glDeleteTextures(1, &mLuminanceTexture);
     }
 
     if (mFBOId >= 0)

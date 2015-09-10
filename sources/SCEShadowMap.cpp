@@ -22,12 +22,12 @@ SCEShadowMap::SCEShadowMap()
 
 SCEShadowMap::~SCEShadowMap()
 {
-    if(mDepthTexture >= 0)
+    if(mDepthTexture != GLuint(-1))
     {
         glDeleteTextures(1, &mDepthTexture);
     }
 
-    if(mFBOId >= 0)
+    if(mFBOId != GLuint(-1))
     {
         glDeleteFramebuffers(1, &mFBOId);
     }

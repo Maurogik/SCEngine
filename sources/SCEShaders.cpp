@@ -53,6 +53,35 @@ void SCEShaders::CleanUp()
     delete s_instance;
 }
 
+std::string shaderTypeToString(int shaderType)
+{
+    using namespace SCE;
+    string str;
+
+    switch ((SCEShaders::ShaderType)shaderType) {
+    case SCEShaders::ShaderType::FRAGMENT_SHADER :
+        str = "Fragment Shader";
+        break;
+    case SCEShaders::ShaderType::VERTEX_SHADER :
+        str = "Vertex Shader";
+        break;
+    case SCEShaders::ShaderType::GEOMETRY_SHADER:
+        str = "Geometry Shader";
+        break;
+    case SCEShaders::ShaderType::TESSELATION_CONTROL_SHADER:
+        str = "TCS Shader";
+        break;
+    case SCEShaders::ShaderType::TESSELATION_EVALUATION_SHADER:
+        str = "TES Shader";
+        break;
+    default:
+        str = "Unknown Shader";
+        break;
+    }
+
+    return str;
+}
+
 GLuint SCEShaders::CreateShaderProgram(const string& shaderFileName)
 {
     Debug::Assert(s_instance, "No Shader system instance found, Init the system before using it");
@@ -90,25 +119,30 @@ GLuint SCEShaders::CreateShaderProgram(const string& shaderFileName)
 
         while(getline(shaderStream, line))
         {
-            if(line.find("VertexShader") != string::npos)
+            if(line.find("[VertexShader]") != string::npos)
             {
                 currentShaderType = VERTEX_SHADER;
                 shaderIds[currentShaderType] = glCreateShader(GL_VERTEX_SHADER);
             }
-            else if(line.find("FragmentShader") != string::npos)
+            else if(line.find("[FragmentShader]") != string::npos)
             {
                 currentShaderType = FRAGMENT_SHADER;
                 shaderIds[currentShaderType] = glCreateShader(GL_FRAGMENT_SHADER);
             }
-            else if(line.find("TES") != string::npos)
+            else if(line.find("[TES]") != string::npos)
             {
                 currentShaderType = TESSELATION_EVALUATION_SHADER;
                 shaderIds[currentShaderType] = glCreateShader(GL_TESS_EVALUATION_SHADER);
             }
-            else if(line.find("TCS") != string::npos)
+            else if(line.find("[TCS]") != string::npos)
             {
                 currentShaderType = TESSELATION_CONTROL_SHADER;
                 shaderIds[currentShaderType] = glCreateShader(GL_TESS_CONTROL_SHADER);
+            }
+            else if(line.find("[Geometry]") != string::npos)
+            {
+                currentShaderType = GEOMETRY_SHADER;
+                shaderIds[currentShaderType] = glCreateShader(GL_GEOMETRY_SHADER);
             }
             else if(line.find("_{") == string::npos &&
                     line.find("_}") == string::npos &&
@@ -142,9 +176,10 @@ GLuint SCEShaders::CreateShaderProgram(const string& shaderFileName)
             // Check Shader
             glGetShaderiv(shaderIds[i], GL_COMPILE_STATUS, &result);
             glGetShaderiv(shaderIds[i], GL_INFO_LOG_LENGTH, &infoLogLength);
-            if ( infoLogLength > 0 ){
+            if (!result && infoLogLength > 0 ){
                 std::vector<char> shaderErrorMessage(infoLogLength+1);
                 glGetShaderInfoLog(shaderIds[i], infoLogLength, NULL, &shaderErrorMessage[0]);
+                Internal::Log("Compilation Error on " + shaderTypeToString(i) + " !!!");
                 Internal::Log(string(&shaderErrorMessage[0]) + "\n");
             }
         }
@@ -165,12 +200,13 @@ GLuint SCEShaders::CreateShaderProgram(const string& shaderFileName)
 
     glLinkProgram(programID);
 
-    // Check the program
+    // Check the linked program
     glGetProgramiv(programID, GL_LINK_STATUS, &result);
     glGetProgramiv(programID, GL_INFO_LOG_LENGTH, &infoLogLength);
-    if ( infoLogLength > 0 ){
+    if (!result && infoLogLength > 0 ){
         std::vector<char> ProgramErrorMessage(infoLogLength+1);
         glGetProgramInfoLog(programID, infoLogLength, NULL, &ProgramErrorMessage[0]);
+        Internal::Log("Linking error !!!");
         Internal::Log(string(&ProgramErrorMessage[0]) + "\n");
     }
 

@@ -12,8 +12,9 @@ namespace SCE
 {
     namespace Terrain
     {
-        void InitTerrain();
-        void RenderTerrain();
+        void Init();
+        void RenderTerrain(const mat4& projectionMatrix, const mat4& viewMatrix, float terrainBaseHeight);
+        void Cleanup();
     }
 }
 

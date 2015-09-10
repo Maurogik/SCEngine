@@ -7,12 +7,9 @@
 #include "../headers/SCECore.hpp"
 #include "../headers/SCE_GLDebug.hpp"
 #include "../headers/SCEInternal.hpp"
-#include "../headers/SCELighting.hpp"
 #include "../headers/SCERender.hpp"
-#include "../headers/SCEShaders.hpp"
 #include "../headers/SCETextures.hpp"
 #include "../headers/SCEMeshLoader.hpp"
-#include "../headers/SCEMeshRender.hpp"
 
 using namespace SCE;
 using namespace std;
@@ -37,8 +34,8 @@ void SCECore::InitEngine(const std::string &windowName)
     }
 
 //    glfwWindowHint(GLFW_SAMPLES, 4); // 4x antialiasing
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3); // We want OpenGL 3.3
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4); // We want OpenGL 4.0+
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // To make MacOS happy; should not be needed
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); //We don't want the old OpenGL
 
@@ -109,11 +106,10 @@ void SCECore::InitEngine(const std::string &windowName)
 
     //Init Engine subcomponents in order
     SCETime::Init();
-    SCEShaders::Init();
+    //Asset management
     SCETextures::Init();
     SCEMeshLoader::Init();
-    SCEMeshRender::Init();
-    SCELighting::Init();
+    //Rendering
     SCERender::Init();
 }
 
@@ -140,11 +136,10 @@ void SCECore::CleanUpEngine()
 
     //clean engine subcomponents
     SCERender::CleanUp();
-    SCELighting::CleanUp();
-    SCEMeshRender::CleanUp();
+
     SCEMeshLoader::CleanUp();
     SCETextures::CleanUp();
-    SCEShaders::CleanUp();
+
     SCETime::CleanUp();
 
     // Close OpenGL window and terminate GLFW

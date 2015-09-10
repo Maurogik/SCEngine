@@ -44,6 +44,7 @@ include_directories(SYSTEM
     external/glm-0.9.4.0/
     external/glew-1.9.0/include/
     external/rapidjson/
+    external/stb/
     .
 )
 

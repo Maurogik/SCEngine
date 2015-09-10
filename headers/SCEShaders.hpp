@@ -17,6 +17,16 @@ namespace SCE
 
     public :
 
+        enum ShaderType
+        {
+            FRAGMENT_SHADER = 0,
+            VERTEX_SHADER,
+            TESSELATION_EVALUATION_SHADER,
+            TESSELATION_CONTROL_SHADER,
+            GEOMETRY_SHADER,
+            SHADER_TYPE_COUNT
+        };
+
         static void         Init();
         static void         CleanUp();
         static GLuint       CreateShaderProgram(const std::string &shaderFileName);
@@ -25,14 +35,6 @@ namespace SCE
 
     private :
 
-        enum ShaderType
-        {
-            FRAGMENT_SHADER = 0,
-            VERTEX_SHADER,
-            TESSELATION_EVALUATION_SHADER,
-            TESSELATION_CONTROL_SHADER,
-            SHADER_TYPE_COUNT
-        };
 
         struct DefaultUniforms
         {

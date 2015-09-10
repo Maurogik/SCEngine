@@ -11,6 +11,7 @@
 #include "../headers/SCEMeshLoader.hpp"
 #include "../headers/SCEMeshRender.hpp"
 #include "../headers/SCEShaders.hpp"
+#include "../headers/SCETerrain.hpp"
 
 
 using namespace SCE;
@@ -55,6 +56,10 @@ SCERender::SCERender()
 
 void SCERender::Init()
 {
+    SCEShaders::Init();
+    SCELighting::Init();
+    SCEMeshRender::Init();
+    SCE::Terrain::Init();
     Debug::Assert(!s_instance, "An instance of the Render system already exists");
     s_instance = new SCERender();
 }
@@ -63,6 +68,11 @@ void SCERender::CleanUp()
 {
     Debug::Assert(s_instance, "No Render system instance found, Init the system before using it");
     delete s_instance;
+
+    SCE::Terrain::Cleanup();
+    SCEMeshRender::CleanUp();
+    SCELighting::CleanUp();
+    SCEShaders::CleanUp();
 }
 
 void SCERender::Render(const SCEHandle<Camera>& camera,
@@ -120,9 +130,11 @@ void SCERender::renderGeometryPass(const CameraRenderData& renderData,
     mGBuffer.BindForGeometryPass();
     // The geometry pass updates the depth buffer
     glDepthMask(GL_TRUE);
-    glEnable(GL_DEPTH_TEST);    
+    glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
+
+    SCE::Terrain::RenderTerrain(renderData.projectionMatrix, renderData.viewMatrix, 0.0f);
 
     for(Container* container : objectsToRender)
     {

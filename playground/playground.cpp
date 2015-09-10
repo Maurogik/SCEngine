@@ -327,9 +327,9 @@ int main( void )
     SCEScene::CreateEmptyScene();
 
 
-//    lightOutdoor();
-    redAndGreen();
-    streetLights();
+    lightOutdoor();
+//    redAndGreen();
+//    streetLights();
 
 //    scene1();
 //    scene2();
