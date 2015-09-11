@@ -12,7 +12,6 @@ _{
     uniform mat4 QuadToTerrainSpace;
 
     in vec3 vertexPosition_modelspace;
-//    in vec3 vertexNormal_modelspace;
 
     out vec2 VS_terrainTexCoord;
 
@@ -29,13 +28,14 @@ _{
 #version 430 core
 
     uniform sampler2D TerrainHeightMap;
-    uniform mat4 MV;
-    uniform mat4 MVP;
+    uniform mat4 M;
+    uniform mat4 V;
+    uniform mat4 MVP;    
 
-    // Inputs
+    //in
     in vec2 VS_terrainTexCoord[];
 
-    // Outputs
+    //out
     layout(vertices = 4) out;
 
     patch out float gl_TessLevelOuter[4];
@@ -43,23 +43,32 @@ _{
 
     out vec2 TCS_terrainTexCoord[];
 
-
     float tesselationFromDist(vec4 p0, vec4 p1, vec2 t0, vec2 t1)
     {
-
         vec2 centerUv = (t0 - t1) * 0.5 + t1;
         float height = texture(TerrainHeightMap, centerUv);
 
-        float farPlane = 500.0;
-        vec4 center_cameraspace = MV * ((p0 - p1) * 0.5 + p1 + vec4(0.0, height, 0.0, 0.0));
-        float tess = center_cameraspace.z / farPlane * 64;//map to 0..64 range
+        float farPlane = 500.0 + 1.0;
+        vec4 center_cameraspace = V * M * ((p0 - p1) * 0.5 + p1 + vec4(0.0, height, 0.0, 0.0));
+        float tess = 1.0 - (center_cameraspace.z / farPlane);//map to 0..64 range
+        tess = pow(tess, 4.0);
 
-        return tess;//between 0 and 64
+        return clamp(tess * 64.0, 2.0, 64.0);//between 0 and 64
     }
 
     bool offscreen(vec4 vertex_modelspace){
         vec4 vert_ndc = MVP * vertex_modelspace;
-        return vert_ndc.z < -0.7 || abs(vert_ndc.x) > 1.0 || abs(vert_ndc.y) > 1.0;
+        vert_ndc /= vert_ndc.w;
+        //return false;//vert_ndc.z < -1.0 || abs(vert_ndc.x) > 1.0 || abs(vert_ndc.y) > 1.0;
+
+//        if(vert_ndc.z < -0.5){
+//            return true;
+//        }
+//        return any(
+//            lessThan(vert_ndc.xy, vec2(-1.7)) ||
+//            greaterThan(vert_ndc.xy, vec2(1.7))
+//        );
+        return false;
     }
 
     void main(void)
@@ -71,7 +80,7 @@ _{
             vec4 p2 = gl_in[2].gl_Position;
             vec4 p3 = gl_in[3].gl_Position;
 
-           /* if( offscreen(p0) &&
+            if( offscreen(p0) &&
                 offscreen(p1) &&
                 offscreen(p2) &&
                 offscreen(p3))
@@ -83,7 +92,7 @@ _{
                 gl_TessLevelOuter[2] = 0;
                 gl_TessLevelOuter[3] = 0;
             }
-            else*/
+            else
             {
                 // Outer tessellation level
                 gl_TessLevelOuter[0] = tesselationFromDist( p3, p0,
@@ -121,20 +130,36 @@ _{
     uniform mat4 M;
     uniform sampler2D TerrainHeightMap;
 
-    // Inputs
-    layout(quads, fractional_even_spacing) in;
+    //in
+    layout(quads, equal_spacing, ccw) in;
 
     patch in float gl_TessLevelOuter[4];
     patch in float gl_TessLevelInner[2];
 
     in vec2 TCS_terrainTexCoord[];
 
-    // Outputs
+    //out
     out float TES_tessLevel;
     out vec3 TES_Position_worldspace;
+    out vec2 TES_terrainTexCoord;
+
+
+    //quad interpol
+    vec4 interpolate(in vec4 v0, in vec4 v1, in vec4 v2, in vec4 v3)
+    {
+        vec4 a = mix(v0, v1, gl_TessCoord.x);
+        vec4 b = mix(v3, v2, gl_TessCoord.x);
+        return mix(a, b, gl_TessCoord.y);
+    }
 
     void main()
     {
+//        vec4 position = interpolate(
+//            gl_in[0].gl_Position,
+//            gl_in[1].gl_Position,
+//            gl_in[2].gl_Position,
+//            gl_in[3].gl_Position);
+
         vec4 bottomEdge = mix(gl_in[0].gl_Position, gl_in[1].gl_Position, gl_TessCoord.x);
         vec4 topEdge = mix(gl_in[3].gl_Position, gl_in[2].gl_Position, gl_TessCoord.x);
         vec4 position = mix(bottomEdge, topEdge, gl_TessCoord.y);
@@ -144,15 +169,13 @@ _{
         vec2 topTerrainUv = mix(TCS_terrainTexCoord[3], TCS_terrainTexCoord[2], gl_TessCoord.x);
         vec2 terrainTexCoord = mix(bottomTerrainUv, topTerrainUv, gl_TessCoord.y);
 
-        float height = texture(TerrainHeightMap ,terrainTexCoord);
+        float height = texture(TerrainHeightMap ,terrainTexCoord).r;
         position.y += height;
 
-        // Send along the tessellation level (for color coded wireframe)
-        TES_tessLevel = gl_TessLevelOuter[0];
-
-        // Project the vertex to clip space and send it along
         gl_Position = MVP * position;
+        TES_tessLevel = gl_TessLevelOuter[0];
         TES_Position_worldspace = (M * position).xyz;
+        TES_terrainTexCoord = terrainTexCoord;
     }
 _}
 
@@ -160,67 +183,80 @@ _}
 _{
 #version 430 core
 
-    layout(triangles) in;
-    layout(triangle_strip, max_vertices = 4) out;
+//#define WIREFRAME
+
+    uniform vec2 SCE_ScreenSize;
+
+    //in
+    layout(triangles, invocations = 1) in;
 
     in float TES_tessLevel[];
     in vec3 TES_Position_worldspace[];
+    in vec2 TES_terrainTexCoord[];
 
+    //out
+    layout(triangle_strip, max_vertices = 4) out;
+
+    noperspective out vec3 gs_edgeDist; //for wireframe
     out vec3 Normal_worldspace;
     out vec3 Position_worldspace;
-    out vec4 TESS_color;
+    out vec3 TESS_color;
+    out vec2 GS_terrainTexCoord;
 
-    vec4 wireframeColor(float tessLevel)
+
+    vec3 wireframeColor()
     {
-        if (tessLevel == 64.0)
-            return vec4(0.0, 0.0, 1.0, 1.0);
-        else if (tessLevel > 32.0)
-            return vec4(0.0, 1.0, 1.0, 1.0);
-        else if (tessLevel > 16.0)
-            return vec4(1.0, 1.0, 0.0, 1.0);
+        if (TES_tessLevel[0] > 48.0)
+            return vec3(0.0, 0.0, 1.0);
+        else if (TES_tessLevel[0] > 32.0)
+            return vec3(0.0, 1.0, 1.0);
+        else if (TES_tessLevel[0] > 16.0)
+            return vec3(1.0, 1.0, 0.0);
         else
-            return vec4(1.0, 0.0, 0.0, 1.0);
+            return vec3(1.0, 0.0, 0.0);
     }
 
-    void main()
+    void main(void)
     {
+#ifdef WIREFRAME
+        float ha, hb, hc;
+
+        vec2 p0 = vec2(SCE_ScreenSize * (gl_in[0].gl_Position.xy / gl_in[0].gl_Position.w));
+        vec2 p1 = vec2(SCE_ScreenSize * (gl_in[1].gl_Position.xy / gl_in[1].gl_Position.w));
+        vec2 p2 = vec2(SCE_ScreenSize * (gl_in[2].gl_Position.xy / gl_in[2].gl_Position.w));
+
+        float a = length(p1 - p2);
+        float b = length(p2 - p0);
+        float c = length(p1 - p0);
+        float alpha = acos( (b*b + c*c - a*a) / (2.0*b*c) );
+        float beta = acos( (a*a + c*c - b*b) / (2.0*a*c) );
+        ha = abs( c * sin( beta ) );
+        hb = abs( c * sin( alpha ) );
+        hc = abs( b * sin( alpha ) );
+
+#endif
+
         vec3 A = TES_Position_worldspace[2] - TES_Position_worldspace[0];
         vec3 B = TES_Position_worldspace[1] - TES_Position_worldspace[0];
         Normal_worldspace = normalize(cross(A, B));
 
-//        TESS_color = wireframeColor(TES_tessLevel[0]);
-//        Position_worldspace = TES_Position_worldspace[0];
-//        gl_Position = gl_in[0].gl_Position;
-//        EmitVertex();
-
-//        TESS_color = wireframeColor(TES_tessLevel[1]);
-//        Position_worldspace = TES_Position_worldspace[1];
-//        gl_Position = gl_in[1].gl_Position;
-//        EmitVertex();
-
-//        TESS_color = wireframeColor(TES_tessLevel[2]);
-//        Position_worldspace = TES_Position_worldspace[2];
-//        gl_Position = gl_in[2].gl_Position;
-//        EmitVertex();
-
-//        TESS_color = wireframeColor(TES_tessLevel[3]);
-//        Position_worldspace = TES_Position_worldspace[3];
-//        gl_Position = gl_in[3].gl_Position;
-//        EmitVertex();
-
         // Output verts
         for(int i = 0; i < gl_in.length(); ++i)
         {
-            TESS_color = wireframeColor(TES_tessLevel[i]);
+#ifdef WIREFRAME
+            if (i == 0)
+                gs_edgeDist = vec3(ha, 0, 0);
+            else if (i == 1)
+                gs_edgeDist = vec3(0, hb, 0);
+            else
+                gs_edgeDist = vec3(0, 0, hc);
+#endif
+            TESS_color = wireframeColor();
             Position_worldspace = TES_Position_worldspace[i];
             gl_Position = gl_in[i].gl_Position;
+            GS_terrainTexCoord = TES_terrainTexCoord[i];
             EmitVertex();
         }
-
-        TESS_color = wireframeColor(TES_tessLevel[0]);
-        Position_worldspace = TES_Position_worldspace[0];
-        gl_Position = gl_in[0].gl_Position;
-        EmitVertex();
 
         EndPrimitive();
     }
@@ -231,19 +267,37 @@ _}
 _{
 #version 430 core
 
+//#define WIREFRAME
+
+    uniform sampler2D TerrainHeightMap;
+
+    //in
+    in vec3 Normal_worldspace;
+    in vec3 Position_worldspace;
+    in vec3 TESS_color;
+    in vec2 GS_terrainTexCoord;
+
+#ifdef WIREFRAME
+    noperspective in vec3 gs_edgeDist;
+#endif
+
+    //out
     layout (location = 0) out vec3 oPosition;
     layout (location = 1) out vec3 oColor;
     layout (location = 2) out vec4 oNormal;
 
-    in vec3 Normal_worldspace;
-    in vec3 Position_worldspace;
-    in vec3 TES_Position_worldspace;
-    in vec4 TESS_color;
-
     void main()
     {
-        oNormal = vec4(1.0);
-        oColor = TESS_color.xyz;
-        oPosition = TES_Position_worldspace;
+        oNormal = vec4(Normal_worldspace, 1.0);//vec4(1.0);
+        oColor = texture(TerrainHeightMap, GS_terrainTexCoord).xyz;//TESS_color;//vec3(10.0, 0.0, 0.0);
+        oPosition = Position_worldspace;
+
+#ifdef WIREFRAME
+        float d = min(gs_edgeDist.x, gs_edgeDist.y);
+        d = min(d, gs_edgeDist.z);
+        float LineWidth = 0.75;
+        float mixVal = smoothstep(LineWidth - 1.0, LineWidth + 1.0, d);
+        oColor = mix(vec3(0.0, 0.0, 0.0), oColor, mixVal);
+#endif
     }
 _}

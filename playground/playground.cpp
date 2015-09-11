@@ -311,7 +311,8 @@ void streetLights()
     {
         for(float z = -nbLights / 2.0f; z < nbLights / 2.0f; ++z)
         {
-            SCEHandle<Container> light = createLight(vec3(x * offset, 15, z * offset), vec3(90, 0, 0), LightType::SPOT_LIGHT);
+            SCEHandle<Container> light = createLight(vec3(x * offset, 15, z * offset),
+                                                     vec3(90, 0, 0), LightType::SPOT_LIGHT);
             light->GetComponent<Light>()->SetLightReach(30.0f);
             light->GetComponent<Light>()->SetLightMaxAngle(75.0f);
             light->GetComponent<Light>()->SetLightColor(vec4(0.5, 1.0, 0.0, 1.0));

@@ -87,12 +87,13 @@ void SCERender::Render(const SCEHandle<Camera>& camera,
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     //render shadows to shadowmap
-    glm::mat4 camToWorld = camera->GetContainer()->GetComponent<Transform>()->GetWorldTransform();
+    SCEHandle<Transform> camTransform = camera->GetContainer()->GetComponent<Transform>();
+    glm::mat4 camToWorld = camTransform->GetWorldTransform();
     SCELighting::RenderCascadedShadowMap(renderData, camera->GetFrustrumData(),
                                         camToWorld, objectsToRender);
 
     //render objects without lighting
-    s_instance->renderGeometryPass(renderData, objectsToRender);
+    s_instance->renderGeometryPass(camTransform->GetWorldPosition(), renderData, objectsToRender);
 
     //lighting & sky
     s_instance->mGBuffer.ClearFinalBuffer();
@@ -124,7 +125,8 @@ void SCERender::Render(const SCEHandle<Camera>& camera,
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void SCERender::renderGeometryPass(const CameraRenderData& renderData,
+void SCERender::renderGeometryPass(const glm::vec3& cameraPostion_worldspace,
+                                   const CameraRenderData& renderData,
                                    std::vector<Container*> objectsToRender)
 {
     mGBuffer.BindForGeometryPass();
@@ -134,7 +136,7 @@ void SCERender::renderGeometryPass(const CameraRenderData& renderData,
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
 
-    SCE::Terrain::RenderTerrain(renderData.projectionMatrix, renderData.viewMatrix, 0.0f);
+    SCE::Terrain::RenderTerrain(cameraPostion_worldspace, renderData.projectionMatrix, renderData.viewMatrix, -1.5f);
 
     for(Container* container : objectsToRender)
     {
