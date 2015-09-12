@@ -28,6 +28,7 @@ _{
 #version 430 core
 
     uniform sampler2D TerrainHeightMap;
+    uniform float TerrainMaxDistance;
     uniform mat4 M;
     uniform mat4 V;
     uniform mat4 MVP;    
@@ -48,10 +49,10 @@ _{
         vec2 centerUv = (t0 - t1) * 0.5 + t1;
         float height = texture(TerrainHeightMap, centerUv).a;
 
-        float farPlane = 800.0 + 1.0;
+        float farDist = TerrainMaxDistance + 50.0;
         vec4 center_cameraspace = V * M * ((p0 - p1) * 0.5 + p1 + vec4(0.0, height, 0.0, 0.0));
-        float tess = 1.0 - (center_cameraspace.z / farPlane);//map to 0..64 range
-        tess = pow(tess, 6.0);
+        float tess = 1.0 - clamp(center_cameraspace.z / farDist, 0.0, 1.0);//map to 0..64 range
+        tess = pow(tess, 4.0);
 
         return clamp(tess * 64.0, 2.0, 64.0);//between 0 and 64
     }

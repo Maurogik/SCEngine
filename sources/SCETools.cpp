@@ -12,13 +12,11 @@
 #include <fstream>
 
 using namespace std;
-using namespace glm;
-
 
 namespace SCE {
 
-namespace Debug {
-
+namespace Debug
+{
     void Assert(bool condition, const string &message)
     {
     #ifdef SCE_DEBUG
@@ -45,17 +43,16 @@ namespace Debug {
     {
         cerr << "[ERROR] " << message << endl;
     }
-
 }
 
 
-namespace Parser {
-
+namespace Parser
+{
     vec3 StringToVec3(const string &str)
     {
         float v1 = -666.0f, v2 = -666.0f, v3 = -666.0f;
         sscanf(str.c_str(), "(%f,%f,%f)", &v1, &v2, &v3);
-        return vec3(v1, v2, v3);
+        return glm::vec3(v1, v2, v3);
     }
 
 
@@ -63,7 +60,7 @@ namespace Parser {
     {
         float v1 = -666.0f, v2 = -666.0f, v3 = -666.0f, v4 = -666.0f;
         sscanf(str.c_str(), "(%f,%f,%f,%f)", &v1, &v2, &v3, &v4);
-        return vec4(v1, v2, v3, v4);
+        return glm::vec4(v1, v2, v3, v4);
     }
 
 
@@ -83,12 +80,11 @@ namespace Parser {
     {
         return (int)atoi(str.c_str());
     }
-
 }
 
 
-namespace Tools {
-
+namespace Tools
+{
     int HashFromString(const string &str)
     {
         std::hash<std::string> hash_func;
@@ -106,7 +102,22 @@ namespace Tools {
     {
         return (int)(val * 255.0f);
     }
+}
 
+namespace Math
+{
+    float mapToRange(float fromMin, float fromMax, float toMin, float toMax, float val)
+    {
+        val = glm::max(fromMin, (glm::min(fromMax, val)));//clamp in range if outside
+        float fromSize = fromMax - fromMin;
+        val = (val - fromMin) / fromSize;
+        return lerp(toMin, toMax, val);
+    }
+
+    float lerp(float a, float b, float v)
+    {
+        return a + (b - a) * v;
+    }
 }
 
 }

@@ -13,8 +13,8 @@
 
 namespace SCE {
 
-namespace Parser {
-
+namespace Parser
+{
     glm::vec3   StringToVec3(const std::string& str);
     glm::vec4   StringToVec4(const std::string& str);
     float       StringToFloat(const std::string& str);
@@ -22,20 +22,25 @@ namespace Parser {
     int         StringToInt(const std::string& str);
 }
 
-namespace Tools {
-
+namespace Tools
+{
     int         HashFromString(const std::string& str);
     std::string ToLowerCase(const std::string &str);
     uint floatToColorRange(float val);
 }
 
-namespace Debug {
-
+namespace Debug
+{
     void        Assert(bool condition, const std::string& message);
     void        RaiseError(const std::string& errorMsg);
     void        Log(const std::string& message);
     void        LogError(const std::string& message);
+}
 
+namespace Math
+{
+    float lerp(float a, float b, float v);
+    float mapToRange(float fromMin, float fromMax, float toMin, float toMax, float val);
 }
 
 }

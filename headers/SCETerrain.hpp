@@ -12,7 +12,7 @@ namespace SCE
 {
     namespace Terrain
     {
-        void Init();
+        void Init(float terrainSize = 500.0f, float patchSize = 20.0f);
         void RenderTerrain(const vec3& cameraPosition, const mat4& projectionMatrix, const mat4& viewMatrix, float terrainBaseHeight);
         void Cleanup();
     }
