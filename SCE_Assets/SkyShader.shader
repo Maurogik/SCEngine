@@ -109,7 +109,7 @@ _{
         vec3 sun_cameraspace = (V * vec4(SunPosition_worldspace, 1.0)).xyz;
 
 
-        float fogStr = 0.001;
+        float fogStr = 0.0025;
         float dist = abs((V * vec4(Position_worldpsace, 1.0)).z);
         float fogAmount = 1.0 - exp( -dist * fogStr );
         float notOccludedByScene = step(dot(Position_worldpsace, Position_worldpsace), 0.0001);

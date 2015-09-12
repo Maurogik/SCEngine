@@ -18,7 +18,7 @@ _{
     void main()
     {
         vec4 pos_terrainspace = QuadToTerrainSpace * vec4(vertexPosition_modelspace, 1.0);
-        VS_terrainTexCoord = pos_terrainspace.xz * 0.5 + vec2(0.5);
+        VS_terrainTexCoord = pos_terrainspace.zx * 0.5 + vec2(0.5);
         gl_Position = vec4(vertexPosition_modelspace, 1.0);
     }
 _}
@@ -46,12 +46,12 @@ _{
     float tesselationFromDist(vec4 p0, vec4 p1, vec2 t0, vec2 t1)
     {
         vec2 centerUv = (t0 - t1) * 0.5 + t1;
-        float height = texture(TerrainHeightMap, centerUv);
+        float height = texture(TerrainHeightMap, centerUv).a;
 
-        float farPlane = 500.0 + 1.0;
+        float farPlane = 800.0 + 1.0;
         vec4 center_cameraspace = V * M * ((p0 - p1) * 0.5 + p1 + vec4(0.0, height, 0.0, 0.0));
         float tess = 1.0 - (center_cameraspace.z / farPlane);//map to 0..64 range
-        tess = pow(tess, 4.0);
+        tess = pow(tess, 6.0);
 
         return clamp(tess * 64.0, 2.0, 64.0);//between 0 and 64
     }
@@ -169,7 +169,10 @@ _{
         vec2 topTerrainUv = mix(TCS_terrainTexCoord[3], TCS_terrainTexCoord[2], gl_TessCoord.x);
         vec2 terrainTexCoord = mix(bottomTerrainUv, topTerrainUv, gl_TessCoord.y);
 
-        float height = texture(TerrainHeightMap ,terrainTexCoord).r;
+        vec4 normAndHeight = texture(TerrainHeightMap, terrainTexCoord);
+        vec3 norm = normAndHeight.xyz;
+
+        float height = normAndHeight.a;
         position.y += height;
 
         gl_Position = MVP * position;
@@ -198,7 +201,6 @@ _{
     layout(triangle_strip, max_vertices = 4) out;
 
     noperspective out vec3 gs_edgeDist; //for wireframe
-    out vec3 Normal_worldspace;
     out vec3 Position_worldspace;
     out vec3 TESS_color;
     out vec2 GS_terrainTexCoord;
@@ -206,14 +208,16 @@ _{
 
     vec3 wireframeColor()
     {
-        if (TES_tessLevel[0] > 48.0)
+        /*if (TES_tessLevel[0] > 48.0)
             return vec3(0.0, 0.0, 1.0);
         else if (TES_tessLevel[0] > 32.0)
             return vec3(0.0, 1.0, 1.0);
         else if (TES_tessLevel[0] > 16.0)
             return vec3(1.0, 1.0, 0.0);
         else
-            return vec3(1.0, 0.0, 0.0);
+            return vec3(1.0, 0.0, 0.0);*/
+        float fTess = TES_tessLevel[0]/64.0;
+        return vec3(fTess, 0.0, 1.0 - fTess);
     }
 
     void main(void)
@@ -235,10 +239,6 @@ _{
         hc = abs( b * sin( alpha ) );
 
 #endif
-
-        vec3 A = TES_Position_worldspace[2] - TES_Position_worldspace[0];
-        vec3 B = TES_Position_worldspace[1] - TES_Position_worldspace[0];
-        Normal_worldspace = normalize(cross(A, B));
 
         // Output verts
         for(int i = 0; i < gl_in.length(); ++i)
@@ -270,9 +270,10 @@ _{
 //#define WIREFRAME
 
     uniform sampler2D TerrainHeightMap;
+    uniform mat4 M;
+    uniform vec2 SCE_ScreenSize;
 
     //in
-    in vec3 Normal_worldspace;
     in vec3 Position_worldspace;
     in vec3 TESS_color;
     in vec2 GS_terrainTexCoord;
@@ -288,8 +289,12 @@ _{
 
     void main()
     {
-        oNormal = vec4(Normal_worldspace, 1.0);//vec4(1.0);
-        oColor = texture(TerrainHeightMap, GS_terrainTexCoord).xyz;//TESS_color;//vec3(10.0, 0.0, 0.0);
+        vec2 uv = gl_FragCoord.xy / SCE_ScreenSize;
+        vec4 normAndHeight = texture(TerrainHeightMap, GS_terrainTexCoord);
+        vec3 norm = normAndHeight.xyz;
+//        norm = normalize((M * vec4(norm, 0.0)).xyz);
+        oNormal = vec4(norm, 0.1);
+        oColor = TESS_color;
         oPosition = Position_worldspace;
 
 #ifdef WIREFRAME

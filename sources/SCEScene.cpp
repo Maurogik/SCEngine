@@ -113,7 +113,7 @@ void SCEScene::UpdateScene()
 
     float xRotateSpeed = 360.0f;
     float yRotateSpeed = 180.0f;
-    float speed = 10.0f;
+    float speed = 30.0f;
 
     vec3 position = transform->GetWorldPosition();
     transform->SetWorldOrientation(vec3((yMouse - 0.5) * yRotateSpeed, (xMouse - 0.5) * xRotateSpeed, 0.0));
