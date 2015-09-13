@@ -59,7 +59,7 @@ Material::~Material()
         else if (data.type == UNIFORM_TEXTURE2D)
         {
             GLuint* fData = (GLuint*) data.data;
-            SCETextures::DeleteTexture(*fData);
+            SCE::TextureUtils::DeleteTexture(*fData);
             delete(fData);
         }
     }
@@ -120,7 +120,7 @@ void Material::LoadMaterial(const string &filename)
 
             if(type == "Texture2D")
             {
-                GLuint* texId = new GLuint(SCETextures::LoadTexture(value));
+                GLuint* texId = new GLuint(SCE::TextureUtils::LoadTexture(value));
                 unifData.data = (void*)texId;
                 unifData.type = UNIFORM_TEXTURE2D;
             }
@@ -171,7 +171,7 @@ void Material::BindMaterialData()
         case UNIFORM_TEXTURE2D :
         {
             GLuint texId = *((GLuint*)uniform.data);
-            SCETextures::BindTexture(texId, textureUnit, uniform.dataID);
+            SCE::TextureUtils::BindTexture(texId, textureUnit, uniform.dataID);
             ++textureUnit;
             break;
         }

@@ -107,7 +107,6 @@ void SCECore::InitEngine(const std::string &windowName)
     //Init Engine subcomponents in order
     SCETime::Init();
     //Asset management
-    SCETextures::Init();
     SCEMeshLoader::Init();
     //Rendering
     SCERender::Init();
@@ -136,9 +135,7 @@ void SCECore::CleanUpEngine()
 
     //clean engine subcomponents
     SCERender::CleanUp();
-
     SCEMeshLoader::CleanUp();
-    SCETextures::CleanUp();
 
     SCETime::CleanUp();
 
