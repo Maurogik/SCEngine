@@ -46,8 +46,8 @@ SCERender::SCERender()
 
     mQuadMeshId = SCEMeshLoader::CreateQuadMesh();
 
-    mToneMapData.toneMapShader = SCEShaders::CreateShaderProgram("ToneMapping");
-    mToneMapData.luminanceShader = SCEShaders::CreateShaderProgram("LuminanceShader");
+    mToneMapData.toneMapShader = SCE::ShaderUtils::CreateShaderProgram("ToneMapping");
+    mToneMapData.luminanceShader = SCE::ShaderUtils::CreateShaderProgram("LuminanceShader");
     mToneMapData.exposureUniform = glGetUniformLocation(mToneMapData.toneMapShader,
                                                         TONEMAP_EXPOSURE_NAME);
     mToneMapData.maxBrightnessUniform = glGetUniformLocation(mToneMapData.toneMapShader,
@@ -56,7 +56,6 @@ SCERender::SCERender()
 
 void SCERender::Init()
 {
-    SCEShaders::Init();
     SCELighting::Init();
     SCEMeshRender::Init();
     SCE::Terrain::Init(500.0f, 20.0f, -2.0f);
@@ -72,7 +71,6 @@ void SCERender::CleanUp()
     SCE::Terrain::Cleanup();
     SCEMeshRender::CleanUp();
     SCELighting::CleanUp();
-    SCEShaders::CleanUp();
 }
 
 void SCERender::Render(const SCEHandle<Camera>& camera,
@@ -105,7 +103,7 @@ void SCERender::Render(const SCEHandle<Camera>& camera,
     glDisable(GL_DEPTH_TEST);
     glCullFace(GL_FRONT);
     glUseProgram(tonemap.luminanceShader);
-    SCEShaders::BindDefaultUniforms(tonemap.luminanceShader);
+    SCE::ShaderUtils::BindDefaultUniforms(tonemap.luminanceShader);
     s_instance->mGBuffer.BindForLuminancePass();
     RenderFullScreenPass(renderData.projectionMatrix, renderData.viewMatrix);
     s_instance->mGBuffer.GenerateLuminanceMimap();
@@ -113,7 +111,7 @@ void SCERender::Render(const SCEHandle<Camera>& camera,
     //Tonemapping & render to back buffer
     glUseProgram(tonemap.toneMapShader);
     s_instance->mGBuffer.BindForToneMapPass();
-    SCEShaders::BindDefaultUniforms(tonemap.toneMapShader);
+    SCE::ShaderUtils::BindDefaultUniforms(tonemap.toneMapShader);
     glUniform1f(tonemap.exposureUniform, tonemap.exposure);
     glUniform1f(tonemap.maxBrightnessUniform, tonemap.maxBrightness);
     RenderFullScreenPass(renderData.projectionMatrix, renderData.viewMatrix);

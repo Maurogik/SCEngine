@@ -6,49 +6,16 @@
 #ifndef SCE_SHADERS_HPP
 #define SCE_SHADERS_HPP
 
-#include "SCEDefines.hpp"
-#include <map>
+#include "../headers/SCEDefines.hpp"
 
 namespace SCE
 {
-
-    class SCEShaders
+    namespace ShaderUtils
     {
-
-    public :
-
-        enum ShaderType
-        {
-            FRAGMENT_SHADER = 0,
-            VERTEX_SHADER,
-            TESSELATION_EVALUATION_SHADER,
-            TESSELATION_CONTROL_SHADER,
-            GEOMETRY_SHADER,
-            SHADER_TYPE_COUNT
-        };
-
-        static void         Init();
-        static void         CleanUp();
-        static GLuint       CreateShaderProgram(const std::string &shaderFileName);
-        static void         DeleteShaderProgram(GLuint shaderId);
-        static void         BindDefaultUniforms(GLuint shaderId);
-
-    private :
-
-
-        struct DefaultUniforms
-        {
-            GLint screenSizeUniform;
-        };
-
-        static SCEShaders*                  s_instance;
-
-        std::map<std::string, GLuint>       mCompiledShaderPrograms;
-        std::map<GLuint, DefaultUniforms>   mDefaultUniforms;
-
-        SCEShaders();
-        ~SCEShaders();
-    };
+        GLuint       CreateShaderProgram(const std::string &shaderFileName);
+        void         DeleteShaderProgram(GLuint shaderId);
+        void         BindDefaultUniforms(GLuint shaderId);
+    }
 }
 
 #endif

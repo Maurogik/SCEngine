@@ -75,9 +75,9 @@ void SCELighting::CleanUp()
 {
     Debug::Assert(s_instance, "No Lighting system instance found, Init the system before using it");
     //unload shader
-    SCEShaders::DeleteShaderProgram(s_instance->mLightShader);
-    SCEShaders::DeleteShaderProgram(s_instance->mEmptyShader);
-    SCEShaders::DeleteShaderProgram(s_instance->mSkyShader);
+    SCE::ShaderUtils::DeleteShaderProgram(s_instance->mLightShader);
+    SCE::ShaderUtils::DeleteShaderProgram(s_instance->mEmptyShader);
+    SCE::ShaderUtils::DeleteShaderProgram(s_instance->mSkyShader);
     delete s_instance;
 }
 
@@ -124,7 +124,7 @@ void SCELighting::RenderLightsToGBuffer(const CameraRenderData& renderData,
         s_instance->renderLightStencilPass(renderData, light);
 
         glUseProgram(s_instance->mLightShader);
-        SCEShaders::BindDefaultUniforms(s_instance->mLightShader);
+        SCE::ShaderUtils::BindDefaultUniforms(s_instance->mLightShader);
         gBuffer.BindForLightPass();
         gBuffer.BindTexturesToLightShader();
 
@@ -144,7 +144,7 @@ void SCELighting::RenderLightsToGBuffer(const CameraRenderData& renderData,
     for(SCEHandle<Light> light : s_instance->mDirectionalLights)
     {
         glUseProgram(s_instance->mLightShader);
-        SCEShaders::BindDefaultUniforms(s_instance->mLightShader);
+        SCE::ShaderUtils::BindDefaultUniforms(s_instance->mLightShader);
         gBuffer.BindForLightPass();
         gBuffer.BindTexturesToLightShader();
 
@@ -238,17 +238,17 @@ void SCELighting::initLightShader()
 {
     if(mLightShader == (GLuint) -1)
     {
-        mLightShader = SCEShaders::CreateShaderProgram(LIGHT_SHADER_NAME);
+        mLightShader = SCE::ShaderUtils::CreateShaderProgram(LIGHT_SHADER_NAME);
     }
 
     if(mEmptyShader == (GLuint) -1)
     {
-        mEmptyShader = SCEShaders::CreateShaderProgram(STENCYL_SHADER_NAME);
+        mEmptyShader = SCE::ShaderUtils::CreateShaderProgram(STENCYL_SHADER_NAME);
     }
 
     if(mSkyShader == (GLuint) -1)
     {
-        mSkyShader = SCEShaders::CreateShaderProgram(SKY_SHADER_NAME);
+        mSkyShader = SCE::ShaderUtils::CreateShaderProgram(SKY_SHADER_NAME);
     }
 
     for (uint i = 0; i < SCE_GBuffer::GBUFFER_NUM_TEXTURES; i++)
@@ -316,7 +316,7 @@ void SCELighting::unregisterLight(SCEHandle<Light> light)
 
 void SCELighting::renderSkyPass(const CameraRenderData& renderData)
 {    
-    SCEShaders::BindDefaultUniforms(mSkyShader);
+    SCE::ShaderUtils::BindDefaultUniforms(mSkyShader);
     glDisable(GL_DEPTH_TEST);
     glCullFace(GL_FRONT);
 

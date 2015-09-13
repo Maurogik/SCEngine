@@ -65,7 +65,7 @@ Material::~Material()
     }
 
     //unload shader
-    SCEShaders::DeleteShaderProgram(mShaderProgramId);
+    SCE::ShaderUtils::DeleteShaderProgram(mShaderProgramId);
 }
 
 void Material::LoadMaterial(const string &filename)
@@ -190,7 +190,7 @@ void Material::BindMaterialData()
         }
     }
 
-    SCEShaders::BindDefaultUniforms(mShaderProgramId);
+    SCE::ShaderUtils::BindDefaultUniforms(mShaderProgramId);
 }
 
 void Material::ReloadMaterial()
@@ -210,7 +210,7 @@ const GLuint& Material::GetShaderProgram() const
 
 GLuint Material::loadShaders(const string &filename)
 {
-    return SCEShaders::CreateShaderProgram(filename);
+    return SCE::ShaderUtils::CreateShaderProgram(filename);
 }
 
 

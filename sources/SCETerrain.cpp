@@ -86,7 +86,7 @@ namespace Terrain
 
         if(terrainData->glData.terrainProgram != GLuint(-1))
         {
-            SCEShaders::DeleteShaderProgram(terrainData->glData.terrainProgram);
+            SCE::ShaderUtils::DeleteShaderProgram(terrainData->glData.terrainProgram);
         }
     }
 
@@ -253,7 +253,7 @@ namespace Terrain
         TerrainGLData& glData = terrainData->glData;
         TerrainQuadUniforms &quadUniforms = terrainData->quadUniforms;
 
-        glData.terrainProgram = SCEShaders::CreateShaderProgram(TERRAIN_SHADER_NAME);
+        glData.terrainProgram = SCE::ShaderUtils::CreateShaderProgram(TERRAIN_SHADER_NAME);
 
         GLuint terrainProgram = glData.terrainProgram;
 
@@ -343,7 +343,7 @@ namespace Terrain
 
         //setup gl state that at common for all patches
         glUseProgram(glData.terrainProgram);
-        SCEShaders::BindDefaultUniforms(glData.terrainProgram);
+        SCE::ShaderUtils::BindDefaultUniforms(glData.terrainProgram);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, glData.terrainTexture);
 
