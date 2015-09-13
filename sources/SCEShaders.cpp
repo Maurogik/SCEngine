@@ -44,26 +44,26 @@ namespace ShaderUtils
     struct ShadersData
     {
         ShadersData()
-            : mCompiledShaderPrograms(),
-              mDefaultUniforms()
+            : compiledPrograms(),
+              defaultUniforms()
         {}
 
         ~ShadersData()
         {
             Internal::Log("Cleaning up shader system, will delete compiled shader promgrams");
-            auto beginIt = begin(mCompiledShaderPrograms);
-            auto endIt = end(mCompiledShaderPrograms);
+            auto beginIt = begin(compiledPrograms);
+            auto endIt = end(compiledPrograms);
             for(auto iterator = beginIt; iterator != endIt; iterator++) {
                 Internal::Log("Deleting shader : " + iterator->first);
                 glDeleteProgram(iterator->second);
             }
         }
 
-        std::map<std::string, GLuint>       mCompiledShaderPrograms;
-        std::map<GLuint, DefaultUniforms>   mDefaultUniforms;
+        std::map<std::string, GLuint>       compiledPrograms;
+        std::map<GLuint, DefaultUniforms>   defaultUniforms;
     };
 
-    //Compilation unit scope variables
+    //Compilation unit scope variable
     ShadersData shaderData;
 
     std::string shaderTypeToString(int shaderType)
@@ -99,10 +99,10 @@ namespace ShaderUtils
     GLuint CreateShaderProgram(const string& shaderFileName)
     {
         //shader has already been compiled
-        if(shaderData.mCompiledShaderPrograms.count(shaderFileName) > 0)
+        if(shaderData.compiledPrograms.count(shaderFileName) > 0)
         {
             Internal::Log("Shader " + shaderFileName + " already compiled, using it directly");
-            return shaderData.mCompiledShaderPrograms[shaderFileName];
+            return shaderData.compiledPrograms[shaderFileName];
         }
 
         Internal::Log("TODO : cache shaders once compiled to avoid compiling again");
@@ -231,33 +231,33 @@ namespace ShaderUtils
             }
         }
 
-        shaderData.mCompiledShaderPrograms[shaderFileName] = programID;
+        shaderData.compiledPrograms[shaderFileName] = programID;
 
         DefaultUniforms uniforms;
         uniforms.screenSizeUniform = glGetUniformLocation(programID, SCREEN_SIZE_UNIFORM_NAME);
-        shaderData.mDefaultUniforms[programID] = uniforms;
+        shaderData.defaultUniforms[programID] = uniforms;
 
         return programID;
     }
 
     void DeleteShaderProgram(GLuint shaderId)
     {
-        auto it = find_if(begin(shaderData.mCompiledShaderPrograms),
-                          end(shaderData.mCompiledShaderPrograms),
+        auto it = find_if(begin(shaderData.compiledPrograms),
+                          end(shaderData.compiledPrograms),
                           [&shaderId](std::pair<string, GLuint> entry)
         { return entry.second == shaderId; } );
 
-        if(it != end(shaderData.mCompiledShaderPrograms))
+        if(it != end(shaderData.compiledPrograms))
         {
             Internal::Log("Delete program : " + it->first);
             glDeleteProgram(it->second);
-            shaderData.mCompiledShaderPrograms.erase(it);
+            shaderData.compiledPrograms.erase(it);
         }
 
-        auto itUniform = shaderData.mDefaultUniforms.find(shaderId);
-        if(itUniform != end(shaderData.mDefaultUniforms))
+        auto itUniform = shaderData.defaultUniforms.find(shaderId);
+        if(itUniform != end(shaderData.defaultUniforms))
         {
-            shaderData.mDefaultUniforms.erase(itUniform);
+            shaderData.defaultUniforms.erase(itUniform);
         }
     }
 
@@ -266,7 +266,7 @@ namespace ShaderUtils
         float width = SCECore::GetWindowWidth();
         float height = SCECore::GetWindowHeight();
 
-        glUniform2f(shaderData.mDefaultUniforms[shaderId].screenSizeUniform, width, height);
+        glUniform2f(shaderData.defaultUniforms[shaderId].screenSizeUniform, width, height);
     }
 }
 
