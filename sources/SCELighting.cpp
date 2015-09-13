@@ -216,6 +216,7 @@ void SCELighting::RegisterLight(SCEHandle<Light> light)
 {
     Debug::Assert(s_instance, "No Lighting system instance found, Init the system before using it");
     s_instance->registerLight(light);
+    light->InitLightRenderData(s_instance->mLightShader);
 }
 
 void SCELighting::UnregisterLight(SCEHandle<Light> light)

@@ -33,7 +33,8 @@ namespace SCE
     {
         DIRECTIONAL_LIGHT = 0,
         POINT_LIGHT,
-        SPOT_LIGHT
+        SPOT_LIGHT,
+        LIGHT_TYPE_COUNT
     };
 
     class Light : public Component
@@ -53,6 +54,7 @@ namespace SCE
 
         LightType           GetLightType() const;
 
+        void                InitLightRenderData(GLuint lightShaderProgram);
         void                RenderWithLightData(const CameraRenderData& renderData);
         void                RenderWithoutLightData(const CameraRenderData& renderData);
 
@@ -71,13 +73,14 @@ namespace SCE
         glm::vec4                   mLightColor;
         bool                        mIsSunLight;
         //array containing a map of uniforms Id by shader ID, for each light uniform type
-        std::map<GLuint, GLint>     mLightUniformsByShader[LIGHT_UNIFORMS_COUNT];
+        GLint                       mLightUniforms[LIGHT_UNIFORMS_COUNT];
+        GLuint                      mLightSubroutineIndex;
         SCEHandle<Mesh>             mLightMesh;
         SCEHandle<MeshRenderer>     mLightRenderer;
 
         void                        initRenderDataForShader(GLuint lightShaderId);
-        void                        bindRenderDataForShader(GLuint shaderId, const vec3& cameraPosition);
-        void                        bindLightModelForShader(GLuint shaderId);
+        void                        bindRenderDataForShader(const vec3& cameraPosition);
+        void                        bindLightModelForShader();
 
         void                        generateLightMesh();
         void                        generateDirectionalLightMesh();

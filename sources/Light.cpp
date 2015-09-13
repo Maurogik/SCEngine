@@ -20,20 +20,21 @@ using namespace SCE;
 //#define LIGHT_BOUNDS_COMPLEX
 
 #define REACH_DEFAULT 1.0f
-#define COLOR_DEFAULT vec4(1.0f, 1.0f, 1.0f, 1.0f)
+#define COLOR_DEFAULT (glm::vec4(1.0f, 1.0f, 1.0f, 1.0f))
 #define ANGLE_DEFAULT 45.0f
 
 #define POINT_LIGHT_CUTOFF (1.0f/256.0f)
 #define SPOT_LIGHT_CUTOFF (0.1f/256.0f)
 
 #define LIGHT_ROUTINE_COUNT 1
+#define LIGHT_ROUTINE_SHADER_TYPE GL_FRAGMENT_SHADER
 
 #define COMPUTE_LIGHT_UNIFORM_NAME      "SCE_ComputeLight"
 #define COMPUTE_DIRECTIONAL_LIGHT_NAME  "SCE_ComputeDirectionalLight"
 #define COMPUTE_POINT_LIGHT_NAME        "SCE_ComputePointLight"
 #define COMPUTE_SPOT_LIGHT_NAME         "SCE_ComputeSpotLight"
 
-string s_lightUniformNames[LIGHT_UNIFORMS_COUNT] = {
+string lightUniformNames[LIGHT_UNIFORMS_COUNT] = {
     "SCE_LightPosition_worldspace",
     "SCE_LightDirection_worldspace",
     "SCE_LightReach_worldspace",
@@ -51,13 +52,12 @@ Light::Light(SCEHandle<Container>& container, LightType lightType,
       mLightMaxAngle(ANGLE_DEFAULT),
       mLightColor(COLOR_DEFAULT),
       mIsSunLight(false),
-      mLightUniformsByShader(),
+      mLightUniforms(),
       mLightMesh(nullptr),
       mLightRenderer(nullptr)
 {
     SCELighting::RegisterLight(SCEHandle<Light>(this));
     generateLightMesh();
-    initRenderDataForShader(SCELighting::GetLightShader());
     //change layer to avoid rendering the light mesh as a regular mesh
     container->SetLayer(LIGHTS_LAYER);
 }
@@ -72,29 +72,56 @@ LightType Light::GetLightType() const
     return mLightType;
 }
 
-void Light::initRenderDataForShader(GLuint lightShaderId)
+//Will be called by the Lighting system upon light registration
+void Light::InitLightRenderData(GLuint lightShaderProgram)
 {
-    glUseProgram(lightShaderId);
-
     //get the location for all uniforms, some may not be used but that's ok.
     for(int type = LIGHT_POSITION; type < LIGHT_UNIFORMS_COUNT; ++type)
     {
-        string name = s_lightUniformNames[type];
-        GLuint uniform = glGetUniformLocation(lightShaderId, name.c_str());
-        //set the uniformId for this uniform and shader if it's not done already
-        if(mLightUniformsByShader[(LightUniformType)type].count(lightShaderId) == 0)
-        {
-            mLightUniformsByShader[(LightUniformType)type][lightShaderId] = uniform;
-        }
+        string name = lightUniformNames[type];
+        GLuint uniform = glGetUniformLocation(lightShaderProgram, name.c_str());
+        //set the uniformId for this uniform type
+        mLightUniforms[type] = uniform;
     }
+
+    //Check the number of active subroutine uniforms
+    //This is expecting that subroutines are only used for light in this shader
+    GLint subroutineUniformCount;
+    glGetProgramStageiv(lightShaderProgram, LIGHT_ROUTINE_SHADER_TYPE,
+                        GL_ACTIVE_SUBROUTINE_UNIFORMS, &subroutineUniformCount);
+
+    Debug::Assert(subroutineUniformCount == LIGHT_ROUTINE_COUNT,
+                  string("Wrong number of subroutine found in light pass shader \n")
+                  + "expected " + std::to_string(LIGHT_ROUTINE_COUNT)
+                  + " found " + std::to_string(subroutineUniformCount));
+
+    //Get what subroutine index corresponds  to this light type
+    string lightSubroutineName("UnknownLightType");
+    switch(mLightType)
+    {
+    case POINT_LIGHT :
+        lightSubroutineName = COMPUTE_POINT_LIGHT_NAME;
+        break;
+    case SPOT_LIGHT :
+        lightSubroutineName = COMPUTE_SPOT_LIGHT_NAME;
+        break;
+    case DIRECTIONAL_LIGHT :
+        lightSubroutineName = COMPUTE_DIRECTIONAL_LIGHT_NAME;
+        break;
+    default :
+        Debug::RaiseError("Unknown Light type : " + mLightType);
+        break;
+    }
+
+    mLightSubroutineIndex = glGetSubroutineIndex( lightShaderProgram,
+                                                  LIGHT_ROUTINE_SHADER_TYPE,
+                                                  lightSubroutineName.c_str());
 
     mLightRenderer = GetContainer()->AddComponent<MeshRenderer>();
 }
 
-void Light::bindRenderDataForShader(GLuint shaderId, const vec3& cameraPosition)
+void Light::bindRenderDataForShader(const vec3& cameraPosition)
 {
-    glUseProgram(shaderId);
-
     SCEHandle<Transform> transform = GetContainer()->GetComponent<Transform>();
 
     vec3 lightPos = transform->GetWorldPosition();
@@ -109,7 +136,7 @@ void Light::bindRenderDataForShader(GLuint shaderId, const vec3& cameraPosition)
     //send the light data to the uniforms
     for(int type = LIGHT_POSITION; type < LIGHT_UNIFORMS_COUNT; ++ type)
     {
-        GLuint unifId = mLightUniformsByShader[(LightUniformType)type][shaderId];
+        GLuint unifId = mLightUniforms[type];
 
         switch(type)
         {
@@ -140,77 +167,21 @@ void Light::bindRenderDataForShader(GLuint shaderId, const vec3& cameraPosition)
     }
 }
 
-void Light::bindLightModelForShader(GLuint shaderId)
+void Light::bindLightModelForShader()
 {
-    glUseProgram(shaderId);
+    //send the binding of uniform/subroutines to the current context/shader
+    //last param is array of subroutine index for each subroutine uniforms
+    //array[i] = index of subroutine to pick for uniform i
+    glUniformSubroutinesuiv(LIGHT_ROUTINE_SHADER_TYPE, LIGHT_ROUTINE_COUNT, &mLightSubroutineIndex);
 
-    //set subroutine according to light type
-    GLuint shaderType = GL_FRAGMENT_SHADER; //always fragment shader for lighting computations
-
-    //get the index of the subroutine uniform (form 0 to nb of subroutines uniforms)
-    GLuint lightSubroutineUniform = glGetSubroutineUniformLocation(shaderId,
-                                                                   shaderType,
-                                                                   COMPUTE_LIGHT_UNIFORM_NAME);
-
-    string lightSubroutineName("UnknownLightType");
-    switch(mLightType)
-    {
-    case POINT_LIGHT :
-        lightSubroutineName = COMPUTE_POINT_LIGHT_NAME;
-        break;
-    case SPOT_LIGHT :
-        lightSubroutineName = COMPUTE_SPOT_LIGHT_NAME;
-        break;
-    case DIRECTIONAL_LIGHT :
-        lightSubroutineName = COMPUTE_DIRECTIONAL_LIGHT_NAME;
-        break;
-    default :
-        Debug::LogError("Unknown Light type : " + mLightType);
-        break;
-    }
-
-    GLuint lightSubroutine = glGetSubroutineIndex( shaderId,
-                                                   shaderType,
-                                                   lightSubroutineName.c_str());
-
-    //Get the number of active uniforms
-    //This is expecting that subroutines are only used for light in this shader
-    GLint subroutineUniformCount;
-    glGetProgramStageiv(shaderId, shaderType, GL_ACTIVE_SUBROUTINE_UNIFORMS, &subroutineUniformCount);
-
-    if(subroutineUniformCount > 0)
-    {
-        Debug::Assert(subroutineUniformCount == LIGHT_ROUTINE_COUNT,
-                      string("Wrong number of subroutine found in light pass shader \n")
-                      + "expected " + std::to_string(LIGHT_ROUTINE_COUNT)
-                      + " found " + std::to_string(subroutineUniformCount));
-
-        //array of subroutine index for each subroutine uniform
-        //ex : {indexForUniform1, indexForUniform2, indexForUniform3, ...}
-        GLuint uniformArray[subroutineUniformCount];
-        for(GLint uniformIndex = 0; uniformIndex < subroutineUniformCount; ++uniformIndex)
-        {
-            if(uniformIndex == (GLint)lightSubroutineUniform)
-            {
-                uniformArray[uniformIndex] = lightSubroutine;
-            }
-            else
-            {
-                Debug::LogError("Unexepected subroutine found at index : " + uniformIndex);
-            }
-        }
-
-        //send the binding of uniform/subroutines to the current context/shader
-        glUniformSubroutinesuiv( shaderType, subroutineUniformCount, uniformArray);
-    }
 }
 
-const glm::vec4 &Light::GetLightColor() const
+const glm::vec4& Light::GetLightColor() const
 {
     return mLightColor;
 }
 
-void Light::SetLightColor(const glm::vec4 &lightColor)
+void Light::SetLightColor(const glm::vec4& lightColor)
 {
     mLightColor = lightColor;
 }
@@ -220,8 +191,8 @@ void Light::RenderWithLightData(const CameraRenderData& renderData)
     //compute light position to send it to the shader
     glm::mat4 camToWorld = glm::inverse(renderData.viewMatrix);
     vec4 camPos = camToWorld * vec4(0, 0, 0, 1);
-    bindRenderDataForShader(SCELighting::GetLightShader(), vec3(camPos.x, camPos.y, camPos.z));
-    bindLightModelForShader(SCELighting::GetLightShader());
+    bindRenderDataForShader(vec3(camPos.x, camPos.y, camPos.z));
+    bindLightModelForShader();
 
     mLightRenderer->Render(renderData, mLightType == DIRECTIONAL_LIGHT);
 }
