@@ -69,12 +69,13 @@ namespace Terrain
         TerrainQuadUniforms quadUniforms;
         float terrainSize;
         float patchSize;
+        float baseHeight;
 
         glm::vec3 quadVertices[4];
         ushort quadPatchIndices[4]; //indices for a quad, not 2 triangles
     };
 
-    TerrainData* terrainData;
+    static TerrainData* terrainData;
 
     void cleanupGLData()
     {
@@ -378,11 +379,12 @@ namespace Terrain
         glBindVertexArray(0);
     }
 
-    void Init(float terrainSize, float patchSize)
+    void Init(float terrainSize, float patchSize, float terrainBaseHeight)
     {
         terrainData = new TerrainData();
         terrainData->terrainSize = terrainSize;
         terrainData->patchSize = patchSize;
+        terrainData->baseHeight = terrainBaseHeight;
         initializeRenderData();
         initializeTerrainTextures(3.0f, 5.0f);
     }
