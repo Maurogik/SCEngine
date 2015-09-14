@@ -16,7 +16,7 @@
 #define SUN_POS_UNIFORM_NAME "SunPosition_worldspace"
 #define QUALITY_UNIFORM_NAME "SizeQuality"
 
-#define SUN_TEXTURE_QUALITY 0.25f
+#define SUN_TEXTURE_QUALITY 0.2f
 
 namespace SCE
 {
@@ -60,8 +60,8 @@ namespace SkyRenderer
         glGenTextures(1, &(skyData.sunShaftTexture));
         //texture will store additive sun color as RGB and fog strength as A
         glBindTexture(GL_TEXTURE_2D, skyData.sunShaftTexture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, skyData.renderWidth, skyData.renderHeight,
-                     0, GL_RGBA, GL_FLOAT, NULL);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RG16F, skyData.renderWidth, skyData.renderHeight,
+                     0, GL_RG, GL_FLOAT, NULL);
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 

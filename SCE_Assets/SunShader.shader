@@ -35,7 +35,7 @@ _{
     uniform mat4 V;
     uniform mat4 P;
 
-    out vec4 color;
+    out vec2 color;
 
     //variables
     vec3 vSunColor = vec3(1.0, 1.0, 0.9) ;
@@ -135,8 +135,8 @@ _{
         vec4 sunColor = getSunColor(ndcUv, sun_projectionspace.xyz);
         float sunStrength = 1.0 - dot(sun_projectionspace.xy, sun_projectionspace.xy) * 0.2;
 
-        color = vec4(0.0);
-        color.rgb = sunColor.rgb * sunColor.a * notOccludedByScene * sunStrength;
+        color = vec2(0.0);
+        color.r = sunColor.a * notOccludedByScene * sunStrength;
 
 #ifdef LIGHT_SHAFTS
         float scaterring = 0.0;
@@ -144,9 +144,7 @@ _{
         {
             scaterring = computeVolumetricLight(uv, sunUV) * sunStrength;
         }
-
-//        color.rgb += vSunColor.rgb * scaterring;
-        color.a = scaterring;
+        color.g = scaterring;
 #endif
     }
 _}

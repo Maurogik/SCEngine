@@ -39,7 +39,7 @@ _{
     out vec4 color;
 
     //variables
-    vec3 vSunColor = vec3(1.0, 1.0, 0.9);
+    vec3 vSunColor = vec3(1.0, 1.0, 0.8);
     vec3 vLowerSkyColor = vec3(0.65, 0.9, 1.0);
     vec3 vUpperSkyColor = vec3(0.06, 0.4, 0.85);
 
@@ -69,7 +69,8 @@ _{
         vec4 sceneColor = texture(FinalColorTex, uv);
         vec3 Position_worldpsace = texture(PositionTex, uv).xyz;
         vec4 sunData = texture(SunTex, uv);
-        vec3 sunColor = sunData.rgb;
+        vec3 sunColor = sunData.r * vSunColor;
+        float lightScatering = sunData.g;
 
         //compute fog strength
         float fogStr = 0.001;
@@ -90,6 +91,6 @@ _{
 
         color = vec4(0.0, 0.0, 0.0, 1.0);
         color.rgb = mix(sceneColor.rgb, skyColor, fogAmount);
-        color.rgb += sunData.a * vSunColor;
+        color.rgb += lightScatering * vSunColor;
     }
 _}
