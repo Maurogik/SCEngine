@@ -19,6 +19,8 @@ include_directories(
 	glfw-3.0.3/include/GLFW/
     glew-1.9.0/include/
 )
+#Set define for high precision timer
+add_definitions( -DCLOCK_MONOTONIC)
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 set(OPENGL_LIBRARY

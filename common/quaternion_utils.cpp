@@ -111,30 +111,30 @@ quat RotateTowards(quat q1, quat q2, float maxAngle){
 	
 }
 
-void tests(){
+//void tests(){
 
-	glm::vec3 Xpos(+1.0f,  0.0f,  0.0f);
-	glm::vec3 Ypos( 0.0f, +1.0f,  0.0f);
-	glm::vec3 Zpos( 0.0f,  0.0f, +1.0f);
-	glm::vec3 Xneg(-1.0f,  0.0f,  0.0f);
-	glm::vec3 Yneg( 0.0f, -1.0f,  0.0f);
-	glm::vec3 Zneg( 0.0f,  0.0f, -1.0f);
+//	glm::vec3 Xpos(+1.0f,  0.0f,  0.0f);
+//	glm::vec3 Ypos( 0.0f, +1.0f,  0.0f);
+//	glm::vec3 Zpos( 0.0f,  0.0f, +1.0f);
+//	glm::vec3 Xneg(-1.0f,  0.0f,  0.0f);
+//	glm::vec3 Yneg( 0.0f, -1.0f,  0.0f);
+//	glm::vec3 Zneg( 0.0f,  0.0f, -1.0f);
 	
-	// Testing standard, easy case
-	// Must be 90° rotation on X : 0.7 0 0 0.7
-	quat X90rot = RotationBetweenVectors(Ypos, Zpos);
+//	// Testing standard, easy case
+//	// Must be 90° rotation on X : 0.7 0 0 0.7
+//	quat X90rot = RotationBetweenVectors(Ypos, Zpos);
 	
-	// Testing with v1 = v2
-	// Must be identity : 0 0 0 1
-	quat id = RotationBetweenVectors(Xpos, Xpos);
+//	// Testing with v1 = v2
+//	// Must be identity : 0 0 0 1
+//	quat id = RotationBetweenVectors(Xpos, Xpos);
 	
-	// Testing with v1 = -v2
-	// Must be 180° on +/-Y axis : 0 +/-1 0 0
-	quat Y180rot = RotationBetweenVectors(Xpos, Xneg);
+//	// Testing with v1 = -v2
+//	// Must be 180° on +/-Y axis : 0 +/-1 0 0
+//	quat Y180rot = RotationBetweenVectors(Xpos, Xneg);
 	
-	// Testing with v1 = -v2, but with a "bad first guess"
-	// Must be 180° on +/-Y axis : 0 +/-1 0 0
-	quat X180rot = RotationBetweenVectors(Zpos, Zneg);
+//	// Testing with v1 = -v2, but with a "bad first guess"
+//	// Must be 180° on +/-Y axis : 0 +/-1 0 0
+//	quat X180rot = RotationBetweenVectors(Zpos, Zneg);
 	
 
-}
+//}

@@ -96,8 +96,7 @@ void SCELighting::RenderCascadedShadowMap(const CameraRenderData &camRenderData,
     //Julie ! Do the thing !
     vector<CameraRenderData> splitShadowFrustrums
             = s_instance->computeCascadedLightFrustrums(camFrustrumData,
-                                                        camToWorldMat,
-                                                        CASCADE_COUNT);
+                                                        camToWorldMat);
 
     for(uint i = 0; i < splitShadowFrustrums.size(); ++i)
     {
@@ -132,7 +131,8 @@ void SCELighting::RenderLightsToGBuffer(const CameraRenderData& renderData,
         s_instance->mShadowMapFBO.BindTextureToLightShader(SCE_GBuffer::GBUFFER_NUM_TEXTURES);
         glUniformMatrix4fv(s_instance->mShadowDepthMatUnifom, CASCADE_COUNT, GL_FALSE,
                            &(s_instance->mDepthConvertMatrices[0][0][0]));
-        glUniform1fv(s_instance->mShadowFarSplitUnifom, CASCADE_COUNT, &(s_instance->mFarSplit_cameraspace[0]));
+        glUniform1fv(s_instance->mShadowFarSplitUnifom, CASCADE_COUNT,
+                     &(s_instance->mFarSplit_cameraspace[0]));
 
         s_instance->renderLightingPass(renderData, light);
     }
@@ -156,7 +156,8 @@ void SCELighting::RenderLightsToGBuffer(const CameraRenderData& renderData,
                            &(s_instance->mDepthConvertMatrices[0][0][0]));
 
         //bind the far split planes usd to pick a cascade level
-        glUniform1fv(s_instance->mShadowFarSplitUnifom, CASCADE_COUNT, &(s_instance->mFarSplit_cameraspace[0]));
+        glUniform1fv(s_instance->mShadowFarSplitUnifom, CASCADE_COUNT,
+                     &(s_instance->mFarSplit_cameraspace[0]));
 
         s_instance->renderLightingPass(renderData, light);
     }
@@ -416,10 +417,9 @@ void SCELighting::renderShadowmapPass(const CameraRenderData& lightRenderData,
 }
 
 std::vector<CameraRenderData> SCELighting::computeCascadedLightFrustrums(FrustrumData cameraFrustrum,
-                                                                         glm::mat4 camToWorldMat,
-                                                                         uint cascadeCount)
+                                                                         glm::mat4 camToWorldMat)
 {
-    glm::mat4 lightToWorld = s_instance->mMainLight->GetContainer()->GetComponent<Transform>()->GetWorldTransform();
+    glm::mat4 lightToWorld = mMainLight->GetContainer()->GetComponent<Transform>()->GetWorldTransform();
     glm::mat4 worldToLight = glm::inverse(lightToWorld);
 
     vector<CameraRenderData> lightFrustrums;
@@ -430,8 +430,9 @@ std::vector<CameraRenderData> SCELighting::computeCascadedLightFrustrums(Frustru
     float ratio     = far / near;
 
     //compute where the camera frustrum will be split
-    vec2 zSplits[cascadeCount]; //x is near dist, y is far dist
+    vec2 zSplits[CASCADE_COUNT]; //x is near dist, y is far dist
 
+    uint cascadeCount = CASCADE_COUNT;
     zSplits[0].x = near;
 
     for(uint i = 1; i < cascadeCount; ++i)
@@ -478,10 +479,12 @@ std::vector<CameraRenderData> SCELighting::computeCascadedLightFrustrums(Frustru
             bottom  = glm::min(bottom, corner_lightSpace.y);
         }
 
-        //near should be close (actually, it should be the closest occluder, but we don't know where it is yet)
+        //near should be close (actually, it should be the closest occluder,
+        //but we don't know where it is yet)
         near = 10.0f;
 
-        //create an orthographic projection enclosing all points between the light and the splitted camera frustrum
+        //create an orthographic projection enclosing all points between the light
+        //and the splitted camera frustrum
         CameraRenderData lightRenderData;
         glm::mat4 projMat = glm::ortho(left, right,
                                        bottom, top,

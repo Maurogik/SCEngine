@@ -75,7 +75,9 @@ namespace Terrain
         ushort quadPatchIndices[4]; //indices for a quad, not 2 triangles
     };
 
+/*      File scope variables    */
     static TerrainData* terrainData;
+
 
     void cleanupGLData()
     {

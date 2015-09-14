@@ -177,13 +177,13 @@ uint SCEMeshLoader::CreateSphereMesh(float tesselation)
     int nbSteps     = 360.0f / angleStep;
 
     //indicies of vertices, normal and uvs stored by angle over x, angle over y;
-    short angleIndices[nbSteps][nbSteps];
+    short *angleIndices = new short[nbSteps * nbSteps];
     //set the array to -1 as default value
     for(int i = 0; i < nbSteps; ++i)
     {
         for(int j = 0; j < nbSteps; ++j)
         {
-            angleIndices[i][j] = -1;
+            angleIndices[i * nbSteps + j] = -1;
         }
     }
 
@@ -234,14 +234,15 @@ uint SCEMeshLoader::CreateSphereMesh(float tesselation)
                     dir = normalizedDir;
                     dir *= radius;
 
-                    if(angleIndices[xStep + stepAddX][yStep + stepAddY] < 0)
+                    uint index = (xStep + stepAddX) * nbSteps + yStep + stepAddY;
+                    if(angleIndices[index] < 0)
                     { //first encouter of this vertice
                         vertices.push_back(dir);
                         normals.push_back(normalizedDir);
                         uvs.push_back(vec2(u[stepAddX], v[stepAddY]));
-                        angleIndices[xStep + stepAddX][yStep + stepAddY] = vertices.size() - 1;
+                        angleIndices[index] = vertices.size() - 1;
                     }
-                    vertIndices[indCount] = angleIndices[xStep + stepAddX][yStep + stepAddY];
+                    vertIndices[indCount] = angleIndices[index];
                     ++indCount;
                 }
             }
@@ -261,6 +262,7 @@ uint SCEMeshLoader::CreateSphereMesh(float tesselation)
     computeTangentBasisIndexed(indices, vertices, uvs, normals,
                                tangents, bitangents);
 
+    delete[] angleIndices;
     return s_instance->addMeshData(meshName, indices, vertices, normals, uvs, tangents, bitangents);
 }
 
@@ -279,17 +281,18 @@ uint SCEMeshLoader::CreateConeMesh(float angle, float tesselation)
     //atefacts appear if angleStep is to low so clamp to min value
     float angleStep     = glm::max(90.0f / glm::pow(2.0f, fTess), 5.0f);
     float lengthStep    = glm::max(length / glm::pow(2.0f, fTess), 0.2f);
-    int nbAngleSteps    = 360.0f / angleStep;
-    int nbLengthSteps   = length / lengthStep;
+    int nbAngleSteps    = 360.0f / angleStep + 1;
+    int nbLengthSteps   = length / lengthStep + 1;
+
 
     //indicies of vertices, normal and uvs stored by [angle over x, distance over z]
-    short viewedVertices[nbAngleSteps + 1][nbLengthSteps + 1];
+    short *viewedVertices = new short[nbAngleSteps * nbLengthSteps];
     //set the array to -1 as default value
-    for(int i = 0; i < nbAngleSteps + 1; ++i)
+    for(int i = 0; i < nbAngleSteps; ++i)
     {
-        for(int j = 0; j < nbLengthSteps + 1; ++j)
+        for(int j = 0; j < nbLengthSteps; ++j)
         {
-            viewedVertices[i][j] = -1;
+            viewedVertices[i * nbLengthSteps + j] = -1;
         }
     }
 
@@ -308,7 +311,7 @@ uint SCEMeshLoader::CreateConeMesh(float angle, float tesselation)
 
     //Generate vertices for cone surface
     //loop over all the angles to make a full 360 around the cone's Z axis
-    for(int zAngleStep = 0; zAngleStep < nbAngleSteps; ++zAngleStep)
+    for(int zAngleStep = 0; zAngleStep < nbAngleSteps - 1; ++zAngleStep)
     {
         float zAngle = zAngleStep * angleStep;
 
@@ -318,7 +321,7 @@ uint SCEMeshLoader::CreateConeMesh(float angle, float tesselation)
             glm::angleAxis(zAngle + angleStep, 0.0f, 0.0f, 1.0f) * coneRotation
         };
 
-        for(int zPosStep = 0; zPosStep < nbLengthSteps; ++zPosStep)
+        for(int zPosStep = 0; zPosStep < nbLengthSteps - 1; ++zPosStep)
         {
             float zPos[2] =
             {
@@ -349,7 +352,8 @@ uint SCEMeshLoader::CreateConeMesh(float angle, float tesselation)
                     //correct z pos so the surface is at the same z;
                     pos.z = zPos[subStepZPos];
 
-                    if(viewedVertices[zAngleStep + subStepZAngle][zPosStep + subStepZPos] < 0)
+                    int index = (zAngleStep + subStepZAngle) * nbLengthSteps + zPosStep + subStepZPos;
+                    if(viewedVertices[index] < 0)
                     { //first encouter of this vertex
                         vertices.push_back(pos);
                         //Normal(approx) is dir from pos on z axis to pos on the surface of the cone
@@ -357,9 +361,9 @@ uint SCEMeshLoader::CreateConeMesh(float angle, float tesselation)
                         vec3 normal = normalize(pos - vec3(0.0f, 0.0f, zPos[subStepZPos] + 0.001f));
                         normals.push_back(normal);
                         uvs.push_back(vec2(u[subStepZAngle], v[subStepZPos]));
-                        viewedVertices[zAngleStep + subStepZAngle][zPosStep + subStepZPos] = vertices.size() - 1;
+                        viewedVertices[index] = vertices.size() - 1;
                     }
-                    vertIndices[indCount] = viewedVertices[zAngleStep + subStepZAngle][zPosStep + subStepZPos];
+                    vertIndices[indCount] = viewedVertices[index];
                     ++indCount;
                 }
             }
@@ -381,6 +385,7 @@ uint SCEMeshLoader::CreateConeMesh(float angle, float tesselation)
                 indices.push_back(endVertexIndex);
             }
         }
+        delete[] viewedVertices;
     }
 
     vector<vec3> tangents;

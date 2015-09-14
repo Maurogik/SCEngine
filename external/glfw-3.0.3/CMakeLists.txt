@@ -73,8 +73,8 @@ endif()
 
 find_package(Threads REQUIRED)
 
-set(DOXYGEN_SKIP_DOT TRUE)
-find_package(Doxygen)
+#set(DOXYGEN_SKIP_DOT TRUE)
+#find_package(Doxygen)
 
 if (GLFW_DOCUMENT_INTERNALS)
     set(GLFW_INTERNAL_DOCS "${GLFW_SOURCE_DIR}/src/internal.h ${GLFW_SOURCE_DIR}/docs/internal.dox")
@@ -413,9 +413,10 @@ if (GLFW_BUILD_TESTS)
     add_subdirectory(tests)
 endif()
 
-if (DOXYGEN_FOUND)
-    add_subdirectory(docs)
-endif()
+#I don't want this !
+#if (DOXYGEN_FOUND)
+#    add_subdirectory(docs)
+#endif()
 
 #--------------------------------------------------------------------
 # Install files other than the library

@@ -256,6 +256,9 @@ void Light::generateLightMesh()
     case SPOT_LIGHT :
         generateSpotLightMesh();
         break;
+    default :
+        Debug::RaiseError("Unknow light type");
+        break;
     }
 
     if(mLightRenderer)

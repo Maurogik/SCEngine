@@ -7,9 +7,9 @@
 #include <glm/glm.hpp>
 using namespace glm;
 
-//define here because it is used in SCETools ans SCEInternal
-#define SCE_DEBUG
-#define SCE_DEBUG_ENGINE
+//defined in Cmake with -DSCE_DEBUG compile option
+//#define SCE_DEBUG
+//#define SCE_DEBUG_ENGINE
 
 #include <string>
 #include <iostream>

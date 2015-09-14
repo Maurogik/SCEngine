@@ -90,8 +90,7 @@ namespace SCE
                                                 uint shadowmapId);
 
         std::vector<CameraRenderData> computeCascadedLightFrustrums(FrustrumData cameraFrustrum,
-                                                                    mat4 camToWorldMat,
-                                                                    uint cascadeCount);
+                                                                    mat4 camToWorldMat);
     };
 }
 

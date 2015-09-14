@@ -27,10 +27,6 @@ if( CMAKE_BINARY_DIR MATCHES " " )
     message( "Your Build Directory contains spaces. If you experience problems when compiling, this can be the cause." )
 endif()
 
-#include unity build system
-#set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/CMake_Modules/")
-#include(cotire)
-
 # Compile external dependencies (needs a cMakeList)
 add_subdirectory (external)
 
@@ -122,15 +118,15 @@ target_link_libraries(${TARGET}
     SOIL
 )
 
-message("all libs : ")
-message(${ALL_LIBS})
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-long-long -Wno-variadic-macros -Wunused-local-typedefs -pedantic")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -Wall -Wno-long-long -Wno-variadic-macros -pedantic")
 set(QMAKE_CXXFLAGS "${QMAKE_CXXFLAGS} -std=c++11")
 set(QMAKE_LFLAGS "${QMAKE_LFLAGS} -std=c++11")
 
+#debug and release flag for in-engine use
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DSCE_DEBUG -DSCE_DEBUG_ENGINE")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wall")
+
 
 file( COPY "${TARGET}/ressources" DESTINATION "." )
 file( COPY "${SCE_PATH}/SCE_Assets" DESTINATION "." )
-
-#cotire(${TARGET})

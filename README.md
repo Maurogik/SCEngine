@@ -13,11 +13,9 @@ How to build (with cmd line, tested on linux):
 
 2. go to the SCEngine folder and run the following commands
 
-	'mkdir build'
+	'mkdir build && cd build'
 
-	'cd build'
-
-	'cmake .'
+	'cmake ..'
 
 	'make'
 
