@@ -189,8 +189,6 @@ void Material::BindMaterialData()
         }
         }
     }
-
-    SCE::ShaderUtils::BindDefaultUniforms(mShaderProgramId);
 }
 
 void Material::ReloadMaterial()

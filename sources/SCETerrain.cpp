@@ -20,10 +20,6 @@
 #define TERRAIN_TEXTURE_NAME "TerrainHeightMap"
 #define TERRAIN_MAX_DIST_UNIFORM_NAME "TerrainMaxDistance"
 #define QUAD_TO_TERRAIN_UNIFORM_NAME "QuadToTerrainSpace"
-#define TERRAIN_MODEL_UNIFORM_NAME "M"
-#define TERRAIN_VIEW_UNIFORM_NAME "V"
-#define TERRAIN_PROJECTION_UNIFORM_NAME "P"
-#define TERRAIN_MVP_UNIFORM_NAME "MVP"
 
 #define TERRAIN_TEXTURE_SIZE 1024
 
@@ -35,8 +31,6 @@ namespace Terrain
     struct TerrainQuadUniforms
     {
         GLint quadToTerrainMatrix;
-        GLint modelMatrix;
-        GLint MVPMatrix;
     };
 
     struct TerrainGLData
@@ -45,8 +39,6 @@ namespace Terrain
         GLuint terrainTexture;
         GLint terrainTextureUniform;
         GLint terrainMaxDistanceUniform;
-        GLint viewMatrixUniform;
-        GLint projectionMatrixUniform;
     };
 
     struct TerrainData
@@ -58,7 +50,9 @@ namespace Terrain
                   glm::vec3(1.0f, 0.0f, 1.0f),
                   glm::vec3(0.0f, 0.0f, 1.0f)},
               quadPatchIndices{0, 1, 2, 3}
-        {}
+        {
+            Debug::Log("tolo");
+        }
 
         //Terrain quad render data
         GLuint  quadVao;
@@ -77,7 +71,6 @@ namespace Terrain
 
 /*      File scope variables    */
     static TerrainData* terrainData;
-
 
     void cleanupGLData()
     {
@@ -255,21 +248,15 @@ namespace Terrain
         TerrainGLData& glData = terrainData->glData;
         TerrainQuadUniforms &quadUniforms = terrainData->quadUniforms;
 
-        glData.terrainProgram = SCE::ShaderUtils::CreateShaderProgram(TERRAIN_SHADER_NAME);
+        GLuint terrainProgram = SCE::ShaderUtils::CreateShaderProgram(TERRAIN_SHADER_NAME);
 
-        GLuint terrainProgram = glData.terrainProgram;
+         glData.terrainProgram = terrainProgram;
 
         glData.terrainTextureUniform = glGetUniformLocation(terrainProgram, TERRAIN_TEXTURE_NAME);
-        glData.viewMatrixUniform = glGetUniformLocation(terrainProgram, TERRAIN_VIEW_UNIFORM_NAME);
-        glData.projectionMatrixUniform = glGetUniformLocation(terrainProgram,
-                                                                     TERRAIN_PROJECTION_UNIFORM_NAME);
         glData.terrainMaxDistanceUniform = glGetUniformLocation(terrainProgram,
                                                                        TERRAIN_MAX_DIST_UNIFORM_NAME);
-
         quadUniforms.quadToTerrainMatrix = glGetUniformLocation(terrainProgram,
                                                                        QUAD_TO_TERRAIN_UNIFORM_NAME);
-        quadUniforms.modelMatrix = glGetUniformLocation(terrainProgram, TERRAIN_MODEL_UNIFORM_NAME);
-        quadUniforms.MVPMatrix = glGetUniformLocation(terrainProgram, TERRAIN_MVP_UNIFORM_NAME);
 
         //vertices buffer
         glGenBuffers(1, &(terrainData->quadVerticesVbo));
@@ -306,7 +293,7 @@ namespace Terrain
                      float patchSize,
                      float halfTerrainSize)
     {
-        TerrainQuadUniforms &quadUniforms = terrainData->quadUniforms;
+
         //create matrix to convert vertex pos to terrain space coord
         glm::mat4 quadToTerrainspace = glm::scale(mat4(1.0f), glm::vec3(1.0f / halfTerrainSize)) *
                                        glm::translate(mat4(1.0f), position_terrainSpace) *
@@ -339,13 +326,10 @@ namespace Terrain
         }
 
         //do the rendering
-        glUniformMatrix4fv(quadUniforms.quadToTerrainMatrix,
+        glUniformMatrix4fv(terrainData->quadUniforms.quadToTerrainMatrix,
                            1, GL_FALSE, &(quadToTerrainspace[0][0]));
-        glUniformMatrix4fv(quadUniforms.modelMatrix,
-                           1, GL_FALSE, &(modelMatrix[0][0]));
-        glUniformMatrix4fv(quadUniforms.MVPMatrix,
-                           1, GL_FALSE, &(MVPMat[0][0]));
-
+        SCE::ShaderUtils::BindDefaultUniforms(terrainData->glData.terrainProgram, modelMatrix,
+                                              viewMatrix, projectionMatrix);
         glDrawElements(GL_PATCHES,
                        4,//indices count
                        GL_UNSIGNED_SHORT,
@@ -364,15 +348,12 @@ namespace Terrain
         float patchSize = terrainData->patchSize;
 
         //setup gl state that at common for all patches
-        glUseProgram(glData.terrainProgram);
-        SCE::ShaderUtils::BindDefaultUniforms(glData.terrainProgram);
+        glUseProgram(glData.terrainProgram);        
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, glData.terrainTexture);
 
         glUniform1i(glData.terrainTextureUniform, 0);//terrain height map is sampler 0
         glUniform1f(glData.terrainMaxDistanceUniform, terrainData->terrainSize);
-        glUniformMatrix4fv(glData.viewMatrixUniform,        1, GL_FALSE, &(viewMatrix[0][0]));
-        glUniformMatrix4fv(glData.projectionMatrixUniform,  1, GL_FALSE, &(projectionMatrix[0][0]));
 
         glBindVertexArray(terrainData->quadVao);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, terrainData->quadIndicesVbo);

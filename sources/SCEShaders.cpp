@@ -38,6 +38,10 @@ namespace ShaderUtils
     struct DefaultUniforms
     {
         GLint screenSizeUniform;
+        GLint MVPMatrixUniform;
+        GLint ProjectionMatrixUniform;
+        GLint ViewMatrixUniform;
+        GLint ModelMatrixUniform;
     };
 
     //Only here to allow for automatic creation/destruction of data
@@ -234,7 +238,12 @@ namespace ShaderUtils
         shaderData.compiledPrograms[shaderFileName] = programID;
 
         DefaultUniforms uniforms;
-        uniforms.screenSizeUniform = glGetUniformLocation(programID, SCREEN_SIZE_UNIFORM_NAME);
+        uniforms.screenSizeUniform          = glGetUniformLocation(programID, SCREEN_SIZE_UNIFORM_NAME);
+        uniforms.MVPMatrixUniform           = glGetUniformLocation(programID, "MVP");
+        uniforms.ViewMatrixUniform          = glGetUniformLocation(programID, "V");
+        uniforms.ModelMatrixUniform         = glGetUniformLocation(programID, "M");
+        uniforms.ProjectionMatrixUniform    = glGetUniformLocation(programID, "P");
+
         shaderData.defaultUniforms[programID] = uniforms;
 
         return programID;
@@ -261,12 +270,23 @@ namespace ShaderUtils
         }
     }
 
-    void BindDefaultUniforms(GLuint shaderId)
+    void BindDefaultUniforms(GLuint shaderId, const glm::mat4& modelMatrix,
+                             const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix)
     {
         float width = SCECore::GetWindowWidth();
         float height = SCECore::GetWindowHeight();
+        DefaultUniforms& uniforms = shaderData.defaultUniforms[shaderId];
 
-        glUniform2f(shaderData.defaultUniforms[shaderId].screenSizeUniform, width, height);
+        glUniform2f(uniforms.screenSizeUniform, width, height);
+
+        glm::mat4 MVP = projectionMatrix * viewMatrix * modelMatrix;
+
+        // Send our transformation to the currently bound shader,
+        // in the "MVP" uniform
+        glUniformMatrix4fv(uniforms.MVPMatrixUniform, 1, GL_FALSE, &(MVP[0][0]));
+        glUniformMatrix4fv(uniforms.ModelMatrixUniform, 1, GL_FALSE, &(modelMatrix[0][0]));
+        glUniformMatrix4fv(uniforms.ViewMatrixUniform, 1, GL_FALSE, &(viewMatrix[0][0]));
+        glUniformMatrix4fv(uniforms.ProjectionMatrixUniform, 1, GL_FALSE, &(projectionMatrix[0][0]));
     }
 }
 

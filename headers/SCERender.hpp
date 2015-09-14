@@ -42,7 +42,9 @@ namespace SCE
                                    std::vector<Container*> objectsToRender);
         static void         ResetClearColorToDefault();
         static glm::mat4    FixOpenGLProjectionMatrix(const glm::mat4& projMat);
-        static void         RenderFullScreenPass(glm::mat4 &projectionMatrix, glm::mat4 &viewMatrix);
+        static void         RenderFullScreenPass(GLuint shaderId,
+                                                 const glm::mat4 &projectionMatrix,
+                                                 const glm::mat4 &viewMatrix);
 
         ToneMappingData     mToneMapData;
         static SCERender*   s_instance;

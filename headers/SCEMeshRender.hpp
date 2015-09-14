@@ -32,14 +32,10 @@ namespace SCE
         GLenum                      type;
     };
 
-    //store mandatory uniforms and attributes locations per shader
+    //store attributes locations per shader
     struct ShaderData
     {
         GLint attribLocations[VERTEX_ATTRIB_COUNT];
-        GLint MVPMatrixLocation;
-        GLint ProjectionMatrixLocation;
-        GLint ViewMatrixLocation;
-        GLint ModelMatrixLocation;
     };
 
     //Per mesh data
@@ -70,10 +66,8 @@ namespace SCE
         static MeshRenderData&  GetMeshRenderData(uint meshId, GLuint shaderProgram);
         static void             DeleteMeshRenderData(uint meshId);
 
-        static void             RenderMesh(ui16 meshId,
-                                           const mat4& projectionMatrix,
-                                           const mat4& viewMatrix,
-                                           const mat4& modelMatrix);
+        static void             RenderMesh(ui16 meshId, const mat4& projectionMatrix,
+                                           const mat4& viewMatrix, const mat4& modelMatrix);
 
     private :
 

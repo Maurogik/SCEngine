@@ -54,13 +54,11 @@ namespace SCE
 
         GLuint              mLightShader;
         GLuint              mEmptyShader;
-        GLuint              mSkyShader;
         std::string         mTexSamplerNames[SCE_GBuffer::GBUFFER_NUM_TEXTURES];
         GLint               mTexSamplerUniforms[SCE_GBuffer::GBUFFER_NUM_TEXTURES];
         GLint               mShadowSamplerUnifom;
         GLint               mShadowDepthMatUnifom;
-        GLint               mShadowFarSplitUnifom;
-        GLint               mSunPositionUniform;        
+        GLint               mShadowFarSplitUnifom;   
 
         SCEShadowMap        mShadowMapFBO;
 
@@ -76,8 +74,6 @@ namespace SCE
         void                initLightShader();
         void                registerLight(SCEHandle<Light> light);
         void                unregisterLight(SCEHandle<Light> light);
-
-        void                renderSkyPass(const CameraRenderData& renderData);
 
         void                renderLightingPass(const CameraRenderData& renderData,
                                                SCEHandle<Light> &light);

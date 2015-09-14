@@ -43,7 +43,7 @@ SCE_GBuffer::~SCE_GBuffer()
         glDeleteTextures(1, &mLuminanceTexture);
     }
 
-    if (mFBOId >= 0)
+    if (mFBOId != GLuint(-1))
     {
         glDeleteFramebuffers(1, &mFBOId);
     }
@@ -209,7 +209,7 @@ void SCE_GBuffer::BindForToneMapPass()
     glUniform1i(1, 1);//LuminanceTex is sampler1
 }
 
-void SCE_GBuffer::BindTexturesToLightShader()
+void SCE_GBuffer::BindTexturesForLighting()
 {
     for (uint i = 0; i < GBUFFER_TEXTURE_COUNT; i++)
     {
@@ -218,6 +218,14 @@ void SCE_GBuffer::BindTexturesToLightShader()
         // Set the sampler uniform to the texture unit
         glUniform1i(SCELighting::GetTextureSamplerUniform(GBUFFER_TEXTURE_TYPE(i)), i);
     }
+}
+
+void SCE_GBuffer::BindTexture(SCE_GBuffer::GBUFFER_TEXTURE_TYPE type, uint uniform, uint sampler)
+{
+    glActiveTexture(GL_TEXTURE0 + sampler);
+    glBindTexture(GL_TEXTURE_2D, mTextures[type]);
+    // Set the sampler uniform to the texture unit
+    glUniform1i(uniform, sampler);
 }
 
 void SCE_GBuffer::SetReadBuffer(GBUFFER_TEXTURE_TYPE TextureType)

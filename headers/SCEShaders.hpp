@@ -14,7 +14,8 @@ namespace SCE
     {
         GLuint       CreateShaderProgram(const std::string &shaderFileName);
         void         DeleteShaderProgram(GLuint shaderId);
-        void         BindDefaultUniforms(GLuint shaderId);
+        void         BindDefaultUniforms(GLuint shaderId, const glm::mat4& modelMatrix,
+                                         const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix);
     }
 }
 

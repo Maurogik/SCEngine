@@ -102,19 +102,18 @@ void SCERender::Render(const SCEHandle<Camera>& camera,
     ToneMappingData& tonemap = s_instance->mToneMapData;
     glDisable(GL_DEPTH_TEST);
     glCullFace(GL_FRONT);
-    glUseProgram(tonemap.luminanceShader);
-    SCE::ShaderUtils::BindDefaultUniforms(tonemap.luminanceShader);
+    glUseProgram(tonemap.luminanceShader);    
     s_instance->mGBuffer.BindForLuminancePass();
-    RenderFullScreenPass(renderData.projectionMatrix, renderData.viewMatrix);
+    RenderFullScreenPass(tonemap.luminanceShader, renderData.projectionMatrix, renderData.viewMatrix);
     s_instance->mGBuffer.GenerateLuminanceMimap();
 
     //Tonemapping & render to back buffer
     glUseProgram(tonemap.toneMapShader);
     s_instance->mGBuffer.BindForToneMapPass();
-    SCE::ShaderUtils::BindDefaultUniforms(tonemap.toneMapShader);
+
     glUniform1f(tonemap.exposureUniform, tonemap.exposure);
     glUniform1f(tonemap.maxBrightnessUniform, tonemap.maxBrightness);
-    RenderFullScreenPass(renderData.projectionMatrix, renderData.viewMatrix);
+    RenderFullScreenPass(tonemap.toneMapShader, renderData.projectionMatrix, renderData.viewMatrix);
 
     glEnable(GL_DEPTH_TEST);
     glCullFace(GL_BACK);
@@ -163,9 +162,10 @@ mat4 SCERender::FixOpenGLProjectionMatrix(const mat4& projMat)
     return glm::scale(projMat, glm::vec3(1, 1, -1));
 }
 
-void SCERender::RenderFullScreenPass(mat4& projectionMatrix, mat4& viewMatrix)
+void SCERender::RenderFullScreenPass(GLuint shaderId, const mat4& projectionMatrix, const mat4& viewMatrix)
 {
     glm::mat4 modelMatrix = inverse(projectionMatrix * viewMatrix);
+    SCE::ShaderUtils::BindDefaultUniforms(shaderId, modelMatrix, viewMatrix, projectionMatrix);
     SCEMeshRender::RenderMesh(s_instance->mQuadMeshId, projectionMatrix, viewMatrix, modelMatrix);
 }
 

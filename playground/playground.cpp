@@ -283,7 +283,7 @@ void scene3()
 
 void lightOutdoor()
 {
-        SCEHandle<Container> dirLight = createLight(vec3(0, 200, -200),
+        SCEHandle<Container> dirLight = createLight(vec3(0, 2000, -2000),
                                                     vec3(40, 0, 0),
                                                     LightType::DIRECTIONAL_LIGHT);
         dirLight->GetComponent<Light>()->SetLightColor(vec4(1.0, 1.0, 0.8, 0.7));
@@ -332,9 +332,9 @@ int main( void )
 //    redAndGreen();
 //    streetLights();
 
-    scene1();
+//    scene1();
 //    scene2();
-//    scene3();
+    scene3();
 
     //Camera
     SCEHandle<Container> cameraObject = SCEScene::CreateContainer("cameraObject");

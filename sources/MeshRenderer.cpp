@@ -51,16 +51,16 @@ void MeshRenderer::Render(const CameraRenderData& renderData, bool renderFullScr
 {
     SCEHandle<Transform> transform = GetContainer()->GetComponent<Transform>();
 
-    glm::mat4 modelMatrx;
+    glm::mat4 modelMatrix;
 
     if(renderFullScreenQuad)
     {
-         modelMatrx = glm::inverse(renderData.projectionMatrix * renderData.viewMatrix);
+         modelMatrix = glm::inverse(renderData.projectionMatrix * renderData.viewMatrix);
     }
     else
     {
-         modelMatrx = transform->GetWorldTransform();
+         modelMatrix = transform->GetWorldTransform();
     }
-    SCEMeshRender::RenderMesh(mMeshId, renderData.projectionMatrix, renderData.viewMatrix, modelMatrx);
+    SCEMeshRender::RenderMesh(mMeshId, renderData.projectionMatrix, renderData.viewMatrix, modelMatrix);
 }
 
