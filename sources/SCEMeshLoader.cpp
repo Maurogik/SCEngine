@@ -9,7 +9,6 @@
 #include "../headers/SCETools.hpp"
 #include "../headers/SCEInternal.hpp"
 
-#include <common/objloader.hpp>
 #include <common/vboindexer.hpp>
 #include <common/tangentspace.hpp>
 

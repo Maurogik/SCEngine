@@ -94,16 +94,16 @@ namespace Terrain
 
     void computeNormalsForQuad(int xCount, int zCount, glm::vec3 *normals, float* heightmap)
     {
-        float terrainSize = 1.0;
+        float terrainSize = terrainData->terrainSize;
         float x, z;
         float y1, y2, y3, y4;
         float stepSize = terrainSize / float(TERRAIN_TEXTURE_SIZE);
 
         //hack to force normals to correspond to in game face normals
-        float yScale = terrainSize/40.0f; //20.0f;
+        float yScale = terrainData->patchSize;
 
-        x = (float(xCount) / float(TERRAIN_TEXTURE_SIZE) - 0.5f) * terrainSize;
-        z = (float(zCount) / float(TERRAIN_TEXTURE_SIZE) - 0.5f) * terrainSize;
+        x = float(xCount) * stepSize;
+        z = float(zCount) * stepSize;
 
         int xOff = xCount < TERRAIN_TEXTURE_SIZE - 1 ? 1 : 0;
         int zOff = zCount < TERRAIN_TEXTURE_SIZE - 1 ? 1 : 0;
@@ -317,6 +317,26 @@ namespace Terrain
                                 glm::translate(mat4(1.0f), position_terrainSpace) *
                                 glm::scale(mat4(1.0f), glm::vec3(patchSize));
         glm::mat4 MVPMat = projectionMatrix * viewMatrix * modelMatrix;
+
+        int onScreenCount = 4;
+        float tolerance = 5.0f;
+        for(int i = 0; i < 4; ++i)
+        {
+            glm::vec4 pos = MVPMat * glm::vec4(terrainData->quadVertices[i], 1.0);
+            pos /= pos.w;
+            //check if the patch is completely on screen
+            // don't check the y pos because we will change it during tesselation
+            if(pos.z > 1.0f || pos.z < -1.0f||
+               pos.x > tolerance || pos.x < -tolerance )
+            {
+                --onScreenCount;
+            }
+        }
+
+        if(onScreenCount == 0)
+        {
+//            return;
+        }
 
         //do the rendering
         glUniformMatrix4fv(quadUniforms.quadToTerrainMatrix,
