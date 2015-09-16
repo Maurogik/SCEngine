@@ -4,6 +4,7 @@
 
 #include "../headers/SCECore.hpp"
 #include "Rotator.hpp"
+#include "CameraControl.hpp"
 #include "LookAtTarget.hpp"
 
 using namespace SCE;
@@ -341,7 +342,8 @@ int main( void )
     SCEHandle<Transform> cameraTransform = cameraObject->AddComponent<Transform>();
     cameraObject->AddComponent<Camera>(40.0f, 16.0f/9.0f, 1.0f, 500.0f);
     cameraTransform->SetWorldPosition(vec3(0, 2, -25));
-//    cameraTransform->RotateAroundAxis(vec3(1.0f, 0.0f, 0.0f), 90.0f);
+    cameraTransform->SetWorldOrientation(vec3(0.0f, 180.0f, 0.0f));
+    cameraObject->AddComponent<CameraControl>();
 
     //load scene here
     engine.RunEngine();

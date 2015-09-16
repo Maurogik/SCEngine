@@ -100,7 +100,7 @@ _{
 
     uniform mat4 MVP;
     uniform mat4 M;
-    uniform sampler2D TerrainHeightMap;
+    uniform sampler2D TerrainHeightMap;    
 
     //in
     layout(quads, equal_spacing, ccw) in;
@@ -160,7 +160,7 @@ _{
 
     noperspective out vec3 gs_edgeDist; //for wireframe
     out vec3 Position_worldspace;
-    out vec3 TESS_color;
+    out vec3 GS_color;
     out vec2 GS_terrainTexCoord;
 
 
@@ -193,6 +193,11 @@ _{
         // Output verts
         for(int i = 0; i < gl_in.length(); ++i)
         {
+            GS_color = vec3(0.0);
+            Position_worldspace = TES_Position_worldspace[i];
+            gl_Position = gl_in[i].gl_Position;
+            GS_terrainTexCoord = TES_terrainTexCoord[i];
+
 #ifdef WIREFRAME
             if (i == 0)
                 gs_edgeDist = vec3(ha, 0, 0);
@@ -200,11 +205,8 @@ _{
                 gs_edgeDist = vec3(0, hb, 0);
             else
                 gs_edgeDist = vec3(0, 0, hc);
+            GS_color = wireframeColor();
 #endif
-            TESS_color = wireframeColor();
-            Position_worldspace = TES_Position_worldspace[i];
-            gl_Position = gl_in[i].gl_Position;
-            GS_terrainTexCoord = TES_terrainTexCoord[i];
             EmitVertex();
         }
 
@@ -222,10 +224,11 @@ _{
     uniform sampler2D TerrainHeightMap;
     uniform mat4 M;
     uniform vec2 SCE_ScreenSize;
+    uniform float HeightScale;
 
     //in
     in vec3 Position_worldspace;
-    in vec3 TESS_color;
+    in vec3 GS_color;
     in vec2 GS_terrainTexCoord;
 
 #ifdef WIREFRAME
@@ -237,14 +240,56 @@ _{
     layout (location = 1) out vec3 oColor;
     layout (location = 2) out vec4 oNormal;
 
+    vec3 TerrainColor(vec4 normAndHeight)
+    {
+        vec3 resColor;
+
+        vec3 topColor = vec3(3.0);
+        vec3 middleColor = vec3(0.7, 0.4, 0.2);
+        vec3 bottomColor = vec3(0.2, 0.7, 0.1);
+
+        float height = normAndHeight.a / HeightScale;
+        float flatness = pow(dot(normAndHeight.xyz, vec3(0.0, 1.0, 0.0)), 8.0);
+        float slope = 1.0 - flatness;
+
+        float bottomEnd = 0.4;
+        float middleEnd = 0.6;
+
+        float bottomToMiddleMix = 0.2;// * normAndHeight.y;
+        float middleToTopMix = 0.2;// * (normAndHeight.y);
+
+        float BtoMStart = bottomEnd - bottomToMiddleMix*0.5;
+        float BtoMEnd = bottomEnd + bottomToMiddleMix*0.5;
+
+        float MtoTStart = middleEnd - middleToTopMix*0.5;
+        float MtoTEnd = middleEnd + middleToTopMix*0.5;
+
+        float lerpLow = (height - BtoMStart) / (bottomToMiddleMix);
+        float lerpHigh = (height - MtoTStart) / (middleToTopMix);
+        lerpHigh = pow(lerpHigh, 2.0) + lerpHigh * 2.0 * flatness;
+        lerpHigh = clamp(lerpHigh, 0.0, 1.0);
+
+        resColor = vec3(0.0);//, slope, 0.0);
+
+        resColor += bottomColor * step(height, BtoMStart);
+        resColor += mix(bottomColor, middleColor, lerpLow) * step(BtoMStart, height)
+                * step(height, BtoMEnd);
+        resColor += middleColor * step(BtoMEnd, height) * step(height, MtoTStart);
+        resColor += mix(middleColor, topColor, lerpHigh) * step(MtoTStart, height)
+                * step(height, MtoTEnd);
+        resColor += topColor * step(MtoTEnd, height);
+
+        return resColor;
+    }
+
     void main()
     {
         vec2 uv = gl_FragCoord.xy / SCE_ScreenSize;
         vec4 normAndHeight = texture(TerrainHeightMap, GS_terrainTexCoord);
         vec3 norm = normAndHeight.xyz;
 //        norm = normalize((M * vec4(norm, 0.0)).xyz);
-        oNormal = vec4(norm, 0.5);
-        oColor = TESS_color;
+        oNormal = vec4(norm, 0.25);
+        oColor = TerrainColor(normAndHeight);
         oPosition = Position_worldspace;
 
 #ifdef WIREFRAME
@@ -253,6 +298,7 @@ _{
         float LineWidth = 0.75;
         float mixVal = smoothstep(LineWidth - 1.0, LineWidth + 1.0, d);
         oColor = mix(vec3(0.0, 0.0, 0.0), oColor, mixVal);
+
 #endif
     }
 _}

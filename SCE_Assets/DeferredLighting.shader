@@ -298,12 +298,14 @@ _{
                     Specularity
                     );
 
+
         color.rgb =
                 //Diffuse
                 (MaterialDiffuseColor * lightCol.x * SCE_LightColor.rgb * SCE_LightColor.a)
                 //Specular
                 + (SCE_LightColor.rgb * lightCol.y * lightCol.x * SCE_LightColor.a);
         //shadow and ambiant
-        color.rgb = (color.rgb * (1.0 - lightCol.z) + SCE_ShadowStrength * ambiantColor * MaterialDiffuseColor);
+        color.rgb = (color.rgb * (1.0 - lightCol.z)
+                     + SCE_ShadowStrength * ambiantColor * MaterialDiffuseColor);
     }
 _}

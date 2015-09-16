@@ -20,6 +20,7 @@
 #define TERRAIN_TEXTURE_NAME "TerrainHeightMap"
 #define TERRAIN_MAX_DIST_UNIFORM_NAME "TerrainMaxDistance"
 #define QUAD_TO_TERRAIN_UNIFORM_NAME "QuadToTerrainSpace"
+#define HEIGHT_SCALE_UNIFORM_NAME "HeightScale"
 
 #define TERRAIN_TEXTURE_SIZE 1024
 
@@ -39,6 +40,7 @@ namespace Terrain
         GLuint terrainTexture;
         GLint terrainTextureUniform;
         GLint terrainMaxDistanceUniform;
+        GLint heightScaleUniform;
     };
 
     struct TerrainData
@@ -64,6 +66,7 @@ namespace Terrain
         float terrainSize;
         float patchSize;
         float baseHeight;
+        float heightScale;
 
         glm::vec3 quadVertices[4];
         ushort quadPatchIndices[4]; //indices for a quad, not 2 triangles
@@ -255,6 +258,7 @@ namespace Terrain
         glData.terrainTextureUniform = glGetUniformLocation(terrainProgram, TERRAIN_TEXTURE_NAME);
         glData.terrainMaxDistanceUniform = glGetUniformLocation(terrainProgram,
                                                                        TERRAIN_MAX_DIST_UNIFORM_NAME);
+        glData.heightScaleUniform = glGetUniformLocation(terrainProgram, HEIGHT_SCALE_UNIFORM_NAME);
         quadUniforms.quadToTerrainMatrix = glGetUniformLocation(terrainProgram,
                                                                        QUAD_TO_TERRAIN_UNIFORM_NAME);
 
@@ -354,6 +358,7 @@ namespace Terrain
 
         glUniform1i(glData.terrainTextureUniform, 0);//terrain height map is sampler 0
         glUniform1f(glData.terrainMaxDistanceUniform, terrainData->terrainSize);
+        glUniform1f(glData.heightScaleUniform, terrainData->heightScale);
 
         glBindVertexArray(terrainData->quadVao);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, terrainData->quadIndicesVbo);
@@ -388,8 +393,9 @@ namespace Terrain
         terrainData->terrainSize = terrainSize;
         terrainData->patchSize = patchSize;
         terrainData->baseHeight = terrainBaseHeight;
+        terrainData->heightScale = 5.0f;
         initializeRenderData();
-        initializeTerrainTextures(3.0f, 5.0f);
+        initializeTerrainTextures(3.0f, terrainData->heightScale);
     }
 
     void Cleanup()

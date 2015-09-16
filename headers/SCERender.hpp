@@ -46,11 +46,11 @@ namespace SCE
                                                  const glm::mat4 &projectionMatrix,
                                                  const glm::mat4 &viewMatrix);
 
-        ToneMappingData     mToneMapData;
-        static SCERender*   s_instance;
     private :
 
+        static SCERender*   s_instance;
 
+        ToneMappingData     mToneMapData;
         SCE_GBuffer         mGBuffer;
         glm::vec4           mDefaultClearColor;
         ui16                mQuadMeshId;

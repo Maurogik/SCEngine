@@ -76,8 +76,8 @@ void SCECore::InitEngine(const std::string &windowName)
     UpdateWindow();
 
     // Ensure we can capture the escape key being pressed below
-    //glfwSetInputMode(s_window, GLFW_STICKY_KEYS, GL_TRUE);
-    //glfwSetCursorPos(s_window, 1024/2, 768/2);
+    glfwSetInputMode(s_window, GLFW_STICKY_KEYS, GL_TRUE);
+    glfwSetInputMode(s_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 #ifdef SCE_DEBUG
 
