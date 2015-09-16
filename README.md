@@ -5,7 +5,9 @@ A 3D engine I am currently working on.
 
 This is still a Work In Progress and will be fleshed/refined as I go.
 
-How to build (with cmd line, tested on linux): 
+How to build (requires CMake) :
+
+Linux - Command Line
 
 1. clone the repository
 
@@ -22,3 +24,5 @@ How to build (with cmd line, tested on linux):
 3. Run the executable
 
 	'./playground'
+
+
