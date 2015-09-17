@@ -21,7 +21,7 @@ include_directories(
 )
 #Set define for high precision timer
 add_definitions( -DCLOCK_MONOTONIC)
-
+message(${OPENGL_LIBRARY})
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 set(OPENGL_LIBRARY
 	${OPENGL_LIBRARY}

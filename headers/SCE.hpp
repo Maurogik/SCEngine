@@ -21,6 +21,7 @@
 #include "Light.hpp"
 #include "SCEHandle.hpp"
 
+#include "SCECore.hpp"
 #include "SCETools.hpp"
 #include "SCETime.hpp"
 

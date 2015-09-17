@@ -114,6 +114,8 @@ void SCECore::InitEngine(const std::string &windowName)
 
 void SCECore::RunEngine()
 {
+    int escPressCount = 0;
+    bool pressed = false;
     do
     {
         SCETime::Update();
@@ -123,8 +125,18 @@ void SCECore::RunEngine()
         glfwSwapBuffers(s_window);
         glfwPollEvents();
 
-    } while( glfwGetKey(s_window, GLFW_KEY_ESCAPE ) != GLFW_PRESS
-             && glfwWindowShouldClose(s_window) == 0 );
+        if(glfwGetKey(s_window, GLFW_KEY_ESCAPE ) == GLFW_PRESS)
+        {
+            pressed = true;
+        }
+        else if(glfwGetKey(s_window, GLFW_KEY_ESCAPE ) == GLFW_RELEASE && pressed)
+        {
+            ++escPressCount;
+            glfwSetInputMode(s_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+            pressed = false;
+        }
+
+    } while( escPressCount < 2);
 
 }
 

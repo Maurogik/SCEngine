@@ -16,7 +16,6 @@
 #include "SCEDefines.hpp"
 #include "SCETools.hpp"
 #include "Component.hpp"
-#include "../common/quaternion_utils.hpp"
 
 namespace SCE {
 

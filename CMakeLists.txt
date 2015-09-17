@@ -69,7 +69,6 @@ file(GLOB HEADERS
 
 aux_source_directory(./external/glm-0.9.4.0/ EXT)
 aux_source_directory(./sources SOURCES)
-aux_source_directory(./common COMMONS)
 aux_source_directory(${TARGET} APP_SOURCES)
 
 file(GLOB TEMPLATES
@@ -105,7 +104,6 @@ add_executable(${TARGET}
     ${HEADERS}
     ${SOURCES}
     ${GLM_HEADERS}
-    ${COMMONS}
     ${TEMPLATES}
     ${RESSOURCES}
     ${SCE_ASSETS}
@@ -113,6 +111,8 @@ add_executable(${TARGET}
 target_link_libraries(${TARGET}
     ${ALL_LIBS}
 )
+
+message(${ALL_LIBS})
 
 target_link_libraries(${TARGET}
     SOIL

@@ -2,10 +2,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "../headers/SCECore.hpp"
+#include "../headers/SCE.hpp"
 #include "Rotator.hpp"
 #include "CameraControl.hpp"
-#include "LookAtTarget.hpp"
 
 using namespace SCE;
 using namespace std;
@@ -258,7 +257,7 @@ void scene3()
     cube->SetLocalScale(vec3(2.0f, 2.0f, 2.0f));
 
     //ground
-    float groundY = simpleGround();//complexGround();
+    float groundY = -2.0;//simpleGround();//complexGround();
 
     //house
     SCEHandle<Container> house = createModel("house", "Meshes/house_obj.obj", "Materials/House",
@@ -284,7 +283,7 @@ void scene3()
 
 void lightOutdoor()
 {
-        SCEHandle<Container> dirLight = createLight(vec3(0, 2000, -2000),
+        SCEHandle<Container> dirLight = createLight(vec3(0, 600, -600),
                                                     vec3(40, 0, 0),
                                                     LightType::DIRECTIONAL_LIGHT);
         dirLight->GetComponent<Light>()->SetLightColor(vec4(1.0, 1.0, 0.8, 0.7));

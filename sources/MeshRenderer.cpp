@@ -4,9 +4,6 @@
 /******* FILE : MeshRenderer.cpp ******/
 /**************************************/
 
-#include "common/shader.hpp"
-
-
 #include "../headers/MeshRenderer.hpp"
 #include "../headers/Container.hpp"
 #include "../headers/SCEInternal.hpp"

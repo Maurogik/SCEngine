@@ -91,7 +91,7 @@ void SCERender::Render(const SCEHandle<Camera>& camera,
                                         camToWorld, objectsToRender);
 
     //render objects without lighting
-    s_instance->renderGeometryPass(camTransform->GetWorldPosition(), renderData, objectsToRender);
+    s_instance->renderGeometryPass(renderData, objectsToRender);
 
     //lighting & sky
     s_instance->mGBuffer.ClearFinalBuffer();
@@ -122,8 +122,7 @@ void SCERender::Render(const SCEHandle<Camera>& camera,
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void SCERender::renderGeometryPass(const glm::vec3& cameraPostion_worldspace,
-                                   const CameraRenderData& renderData,
+void SCERender::renderGeometryPass(const CameraRenderData& renderData,
                                    std::vector<Container*> objectsToRender)
 {
     mGBuffer.BindForGeometryPass();
@@ -133,7 +132,7 @@ void SCERender::renderGeometryPass(const glm::vec3& cameraPostion_worldspace,
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
 
-    SCE::Terrain::RenderTerrain(cameraPostion_worldspace, renderData.projectionMatrix, renderData.viewMatrix, -1.5f);
+    SCE::Terrain::RenderTerrain(renderData.projectionMatrix, renderData.viewMatrix);
 
     for(Container* container : objectsToRender)
     {

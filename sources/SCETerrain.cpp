@@ -21,6 +21,7 @@
 #define TERRAIN_MAX_DIST_UNIFORM_NAME "TerrainMaxDistance"
 #define QUAD_TO_TERRAIN_UNIFORM_NAME "QuadToTerrainSpace"
 #define HEIGHT_SCALE_UNIFORM_NAME "HeightScale"
+#define TESS_OVERRIDE_UNIFORM_NAME "TesselationOverride"
 
 #define TERRAIN_TEXTURE_SIZE 1024
 
@@ -41,6 +42,7 @@ namespace Terrain
         GLint terrainTextureUniform;
         GLint terrainMaxDistanceUniform;
         GLint heightScaleUniform;
+        GLint tesselationOverrideUniform;
     };
 
     struct TerrainData
@@ -52,9 +54,7 @@ namespace Terrain
                   glm::vec3(1.0f, 0.0f, 1.0f),
                   glm::vec3(0.0f, 0.0f, 1.0f)},
               quadPatchIndices{0, 1, 2, 3}
-        {
-            Debug::Log("tolo");
-        }
+        {}
 
         //Terrain quad render data
         GLuint  quadVao;
@@ -170,7 +170,8 @@ namespace Terrain
                 }
 
                 float res = noise / maxValue;
-                res  = SCE::Math::mapToRange(-0.5f, 0.5f, 0.0f, 1.0f, res);
+//                res  = SCE::Math::mapToRange(-0.5f, 0.5f, 0.0f, 1.0f, res);
+                res  = SCE::Math::mapToRange(-0.3f, 0.7f, 0.0f, 1.0f, res);
                 min = res < min ? res : min;
                 max = res > max ? res : max;
                 heightmap[xCount * TERRAIN_TEXTURE_SIZE + zCount] = res * heightScale;
@@ -259,6 +260,9 @@ namespace Terrain
         glData.terrainMaxDistanceUniform = glGetUniformLocation(terrainProgram,
                                                                        TERRAIN_MAX_DIST_UNIFORM_NAME);
         glData.heightScaleUniform = glGetUniformLocation(terrainProgram, HEIGHT_SCALE_UNIFORM_NAME);
+        glData.tesselationOverrideUniform = glGetUniformLocation(terrainProgram,
+                                                                 TESS_OVERRIDE_UNIFORM_NAME);
+
         quadUniforms.quadToTerrainMatrix = glGetUniformLocation(terrainProgram,
                                                                        QUAD_TO_TERRAIN_UNIFORM_NAME);
 
@@ -340,10 +344,9 @@ namespace Terrain
                        0);
     }
 
-    void RenderTerrain(const glm::vec3& cameraPosition,
-                       const glm::mat4& projectionMatrix,
+    void RenderTerrain(const glm::mat4& projectionMatrix,
                        const glm::mat4& viewMatrix,
-                       float terrainBaseHeight)
+                       float tesselationOverride)
     {
 
         TerrainGLData& glData = terrainData->glData;
@@ -359,13 +362,14 @@ namespace Terrain
         glUniform1i(glData.terrainTextureUniform, 0);//terrain height map is sampler 0
         glUniform1f(glData.terrainMaxDistanceUniform, terrainData->terrainSize);
         glUniform1f(glData.heightScaleUniform, terrainData->heightScale);
+        glUniform1f(glData.tesselationOverrideUniform, tesselationOverride);
 
         glBindVertexArray(terrainData->quadVao);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, terrainData->quadIndicesVbo);
 
         //we want the terrain mesh to "follow" the camera (the height map coordinates will be offset ?)"
         glm::vec3 terrainPosition_worldspace = vec3(0.0f);//cameraPosition;
-        terrainPosition_worldspace.y = terrainBaseHeight;
+        terrainPosition_worldspace.y = terrainData->baseHeight;
 
         glm::mat4 terrainToWorldspace = glm::translate(glm::mat4(1.0f), terrainPosition_worldspace);
 
@@ -384,6 +388,7 @@ namespace Terrain
             }
         }
 
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
     }
 

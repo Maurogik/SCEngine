@@ -13,6 +13,7 @@
 #include "../headers/SCEShaders.hpp"
 #include "../headers/Camera.hpp"
 #include "../headers/SCESkyRenderer.hpp"
+#include "../headers/SCETerrain.hpp"
 
 using namespace SCE;
 using namespace std;
@@ -368,10 +369,13 @@ void SCELighting::renderShadowmapPass(const CameraRenderData& lightRenderData,
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+
     for(Container* container : objectsToRender)
     {
         container->GetComponent<MeshRenderer>()->Render(lightRenderData);
     }
+
+//    SCE::Terrain::RenderTerrain(lightRenderData.projectionMatrix, lightRenderData.viewMatrix, 16.0f);
 
     glm::mat4 biasMatrix(
     0.5, 0.0, 0.0, 0.0,
@@ -383,8 +387,8 @@ void SCELighting::renderShadowmapPass(const CameraRenderData& lightRenderData,
     mDepthConvertMatrices[shadowmapId] = biasMatrix * lightRenderData.projectionMatrix
                        * lightRenderData.viewMatrix;
 
-    glCullFace(GL_BACK);
     glViewport(viewportDims[0], viewportDims[1], viewportDims[2], viewportDims[3]);
+    glCullFace(GL_BACK);
 }
 
 std::vector<CameraRenderData> SCELighting::computeCascadedLightFrustrums(FrustrumData cameraFrustrum,

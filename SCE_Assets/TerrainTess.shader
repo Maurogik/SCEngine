@@ -29,9 +29,10 @@ _{
 
     uniform sampler2D TerrainHeightMap;
     uniform float TerrainMaxDistance;
+    uniform float TesselationOverride;
     uniform mat4 M;
     uniform mat4 V;
-    uniform mat4 MVP;    
+    uniform mat4 MVP;
 
     //in
     in vec2 VS_terrainTexCoord[];
@@ -46,15 +47,22 @@ _{
 
     float tesselationFromDist(vec4 p0, vec4 p1, vec2 t0, vec2 t1)
     {
-        vec2 centerUv = (t0 - t1) * 0.5 + t1;
-        float height = texture(TerrainHeightMap, centerUv).a;
+        if(TesselationOverride < 0.0f)
+        {
+            vec2 centerUv = (t0 - t1) * 0.5 + t1;
+            float height = texture(TerrainHeightMap, centerUv).a;
 
-        float farDist = TerrainMaxDistance + 50.0;
-        vec4 center_cameraspace = V * M * ((p0 - p1) * 0.5 + p1 + vec4(0.0, height, 0.0, 0.0));
-        float tess = 1.0 - clamp(center_cameraspace.z / farDist, 0.0, 1.0);//map to 0..64 range
-        tess = pow(tess, 2.0);
+            float farDist = TerrainMaxDistance + 50.0;
+            vec4 center_cameraspace = V * M * ((p0 - p1) * 0.5 + p1 + vec4(0.0, height, 0.0, 0.0));
+            float tess = 1.0 - clamp(center_cameraspace.z / farDist, 0.0, 1.0);//map to 0..64 range
+            tess = pow(tess, 2.0);
 
-        return clamp(tess * 64.0, 2.0, 64.0);//between 0 and 64
+            return clamp(tess * 64.0, 2.0, 64.0);//between 0 and 64
+        }
+        else
+        {
+            return TesselationOverride;
+        }
     }
 
 
@@ -287,7 +295,7 @@ _{
         vec2 uv = gl_FragCoord.xy / SCE_ScreenSize;
         vec4 normAndHeight = texture(TerrainHeightMap, GS_terrainTexCoord);
         vec3 norm = normAndHeight.xyz;
-//        norm = normalize((M * vec4(norm, 0.0)).xyz);
+//        norm = normalize(norm + vec3(0.0, -0.5, 0.0));
         oNormal = vec4(norm, 0.25);
         oColor = TerrainColor(normAndHeight);
         oPosition = Position_worldspace;

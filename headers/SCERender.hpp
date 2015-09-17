@@ -57,7 +57,7 @@ namespace SCE
 
         SCERender();
 
-        void                renderGeometryPass(const vec3& cameraPostion_worldspace, const CameraRenderData& renderData,
+        void                renderGeometryPass(const CameraRenderData& renderData,
                                                std::vector<Container*> objectsToRender);
 
     };

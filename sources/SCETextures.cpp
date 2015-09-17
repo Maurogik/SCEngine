@@ -10,9 +10,9 @@
 
 #include "../external/SOIL/src/SOIL2.h"
 
-#include "external/rapidjson/document.h" // rapidjson's DOM-style API
-#include "external/rapidjson/prettywriter.h" // for stringify JSON
-#include "external/rapidjson/filestream.h" // wrapper of C stream for prettywriter as output
+#include "../external/rapidjson/document.h" // rapidjson's DOM-style API
+#include "../external/rapidjson/prettywriter.h" // for stringify JSON
+#include "../external/rapidjson/filestream.h" // wrapper of C stream for prettywriter as output
 
 #include <map>
 #include <vector>
@@ -67,7 +67,6 @@ namespace TextureUtils
     TexturesData texturesData;
 
 /*      Utiliatry loading/parsing funtions      */
-
     SCETextureFormat formatFromString(const string &formatString)
     {
         SCETextureFormat res = DDS_FORMAT;

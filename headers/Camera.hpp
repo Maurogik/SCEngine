@@ -66,8 +66,7 @@ namespace SCE
                                                                 float bottomPlane,
                                                                 float nearPlane,
                                                                 float farPlane);
-
-        void                init();
+        void                                    init();
 
 
         std::vector<std::string>    mRenderedLayers;

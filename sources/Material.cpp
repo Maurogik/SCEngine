@@ -11,9 +11,9 @@
 #include "../headers/SCEShaders.hpp"
 #include "../headers/Transform.hpp"
 
-#include "external/rapidjson/document.h" // rapidjson's DOM-style API
-#include "external/rapidjson/prettywriter.h" // for stringify JSON
-#include "external/rapidjson/filestream.h" // wrapper of C stream for prettywriter as output
+#include "../external/rapidjson/document.h" // rapidjson's DOM-style API
+#include "../external/rapidjson/prettywriter.h" // for stringify JSON
+#include "../external/rapidjson/filestream.h" // wrapper of C stream for prettywriter as output
 
 #include <iostream>
 #include <fstream>
