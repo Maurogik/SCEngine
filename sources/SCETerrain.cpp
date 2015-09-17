@@ -370,9 +370,9 @@ namespace Terrain
         glm::mat4 terrainToWorldspace = glm::translate(glm::mat4(1.0f), terrainPosition_worldspace);
 
         //Render all the terrain patches
-        for(float x = -halfTerrainSize; x < halfTerrainSize - patchSize; x += patchSize)
+        for(float x = -halfTerrainSize + patchSize * 0.5; x < halfTerrainSize - patchSize; x += patchSize)
         {
-            for(float z = -halfTerrainSize; z < halfTerrainSize - patchSize; z += patchSize)
+            for(float z = -halfTerrainSize + patchSize * 0.5; z < halfTerrainSize - patchSize; z += patchSize)
             {
                 glm::vec3 pos_terrainspace(x, 0.0f, z);
                 renderPatch(projectionMatrix,
@@ -393,7 +393,7 @@ namespace Terrain
         terrainData->terrainSize = terrainSize;
         terrainData->patchSize = patchSize;
         terrainData->baseHeight = terrainBaseHeight;
-        terrainData->heightScale = 5.0f;
+        terrainData->heightScale = 4.0f;
         initializeRenderData();
         initializeTerrainTextures(3.0f, terrainData->heightScale);
     }
