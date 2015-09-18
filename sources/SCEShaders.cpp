@@ -8,6 +8,7 @@
 #include "../headers/SCETools.hpp"
 #include "../headers/SCEInternal.hpp"
 #include "../headers/SCECore.hpp"
+#include "../headers/SCETime.hpp"
 
 #include <map>
 #include <algorithm>
@@ -18,6 +19,7 @@ using namespace std;
 
 
 #define SCREEN_SIZE_UNIFORM_NAME "SCE_ScreenSize"
+#define TIME_UNIFORM_NAME "SCE_TimeInSeconds"
 
 namespace SCE
 {
@@ -42,6 +44,7 @@ namespace ShaderUtils
         GLint ProjectionMatrixUniform;
         GLint ViewMatrixUniform;
         GLint ModelMatrixUniform;
+        GLint timeUniform;
     };
 
     //Only here to allow for automatic creation/destruction of data
@@ -232,10 +235,11 @@ namespace ShaderUtils
             }
         }
 
-        shaderData.compiledPrograms[shaderFileName] = programID;
+        shaderData.compiledPrograms[shaderFileName] = programID;       
 
         DefaultUniforms uniforms;
         uniforms.screenSizeUniform          = glGetUniformLocation(programID, SCREEN_SIZE_UNIFORM_NAME);
+        uniforms.timeUniform                = glGetUniformLocation(programID, TIME_UNIFORM_NAME);
         uniforms.MVPMatrixUniform           = glGetUniformLocation(programID, "MVP");
         uniforms.ViewMatrixUniform          = glGetUniformLocation(programID, "V");
         uniforms.ModelMatrixUniform         = glGetUniformLocation(programID, "M");
@@ -272,9 +276,12 @@ namespace ShaderUtils
     {
         float width = SCECore::GetWindowWidth();
         float height = SCECore::GetWindowHeight();
+        float timeInSecond = SCETime::TimeInSeconds();
+
         DefaultUniforms& uniforms = shaderData.defaultUniforms[shaderId];
 
         glUniform2f(uniforms.screenSizeUniform, width, height);
+        glUniform1f(uniforms.timeUniform, timeInSecond);
 
         glm::mat4 MVP = projectionMatrix * viewMatrix * modelMatrix;
 

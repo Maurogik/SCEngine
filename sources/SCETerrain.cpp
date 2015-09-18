@@ -31,7 +31,7 @@
 #define HEIGHT_SCALE_UNIFORM "HeightScale"
 #define TESS_OVERRIDE_UNIFORM "TesselationOverride"
 
-#define TERRAIN_TEXTURE_SIZE 2048
+#define TERRAIN_TEXTURE_SIZE 512
 #define OUTTER_TEX_SCALE 1.0f
 #define TEX_TILE_SIZE 2.0f
 

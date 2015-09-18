@@ -26,6 +26,8 @@ _}
 _{
 #version 430 core
 
+//#define DEBUG
+
     uniform vec2        SCE_ScreenSize;
     uniform float       SCE_Exposure;
     uniform float       SCE_MaxBrightness;
@@ -61,9 +63,12 @@ _{
         float exposure = 0.3 / (lum * SCE_Exposure);
         exposure = clamp(exposure, 0.2, 2.0);
         vec3 hdrColor = sceneColor.xyz;
-//        color.rgb = hdrColor;// * step(0.5, uv.x);
-        color.rgb = Uncharted2Tonemap(hdrColor * exposure) / Uncharted2Tonemap(whitePoint);
-        // * step(uv.x, 0.5);
+#ifdef DEBUG
+        color.rgb = hdrColor * step(0.5, uv.x);
+        color.rgb += Uncharted2Tonemap(hdrColor*exposure) / Uncharted2Tonemap(whitePoint) * step(uv.x, 0.5);
+#else
+        color.rgb += Uncharted2Tonemap(hdrColor*exposure) / Uncharted2Tonemap(whitePoint);
+#endif
 
         //gamma correction
         color.rgb = pow(color.rgb, vec3(1.0/2.2));

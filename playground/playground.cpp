@@ -336,13 +336,23 @@ int main( void )
 //    scene2();
 //    scene3();
 
+    vec3 startPos = vec3(0, 250, -25);
     //Camera
     SCEHandle<Container> cameraObject = SCEScene::CreateContainer("cameraObject");
     SCEHandle<Transform> cameraTransform = cameraObject->AddComponent<Transform>();
     cameraObject->AddComponent<Camera>(40.0f, 16.0f/9.0f, 1.0f, 2000.0f);
-    cameraTransform->SetWorldPosition(vec3(0, 100, -25));
-//    cameraTransform->SetWorldOrientation(vec3(0.0f, 180.0f, 0.0f));
-    cameraObject->AddComponent<CameraControl>();
+
+    SCEHandle<Container> eagle = createModel("eagle2",
+                                              "Meshes/EAGLE_2.OBJ", "Materials/Eagle",
+                                              startPos);
+    SCEHandle<Transform> eagleTransform = eagle->GetComponent<Transform>();
+    eagleTransform->RotateAroundAxis(vec3(0.0, 1.0, 0.0), 180.0f);
+    eagleTransform->AddChild(cameraTransform);
+    cameraTransform->SetLocalPosition(vec3(0.0f, 1.0f, -5.0f));
+//    cameraTransform->RotateAroundAxis(vec3(1.0f, 0.0f, 0.0f), 5.0f);
+
+    eagle->AddComponent<CameraControl>();
+
 
     //load scene here
     engine.RunEngine();

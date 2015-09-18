@@ -213,16 +213,6 @@ namespace SCE {
         glm::vec3               Back() const;
 
         //-------------------- Parenting
-        /**
-         * @brief Sets the parent of the transform, the world space transform remains the same
-         * @param parentPtr the transfrom's new parent
-         */
-        void                    SetParent(SCEHandle<Transform>  parentPtr);
-
-        /**
-         * @brief Removes the transform's parent, the local transform is now the world transform
-         */
-        void                    RemoveParent();
 
         /**
          * @brief Makes the given transform object a child of this object
@@ -242,6 +232,17 @@ namespace SCE {
                                 Transform(SCEHandle<Container>& container);
 
     private :
+
+        /**
+         * @brief Sets the parent of the transform, the world space transform remains the same
+         * @param parentPtr the transfrom's new parent
+         */
+        void                    setParent(SCEHandle<Transform>  parentPtr);
+
+        /**
+         * @brief Removes the transform's parent, the local transform is now the world transform
+         */
+        void                    removeParent();
 
         static glm::vec3        QuatToEuler(const glm::quat& q1);
 

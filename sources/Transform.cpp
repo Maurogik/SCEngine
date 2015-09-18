@@ -25,7 +25,7 @@ Transform::Transform(SCEHandle<Container> &container)
 Transform::~Transform()
 {
     for(size_t i = 0; i < mChildren.size(); ++i){
-        mChildren[i]->RemoveParent();
+        mChildren[i]->removeParent();
     }
     if(mParent){
         mParent->RemoveChild(this);
@@ -245,7 +245,7 @@ void Transform::LookAt(const glm::vec3& target, const glm::vec3& upVector)
     SCE::Debug::LogError("Not implemented yet");
 }
 
-void Transform::SetParent(SCEHandle<Transform> parentPtr)
+void Transform::setParent(SCEHandle<Transform> parentPtr)
 {
     //make a copy of current world position, scale and rotation
     vec3 wPos   = GetWorldPosition();
@@ -254,9 +254,6 @@ void Transform::SetParent(SCEHandle<Transform> parentPtr)
 
     //change parent
     mParent = parentPtr;
-    if(mParent) {
-        mParent->AddChild(this);
-    }
 
     //convert saved transform to local
     mat4 inverseTransform = inverse(GetWorldTransform());
@@ -265,7 +262,7 @@ void Transform::SetParent(SCEHandle<Transform> parentPtr)
     mScale       = vec3(inverseTransform * vec4(wScale, 0.0f));
 }
 
-void Transform::RemoveParent()
+void Transform::removeParent()
 {
     //make a copy of current world position, scale and rotation
     vec3 wPos   = GetWorldPosition();
@@ -284,9 +281,9 @@ void Transform::RemoveParent()
 void Transform::AddChild(SCEHandle<Transform> child)
 {
     Debug::Assert(find(mChildren.begin(), mChildren.end(), child) == mChildren.end()
-               , "Cannont add because the child has already been added");
+               , "Cannont add because the child was added");
     mChildren.push_back(child);
-    child->SetParent(this);
+    child->setParent(this);
 }
 
 void Transform::RemoveChild(SCEHandle<Transform> child)
@@ -294,7 +291,7 @@ void Transform::RemoveChild(SCEHandle<Transform> child)
     auto it = find(begin(mChildren), end(mChildren), child);
     Debug::Assert(it != end(mChildren)
                , "Cannont remove because the transform is not a child");
-    (*it)->RemoveParent();
+    (*it)->removeParent();
     mChildren.erase(it);
 }
 
