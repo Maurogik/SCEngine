@@ -7,6 +7,7 @@
 
 #include "../headers/SCETerrain.hpp"
 #include "../headers/SCEShaders.hpp"
+#include "../headers/SCETextures.hpp"
 #include "../headers/SCERenderStructs.hpp"
 #include "../headers/SCETools.hpp"
 
@@ -15,16 +16,26 @@
 #define STB_PERLIN_IMPLEMENTATION
 #include <stb_perlin.h>
 
+#define GRASS_TEX_FILE "Textures/terrainGrass"
+#define DIRT_TEX_FILE "Textures/terrainDirt"
+#define SNOW_TEX_FILE "Textures/terrainSnow"
 
 #define TERRAIN_SHADER_NAME "TerrainTess"
 #define TERRAIN_TEXTURE_NAME "TerrainHeightMap"
-#define TERRAIN_MAX_DIST_UNIFORM_NAME "TerrainMaxDistance"
-#define QUAD_TO_TERRAIN_UNIFORM_NAME "QuadToTerrainSpace"
-#define HEIGHT_SCALE_UNIFORM_NAME "HeightScale"
-#define TESS_OVERRIDE_UNIFORM_NAME "TesselationOverride"
+#define GRASS_TEXTURE_NAME "GrassTex"
+#define DIRT_TEXTURE_NAME "DirtTex"
+#define SNOW_TEXTURE_NAME "SnowTex"
+#define TEX_TILE_SIZE_UNIFORM "TextureTileScale"
+#define TERRAIN_MAX_DIST_UNIFORM "TerrainMaxDistance"
+#define QUAD_TO_TERRAIN_UNIFORM "QuadToTerrainSpace"
+#define HEIGHT_SCALE_UNIFORM "HeightScale"
+#define TESS_OVERRIDE_UNIFORM "TesselationOverride"
 
 #define TERRAIN_TEXTURE_SIZE 2048
 #define OUTTER_TEX_SCALE 1.0f
+#define TEX_TILE_SIZE 2.0f
+
+
 
 namespace SCE
 {
@@ -40,10 +51,17 @@ namespace Terrain
     {
         GLuint terrainProgram;
         GLuint terrainTexture;
+        GLuint grassTexture;
+        GLuint dirtTexture;
+        GLuint snowTexture;
         GLint terrainTextureUniform;
         GLint terrainMaxDistanceUniform;
         GLint heightScaleUniform;
         GLint tesselationOverrideUniform;
+        GLint grassTextureUniform;
+        GLint dirtTextureUniform;
+        GLint snowTextureUniform;
+        GLint textureTileScaleUniform;
     };
 
     struct TerrainData
@@ -133,6 +151,8 @@ namespace Terrain
     //generate perlin noise texture
     void initializeTerrainTextures(float startScale, float heightScale)
     {
+        float xOffset = SCE::Math::randRange(0.0f, 1.0f);
+        float zOffset = SCE::Math::randRange(0.0f, 1.0f);
         //8MB array, does not fit on stack so heap allocate it
         float *heightmap = new float[TERRAIN_TEXTURE_SIZE * TERRAIN_TEXTURE_SIZE];
         glm::vec3 *normals = new glm::vec3[TERRAIN_TEXTURE_SIZE * TERRAIN_TEXTURE_SIZE * 2];
@@ -145,14 +165,27 @@ namespace Terrain
         float noise = 0.0f;
         float persistence = 0.75f;
 
-        float x, z, y = 0.1f;
+        float x, z;
+        float y = 0.1f;
+        float edgeScale = 2.0f;
+        float edgeInc = 1.0f;
+        float xDist, zDist, edgeDist;
 
         for(int xCount = 0; xCount < TERRAIN_TEXTURE_SIZE; ++xCount)
         {
             x = float(xCount) / float(TERRAIN_TEXTURE_SIZE);
+            xDist = x < 0.5f ? x : 1.0 - x;
+            x += xOffset;
+
             for(int zCount = 0; zCount < TERRAIN_TEXTURE_SIZE; ++zCount)
             {
                 z = float(zCount) / float(TERRAIN_TEXTURE_SIZE);
+                zDist = z < 0.5f ? z : 1.0 - z;
+                z += zOffset;
+
+//                edgeDist = min(xDist, zDist);
+//                edgeInc = SCE::Math::mapToRange(0.0f, 0.1f, edgeScale, 1.0f, edgeDist);
+
                 noise = 0.0f;
                 amplitude = 1.0f;
                 scale = startScale;
@@ -254,14 +287,19 @@ namespace Terrain
          glData.terrainProgram = terrainProgram;
 
         glData.terrainTextureUniform = glGetUniformLocation(terrainProgram, TERRAIN_TEXTURE_NAME);
-        glData.terrainMaxDistanceUniform = glGetUniformLocation(terrainProgram,
-                                                                       TERRAIN_MAX_DIST_UNIFORM_NAME);
-        glData.heightScaleUniform = glGetUniformLocation(terrainProgram, HEIGHT_SCALE_UNIFORM_NAME);
-        glData.tesselationOverrideUniform = glGetUniformLocation(terrainProgram,
-                                                                 TESS_OVERRIDE_UNIFORM_NAME);
+        glData.grassTextureUniform = glGetUniformLocation(terrainProgram, GRASS_TEXTURE_NAME);
+        glData.dirtTextureUniform = glGetUniformLocation(terrainProgram, DIRT_TEXTURE_NAME);
+        glData.snowTextureUniform = glGetUniformLocation(terrainProgram, SNOW_TEXTURE_NAME);
+        glData.textureTileScaleUniform = glGetUniformLocation(terrainProgram, TEX_TILE_SIZE_UNIFORM);
+        glData.terrainMaxDistanceUniform = glGetUniformLocation(terrainProgram, TERRAIN_MAX_DIST_UNIFORM);
+        glData.heightScaleUniform = glGetUniformLocation(terrainProgram, HEIGHT_SCALE_UNIFORM);
+        glData.tesselationOverrideUniform = glGetUniformLocation(terrainProgram, TESS_OVERRIDE_UNIFORM);
 
-        quadUniforms.quadToTerrainMatrix = glGetUniformLocation(terrainProgram,
-                                                                       QUAD_TO_TERRAIN_UNIFORM_NAME);
+        quadUniforms.quadToTerrainMatrix = glGetUniformLocation(terrainProgram, QUAD_TO_TERRAIN_UNIFORM);
+
+        glData.grassTexture = SCE::TextureUtils::LoadTexture(GRASS_TEX_FILE);
+        glData.dirtTexture = SCE::TextureUtils::LoadTexture(DIRT_TEX_FILE);
+        glData.snowTexture = SCE::TextureUtils::LoadTexture(SNOW_TEX_FILE);
 
         //vertices buffer
         glGenBuffers(1, &(terrainData->quadVerticesVbo));
@@ -358,10 +396,23 @@ namespace Terrain
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, glData.terrainTexture);
 
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, glData.grassTexture);
+        glUniform1i(glData.grassTextureUniform, 1);
+
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, glData.dirtTexture);
+        glUniform1i(glData.dirtTextureUniform, 2);
+
+        glActiveTexture(GL_TEXTURE3);
+        glBindTexture(GL_TEXTURE_2D, glData.snowTexture);
+        glUniform1i(glData.snowTextureUniform, 3);
+
         glUniform1i(glData.terrainTextureUniform, 0);//terrain height map is sampler 0
         glUniform1f(glData.terrainMaxDistanceUniform, terrainData->terrainSize);
         glUniform1f(glData.heightScaleUniform, terrainData->heightScale);
         glUniform1f(glData.tesselationOverrideUniform, tesselationOverride);
+        glUniform1f(glData.textureTileScaleUniform, terrainData->terrainSize / TEX_TILE_SIZE);
 
         glBindVertexArray(terrainData->quadVao);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, terrainData->quadIndicesVbo);
@@ -405,7 +456,7 @@ namespace Terrain
         terrainData->terrainSize = terrainSize;
         terrainData->patchSize = patchSize;
         terrainData->baseHeight = terrainBaseHeight;
-        terrainData->heightScale = 5.0f;
+        terrainData->heightScale = 8.0f;
         initializeRenderData();
         initializeTerrainTextures(4.0f, terrainData->heightScale);
     }

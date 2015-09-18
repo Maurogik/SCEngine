@@ -39,7 +39,7 @@ _{
     out vec4 color;
 
     //variables
-    vec3 vSunColor = vec3(1.0, 1.0, 0.8);
+    vec3 vSunColor = vec3(1.0, 1.0, 0.7);
     vec3 vLowerSkyColor = vec3(0.65, 0.9, 1.0);
     vec3 vUpperSkyColor = vec3(0.06, 0.4, 0.85);
 
@@ -91,9 +91,10 @@ _{
 
         //compute fog strength
         float height = Position_worldspace.y;
-        float fogStr = 0.001;
-        float heightDensity = 0.01;
+        float fogStr = 0.000001;
+        float heightDensity = 0.002;
         float dist = abs((V * vec4(Position_worldspace, 1.0)).z);
+        dist *= dist;
         float fogAmount = (1.0 - exp( -dist * fogStr )) * exp(-height * heightDensity);
 
         vec3 skyColor = getSkyColor(ndcUv);

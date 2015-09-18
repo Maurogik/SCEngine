@@ -55,9 +55,9 @@ _{
             float farDist = TerrainMaxDistance + 50.0;
             vec4 center_cameraspace = V * M * ((p0 - p1) * 0.5 + p1 + vec4(0.0, height, 0.0, 0.0));
             float tess = 1.0 - clamp(center_cameraspace.z / farDist, 0.0, 1.0);//map to 0..64 range
-            tess = pow(tess, 2.0);
+            tess = pow(tess, 6.0);
 
-            return clamp(tess * 64.0, 2.0, 64.0);//between 0 and 64
+            return clamp(tess * 64.0, 6.0, 64.0);//between 0 and 64
         }
         else
         {
@@ -111,7 +111,7 @@ _{
     uniform sampler2D TerrainHeightMap;    
 
     //in
-    layout(quads, equal_spacing, ccw) in;
+    layout(quads, fractional_odd_spacing, ccw) in;
 
     patch in float gl_TessLevelOuter[4];
     patch in float gl_TessLevelInner[2];
@@ -230,9 +230,13 @@ _{
 //#define WIREFRAME
 
     uniform sampler2D TerrainHeightMap;
+    uniform sampler2D GrassTex;
+    uniform sampler2D DirtTex;
+    uniform sampler2D SnowTex;
     uniform mat4 M;
     uniform vec2 SCE_ScreenSize;
     uniform float HeightScale;
+    uniform float TextureTileScale;
 
     //in
     in vec3 Position_worldspace;
@@ -248,26 +252,33 @@ _{
     layout (location = 1) out vec3 oColor;
     layout (location = 2) out vec4 oNormal;
 
-    vec3 TerrainColor(vec4 normAndHeight)
-    {
-        vec3 resColor;
+    float waterHeight = 0.001;
 
-        vec3 waterColor = vec3(0.0, 0.0, 1.0);
-        vec3 topColor = vec3(3.0);
-        vec3 middleColor = vec3(0.7, 0.4, 0.2);
-        vec3 bottomColor = vec3(0.2, 0.7, 0.1);
+    vec4 TerrainColor(vec4 normAndHeight, vec2 uv)
+    {
+        uv *= TextureTileScale;
+
+        vec4 waterColor = vec4(0.1, 0.2, 1.0, 1.0);
+        vec4 topColor = vec4(1.0, 1.0, 1.0, 2.0);
+        vec4 middleColor = vec4(0.7, 0.4, 0.2, 0.3);
+        vec4 bottomColor = vec4(0.2, 0.7, 0.1, 0.3);
+
+        bottomColor.rgb = pow(texture(GrassTex, uv).rgb, vec3(1.5));
+        middleColor.rgb = texture(DirtTex, uv).rgb;
+        topColor.rgb += texture(SnowTex, uv).rgb;
+        topColor.rgb *= 3.0;
 
         float height = normAndHeight.a / HeightScale;
         float flatness = pow(dot(normAndHeight.xyz, vec3(0.0, 1.0, 0.0)), 8.0);
         float slope = 1.0 - flatness;
 
-        float bottomEnd = 0.2;
-        float middleEnd = 0.5;
+        float bottomEnd = 0.15;
+        float middleEnd = 0.45;
 
-        float bottomToMiddleMix = 0.4;// * normAndHeight.y;
-        float middleToTopMix = 0.2;// * (normAndHeight.y);
+        float bottomToMiddleMix = 0.3;// * normAndHeight.y;
+        float middleToTopMix = 0.3;// * (normAndHeight.y);
 
-        float waterHeight = 0.0001;
+
         float BtoMStart = bottomEnd - bottomToMiddleMix*0.5;
         float BtoMEnd = bottomEnd + bottomToMiddleMix*0.5;
 
@@ -275,11 +286,14 @@ _{
         float MtoTEnd = middleEnd + middleToTopMix*0.5;
 
         float lerpLow = (height - BtoMStart) / (bottomToMiddleMix);
+        lerpLow = pow(lerpLow, 2.0) - pow(flatness, 1.0) * (1.0 - lerpLow);
+        lerpLow = clamp(lerpLow, 0.0, 1.0);
+
         float lerpHigh = (height - MtoTStart) / (middleToTopMix);
-        lerpHigh = pow(lerpHigh, 2.0) + lerpHigh * 2.0 * flatness;
+        lerpHigh = pow(flatness, 4.0) * lerpHigh * 3.0 + pow(lerpHigh, 4.0);
         lerpHigh = clamp(lerpHigh, 0.0, 1.0);
 
-        resColor = vec3(0.0);//, slope, 0.0);
+        vec4 resColor = vec4(0.0);//, slope, 0.0);
 
         resColor += waterColor * step(height, waterHeight);
         resColor += bottomColor * step(waterHeight, height) * step(height, BtoMStart);
@@ -290,17 +304,31 @@ _{
                 * step(height, MtoTEnd);
         resColor += topColor * step(MtoTEnd, height);
 
-        return resColor;
+        return vec4(resColor);
+    }
+
+    vec3 processNormal(vec4 normAndHeight)
+    {
+        //do a wavy normal displacement for water normals
+        float height = normAndHeight.a / HeightScale;
+        vec3 normalDisplacement = vec3(0.0);
+        //only for water
+        normalDisplacement *= step(height, waterHeight);
+        vec3 normal = normAndHeight.xyz + normalDisplacement;
+        return normal;
     }
 
     void main()
     {
         vec2 uv = gl_FragCoord.xy / SCE_ScreenSize;
         vec4 normAndHeight = texture(TerrainHeightMap, GS_terrainTexCoord);
-        vec3 norm = normAndHeight.xyz;
+
+        vec4 colorAndSpec = TerrainColor(normAndHeight, GS_terrainTexCoord);
+
+        vec3 norm = processNormal(normAndHeight);
 //        norm = normalize(norm + vec3(0.0, -0.5, 0.0));
-        oNormal = vec4(norm, 0.25);
-        oColor = TerrainColor(normAndHeight);
+        oNormal = vec4(norm, colorAndSpec.a);
+        oColor = colorAndSpec.rgb;
         oPosition = Position_worldspace;
 
 #ifdef WIREFRAME

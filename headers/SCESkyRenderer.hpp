@@ -7,6 +7,10 @@
 #define SCE_SKYRENDERER_HPP
 
 #include "SCEDefines.hpp"
+
+//TODO make sky colors and fade factor customisable
+//TODO make sun color customisalbe
+
 namespace SCE
 {
 

@@ -283,7 +283,7 @@ void scene3()
 
 void lightOutdoor()
 {
-        SCEHandle<Container> dirLight = createLight(vec3(0, 600, -600),
+        SCEHandle<Container> dirLight = createLight(vec3(0, 2000, -2000),
                                                     vec3(40, 0, 0),
                                                     LightType::DIRECTIONAL_LIGHT);
         dirLight->GetComponent<Light>()->SetLightColor(vec4(1.0, 1.0, 0.8, 0.7));
@@ -339,7 +339,7 @@ int main( void )
     //Camera
     SCEHandle<Container> cameraObject = SCEScene::CreateContainer("cameraObject");
     SCEHandle<Transform> cameraTransform = cameraObject->AddComponent<Transform>();
-    cameraObject->AddComponent<Camera>(40.0f, 16.0f/9.0f, 1.0f, 1000.0f);
+    cameraObject->AddComponent<Camera>(40.0f, 16.0f/9.0f, 1.0f, 2000.0f);
     cameraTransform->SetWorldPosition(vec3(0, 100, -25));
 //    cameraTransform->SetWorldOrientation(vec3(0.0f, 180.0f, 0.0f));
     cameraObject->AddComponent<CameraControl>();

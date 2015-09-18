@@ -58,7 +58,7 @@ void SCERender::Init()
 {
     SCELighting::Init();
     SCEMeshRender::Init();
-    SCE::Terrain::Init(1000.0f, 40.0f, 2.0f);
+    SCE::Terrain::Init(2000.0f, 80.0f, 0.0f);
     Debug::Assert(!s_instance, "An instance of the Render system already exists");
     s_instance = new SCERender();
 }

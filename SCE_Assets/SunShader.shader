@@ -96,7 +96,7 @@ _{
         float nbSamples = 80.0;
         float decay = 4.0;
         float density = 0.6;
-        float weight = 0.01;
+        float weight = 0.02;
 
         vec2 stepToFrag = (sunUV - uv);
         stepToFrag *= 1.0 / float(nbSamples) * density;
@@ -133,15 +133,15 @@ _{
 
         vec4 sunColor = getSunColor(ndcUv, sun_projectionspace.xyz);
         float sunStrength = 1.0 - dot(sun_projectionspace.xy, sun_projectionspace.xy) * 0.2;
+        sunStrength *= step(0.0, sun_cameraspace.z);
 
         color = vec2(0.0);       
 
 #ifdef LIGHT_SHAFTS
-        float scaterring = 0.0;
         if(sunStrength > 0.0)
         {
             color.r = sunColor.a * notOccludedByScene * sunStrength;
-            scaterring = computeVolumetricLight(uv, sunUV) * sunStrength;
+            color.g = computeVolumetricLight(uv, sunUV) * sunStrength;
         }
 #endif
     }

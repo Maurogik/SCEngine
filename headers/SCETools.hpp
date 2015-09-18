@@ -41,6 +41,7 @@ namespace Math
 {
     float lerp(float a, float b, float v);
     float mapToRange(float fromMin, float fromMax, float toMin, float toMax, float val);
+    float randRange(float min, float max);
 }
 
 }

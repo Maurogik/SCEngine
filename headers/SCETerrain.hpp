@@ -8,6 +8,8 @@
 
 #include "SCEDefines.hpp"
 
+//TODO make terrain textures and texture sizes customizable
+
 namespace SCE
 {
     namespace Terrain

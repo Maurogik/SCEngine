@@ -7,6 +7,7 @@
 #include "../headers/SCETools.hpp"
 #include "../headers/SCEInternal.hpp"
 
+#include <stdlib.h>
 #include <assert.h>
 #include <iostream>
 #include <fstream>
@@ -117,6 +118,11 @@ namespace Math
     float lerp(float a, float b, float v)
     {
         return a + (b - a) * v;
+    }
+
+    float randRange(float min, float max)
+    {
+        return ((float)rand() / (float)RAND_MAX) * (max - min) + min;
     }
 }
 
