@@ -109,9 +109,9 @@ SCEHandle<Container> createLight(vec3 pos, vec3 orientation, LightType type){
 
 float simpleGround()
 {
-    SCEHandle<Container> plane = createPlane("plane", GROUND_MATERIAL, 500.0f, vec3(0.0f, -2.0f, 0.0f));
+    SCEHandle<Container> plane = createPlane("plane", GROUND_MATERIAL, 500.0f, vec3(0.0f, 0.0f, 0.0f));
     plane->GetComponent<Transform>()->SetWorldOrientation(vec3(-90.0f, 180.0f, 0.0f));
-    return -2.0f;
+    return 0.0f;
 }
 
 float complexGround()
@@ -126,7 +126,7 @@ float complexGround()
         {
             SCEHandle<Container> groundObj = createModel("groundObject",
                                                          "Meshes/CobbleStones2.obj", "Materials/CobbleStone2",
-                                                         vec3(x, -2.1f, z));
+                                                         vec3(x, -0.1f, z));
             groundObj->GetComponent<Transform>()->SetLocalScale(vec3(tileScale));
         }
 
@@ -334,14 +334,14 @@ int main( void )
 
 //    scene1();
 //    scene2();
-    scene3();
+//    scene3();
 
     //Camera
     SCEHandle<Container> cameraObject = SCEScene::CreateContainer("cameraObject");
     SCEHandle<Transform> cameraTransform = cameraObject->AddComponent<Transform>();
-    cameraObject->AddComponent<Camera>(40.0f, 16.0f/9.0f, 1.0f, 500.0f);
-    cameraTransform->SetWorldPosition(vec3(0, 2, -25));
-    cameraTransform->SetWorldOrientation(vec3(0.0f, 180.0f, 0.0f));
+    cameraObject->AddComponent<Camera>(40.0f, 16.0f/9.0f, 1.0f, 1000.0f);
+    cameraTransform->SetWorldPosition(vec3(0, 100, -25));
+//    cameraTransform->SetWorldOrientation(vec3(0.0f, 180.0f, 0.0f));
     cameraObject->AddComponent<CameraControl>();
 
     //load scene here

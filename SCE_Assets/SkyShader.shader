@@ -47,37 +47,40 @@ _{
     {
         mat4 ndcToWorld = inverse(P*V);
         vec4 frag_ndc = vec4(screenNdc, 1.0, 1.0);
-        frag_ndc /= gl_FragCoord.w;
+        frag_ndc *= 500.0; //perforw inverse of perspective divide as if the point was on far plane
 
         vec3 frag_worldspace = (ndcToWorld * frag_ndc).xyz;
         return frag_worldspace;
     }
 
-    vec3 getSkyColor(vec2 ndcUv, vec3 sun_projectionspace)
+    vec3 getSkyColor(vec2 ndcUv)
     {
         vec3 frag_worldspace = ndcToFarWorldspace(ndcUv);
-        float fade = normalize(frag_worldspace).y;
-        fade = clamp(fade, 0.0, 1.0);
+        float height_worldspace = normalize(frag_worldspace).y + 0.1;
+
+        float maxHeight = 1.0;
+        float fade = height_worldspace;
+        fade = clamp(fade, 0.0, maxHeight) / maxHeight;
         fade = 1.0 - pow(1.0 - fade, 7.0);
 
         return mix(vLowerSkyColor, vUpperSkyColor, fade);
+    }
+
+    vec3 getFogColor(float height_worldspace)
+    {
+        return mix(vLowerSkyColor, vUpperSkyColor, 0.5);
     }
 
     void main()
     {
         vec2 uv = gl_FragCoord.xy / SCE_ScreenSize;
         vec4 sceneColor = texture(FinalColorTex, uv);
-        vec3 Position_worldpsace = texture(PositionTex, uv).xyz;
+        vec3 Position_worldspace = texture(PositionTex, uv).xyz;
         vec4 sunData = texture(SunTex, uv);
         vec3 sunColor = sunData.r * vSunColor;
         float lightScatering = sunData.g;
 
-        //compute fog strength
-        float fogStr = 0.001;
-        float dist = abs((V * vec4(Position_worldpsace, 1.0)).z);
-        float fogAmount = 1.0 - exp( -dist * fogStr );
-        float notOccludedByScene = step(dot(Position_worldpsace, Position_worldpsace), 0.0001);
-        fogAmount = min(1.0, fogAmount + notOccludedByScene);
+        float notOccludedByScene = step(dot(Position_worldspace, Position_worldspace), 0.0001);
 
         //compute normalized device coord and screenspace sun position
         vec3 sun_cameraspace = (V * vec4(SunPosition_worldspace, 1.0)).xyz;
@@ -86,11 +89,19 @@ _{
         sun_projectionspace /= sun_projectionspace.w;
         vec2 sunUV = sun_projectionspace.xy * 0.5 + vec2(0.5);
 
-        vec3 skyColor = getSkyColor(ndcUv, sun_projectionspace.xyz);
+        //compute fog strength
+        float height = Position_worldspace.y;
+        float fogStr = 0.001;
+        float heightDensity = 0.01;
+        float dist = abs((V * vec4(Position_worldspace, 1.0)).z);
+        float fogAmount = (1.0 - exp( -dist * fogStr )) * exp(-height * heightDensity);
+
+        vec3 skyColor = getSkyColor(ndcUv);
         skyColor += sunColor;
 
         color = vec4(0.0, 0.0, 0.0, 1.0);
-        color.rgb = mix(sceneColor.rgb, skyColor, fogAmount);
+        color.rgb += skyColor * notOccludedByScene;
+        color.rgb += mix(sceneColor.rgb, getFogColor(height), fogAmount) * (1.0 - notOccludedByScene);
         color.rgb += lightScatering * vSunColor;
     }
 _}

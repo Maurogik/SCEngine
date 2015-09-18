@@ -123,7 +123,6 @@ _{
         vec3 Position_worldpsace = texture(PositionTex, uv).xyz;
         vec3 sun_cameraspace = (V * vec4(SunPosition_worldspace, 1.0)).xyz;
 
-        //compute fog strength
         float notOccludedByScene = step(dot(Position_worldpsace, Position_worldpsace), 0.0001);
 
         //compute normalized device coord and screenspace sun position
@@ -135,16 +134,15 @@ _{
         vec4 sunColor = getSunColor(ndcUv, sun_projectionspace.xyz);
         float sunStrength = 1.0 - dot(sun_projectionspace.xy, sun_projectionspace.xy) * 0.2;
 
-        color = vec2(0.0);
-        color.r = sunColor.a * notOccludedByScene * sunStrength;
+        color = vec2(0.0);       
 
 #ifdef LIGHT_SHAFTS
         float scaterring = 0.0;
         if(sunStrength > 0.0)
         {
+            color.r = sunColor.a * notOccludedByScene * sunStrength;
             scaterring = computeVolumetricLight(uv, sunUV) * sunStrength;
         }
-        color.g = scaterring;
 #endif
     }
 _}

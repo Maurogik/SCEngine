@@ -23,7 +23,8 @@
 #define HEIGHT_SCALE_UNIFORM_NAME "HeightScale"
 #define TESS_OVERRIDE_UNIFORM_NAME "TesselationOverride"
 
-#define TERRAIN_TEXTURE_SIZE 1024
+#define TERRAIN_TEXTURE_SIZE 2048
+#define OUTTER_TEX_SCALE 1.0f
 
 namespace SCE
 {
@@ -142,11 +143,9 @@ namespace Terrain
         float amplitude = 1.0f;
         float scale = 0.0f;
         float noise = 0.0f;
-        float decay = 0.4f;
+        float persistence = 0.75f;
 
         float x, z, y = 0.1f;
-        float min = 10000.0f;
-        float max = -10000.0f;
 
         for(int xCount = 0; xCount < TERRAIN_TEXTURE_SIZE; ++xCount)
         {
@@ -165,15 +164,13 @@ namespace Terrain
                     float tmpNoise = stb_perlin_noise3(x * scale, y * scale, z * scale) * amplitude;
                     noise += tmpNoise;
                     maxValue += amplitude;
-                    amplitude *= decay;
+                    amplitude *= persistence * (tmpNoise + 0.5f);
                     scale *= 2.0f;
                 }
 
                 float res = noise / maxValue;
 //                res  = SCE::Math::mapToRange(-0.5f, 0.5f, 0.0f, 1.0f, res);
                 res  = SCE::Math::mapToRange(-0.3f, 0.7f, 0.0f, 1.0f, res);
-                min = res < min ? res : min;
-                max = res > max ? res : max;
                 heightmap[xCount * TERRAIN_TEXTURE_SIZE + zCount] = res * heightScale;
             }
         }
@@ -298,12 +295,14 @@ namespace Terrain
                      const glm::mat4& viewMatrix,
                      const glm::mat4& terrainToWorldspace,
                      const glm::vec3& position_terrainSpace,
+                     const glm::vec3& uvOffset,
                      float patchSize,
                      float halfTerrainSize)
     {
 
         //create matrix to convert vertex pos to terrain space coord
-        glm::mat4 quadToTerrainspace = glm::scale(mat4(1.0f), glm::vec3(1.0f / halfTerrainSize)) *
+        glm::mat4 quadToTerrainspace = glm::translate(mat4(1.0f), uvOffset) *
+                                       glm::scale(mat4(1.0f), glm::vec3(1.0f / (halfTerrainSize))) *
                                        glm::translate(mat4(1.0f), position_terrainSpace) *
                                        glm::scale(mat4(1.0f), glm::vec3(patchSize));
 
@@ -367,22 +366,30 @@ namespace Terrain
         glBindVertexArray(terrainData->quadVao);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, terrainData->quadIndicesVbo);
 
+        glm::vec3 terrainCenter = glm::vec3(0.0f, terrainData->baseHeight, 0.0f);
+        glm::vec4 cameraPosition = glm::inverse(viewMatrix)[3];
         //we want the terrain mesh to "follow" the camera (the height map coordinates will be offset ?)"
-        glm::vec3 terrainPosition_worldspace = vec3(0.0f);//cameraPosition;
+        glm::vec3 terrainPosition_worldspace = vec3(0.0);//glm::vec3(cameraPosition);
         terrainPosition_worldspace.y = terrainData->baseHeight;
+
+        glm::vec3 uvOffset = vec3(0.0);//terrainPosition_worldspace - terrainCenter;
+        uvOffset /= halfTerrainSize * OUTTER_TEX_SCALE;
 
         glm::mat4 terrainToWorldspace = glm::translate(glm::mat4(1.0f), terrainPosition_worldspace);
 
         //Render all the terrain patches
-        for(float x = -halfTerrainSize + patchSize * 0.5; x < halfTerrainSize - patchSize; x += patchSize)
+        for(float x = -halfTerrainSize + patchSize * 0.5; x < halfTerrainSize - patchSize;
+            x += patchSize)
         {
-            for(float z = -halfTerrainSize + patchSize * 0.5; z < halfTerrainSize - patchSize; z += patchSize)
+            for(float z = -halfTerrainSize + patchSize * 0.5; z < halfTerrainSize - patchSize;
+                z += patchSize)
             {
                 glm::vec3 pos_terrainspace(x, 0.0f, z);
                 renderPatch(projectionMatrix,
                             viewMatrix,
                             terrainToWorldspace,
                             pos_terrainspace,
+                            uvOffset,
                             patchSize,
                             halfTerrainSize);
             }
@@ -398,9 +405,9 @@ namespace Terrain
         terrainData->terrainSize = terrainSize;
         terrainData->patchSize = patchSize;
         terrainData->baseHeight = terrainBaseHeight;
-        terrainData->heightScale = 4.0f;
+        terrainData->heightScale = 5.0f;
         initializeRenderData();
-        initializeTerrainTextures(3.0f, terrainData->heightScale);
+        initializeTerrainTextures(4.0f, terrainData->heightScale);
     }
 
     void Cleanup()

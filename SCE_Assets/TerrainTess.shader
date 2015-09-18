@@ -252,6 +252,7 @@ _{
     {
         vec3 resColor;
 
+        vec3 waterColor = vec3(0.0, 0.0, 1.0);
         vec3 topColor = vec3(3.0);
         vec3 middleColor = vec3(0.7, 0.4, 0.2);
         vec3 bottomColor = vec3(0.2, 0.7, 0.1);
@@ -260,12 +261,13 @@ _{
         float flatness = pow(dot(normAndHeight.xyz, vec3(0.0, 1.0, 0.0)), 8.0);
         float slope = 1.0 - flatness;
 
-        float bottomEnd = 0.4;
-        float middleEnd = 0.6;
+        float bottomEnd = 0.2;
+        float middleEnd = 0.5;
 
-        float bottomToMiddleMix = 0.2;// * normAndHeight.y;
+        float bottomToMiddleMix = 0.4;// * normAndHeight.y;
         float middleToTopMix = 0.2;// * (normAndHeight.y);
 
+        float waterHeight = 0.0001;
         float BtoMStart = bottomEnd - bottomToMiddleMix*0.5;
         float BtoMEnd = bottomEnd + bottomToMiddleMix*0.5;
 
@@ -279,7 +281,8 @@ _{
 
         resColor = vec3(0.0);//, slope, 0.0);
 
-        resColor += bottomColor * step(height, BtoMStart);
+        resColor += waterColor * step(height, waterHeight);
+        resColor += bottomColor * step(waterHeight, height) * step(height, BtoMStart);
         resColor += mix(bottomColor, middleColor, lerpLow) * step(BtoMStart, height)
                 * step(height, BtoMEnd);
         resColor += middleColor * step(BtoMEnd, height) * step(height, MtoTStart);
