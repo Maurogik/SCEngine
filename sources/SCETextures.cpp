@@ -133,8 +133,14 @@ namespace TextureUtils
     //loads texture from disk and create and OpenGL texture with it
     GLuint loadTexture(const string &filename, SCETextureFormat format,
                        SCETextureWrap wrapMode, bool mipmapsOn)
-    {
+    {        
         string fullTexturePath = RESSOURCE_PATH + filename;
+
+        if(!ifstream(fullTexturePath.c_str()))
+        {
+            fullTexturePath = ENGINE_RESSOURCE_PATH + filename;
+        }
+
         uint soilFlags = getSoilFlags(format, wrapMode, mipmapsOn);
 
         Internal::Log("TODO : Find a way to get the width and height of the loaded texture");
