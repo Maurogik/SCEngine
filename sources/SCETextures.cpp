@@ -193,6 +193,12 @@ namespace TextureUtils
         string fullTexturePath = RESSOURCE_PATH + filename;
         string metadataFile = fullTexturePath + TEXTURE_METADATA_SUFIX;
 
+        if(!ifstream(metadataFile.c_str()))
+        {
+            fullTexturePath = ENGINE_RESSOURCE_PATH + filename;
+            metadataFile = fullTexturePath + TEXTURE_METADATA_SUFIX;
+        }
+
         //load texture metada
 
         rapidjson::Document root;

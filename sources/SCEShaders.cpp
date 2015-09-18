@@ -109,9 +109,6 @@ namespace ShaderUtils
             return shaderData.compiledPrograms[shaderFileName];
         }
 
-        Internal::Log("TODO : cache shaders once compiled to avoid compiling again");
-        string fullPath = RESSOURCE_PATH + shaderFileName + SHADER_SUFIX;
-
         // Read the Shader code from the text file
         string shaderCodes[SHADER_TYPE_COUNT];
         GLuint shaderIds[SHADER_TYPE_COUNT];
@@ -119,9 +116,9 @@ namespace ShaderUtils
         {   //init to max value
             shaderIds[i] = GLuint(-1);
         }
-
         int currentShaderType = -1;
 
+        string fullPath = RESSOURCE_PATH + shaderFileName + SHADER_SUFIX;
         if(!ifstream(fullPath.c_str()))
         {
             fullPath = ENGINE_RESSOURCE_PATH + shaderFileName + SHADER_SUFIX;
