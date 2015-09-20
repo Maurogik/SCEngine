@@ -120,6 +120,11 @@ namespace Math
         return a + (b - a) * v;
     }
 
+    void seedRandomGenerator(float val)
+    {
+        srand(val);
+    }
+
     float randRange(float min, float max)
     {
         return ((float)rand() / (float)RAND_MAX) * (max - min) + min;

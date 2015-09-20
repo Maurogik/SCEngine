@@ -10,7 +10,9 @@
 #include "../headers/SCETextures.hpp"
 #include "../headers/SCERenderStructs.hpp"
 #include "../headers/SCETools.hpp"
+#include "../headers/SCETime.hpp"
 
+#include <time.h>
 #include <glm/gtc/matrix_transform.hpp>
 
 #define STB_PERLIN_IMPLEMENTATION
@@ -150,6 +152,8 @@ namespace Terrain
     //generate perlin noise texture
     void initializeTerrainTextures(float startScale, float heightScale)
     {
+        SCE::Math::seedRandomGenerator(time(NULL));
+
         float xOffset = SCE::Math::randRange(0.0f, 1.0f);
         float zOffset = SCE::Math::randRange(0.0f, 1.0f);
         //8MB array, does not fit on stack so heap allocate it
@@ -450,7 +454,7 @@ namespace Terrain
         terrainData->terrainSize = terrainSize;
         terrainData->patchSize = patchSize;
         terrainData->baseHeight = terrainBaseHeight;
-        terrainData->heightScale = 16.0f;
+        terrainData->heightScale = 12.0f;
         initializeRenderData();
         initializeTerrainTextures(2.0f, terrainData->heightScale);
     }
