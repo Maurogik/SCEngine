@@ -16,14 +16,14 @@ namespace SCE
 
     namespace MeshRender
     {
-        struct RenderData;
+        struct MeshRenderData;
 
-        void            InitializeMeshRenderData(ui16 meshId);
-        RenderData&     GetMeshRenderData(ui16 meshId, GLuint shaderProgram);
-        void            DeleteMeshRenderData(ui16 meshId);
+        void                InitializeMeshRenderData(ui16 meshId);
+        MeshRenderData&     GetMeshRenderData(ui16 meshId, GLuint shaderProgram);
+        void                DeleteMeshRenderData(ui16 meshId);
 
-        void            RenderMesh(ui16 meshId, const mat4& projectionMatrix,
-                                           const mat4& viewMatrix, const mat4& modelMatrix);
+        void                RenderMesh( ui16 meshId, const mat4& projectionMatrix,
+                                        const mat4& viewMatrix, const mat4& modelMatrix);
     }
 }
 

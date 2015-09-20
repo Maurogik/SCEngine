@@ -43,9 +43,9 @@ namespace MeshRender
     };
 
     //Per mesh data
-    struct RenderData
+    struct MeshRenderData
     {
-        RenderData()
+        MeshRenderData()
             : shaderData(),
               indiceBuffer(-1),
               indiceCount(0),
@@ -63,7 +63,7 @@ namespace MeshRender
     //unnamed namspace, translation unit local
     namespace
     {
-        void cleanupGLRenderData(RenderData& renderData);
+        void cleanupGLRenderData(MeshRenderData& renderData);
 
         std::string attribNames[5] =
         {
@@ -87,13 +87,14 @@ namespace MeshRender
                 }
             }
 
-            std::map<uint, RenderData>  meshRenderData;
+            std::map<uint, MeshRenderData>  meshRenderData;
         };
 
+        /***    Mesh Render System Data variable    ***/
         MeshRendererData meshRendererData;
 
 
-        void addAttribute(RenderData& renderData,
+        void addAttribute(MeshRenderData& renderData,
                                          void* buffer,
                                          size_t size,
                                          GLenum type,
@@ -127,7 +128,7 @@ namespace MeshRender
             glBindVertexArray(vaoId);
 
             //initialize and get reference at the same time
-            RenderData &renderData = meshRendererData.meshRenderData[meshId];
+            MeshRenderData &renderData = meshRendererData.meshRenderData[meshId];
 
             renderData.indiceCount = meshData.indices.size();
             renderData.vaoID = vaoId;
@@ -184,7 +185,7 @@ namespace MeshRender
             glBindVertexArray(0); // Disable the Vertex Array Object
         }
 
-        void initializeShaderData(RenderData& renderData, GLuint programID)
+        void initializeShaderData(MeshRenderData& renderData, GLuint programID)
         {
             ShaderData& data = renderData.shaderData[programID];
 
@@ -196,7 +197,7 @@ namespace MeshRender
             }
         }
 
-        void cleanupGLRenderData(RenderData& renderData)
+        void cleanupGLRenderData(MeshRenderData& renderData)
         {
             for(size_t i = 0; i < renderData.attributes.size(); ++i){
                 glDeleteBuffers(1, &(renderData.attributes[i].dataBufferId));
@@ -218,12 +219,12 @@ namespace MeshRender
         }
     }
 
-    RenderData& GetMeshRenderData(ui16 meshId, GLuint shaderProgram)
+    MeshRenderData& GetMeshRenderData(ui16 meshId, GLuint shaderProgram)
     {
         Debug::Assert(meshRendererData.meshRenderData.count(meshId) > 0, "Render data for mesh : "
                       + std::to_string(meshId) + " not initialized yet");
 
-        RenderData& renderData = meshRendererData.meshRenderData[meshId];
+        MeshRenderData& renderData = meshRendererData.meshRenderData[meshId];
 
         if(renderData.shaderData.count(shaderProgram) == 0)
         {
@@ -237,7 +238,7 @@ namespace MeshRender
         Debug::Assert(meshRendererData.meshRenderData.count(meshId) > 0, "Render data for mesh : "
                       + std::to_string(meshId) + " not initialized yet");
 
-        RenderData& renderData = meshRendererData.meshRenderData[meshId];
+        MeshRenderData& renderData = meshRendererData.meshRenderData[meshId];
 
         cleanupGLRenderData(renderData);
 
@@ -253,7 +254,7 @@ namespace MeshRender
 
         SCE::ShaderUtils::BindDefaultUniforms(shaderProgram, modelMatrix, viewMatrix, projectionMatrix);
 
-        RenderData& meshRenderData = GetMeshRenderData(meshId, shaderProgram);
+        MeshRenderData& meshRenderData = GetMeshRenderData(meshId, shaderProgram);
         const ShaderData &shaderData = meshRenderData.shaderData[shaderProgram];
         const std::vector<AttributeData>& attributes = meshRenderData.attributes;
         GLuint indiceCount = meshRenderData.indiceCount;
