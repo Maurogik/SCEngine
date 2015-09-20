@@ -142,6 +142,7 @@ std::string FormatDebugOutput(
         }
         default: {
             severityString = "Unknown";
+            errorMustBreak = false;
             break;
         }
     }

@@ -21,7 +21,7 @@ Camera::Camera(SCEHandle<Container> &container)
       mFrustrumData()
 {
     mProjectionMatrix  = glm::perspective(
-                90.0f //Fov
+                radians(90.0f) //Fov
               , 4.0f / 3.0f //aspect ratio
               , 1.0f //near plane distance
               , 100.0f //far plane distance
@@ -46,7 +46,7 @@ Camera::Camera(SCEHandle<Container> &container
       mFrustrumData()
 {
     mProjectionMatrix  = glm::perspective(
-                  fieldOfView
+                  radians(fieldOfView)
                 , aspectRatio
                 , nearPlane
                 , farPlane

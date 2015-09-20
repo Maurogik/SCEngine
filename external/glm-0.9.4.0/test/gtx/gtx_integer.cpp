@@ -1,13 +1,35 @@
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// OpenGL Mathematics Copyright (c) 2005 - 2012 G-Truc Creation (www.g-truc.net)
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// Created : 2011-10-11
-// Updated : 2011-10-11
-// Licence : This source is under MIT licence
-// File    : test/gtx/gtx_integer.cpp
-///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////
+/// OpenGL Mathematics (glm.g-truc.net)
+///
+/// Copyright (c) 2005 - 2015 G-Truc Creation (www.g-truc.net)
+/// Permission is hereby granted, free of charge, to any person obtaining a copy
+/// of this software and associated documentation files (the "Software"), to deal
+/// in the Software without restriction, including without limitation the rights
+/// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+/// copies of the Software, and to permit persons to whom the Software is
+/// furnished to do so, subject to the following conditions:
+/// 
+/// The above copyright notice and this permission notice shall be included in
+/// all copies or substantial portions of the Software.
+/// 
+/// Restrictions:
+///		By making use of the Software for military purposes, you choose to make
+///		a Bunny unhappy.
+/// 
+/// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+/// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+/// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+/// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+/// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+/// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+/// THE SOFTWARE.
+///
+/// @file test/gtx/gtx_integer.cpp
+/// @date 2011-10-11 / 2014-11-25
+/// @author Christophe Riccio
+///////////////////////////////////////////////////////////////////////////////////
 
-#include <glm/glm.hpp>
+#include <glm/exponential.hpp>
 #include <glm/gtc/epsilon.hpp>
 #include <glm/gtx/integer.hpp>
 #include <cstdio>
@@ -18,8 +40,8 @@ int test_floor_log2()
 
 	for(std::size_t i = 1; i < 1000000; ++i)
 	{
-		glm::unsigned int A = glm::floor_log2(glm::unsigned int(i));
-		glm::unsigned int B = glm::unsigned int(glm::floor(glm::log2(double(i)))); // Will fail with float, lack of accuracy
+		glm::uint A = glm::floor_log2(glm::uint(i));
+		glm::uint B = glm::uint(glm::floor(glm::log2(double(i)))); // Will fail with float, lack of accuracy
 
 		Error += A == B ? 0 : 1;
 		assert(!Error);
@@ -34,8 +56,8 @@ int test_log2()
 
 	for(std::size_t i = 1; i < 24; ++i)
 	{
-		glm::unsigned int A = glm::log2(glm::unsigned int(1 << i));
-		glm::unsigned int B = glm::unsigned int(glm::log2(double(1 << i)));
+		glm::uint A = glm::log2(glm::uint(1 << i));
+		glm::uint B = glm::uint(glm::log2(double(1 << i)));
 
 		//Error += glm::equalEpsilon(double(A), B, 1.0) ? 0 : 1;
 		Error += glm::abs(double(A) - B) <= 24 ? 0 : 1;
@@ -53,8 +75,8 @@ int test_nlz()
 {
 	int Error = 0;
 
-	for(glm::unsigned int i = 1; i < glm::unsigned int(33); ++i)
-		Error += glm::nlz(i) == glm::unsigned int(31u) - glm::findMSB(i) ? 0 : 1;
+	for(glm::uint i = 1; i < glm::uint(33); ++i)
+		Error += glm::nlz(i) == glm::uint(31u) - glm::findMSB(i) ? 0 : 1;
 		//printf("%d, %d\n", glm::nlz(i), 31u - glm::findMSB(i));
 
 	return Error;
@@ -70,3 +92,4 @@ int main()
 
 	return Error;
 }
+

@@ -63,7 +63,7 @@ void SCECore::InitEngine(const std::string &windowName)
     glfwMakeContextCurrent(s_window);
     glewExperimental=true; // Needed in core profile
     //enable v-sync
-    glfwSwapInterval(1);
+    glfwSwapInterval(-1);
 
 
     // Initialize GLEW
