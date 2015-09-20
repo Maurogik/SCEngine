@@ -1,45 +1,27 @@
 /**********Sand Castle Engine**********/
 /**************************************/
 /******** AUTHOR : Gwenn AUBERT *******/
-/********* FILE : SCETimes.hpp ********/
+/********* FILE : SCE::Times.hpp ********/
 /**************************************/
 #ifndef SCE_TIME_HPP
 #define SCE_TIME_HPP
 
 //#include <time.h>
 
-namespace SCE {
+namespace SCE
+{
 
-    class SCETime {
-
-    public :
-
-        static void     Init();
-        static void     CleanUp();
-        static void     Update();
-        static double   TimeInSeconds();
-        static double   DeltaTime();
-        static double   RealTimeInSeconds();
-        static float    GetTimeSpeed();
-        static void     SetTimeSpeed(float value);
-
-    private :
-
-        SCETime();
-        ~SCETime();
-
-        void            update();
-
-        static SCETime* s_instance;
-
-        float       mTimeSpeed;
-        double      mTimeInSeconds;
-        double      mDeltaTime;
-        double      mRealTimeInSeconds;
-        double      mStartTime;
-        double      mLastTime;
-
-    };
+namespace Time
+{
+        void     Init();
+        void     CleanUp();
+        void     Update();
+        double   TimeInSeconds();
+        double   DeltaTime();
+        double   RealTimeInSeconds();
+        float    GetTimeSpeed();
+        void     SetTimeSpeed(float value);
+}
 
 }
 

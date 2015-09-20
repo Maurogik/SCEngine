@@ -8,7 +8,6 @@
 #include "../headers/SCETools.hpp"
 #include "../headers/SCEInternal.hpp"
 #include "../headers/SCECore.hpp"
-#include "../headers/SCETime.hpp"
 
 #include <map>
 #include <algorithm>
@@ -20,6 +19,7 @@ using namespace std;
 
 #define SCREEN_SIZE_UNIFORM_NAME "SCE_ScreenSize"
 #define TIME_UNIFORM_NAME "SCE_TimeInSeconds"
+#define DELTA_TIME_UNIFORM_NAME "SCE_DeltaTime"
 
 namespace SCE
 {
@@ -45,6 +45,7 @@ namespace ShaderUtils
         GLint ViewMatrixUniform;
         GLint ModelMatrixUniform;
         GLint timeUniform;
+        GLint deltaTImeUniform;
     };
 
     //Only here to allow for automatic creation/destruction of data
@@ -240,6 +241,7 @@ namespace ShaderUtils
         DefaultUniforms uniforms;
         uniforms.screenSizeUniform          = glGetUniformLocation(programID, SCREEN_SIZE_UNIFORM_NAME);
         uniforms.timeUniform                = glGetUniformLocation(programID, TIME_UNIFORM_NAME);
+        uniforms.deltaTImeUniform           = glGetUniformLocation(programID, DELTA_TIME_UNIFORM_NAME);
         uniforms.MVPMatrixUniform           = glGetUniformLocation(programID, "MVP");
         uniforms.ViewMatrixUniform          = glGetUniformLocation(programID, "V");
         uniforms.ModelMatrixUniform         = glGetUniformLocation(programID, "M");
@@ -276,12 +278,14 @@ namespace ShaderUtils
     {
         float width = SCECore::GetWindowWidth();
         float height = SCECore::GetWindowHeight();
-        float timeInSecond = SCETime::TimeInSeconds();
+        float timeInSecond = SCE::Time::TimeInSeconds();
+        float deltaTime = (float)SCE::Time::DeltaTime();
 
         DefaultUniforms& uniforms = shaderData.defaultUniforms[shaderId];
 
         glUniform2f(uniforms.screenSizeUniform, width, height);
         glUniform1f(uniforms.timeUniform, timeInSecond);
+        glUniform1f(uniforms.deltaTImeUniform, deltaTime);
 
         glm::mat4 MVP = projectionMatrix * viewMatrix * modelMatrix;
 

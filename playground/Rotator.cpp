@@ -19,13 +19,13 @@ void Rotator::Update()
         transform->RotateAroundAxis(vec3(0, 0, 1), 90);
     }*/
 
-    transform->RotateAroundAxis(vec3(0, 0, 1), mSpeed * SCETime::DeltaTime());
+    transform->RotateAroundAxis(vec3(0, 0, 1), mSpeed * SCE::Time::DeltaTime());
 
     //vec3 worldPos = transform->GetWorldPosition();
-    //worldPos += vec3(0.0f, 0.0f, 0.50f) * SCETime::DeltaTime();
+    //worldPos += vec3(0.0f, 0.0f, 0.50f) * SCE::Time::DeltaTime();
     //transform->SetWorldPosition(worldPos);
 
-    /*transform->RotateAroundAxis(vec3(0, 1, 0), mSpeed * SCETime::DeltaTime());
-    transform->RotateAroundAxis(vec3(1, 0, 0), mSpeed * SCETime::DeltaTime());
-    transform->RotateAroundPivot(vec3(0, 0, 2), vec3(0, 0, 1), mSpeed * SCETime::DeltaTime());*/
+    /*transform->RotateAroundAxis(vec3(0, 1, 0), mSpeed * SCE::Time::DeltaTime());
+    transform->RotateAroundAxis(vec3(1, 0, 0), mSpeed * SCE::Time::DeltaTime());
+    transform->RotateAroundPivot(vec3(0, 0, 2), vec3(0, 0, 1), mSpeed * SCE::Time::DeltaTime());*/
 }

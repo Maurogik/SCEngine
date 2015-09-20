@@ -30,7 +30,7 @@ _{
     uniform vec2        SCE_ScreenSize;
     layout (location = 0) uniform sampler2D   FinalColorTex;
     layout (location = 1) uniform sampler2D   LuminanceTex;
-    layout (location = 2) uniform float       DeltaTime;
+    layout (location = 2) uniform float       SCE_DeltaTime;
 
     out float oLuminance;
 
@@ -42,7 +42,7 @@ _{
         vec4 sceneColor = texture(FinalColorTex, uv);
         float oldLum = texture(LuminanceTex, uv).r;
         float newLum = dot(vec4(0.30, 0.59, 0.11, 0.0), sceneColor);
-        float dt = DeltaTime * 1.0f;
+        float dt = SCE_DeltaTime * 1.0f;
         oLuminance = (oldLum * adaptationDuration + newLum * dt)/(adaptationDuration + dt);
     }
 _}

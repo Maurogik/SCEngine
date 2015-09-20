@@ -7,7 +7,6 @@
 #include "../headers/SCE_GBuffer.hpp"
 #include "../headers/SCETools.hpp"
 #include "../headers/SCELighting.hpp"
-#include "../headers/SCETime.hpp"
 
 using namespace SCE;
 using namespace std;
@@ -183,8 +182,6 @@ void SCE_GBuffer::BindForLuminancePass()
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, mLuminanceTexture);
     glUniform1i(1, 1);//LuminanceTex is sampler1
-
-    glUniform1f(2, (float)SCETime::DeltaTime());
 
     glDrawBuffer(GL_COLOR_ATTACHMENT0 + LUM_TEXT_ATTACHMENT);
 }

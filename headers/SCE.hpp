@@ -16,14 +16,13 @@
 #include "Container.hpp"
 #include "Component.hpp"
 #include "Material.hpp"
-#include "SCETime.hpp"
 #include "GameObject.hpp"
 #include "Light.hpp"
 #include "SCEHandle.hpp"
 
+#include "SCETime.hpp"
 #include "SCECore.hpp"
 #include "SCETools.hpp"
-#include "SCETime.hpp"
 
 
 // Include standard headers

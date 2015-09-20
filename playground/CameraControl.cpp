@@ -40,7 +40,7 @@ void CameraControl::Update()
     lastMouseX = xMouse;
     lastMouseY = yMouse;
 
-    float deltaTime = SCETime::DeltaTime();
+    float deltaTime = SCE::Time::DeltaTime();
 
     float xRotateSpeed = 4000.0f;
     float yRotateSpeed = 2000.0f;
