@@ -29,6 +29,7 @@ _{
 
     uniform vec2        SCE_ScreenSize;
     uniform vec3        SunPosition_worldspace;
+    uniform vec3        SunColor;
     uniform float       SizeQuality;
     layout (location = 0) uniform sampler2D   PositionTex;
 
@@ -36,9 +37,6 @@ _{
     uniform mat4 P;
 
     out vec2 color;
-
-    //variables
-    vec3 vSunColor = vec3(1.0, 1.0, 0.9) ;
 
     float pent(in vec2 fragCoord){
         vec2 sunToFrag = abs(fragCoord);
@@ -86,7 +84,7 @@ _{
         float flare = flare(fixedNdc, sun_projectionspace.xy);
         sun = clamp(sun + flare * 2.0, 0.0, sunStrength);
 
-        return vec4(vSunColor, sun);
+        return vec4(SunColor, sun);
     }
 
 #define LIGHT_SHAFTS

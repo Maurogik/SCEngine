@@ -11,11 +11,6 @@
 #include "../headers/SCE_GBuffer.hpp"
 
 
-#define SUN_SHADER_NAME "SunShader"
-#define SKY_SHADER_NAME "SkyShader"
-#define SUN_POS_UNIFORM_NAME "SunPosition_worldspace"
-#define QUALITY_UNIFORM_NAME "SizeQuality"
-
 #define SUN_TEXTURE_QUALITY 0.2f
 
 namespace SCE
@@ -24,49 +19,81 @@ namespace SCE
 namespace SkyRenderer
 {
 
-    struct SkyData
+    namespace
     {
-        SkyData()
-            : sunShaftTexture(-1), sunShaftProgram(-1), qualityUniform(-1), skyProgram(-1),
-              sunPositionUniform(), fboId(-1)
-        {}
+        struct SunShaderData
+        {
+            SunShaderData()
+                : sunShaftTexture(-1), sunShaftProgram(-1),
+                  sunColor(1.0, 1.0, 0.7)
+            {}
 
-        //sun shader data
-        GLuint  sunShaftTexture;
-        GLuint  sunShaftProgram;
-        GLint   qualityUniform;
-        //sky shader data
-        GLuint  skyProgram;
-        //common data
-        GLint   sunPositionUniform[2]; //{unif for sun shader, unif for sky shader}
-        GLuint  fboId;
-        uint    renderWidth;
-        uint    renderHeight;
-    };
+            GLuint  sunShaftTexture;
+            GLuint  sunShaftProgram;
+            GLint   qualityUniform;
+            GLint   sunPositionUniform;
+            GLint   sunColorUniform;
+            vec3    sunColor;
+        };
 
-    SkyData skyData;
+        struct SkyShaderData
+        {
+            SkyShaderData()
+                : skyProgram(-1), skyFadeFactor(7.0f),
+                  skyTopColor(0.06, 0.4, 0.85), skyBottomColor(0.65, 0.9, 1.0), fogColor(0.4, 0.7, 0.9)
+            {}
+
+            GLuint  skyProgram;
+            GLint   sunPositionUniform;
+            GLint   skyTopColorUniform;
+            GLint   skyBottomColorUniform;
+            GLint   skyFadeUniform;
+            GLint   sunColorUniform;
+            GLint   fogColorUniform;
+            float   skyFadeFactor;
+            vec3    skyTopColor;
+            vec3    skyBottomColor;
+            vec3    fogColor;
+        };
+
+        struct SkyAndSunData
+        {
+            SkyAndSunData()
+                : fboId(-1)  {}
+
+            //common data
+            GLuint  fboId;
+            uint    renderWidth;
+            uint    renderHeight;
+        };
+
+        SkyAndSunData commonSkyData;
+        SkyShaderData skyData;
+        SunShaderData sunData;
+    }
+
 
     void Init(uint windowWidth, uint windowHeight)
     {
         float quality = SUN_TEXTURE_QUALITY;
 
-        skyData.renderWidth = float(windowWidth) * quality;
-        skyData.renderHeight = float(windowHeight) * quality;
+        commonSkyData.renderWidth = float(windowWidth) * quality;
+        commonSkyData.renderHeight = float(windowHeight) * quality;
 
         // Create the FBO
-        glGenFramebuffers(1, &(skyData.fboId));
-        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, skyData.fboId);
+        glGenFramebuffers(1, &(commonSkyData.fboId));
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, commonSkyData.fboId);
 
-        glGenTextures(1, &(skyData.sunShaftTexture));
+        glGenTextures(1, &(sunData.sunShaftTexture));
         //texture will store additive sun color as RGB and fog strength as A
-        glBindTexture(GL_TEXTURE_2D, skyData.sunShaftTexture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RG16F, skyData.renderWidth, skyData.renderHeight,
+        glBindTexture(GL_TEXTURE_2D, sunData.sunShaftTexture);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RG16F, commonSkyData.renderWidth, commonSkyData.renderHeight,
                      0, GL_RG, GL_FLOAT, NULL);
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
         glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-                               GL_TEXTURE_2D, skyData.sunShaftTexture, 0);
+                               GL_TEXTURE_2D, sunData.sunShaftTexture, 0);
 
         GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 
@@ -78,11 +105,19 @@ namespace SkyRenderer
         // restore default FBO
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 
-        skyData.skyProgram = SCE::ShaderUtils::CreateShaderProgram(SKY_SHADER_NAME);
-        skyData.sunShaftProgram = SCE::ShaderUtils::CreateShaderProgram(SUN_SHADER_NAME);
-        skyData.qualityUniform = glGetUniformLocation(skyData.sunShaftProgram, QUALITY_UNIFORM_NAME);
-        skyData.sunPositionUniform[0] = glGetUniformLocation(skyData.sunShaftProgram,SUN_POS_UNIFORM_NAME);
-        skyData.sunPositionUniform[1] = glGetUniformLocation(skyData.skyProgram, SUN_POS_UNIFORM_NAME);
+        skyData.skyProgram = SCE::ShaderUtils::CreateShaderProgram("SkyShader");
+        sunData.sunShaftProgram = SCE::ShaderUtils::CreateShaderProgram("SunShader");
+
+        sunData.qualityUniform = glGetUniformLocation(sunData.sunShaftProgram, "SizeQuality");
+        sunData.sunPositionUniform = glGetUniformLocation(sunData.sunShaftProgram, "SunPosition_worldspace");
+        sunData.sunColorUniform = glGetUniformLocation(sunData.sunShaftProgram, "SunColor");
+
+        skyData.sunPositionUniform = glGetUniformLocation(skyData.skyProgram, "SunPosition_worldspace");
+        skyData.sunColorUniform = glGetUniformLocation(skyData.skyProgram, "SunColor");
+        skyData.skyBottomColorUniform = glGetUniformLocation(skyData.skyProgram, "SkyBottomColor");
+        skyData.skyTopColorUniform = glGetUniformLocation(skyData.skyProgram, "SkyTopColor");
+        skyData.skyFadeUniform = glGetUniformLocation(skyData.skyProgram, "SkyFadeFactor");
+        skyData.fogColorUniform = glGetUniformLocation(skyData.skyProgram, "FogColor");
     }
 
     void Render(const SCE::CameraRenderData& renderData, SCE_GBuffer& gBuffer,
@@ -97,19 +132,20 @@ namespace SkyRenderer
         glCullFace(GL_FRONT);
 
         //Renders sun shaft in smaller res
-        glViewport(0, 0, skyData.renderWidth, skyData.renderHeight);
-        glUseProgram(skyData.sunShaftProgram);
+        glViewport(0, 0, commonSkyData.renderWidth, commonSkyData.renderHeight);
+        glUseProgram(sunData.sunShaftProgram);
 
-        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, skyData.fboId);
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, commonSkyData.fboId);
         glDrawBuffer(GL_COLOR_ATTACHMENT0);
         glClear(GL_COLOR_BUFFER_BIT);
         gBuffer.BindTexture(SCE_GBuffer::GBUFFER_TEXTURE_TYPE_POSITION,
                             0, 0);
-        glUniform1f(skyData.qualityUniform, SUN_TEXTURE_QUALITY);
-        glUniform3f(skyData.sunPositionUniform[0], sunPosition.x, sunPosition.y, sunPosition.z);
+        glUniform1f(sunData.qualityUniform, SUN_TEXTURE_QUALITY);
+        glUniform3f(sunData.sunPositionUniform, sunPosition.x, sunPosition.y, sunPosition.z);
+        glUniform3fv(sunData.sunColorUniform, 1, &sunData.sunColor[0]);
 
         //Render sun pass to texture
-        SCERender::RenderFullScreenPass(skyData.sunShaftProgram, renderData.projectionMatrix,
+        SCERender::RenderFullScreenPass(sunData.sunShaftProgram, renderData.projectionMatrix,
                                         renderData.viewMatrix);
         //restore viewport
         glViewport(viewportDims[0], viewportDims[1], viewportDims[2], viewportDims[3]);
@@ -120,10 +156,15 @@ namespace SkyRenderer
         gBuffer.BindForSkyPass();
         //bind sun texture
         glActiveTexture(GL_TEXTURE2);
-        glBindTexture(GL_TEXTURE_2D, skyData.sunShaftTexture);
+        glBindTexture(GL_TEXTURE_2D, sunData.sunShaftTexture);
         glUniform1i(2, 2);
 
-        glUniform3f(skyData.sunPositionUniform[1], sunPosition.x, sunPosition.y, sunPosition.z);
+        glUniform1f(skyData.skyFadeUniform, skyData.skyFadeFactor);
+        glUniform3fv(skyData.sunPositionUniform, 1, &sunPosition[0]);
+        glUniform3fv(skyData.sunColorUniform, 1, &sunData.sunColor[0]);
+        glUniform3fv(skyData.skyBottomColorUniform, 1, &skyData.skyBottomColor[0]);
+        glUniform3fv(skyData.skyTopColorUniform, 1, &skyData.skyTopColor[0]);
+        glUniform3fv(skyData.fogColorUniform, 1, &skyData.fogColor[0]);
 
         SCERender::RenderFullScreenPass(skyData.skyProgram, renderData.projectionMatrix,
                                         renderData.viewMatrix);
@@ -135,18 +176,18 @@ namespace SkyRenderer
 
     void Cleanup()
     {
-        if(skyData.sunShaftTexture != GLuint(-1))
+        if(sunData.sunShaftTexture != GLuint(-1))
         {
-            glDeleteTextures(1, &(skyData.sunShaftTexture));
+            glDeleteTextures(1, &(sunData.sunShaftTexture));
         }
 
-        if(skyData.fboId != GLuint(-1))
+        if(commonSkyData.fboId != GLuint(-1))
         {
-            glDeleteFramebuffers(1, &(skyData.fboId));
+            glDeleteFramebuffers(1, &(commonSkyData.fboId));
         }
 
         SCE::ShaderUtils::DeleteShaderProgram(skyData.skyProgram);
-        SCE::ShaderUtils::DeleteShaderProgram(skyData.sunShaftProgram);
+        SCE::ShaderUtils::DeleteShaderProgram(sunData.sunShaftProgram);
     }
 
 }

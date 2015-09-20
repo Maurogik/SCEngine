@@ -272,10 +272,10 @@ _{
         float flatness = pow(dot(normAndHeight.xyz, vec3(0.0, 1.0, 0.0)), 8.0);
         float slope = 1.0 - flatness;
 
-        float bottomEnd = 0.15;
-        float middleEnd = 0.40;
+        float bottomEnd = 0.1;
+        float middleEnd = 0.3;
 
-        float bottomToMiddleMix = 0.3;// * normAndHeight.y;
+        float bottomToMiddleMix = 0.2;// * normAndHeight.y;
         float middleToTopMix = 0.2;// * (normAndHeight.y);
 
 

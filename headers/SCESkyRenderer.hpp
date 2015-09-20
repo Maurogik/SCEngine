@@ -14,16 +14,16 @@
 namespace SCE
 {
 
-struct CameraRenderData;
-class SCE_GBuffer;
+    struct CameraRenderData;
+    class SCE_GBuffer;
 
-namespace SkyRenderer
-{
-    void Init(uint windowWidth, uint windowHeight);
-    void Render(const SCE::CameraRenderData& renderData, SCE::SCE_GBuffer& gBuffer,
-                const glm::vec3& sunPosition);
-    void Cleanup();
-}
+    namespace SkyRenderer
+    {
+        void Init(uint windowWidth, uint windowHeight);
+        void Render(const SCE::CameraRenderData& renderData, SCE::SCE_GBuffer& gBuffer,
+                    const glm::vec3& sunPosition);
+        void Cleanup();
+    }
 
 }
 
