@@ -28,17 +28,17 @@
 
 namespace glm
 {
-	template <typename T>
+    template <typename T>
 	GLM_FUNC_QUALIFIER GLM_CONSTEXPR T epsilon()
 	{
 		return std::numeric_limits<T>::epsilon();
 	}
 
-	template <>
+    /*template <>
 	GLM_FUNC_QUALIFIER GLM_CONSTEXPR half epsilon()
 	{
 		return half(1.19209290e-007);
-	}
+    }*/
 
 	template <typename T>
 	GLM_FUNC_QUALIFIER GLM_CONSTEXPR T zero()
@@ -50,7 +50,7 @@ namespace glm
 	GLM_FUNC_QUALIFIER GLM_CONSTEXPR T one()
 	{
 		return T(1);
-	}
+    }
 
 	template <typename T>
 	GLM_FUNC_QUALIFIER GLM_CONSTEXPR T pi()

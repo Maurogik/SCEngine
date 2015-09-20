@@ -207,7 +207,7 @@ void Transform::RotateAroundAxis(const vec3 &axis, float angle)
     if(mParent){
         locAxis = mParent->WorldToLocalDir(axis);
     }
-    quat rotation = angleAxis(angle, locAxis);
+    quat rotation = angleAxis(radians(angle), locAxis);
     mOrientation = mOrientation * rotation;
 }
 
@@ -222,7 +222,7 @@ void Transform::RotateAroundPivot(const glm::vec3& pivot, const glm::vec3& axis,
     vec3 move = locPivot - mTranslation;
     mTranslation += move;
 
-    quat rotation = angleAxis(angle, locAxis);
+    quat rotation = angleAxis(radians(angle), locAxis);
     mOrientation = mOrientation * rotation;
     move = rotation * move;
     mTranslation -= move;

@@ -31,8 +31,7 @@
 #define HEIGHT_SCALE_UNIFORM "HeightScale"
 #define TESS_OVERRIDE_UNIFORM "TesselationOverride"
 
-#define TERRAIN_TEXTURE_SIZE 512
-#define OUTTER_TEX_SCALE 1.0f
+#define TERRAIN_TEXTURE_SIZE 2048
 #define TEX_TILE_SIZE 2.0f
 
 
@@ -167,24 +166,25 @@ namespace Terrain
 
         float x, z;
         float y = 0.1f;
-        float edgeScale = 2.0f;
-        float edgeInc = 1.0f;
-        float xDist, zDist, edgeDist;
+        float edgeChange = 1.0f;
+        float xDist, zDist, distToCenter;
 
         for(int xCount = 0; xCount < TERRAIN_TEXTURE_SIZE; ++xCount)
         {
             x = float(xCount) / float(TERRAIN_TEXTURE_SIZE);
-            xDist = x < 0.5f ? x : 1.0 - x;
+            xDist = (0.5f - x);
             x += xOffset;
 
             for(int zCount = 0; zCount < TERRAIN_TEXTURE_SIZE; ++zCount)
             {
                 z = float(zCount) / float(TERRAIN_TEXTURE_SIZE);
-                zDist = z < 0.5f ? z : 1.0 - z;
+                zDist = (0.5f - z);
                 z += zOffset;
 
-//                edgeDist = min(xDist, zDist);
-//                edgeInc = SCE::Math::mapToRange(0.0f, 0.1f, edgeScale, 1.0f, edgeDist);
+                distToCenter = sqrt(xDist*xDist + zDist*zDist);//min(xDist, zDist);
+                edgeChange = SCE::Math::mapToRange(0.15f, 0.495f, 1.0f, 0.0f, distToCenter);
+                //ease in-out
+                edgeChange = 1.0f / (1.0f + exp(-(edgeChange - 0.5f)*8.0f));
 
                 noise = 0.0f;
                 amplitude = 1.0f;
@@ -203,8 +203,8 @@ namespace Terrain
 
                 float res = noise / maxValue;
 //                res  = SCE::Math::mapToRange(-0.5f, 0.5f, 0.0f, 1.0f, res);
-                res  = SCE::Math::mapToRange(-0.3f, 0.7f, 0.0f, 1.0f, res);
-                heightmap[xCount * TERRAIN_TEXTURE_SIZE + zCount] = res * heightScale;
+                res = SCE::Math::mapToRange(-0.3f, 0.7f, 0.0f, 1.0f, res);
+                heightmap[xCount * TERRAIN_TEXTURE_SIZE + zCount] = res * heightScale * edgeChange;
             }
         }
 
@@ -333,14 +333,12 @@ namespace Terrain
                      const glm::mat4& viewMatrix,
                      const glm::mat4& terrainToWorldspace,
                      const glm::vec3& position_terrainSpace,
-                     const glm::vec3& uvOffset,
                      float patchSize,
                      float halfTerrainSize)
     {
 
         //create matrix to convert vertex pos to terrain space coord
-        glm::mat4 quadToTerrainspace = glm::translate(mat4(1.0f), uvOffset) *
-                                       glm::scale(mat4(1.0f), glm::vec3(1.0f / (halfTerrainSize))) *
+        glm::mat4 quadToTerrainspace = glm::scale(mat4(1.0f), glm::vec3(1.0f / (halfTerrainSize))) *
                                        glm::translate(mat4(1.0f), position_terrainSpace) *
                                        glm::scale(mat4(1.0f), glm::vec3(patchSize));
 
@@ -388,8 +386,11 @@ namespace Terrain
 
         TerrainGLData& glData = terrainData->glData;
 
-        float halfTerrainSize = terrainData->terrainSize / 2.0f;
         float patchSize = terrainData->patchSize;
+        float terrainSize = terrainData->terrainSize;
+        //compute the actual terrain size we will cover with patches
+        terrainSize = floor(terrainSize/patchSize) * patchSize;
+        float halfTerrainSize = terrainSize / 2.0f;
 
         //setup gl state that at common for all patches
         glUseProgram(glData.terrainProgram);        
@@ -409,30 +410,24 @@ namespace Terrain
         glUniform1i(glData.snowTextureUniform, 3);
 
         glUniform1i(glData.terrainTextureUniform, 0);//terrain height map is sampler 0
-        glUniform1f(glData.terrainMaxDistanceUniform, terrainData->terrainSize);
+        glUniform1f(glData.terrainMaxDistanceUniform, terrainSize);
         glUniform1f(glData.heightScaleUniform, terrainData->heightScale);
         glUniform1f(glData.tesselationOverrideUniform, tesselationOverride);
-        glUniform1f(glData.textureTileScaleUniform, terrainData->terrainSize / TEX_TILE_SIZE);
+        glUniform1f(glData.textureTileScaleUniform, terrainSize / TEX_TILE_SIZE);
 
         glBindVertexArray(terrainData->quadVao);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, terrainData->quadIndicesVbo);
 
-        glm::vec3 terrainCenter = glm::vec3(0.0f, terrainData->baseHeight, 0.0f);
-        glm::vec4 cameraPosition = glm::inverse(viewMatrix)[3];
-        //we want the terrain mesh to "follow" the camera (the height map coordinates will be offset ?)"
         glm::vec3 terrainPosition_worldspace = vec3(0.0);//glm::vec3(cameraPosition);
         terrainPosition_worldspace.y = terrainData->baseHeight;
-
-        glm::vec3 uvOffset = vec3(0.0);//terrainPosition_worldspace - terrainCenter;
-        uvOffset /= halfTerrainSize * OUTTER_TEX_SCALE;
 
         glm::mat4 terrainToWorldspace = glm::translate(glm::mat4(1.0f), terrainPosition_worldspace);
 
         //Render all the terrain patches
-        for(float x = -halfTerrainSize + patchSize * 0.5; x < halfTerrainSize - patchSize;
+        for(float x = -halfTerrainSize; x <= halfTerrainSize - patchSize;
             x += patchSize)
         {
-            for(float z = -halfTerrainSize + patchSize * 0.5; z < halfTerrainSize - patchSize;
+            for(float z = -halfTerrainSize; z <= halfTerrainSize - patchSize;
                 z += patchSize)
             {
                 glm::vec3 pos_terrainspace(x, 0.0f, z);
@@ -440,7 +435,6 @@ namespace Terrain
                             viewMatrix,
                             terrainToWorldspace,
                             pos_terrainspace,
-                            uvOffset,
                             patchSize,
                             halfTerrainSize);
             }
@@ -456,9 +450,9 @@ namespace Terrain
         terrainData->terrainSize = terrainSize;
         terrainData->patchSize = patchSize;
         terrainData->baseHeight = terrainBaseHeight;
-        terrainData->heightScale = 8.0f;
+        terrainData->heightScale = 16.0f;
         initializeRenderData();
-        initializeTerrainTextures(4.0f, terrainData->heightScale);
+        initializeTerrainTextures(2.0f, terrainData->heightScale);
     }
 
     void Cleanup()

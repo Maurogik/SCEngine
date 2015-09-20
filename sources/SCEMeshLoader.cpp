@@ -13,7 +13,6 @@
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtx/transform.hpp>
-#include <glm/gtx/constants.hpp>
 
 #include <fstream>
 #include <sstream>
@@ -342,8 +341,8 @@ uint SCEMeshLoader::CreateSphereMesh(float tesselation)
         float xAngle = xStep * angleStep;
 
         glm::quat xRot[2] = {
-            glm::angleAxis(xAngle, 1.0f, 0.0f, 0.0f),
-            glm::angleAxis(xAngle + angleStep, 1.0f, 0.0f, 0.0f)
+            glm::angleAxis(xAngle, vec3(1.0f, 0.0f, 0.0f)),
+            glm::angleAxis(xAngle + angleStep, vec3(1.0f, 0.0f, 0.0f))
         };
 
         for(int yStep = 0; yStep < nbSteps; ++yStep)
@@ -351,8 +350,8 @@ uint SCEMeshLoader::CreateSphereMesh(float tesselation)
             float yAngle = yStep * angleStep;
 
             glm::quat yRot[2] = {
-                glm::angleAxis(yAngle, 0.0f, 1.0f, 0.0f),
-                glm::angleAxis(yAngle + angleStep, 0.0f, 1.0f, 0.0f)
+                glm::angleAxis(yAngle, vec3(0.0f, 1.0f, 0.0f)),
+                glm::angleAxis(yAngle + angleStep, vec3(0.0f, 1.0f, 0.0f))
             };
 
             float u[2] = {
@@ -461,8 +460,8 @@ uint SCEMeshLoader::CreateConeMesh(float angle, float tesselation)
 
         glm::quat zRot[2] =
         {
-            glm::angleAxis(zAngle, 0.0f, 0.0f, 1.0f) * coneRotation,
-            glm::angleAxis(zAngle + angleStep, 0.0f, 0.0f, 1.0f) * coneRotation
+            glm::angleAxis(zAngle, vec3(0.0f, 0.0f, 1.0f)) * coneRotation,
+            glm::angleAxis(zAngle + angleStep, vec3(0.0f, 0.0f, 1.0f)) * coneRotation
         };
 
         for(int zPosStep = 0; zPosStep < nbLengthSteps - 1; ++zPosStep)

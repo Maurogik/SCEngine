@@ -252,7 +252,7 @@ _{
     layout (location = 1) out vec3 oColor;
     layout (location = 2) out vec4 oNormal;
 
-    float waterHeight = 0.001;
+    float waterHeight = 0.002;
 
     vec4 TerrainColor(vec4 normAndHeight, vec2 uv)
     {
@@ -263,20 +263,20 @@ _{
         vec4 middleColor = vec4(0.7, 0.4, 0.2, 0.3);
         vec4 bottomColor = vec4(0.2, 0.7, 0.1, 0.3);
 
-        bottomColor.rgb = pow(texture(GrassTex, uv).rgb, vec3(1.5));
+        bottomColor.rgb = texture(GrassTex, uv).rgb;
         middleColor.rgb = texture(DirtTex, uv).rgb;
         topColor.rgb += texture(SnowTex, uv).rgb;
-        topColor.rgb *= 3.0;
+        topColor.rgb *= 2.0;
 
         float height = normAndHeight.a / HeightScale;
         float flatness = pow(dot(normAndHeight.xyz, vec3(0.0, 1.0, 0.0)), 8.0);
         float slope = 1.0 - flatness;
 
         float bottomEnd = 0.15;
-        float middleEnd = 0.45;
+        float middleEnd = 0.40;
 
         float bottomToMiddleMix = 0.3;// * normAndHeight.y;
-        float middleToTopMix = 0.3;// * (normAndHeight.y);
+        float middleToTopMix = 0.2;// * (normAndHeight.y);
 
 
         float BtoMStart = bottomEnd - bottomToMiddleMix*0.5;

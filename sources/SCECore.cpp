@@ -33,7 +33,7 @@ void SCECore::InitEngine(const std::string &windowName)
        Debug::RaiseError("Failed to initialize GLFW");
     }
 
-//    glfwWindowHint(GLFW_SAMPLES, 4); // 4x antialiasing
+    glfwWindowHint(GLFW_SAMPLES, 0); // disable antialiasing, which doesn't work  on my computeranyway
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4); // We want OpenGL 4.0+
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // To make MacOS happy; should not be needed

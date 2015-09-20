@@ -10,7 +10,6 @@
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtx/transform.hpp>
-#include <glm/gtx/constants.hpp>
 
 #include <math.h>
 #include "SCEDefines.hpp"
