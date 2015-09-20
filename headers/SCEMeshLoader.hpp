@@ -7,29 +7,38 @@
 #define SCE_MESH_LOADER_HPP
 
 #include "SCEDefines.hpp"
-#include "SCERenderStructs.hpp"
 #include <map>
 
 namespace SCE
-{
-    class SCEMeshLoader
+{    
+    struct MeshData
     {
-    public :
+        MeshData() : indices(), vertices(), normals(), uvs(), tangents(0), bitangents(0) {}
+        std::vector<ushort>     indices;
+        std::vector<vec3>       vertices;
+        std::vector<vec3>       normals;
+        std::vector<vec2>       uvs;
+        std::vector<vec3>       tangents;
+        std::vector<vec3>       bitangents;
+    };
 
-        static void         Init();
-        static void         CleanUp();
+    namespace MeshLoader
+    {
 
-        static uint         CreateMeshFromFile  (const std::string &meshFileName);
+        void         Init();
+        void         CleanUp();
 
-        static uint         CreateSphereMesh    ( float tesselation);
+        ui16         CreateMeshFromFile  (const std::string &meshFileName);
 
-        static uint         CreateConeMesh      ( float angle, float tesselation);
+        ui16         CreateSphereMesh    ( float tesselation);
 
-        static uint         CreateQuadMesh      ();
+        ui16         CreateConeMesh      ( float angle, float tesselation);
 
-        static uint         CreateCubeMesh      ();
+        ui16         CreateQuadMesh      ();
 
-        static uint         CreateCustomMesh    ( const std::vector<ushort> &indices,
+        ui16         CreateCubeMesh      ();
+
+        ui16         CreateCustomMesh    ( const std::vector<ushort> &indices,
                                                   const std::vector<vec3>   &vertices,
                                                   const std::vector<vec3>   &normals,
                                                   const std::vector<vec2>   &uvs,
@@ -37,28 +46,9 @@ namespace SCE
                                                   const std::vector<vec3>   &bitangents
                                                  );
 
-        static void         DeleteMesh(uint meshId);
-
-        static const MeshData& GetMeshData(uint meshId);
-
-    private :
-
-        static SCEMeshLoader*           s_instance;
-
-        std::map<std::string, uint>     mMeshIds;
-        std::map<uint, MeshData>        mMeshData;
-        uint                            mNextId;
-
-        SCEMeshLoader();
-
-        uint                addMeshData(const std::string &meshName,
-                                        const std::vector<ushort> &indices,
-                                        const std::vector<vec3>   &vertices,
-                                        const std::vector<vec3>   &normals,
-                                        const std::vector<vec2>   &uvs,
-                                        const std::vector<vec3>   &tangents,
-                                        const std::vector<vec3>   &bitangents);
-    };
+        void                DeleteMesh(ui16 meshId);
+        const MeshData&     GetMeshData(ui16 meshId);
+    }
 }
 
 

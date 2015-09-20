@@ -28,7 +28,7 @@ namespace SCE {
 
     private :
 
-        uint            mMeshId;
+        ui16            mMeshId;
 
     };
 

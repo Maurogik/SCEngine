@@ -31,7 +31,7 @@ MeshRenderer::MeshRenderer(SCEHandle<Container> &container, const string &typeNa
     SCEHandle<Mesh> mesh = GetContainer()->GetComponent<Mesh>();
     if(mesh)
     {
-        SCEMeshRender::InitializeMeshRenderData(mesh->GetMeshId());
+        SCE::MeshRender::InitializeMeshRenderData(mesh->GetMeshId());
         mMeshId = mesh->GetMeshId();
     }
 }
@@ -41,7 +41,7 @@ void MeshRenderer::UpdateRenderedMesh()
     SCEHandle<Mesh> mesh = GetContainer()->GetComponent<Mesh>();
     Debug::Assert(mesh != nullptr, "Ask to update mesh but mesh doesn't exist");
     mMeshId = mesh->GetMeshId();
-    SCEMeshRender::InitializeMeshRenderData(mesh->GetMeshId());
+    SCE::MeshRender::InitializeMeshRenderData(mesh->GetMeshId());
 }
 
 void MeshRenderer::Render(const CameraRenderData& renderData, bool renderFullScreenQuad)
@@ -58,6 +58,6 @@ void MeshRenderer::Render(const CameraRenderData& renderData, bool renderFullScr
     {
          modelMatrix = transform->GetWorldTransform();
     }
-    SCEMeshRender::RenderMesh(mMeshId, renderData.projectionMatrix, renderData.viewMatrix, modelMatrix);
+    SCE::MeshRender::RenderMesh(mMeshId, renderData.projectionMatrix, renderData.viewMatrix, modelMatrix);
 }
 

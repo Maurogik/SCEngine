@@ -17,7 +17,7 @@ using namespace std;
 SCE::Mesh::Mesh(SCEHandle<Container> &container, const string& filename)
     : Component(container, "Mesh::")
 {
-    mMeshId = SCEMeshLoader::CreateMeshFromFile(filename);
+    mMeshId = SCE::MeshLoader::CreateMeshFromFile(filename);
 }
 
 SCE::Mesh::Mesh(SCEHandle<Container> &container
@@ -29,7 +29,7 @@ SCE::Mesh::Mesh(SCEHandle<Container> &container
                 , const std::vector<vec3>& bitangents)
     : Component(container, "Mesh::")
 {
-    mMeshId = SCEMeshLoader::CreateCustomMesh(indices, vertices, normals, uvs, tangents, bitangents);
+    mMeshId = SCE::MeshLoader::CreateCustomMesh(indices, vertices, normals, uvs, tangents, bitangents);
 }
 
 SCE::Mesh::Mesh(SCEHandle<Container> &container, uint meshId)
@@ -40,7 +40,7 @@ SCE::Mesh::Mesh(SCEHandle<Container> &container, uint meshId)
 
 const MeshData&Mesh::GetMeshData() const
 {
-    return SCEMeshLoader::GetMeshData(mMeshId);
+    return SCE::MeshLoader::GetMeshData(mMeshId);
 }
 
 uint Mesh::GetMeshId()
@@ -55,19 +55,19 @@ SCEHandle<Mesh> SCE::Mesh::AddCustomMesh(SCEHandle<Container> &container, const 
 
 SCEHandle<Mesh> SCE::Mesh::AddSphereMesh(SCEHandle<Container> &container, float tesselation)
 {
-    uint meshId = SCEMeshLoader::CreateSphereMesh(tesselation);
+    uint meshId = SCE::MeshLoader::CreateSphereMesh(tesselation);
     return container->AddComponent<Mesh>(meshId);
 }
 
 SCEHandle<Mesh> SCE::Mesh::AddCubeMesh(SCEHandle<Container> &container)
 {
-    uint meshId = SCEMeshLoader::CreateCubeMesh();
+    uint meshId = SCE::MeshLoader::CreateCubeMesh();
     return container->AddComponent<Mesh>(meshId);
 }
 
 SCEHandle<Mesh> Mesh::AddQuadMesh(SCEHandle<Container> &container)
 {
-    uint meshId = SCEMeshLoader::CreateQuadMesh();
+    uint meshId = SCE::MeshLoader::CreateQuadMesh();
     return container->AddComponent<Mesh>(meshId);
 }
 
@@ -75,7 +75,7 @@ SCEHandle<Mesh> Mesh::AddConeMesh(SCEHandle<Container> &container,
                                   float angle,
                                   float tesselation)
 {
-    uint meshId = SCEMeshLoader::CreateConeMesh(angle, tesselation);
+    uint meshId = SCE::MeshLoader::CreateConeMesh(angle, tesselation);
     return container->AddComponent<Mesh>(meshId);
 }
 

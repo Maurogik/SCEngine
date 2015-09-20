@@ -44,7 +44,7 @@ SCERender::SCERender()
     //initialize the Gbuffer used to deferred lighting
     mGBuffer.Init(SCECore::GetWindowWidth(), SCECore::GetWindowHeight());
 
-    mQuadMeshId = SCEMeshLoader::CreateQuadMesh();
+    mQuadMeshId = SCE::MeshLoader::CreateQuadMesh();
 
     mToneMapData.toneMapShader = SCE::ShaderUtils::CreateShaderProgram("ToneMapping");
     mToneMapData.luminanceShader = SCE::ShaderUtils::CreateShaderProgram("LuminanceShader");
@@ -57,7 +57,6 @@ SCERender::SCERender()
 void SCERender::Init()
 {
     SCELighting::Init();
-    SCEMeshRender::Init();
     SCE::Terrain::Init(2000.0f, 100.0f, 0.0f);
     Debug::Assert(!s_instance, "An instance of the Render system already exists");
     s_instance = new SCERender();
@@ -69,7 +68,6 @@ void SCERender::CleanUp()
     delete s_instance;
 
     SCE::Terrain::Cleanup();
-    SCEMeshRender::CleanUp();
     SCELighting::CleanUp();
 }
 
@@ -165,7 +163,7 @@ void SCERender::RenderFullScreenPass(GLuint shaderId, const mat4& projectionMatr
 {
     glm::mat4 modelMatrix = inverse(projectionMatrix * viewMatrix);
     SCE::ShaderUtils::BindDefaultUniforms(shaderId, modelMatrix, viewMatrix, projectionMatrix);
-    SCEMeshRender::RenderMesh(s_instance->mQuadMeshId, projectionMatrix, viewMatrix, modelMatrix);
+    SCE::MeshRender::RenderMesh(s_instance->mQuadMeshId, projectionMatrix, viewMatrix, modelMatrix);
 }
 
 

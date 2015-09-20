@@ -109,8 +109,6 @@ void SCECore::InitEngine(const std::string &windowName)
 
     //Init Engine subcomponents in order
     SCE::Time::Init();
-    //Asset management
-    SCEMeshLoader::Init();
     //Rendering
     SCERender::Init();
 }
@@ -150,8 +148,6 @@ void SCECore::CleanUpEngine()
 
     //clean engine subcomponents
     SCERender::CleanUp();
-    SCEMeshLoader::CleanUp();   
-
     // Close OpenGL window and terminate GLFW
     glfwTerminate();
 }
