@@ -261,6 +261,7 @@ _{
         return shadow;
     }
 
+//#define DEBUG
 
     void main()
     {
@@ -308,5 +309,9 @@ _{
         //shadow and ambiant
         color.rgb = color.rgb * (1.0 - lightCol.z)
                      + SCE_ShadowStrength * ambiantColor * MaterialDiffuseColor;
+
+#ifdef DEBUG
+        color = vec4(MaterialDiffuseColor, 1.0);
+#endif
     }
 _}

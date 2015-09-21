@@ -40,7 +40,7 @@ namespace SkyRenderer
         {
             SkyShaderData()
                 : skyProgram(-1), skyFadeFactor(7.0f),
-                  skyTopColor(0.06, 0.4, 0.85), skyBottomColor(0.65, 0.9, 1.0), fogColor(0.4, 0.7, 0.9)
+                  skyTopColor(0.06, 0.4, 0.85), skyBottomColor(0.65, 0.9, 1.0), fogColor(0.3, 0.6, 0.9)
             {}
 
             GLuint  skyProgram;

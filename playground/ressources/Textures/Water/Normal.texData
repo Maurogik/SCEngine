@@ -1,0 +1,9 @@
+{
+    "Name": "Textures/Water/normal.jpg",
+    "Texture": {
+        "Format": "DDS",
+        "Mipmaps": true,
+        "Wrapping": "Repeat"
+	}
+}
+

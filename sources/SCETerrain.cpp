@@ -33,7 +33,7 @@
 #define HEIGHT_SCALE_UNIFORM "HeightScale"
 #define TESS_OVERRIDE_UNIFORM "TesselationOverride"
 
-#define TERRAIN_TEXTURE_SIZE 2048
+#define TERRAIN_TEXTURE_SIZE 512
 #define TEX_TILE_SIZE 2.0f
 
 
@@ -428,10 +428,10 @@ namespace Terrain
         glm::mat4 terrainToWorldspace = glm::translate(glm::mat4(1.0f), terrainPosition_worldspace);
 
         //Render all the terrain patches
-        for(float x = -halfTerrainSize; x <= halfTerrainSize - patchSize;
+        for(float x = -halfTerrainSize; x < halfTerrainSize - patchSize;
             x += patchSize)
         {
-            for(float z = -halfTerrainSize; z <= halfTerrainSize - patchSize;
+            for(float z = -halfTerrainSize; z < halfTerrainSize - patchSize;
                 z += patchSize)
             {
                 glm::vec3 pos_terrainspace(x, 0.0f, z);

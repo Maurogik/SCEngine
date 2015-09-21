@@ -44,7 +44,7 @@ void CameraControl::Update()
 
     float xRotateSpeed = 4000.0f;
     float yRotateSpeed = 2000.0f;
-    float speed = 30.0f;
+    float speed = 100.0f;
 
     vec3 position = transform->GetWorldPosition();
 

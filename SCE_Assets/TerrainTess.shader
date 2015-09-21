@@ -252,13 +252,10 @@ _{
     layout (location = 1) out vec3 oColor;
     layout (location = 2) out vec4 oNormal;
 
-    float waterHeight = 0.002;
-
     vec4 TerrainColor(vec4 normAndHeight, vec2 uv)
     {
         uv *= TextureTileScale;
 
-        vec4 waterColor = vec4(0.1, 0.2, 1.0, 1.0);
         vec4 topColor = vec4(1.0, 1.0, 1.0, 2.0);
         vec4 middleColor = vec4(0.7, 0.4, 0.2, 0.3);
         vec4 bottomColor = vec4(0.2, 0.7, 0.1, 0.3);
@@ -272,8 +269,8 @@ _{
         float flatness = pow(dot(normAndHeight.xyz, vec3(0.0, 1.0, 0.0)), 8.0);
         float slope = 1.0 - flatness;
 
-        float bottomEnd = 0.1;
-        float middleEnd = 0.3;
+        float bottomEnd = 0.15;
+        float middleEnd = 0.35;
 
         float bottomToMiddleMix = 0.2;// * normAndHeight.y;
         float middleToTopMix = 0.2;// * (normAndHeight.y);
@@ -286,7 +283,7 @@ _{
         float MtoTEnd = middleEnd + middleToTopMix*0.5;
 
         float lerpLow = (height - BtoMStart) / (bottomToMiddleMix);
-        lerpLow = pow(lerpLow, 2.0) - pow(flatness, 1.0) * (1.0 - lerpLow);
+        lerpLow = pow(lerpLow, 4.0) - pow(flatness, 1.0) * (1.0 - lerpLow);
         lerpLow = clamp(lerpLow, 0.0, 1.0);
 
         float lerpHigh = (height - MtoTStart) / (middleToTopMix);
@@ -295,8 +292,7 @@ _{
 
         vec4 resColor = vec4(0.0);//, slope, 0.0);
 
-        resColor += waterColor * step(height, waterHeight);
-        resColor += bottomColor * step(waterHeight, height) * step(height, BtoMStart);
+        resColor += bottomColor * step(height, BtoMStart);
         resColor += mix(bottomColor, middleColor, lerpLow) * step(BtoMStart, height)
                 * step(height, BtoMEnd);
         resColor += middleColor * step(BtoMEnd, height) * step(height, MtoTStart);
@@ -307,17 +303,6 @@ _{
         return vec4(resColor);
     }
 
-    vec3 processNormal(vec4 normAndHeight)
-    {
-        //do a wavy normal displacement for water normals
-        float height = normAndHeight.a / HeightScale;
-        vec3 normalDisplacement = vec3(0.0);
-        //only for water
-        normalDisplacement *= step(height, waterHeight);
-        vec3 normal = normAndHeight.xyz + normalDisplacement;
-        return normal;
-    }
-
     void main()
     {
         vec2 uv = gl_FragCoord.xy / SCE_ScreenSize;
@@ -325,7 +310,7 @@ _{
 
         vec4 colorAndSpec = TerrainColor(normAndHeight, GS_terrainTexCoord);
 
-        vec3 norm = processNormal(normAndHeight);
+        vec3 norm = normAndHeight.xyz;
 //        norm = normalize(norm + vec3(0.0, -0.5, 0.0));
         oNormal = vec4(norm, colorAndSpec.a);
         oColor = colorAndSpec.rgb;

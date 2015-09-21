@@ -135,6 +135,13 @@ float complexGround()
     return -1.6f;
 }
 
+float waterGround()
+{
+    SCEHandle<Container> plane = createPlane("plane", "Materials/Water", 4000.0f, vec3(0.0f, 7.0f, 0.0f));
+    plane->GetComponent<Transform>()->SetWorldOrientation(vec3(-90.0f, 180.0f, 0.0f));
+    return 7.0f;
+}
+
 void scene1()
 {
     SCEHandle<Container> wallObj = createCube("cubeObject", vec3(0.0f, 3.0f, 5.0f),
@@ -335,6 +342,8 @@ int main( void )
 //    scene1();
 //    scene2();
 //    scene3();
+
+    waterGround();
 
     vec3 startPos = vec3(0, 250, -25);
     //Camera
