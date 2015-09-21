@@ -295,6 +295,11 @@ namespace MeshLoader
 
         string fullPath = RESSOURCE_PATH + meshFileName + "_convert";
 
+        if(!ifstream(fullPath.c_str()))
+        {
+            fullPath = ENGINE_RESSOURCE_PATH + meshFileName + "_convert";
+        }
+
         vector<ushort> out_indices;
         vector<vec3>   out_verts;
         vector<vec2>   out_uvs;

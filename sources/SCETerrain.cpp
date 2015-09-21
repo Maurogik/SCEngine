@@ -11,6 +11,7 @@
 #include "../headers/SCERenderStructs.hpp"
 #include "../headers/SCETools.hpp"
 #include "../headers/SCETime.hpp"
+#include "../headers/SCEMeshLoader.hpp"
 
 #include <time.h>
 #include <glm/gtc/matrix_transform.hpp>
@@ -33,10 +34,12 @@
 #define HEIGHT_SCALE_UNIFORM "HeightScale"
 #define TESS_OVERRIDE_UNIFORM "TesselationOverride"
 
-#define TERRAIN_TEXTURE_SIZE 512
+#define TREE_MODEL_NAME "/Meshes/low_poly_tree.obje"
+
+#define TERRAIN_TEXTURE_SIZE 2048
 #define TEX_TILE_SIZE 2.0f
 
-
+//#define ISLAND_MODE
 
 namespace SCE
 {
@@ -170,8 +173,9 @@ namespace Terrain
 
         float x, z;
         float y = 0.1f;
+
         float edgeChange = 1.0f;
-        float xDist, zDist, distToCenter;
+        float xDist, zDist;
 
         for(int xCount = 0; xCount < TERRAIN_TEXTURE_SIZE; ++xCount)
         {
@@ -181,14 +185,15 @@ namespace Terrain
 
             for(int zCount = 0; zCount < TERRAIN_TEXTURE_SIZE; ++zCount)
             {
-                z = float(zCount) / float(TERRAIN_TEXTURE_SIZE);
-                zDist = (0.5f - z);
-                z += zOffset;
-
-                distToCenter = sqrt(xDist*xDist + zDist*zDist);//min(xDist, zDist);
+                 z = float(zCount) / float(TERRAIN_TEXTURE_SIZE);
+                 zDist = (0.5f - z);
+                 z += zOffset;
+#ifdef ISLAND_MODE
+                float distToCenter = sqrt(xDist*xDist + zDist*zDist);//min(xDist, zDist);
                 edgeChange = SCE::Math::mapToRange(0.15f, 0.495f, 1.0f, 0.0f, distToCenter);
                 //ease in-out
                 edgeChange = 1.0f / (1.0f + exp(-(edgeChange - 0.5f)*8.0f));
+#endif
 
                 noise = 0.0f;
                 amplitude = 1.0f;
@@ -207,7 +212,11 @@ namespace Terrain
 
                 float res = noise / maxValue;
 //                res  = SCE::Math::mapToRange(-0.5f, 0.5f, 0.0f, 1.0f, res);
+#ifdef ISLAND_MODE
                 res = SCE::Math::mapToRange(-0.3f, 0.7f, 0.0f, 1.0f, res);
+#else
+                res = SCE::Math::mapToRange(-0.35f, 1.0f, 0.0f, 1.0f, res);
+#endif
                 heightmap[xCount * TERRAIN_TEXTURE_SIZE + zCount] = res * heightScale * edgeChange;
             }
         }
@@ -428,10 +437,10 @@ namespace Terrain
         glm::mat4 terrainToWorldspace = glm::translate(glm::mat4(1.0f), terrainPosition_worldspace);
 
         //Render all the terrain patches
-        for(float x = -halfTerrainSize; x < halfTerrainSize - patchSize;
+        for(float x = -halfTerrainSize + patchSize * 0.5f; x < halfTerrainSize - patchSize;
             x += patchSize)
         {
-            for(float z = -halfTerrainSize; z < halfTerrainSize - patchSize;
+            for(float z = -halfTerrainSize + patchSize * 0.5f; z < halfTerrainSize - patchSize;
                 z += patchSize)
             {
                 glm::vec3 pos_terrainspace(x, 0.0f, z);

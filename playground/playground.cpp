@@ -109,9 +109,9 @@ SCEHandle<Container> createLight(vec3 pos, vec3 orientation, LightType type){
 
 float simpleGround()
 {
-    SCEHandle<Container> plane = createPlane("plane", GROUND_MATERIAL, 500.0f, vec3(0.0f, 0.0f, 0.0f));
+    SCEHandle<Container> plane = createPlane("plane", GROUND_MATERIAL, 500.0f, vec3(0.0f, -2.0f, 0.0f));
     plane->GetComponent<Transform>()->SetWorldOrientation(vec3(-90.0f, 180.0f, 0.0f));
-    return 0.0f;
+    return -2.0f;
 }
 
 float complexGround()
@@ -135,11 +135,11 @@ float complexGround()
     return -1.6f;
 }
 
-float waterGround()
+float waterGround(float height)
 {
-    SCEHandle<Container> plane = createPlane("plane", "Materials/Water", 4000.0f, vec3(0.0f, 7.0f, 0.0f));
+    SCEHandle<Container> plane = createPlane("plane", "Materials/Water", 4000.0f, vec3(0.0f, height, 0.0f));
     plane->GetComponent<Transform>()->SetWorldOrientation(vec3(-90.0f, 180.0f, 0.0f));
-    return 7.0f;
+    return height;
 }
 
 void scene1()
@@ -264,7 +264,7 @@ void scene3()
     cube->SetLocalScale(vec3(2.0f, 2.0f, 2.0f));
 
     //ground
-    float groundY = -2.0;//simpleGround();//complexGround();
+    float groundY = simpleGround();//complexGround();
 
     //house
     SCEHandle<Container> house = createModel("house", "Meshes/house_obj.obj", "Materials/House",
@@ -327,6 +327,8 @@ void streetLights()
     }
 }
 
+//#define EAGLE
+
 int main( void )
 {
     SCECore engine;
@@ -343,7 +345,11 @@ int main( void )
 //    scene2();
 //    scene3();
 
-    waterGround();
+//    waterGround(7.0f);
+
+    SCEHandle<Container> tree = createModel("tree", "Meshes/low_poly_tree.obj", "Materials/Tree",
+                                              vec3(-5.0f, 0.0f, -20.0f));
+    tree->GetComponent<Transform>()->SetLocalScale(vec3(1.0f));
 
     vec3 startPos = vec3(0, 250, -25);
     //Camera
@@ -351,6 +357,7 @@ int main( void )
     SCEHandle<Transform> cameraTransform = cameraObject->AddComponent<Transform>();
     cameraObject->AddComponent<Camera>(40.0f, 16.0f/9.0f, 1.0f, 2000.0f);
 
+#ifdef EAGLE
     SCEHandle<Container> eagle = createModel("eagle2",
                                               "Meshes/EAGLE_2.OBJ", "Materials/Eagle",
                                               startPos);
@@ -361,7 +368,10 @@ int main( void )
 //    cameraTransform->RotateAroundAxis(vec3(1.0f, 0.0f, 0.0f), 5.0f);
 
     eagle->AddComponent<CameraControl>();
-
+#else
+    cameraTransform->SetLocalPosition(startPos);
+    cameraObject->AddComponent<CameraControl>();
+#endif
 
     //load scene here
     engine.RunEngine();
