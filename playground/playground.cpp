@@ -327,7 +327,7 @@ void streetLights()
     }
 }
 
-//#define EAGLE
+#define EAGLE
 
 int main( void )
 {

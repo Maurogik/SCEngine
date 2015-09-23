@@ -1,8 +1,1 @@
-{
-    "Name": "TestMaterial",
-    "Shader": "Shaders/White",
-    "Material": {
-		"Data": [  
-		]
-	}
-}
+Shader: Shaders/White

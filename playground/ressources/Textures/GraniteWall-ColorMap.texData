@@ -1,9 +1,3 @@
-{
-    "Name": "Textures/GraniteWall/color.png",
-    "Texture": {
-        "Format": "DDS",
-        "Mipmaps": true,
-        "Wrapping": "Repeat"
-    }
-}
+Name: Textures/GraniteWall/color.png
+Format: DDS; Mipmaps: true; Wrapping: Repeat
 

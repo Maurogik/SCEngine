@@ -1,9 +1,2 @@
-{
-    "Name": "Textures/terrainSnow.jpg",
-    "Texture": {
-        "Format": "DDS",
-        "Mipmaps": true,
-        "Wrapping": "Repeat"
-	}
-}
-
+Name: Terrain/Textures/terrainSnow.jpg
+Format: DDS; Mipmaps: true; Wrapping: Repeat

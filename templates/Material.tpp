@@ -4,6 +4,7 @@
 /**********FILE:Material.tpp***********/
 /**************************************/
 
+#include "../headers/SCETools.hpp"
 
 template<typename T>
 void SCE::Material::SetUniformValue(const std::string& uniformName, const T& value)

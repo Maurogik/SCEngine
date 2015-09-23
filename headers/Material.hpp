@@ -7,7 +7,6 @@
 #define SCE_MATERIAL_HPP
 
 #include "SCEDefines.hpp"
-#include "SCETools.hpp"
 #include "Component.hpp"
 #include "Light.hpp"
 #include <map>

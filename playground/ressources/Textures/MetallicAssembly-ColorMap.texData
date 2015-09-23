@@ -1,9 +1,3 @@
-{
-    "Name": "Textures/MetallicAssembly/color.png",
-    "Texture": {
-        "Format": "DDS",
-        "Mipmaps": true,
-        "Wrapping": "Repeat"
-    }
-}
+Name: Textures/MetallicAssembly/color.png
+Format: DDS; Mipmaps: true; Wrapping: Repeat
 

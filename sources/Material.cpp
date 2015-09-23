@@ -10,10 +10,8 @@
 #include "../headers/SCETextures.hpp"
 #include "../headers/SCEShaders.hpp"
 #include "../headers/Transform.hpp"
-
-#include "../external/rapidjson/document.h" // rapidjson's DOM-style API
-#include "../external/rapidjson/prettywriter.h" // for stringify JSON
-#include "../external/rapidjson/filestream.h" // wrapper of C stream for prettywriter as output
+#include "../headers/SCETools.hpp"
+#include "../headers/SCEMetadataParser.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -72,49 +70,39 @@ void Material::LoadMaterial(const string &filename)
 {
     string fullPath = RESSOURCE_PATH + filename + MATERIAL_SUFIX;
 
-    rapidjson::Document root;
+    if(!ifstream(fullPath.c_str()))
+    {
+        fullPath = ENGINE_RESSOURCE_PATH + filename + MATERIAL_SUFIX;
+    }
+
     ifstream materialFileStream(fullPath.c_str(), ios::in);
 
     if(materialFileStream.is_open())
     {
         string currLine;
-        string matFileStr = "";
-        //read whole file in a string
+        mMaterialName = filename;
+        Internal::Log("Parsing material : " + mMaterialName);
+        map<string, string> lineData;
+
+
+        //read first line to get shader name
+        getline(materialFileStream, currLine);
+        lineData = MetadataParser::GetLineData(currLine);
+        Debug::Assert(lineData.count("Shader") > 0, "Could not find shader name in material file");
+        mShaderProgramId = loadShaders(lineData["Shader"]);
+//        //start initializing the render data as soon as the shader is loaded
+//        glUseProgram(mShaderProgramId);
+
+        //read the whole file
         while (getline(materialFileStream, currLine))
         {
-            matFileStr += "\n" + currLine;
-        }
-        materialFileStream.close();
-
-        if (root.Parse<0>(matFileStr.c_str()).HasParseError())
-        {
-            Debug::RaiseError("Error reading the material file : " + filename + "\n error : " + root.Parse<0>(matFileStr.c_str()).GetParseError());
-        }
-
-        //Access values
-        Debug::Assert(root.IsObject(), "Malformated Json material file\n");
-
-        mMaterialName = root["Name"].GetString();
-        Internal::Log("Parsing material : " + mMaterialName);
-
-        rapidjson::Value& materialRoot = root["Material"];
-        rapidjson::Value& materialData = materialRoot["Data"];
-        string shaderName   = root["Shader"].GetString();
-
-        mShaderProgramId = loadShaders(shaderName);
-
-        //start initializing the render data as soon as the shader is loaded
-        glUseProgram(mShaderProgramId);
-
-        Debug::Assert(materialData.IsArray(), "Data value of Json material file should be an array");
-
-        //initialize all found uniforms
-        for(rapidjson::SizeType i = 0; i < materialData.Size(); ++i)
-        {
-            const rapidjson::Value& entry = materialData[i];
-            string name = entry["Name"].GetString();
-            string type = entry["Type"].GetString();
-            string value = entry["Value"].GetString();
+            lineData = MetadataParser::GetLineData(currLine);
+            Debug::Assert(lineData.count("Name") == 1 && lineData.count("Type") == 1
+                          && lineData.count("Value") == 1,
+                          "Failed to read uniform line in material file");
+            string name = lineData["Name"];
+            string type = lineData["Type"];
+            string value = lineData["Value"];
 
             uniform_data unifData;
 
@@ -127,23 +115,24 @@ void Material::LoadMaterial(const string &filename)
             else if(type == "float")
             {
                 unifData.type = UNIFORM_FLOAT;
-                unifData.data = new float(Parser::StringToFloat(value));
+                unifData.data = new float(MetadataParser::StringToFloat(value));
             }
             else if (type == "vec4")
             {
                 unifData.type = UNIFORM_VEC4;
-                unifData.data = new vec4(Parser::StringToVec4(value));
+                unifData.data = new vec4(MetadataParser::StringToVec4(value));
             }
             else if (type == "vec3")
             {
                 unifData.type = UNIFORM_VEC3;
-                unifData.data = new vec3(Parser::StringToVec3(value));
+                unifData.data = new vec3(MetadataParser::StringToVec3(value));
             }
             unifData.name = name;
             unifData.dataID = glGetUniformLocation(mShaderProgramId, name.c_str());
 
             mUniforms[name] = unifData;
         }
+        materialFileStream.close();
     }
     else
     {

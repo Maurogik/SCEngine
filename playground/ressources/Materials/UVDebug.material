@@ -1,8 +1,1 @@
-{
-    "Name": "UVDebug",
-    "Shader": "Shaders/UVDebug",
-    "Material": {
-		"Data": [  
-		]
-	}
-}
+Shader: Shaders/UVDebug

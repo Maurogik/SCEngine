@@ -6,13 +6,10 @@
 
 #include "../headers/SCETextures.hpp"
 #include "../headers/SCETools.hpp"
+#include "../headers/SCEMetadataParser.hpp"
 #include "../headers/SCEInternal.hpp"
 
 #include "../external/SOIL/src/SOIL2.h"
-
-#include "../external/rapidjson/document.h" // rapidjson's DOM-style API
-#include "../external/rapidjson/prettywriter.h" // for stringify JSON
-#include "../external/rapidjson/filestream.h" // wrapper of C stream for prettywriter as output
 
 #include <map>
 #include <vector>
@@ -151,17 +148,26 @@ namespace TextureUtils
         GLuint textureID = SOIL_load_OGL_texture(fullTexturePath.c_str(), 0, 0, soilFlags);
 
         glBindTexture(GL_TEXTURE_2D, textureID);
-        glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        if(wrapMode == SCETextureWrap::CLAMP_WRAP)
+
+        if(mipmapsOn)
         {
-            glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         }
         else
         {
-            glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);
-            glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        }
+        if(wrapMode == SCETextureWrap::CLAMP_WRAP)
+        {
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        }
+        else
+        {
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
         }
 
         return textureID;
@@ -206,47 +212,41 @@ namespace TextureUtils
         }
 
         //load texture metada
-
-        rapidjson::Document root;
-        string fileStr = "";
         ifstream fileStream(metadataFile.c_str(), ios::in);
-
+        map<string, string> lineData;
         if(fileStream.is_open())
         {
             string currLine;
+            string name, formatStr, mipmapStr, wrappingModeStr;
+
             while (getline(fileStream, currLine))
             {
-                fileStr += "\n" + currLine;
+                lineData = MetadataParser::GetLineData(currLine);
+                if(lineData.count("Name") > 0)
+                {
+                    name = lineData["Name"];
+                }
+                if(lineData.count(FORMAT_STR) > 0)
+                {
+                    formatStr = lineData[FORMAT_STR];
+                }
+                if(lineData.count(MIPMAPS_STR) > 0)
+                {
+                    mipmapStr = lineData[MIPMAPS_STR];
+                }
+                if(lineData.count(WRAPPING_STR) > 0)
+                {
+                    wrappingModeStr = lineData[WRAPPING_STR];
+                }
             }
             fileStream.close();
 
-            //parse json string using rapidjson
-            if (root.Parse<0>(fileStr.c_str()).HasParseError())
-            {
-                Debug::RaiseError("Error reading the texture file : " + filename);
-            }
-
-            //Access values
-            Debug::Assert(root.IsObject(), "Malformated Json texture file\n");
-
-            string name = root["Name"].GetString();
-            Internal::Log("Parsing texture data for : " + name);
-
-            rapidjson::Value& textureRoot  = root["Texture"];
-
-            Debug::Assert(textureRoot.IsObject(),
-                          "Texture value of Json texture file should be an object");
-
+            bool mipmapsOn = mipmapStr != "false";
             //texture format
-            string formatStr        = textureRoot[FORMAT_STR].GetString();
-            bool mipmapsOn          = textureRoot[MIPMAPS_STR].GetBool();
-            string wrappingModeStr  = textureRoot[WRAPPING_STR].GetString();
-
             SCETextureFormat format = formatFromString(formatStr);
             SCETextureWrap wrapMode = wrapModeFromString(wrappingModeStr);
 
             return loadTexture(name, format, wrapMode, mipmapsOn);
-
         }
         else
         {

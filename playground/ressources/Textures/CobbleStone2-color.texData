@@ -1,9 +1,2 @@
-{
-    "Name": "Textures/CobbleStone2/color.jpg",
-    "Texture": {
-        "Format": "DDS",
-        "Mipmaps": true,
-        "Wrapping": "Repeat"
-    }
-}
-
+Name: Textures/CobbleStone2/color.jpg
+Format: DDS; Mipmaps: true; Wrapping: Repeat

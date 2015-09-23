@@ -134,7 +134,7 @@ target_link_libraries(${TARGET}
 )
 
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-long-long -Wno-variadic-macros -Wunused-local-typedefs -pedantic")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -Wall -Wno-long-long -Wno-variadic-macros -Wunused-local-typedef -pedantic")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -Wall -Wno-long-long -Wno-variadic-macros -pedantic")
 set(QMAKE_CXXFLAGS "${QMAKE_CXXFLAGS} -std=c++11")
 set(QMAKE_LFLAGS "${QMAKE_LFLAGS} -std=c++11")
 
