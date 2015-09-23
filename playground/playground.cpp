@@ -347,10 +347,6 @@ int main( void )
 
 //    waterGround(7.0f);
 
-    SCEHandle<Container> tree = createModel("tree", "Meshes/low_poly_tree.obj", "Materials/Tree",
-                                              vec3(-5.0f, 0.0f, -20.0f));
-    tree->GetComponent<Transform>()->SetLocalScale(vec3(1.0f));
-
     vec3 startPos = vec3(0, 250, -25);
     //Camera
     SCEHandle<Container> cameraObject = SCEScene::CreateContainer("cameraObject");

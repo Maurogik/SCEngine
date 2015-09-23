@@ -14,6 +14,11 @@
 cmake_minimum_required (VERSION 2.8)
 project (SCEngine)
 
+message("CMAKE_SYSTEM: " ${CMAKE_SYSTEM} )
+message("Compilers in use : ")
+message("CMAKE_C_COMPILER: " ${CMAKE_C_COMPILER} )
+message("CMAKE_CXX_COMPILER: " ${CMAKE_CXX_COMPILER} )
+
 find_package(OpenGL REQUIRED)
 
 
@@ -90,7 +95,17 @@ file(GLOB RESSOURCES
 )
 
 file(GLOB SCE_ASSETS
-    "${SCE_PATH}/SCE_Assets/*"
+    "${SCE_PATH}/SCE_Assets/*.material"
+    "${SCE_PATH}/SCE_Assets/*/*.material"
+    "${SCE_PATH}/SCE_Assets/*/*/*.material"
+
+    "${SCE_PATH}/SCE_Assets/*.shader"
+    "${SCE_PATH}/SCE_Assets/*/*.shader"
+    "${SCE_PATH}/SCE_Assets/*/*/*.shader"
+
+    "${SCE_PATH}/SCE_Assets/*.texData"
+    "${SCE_PATH}/SCE_Assets/*/*.texData"
+    "${SCE_PATH}/SCE_Assets/*/*/*.texData"
 )
 
 file(GLOB GLM_HEADERS
@@ -119,13 +134,13 @@ target_link_libraries(${TARGET}
 )
 
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-long-long -Wno-variadic-macros -Wunused-local-typedefs -pedantic")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -Wall -Wno-long-long -Wno-variadic-macros -pedantic")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -Wall -Wno-long-long -Wno-variadic-macros -Wunused-local-typedef -pedantic")
 set(QMAKE_CXXFLAGS "${QMAKE_CXXFLAGS} -std=c++11")
 set(QMAKE_LFLAGS "${QMAKE_LFLAGS} -std=c++11")
 
 #debug and release flag for in-engine use
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DSCE_DEBUG -DSCE_DEBUG_ENGINE")
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wall")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
 
 
 file( COPY "${TARGET}/ressources" DESTINATION "." )

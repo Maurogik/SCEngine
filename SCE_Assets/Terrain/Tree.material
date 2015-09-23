@@ -9,3 +9,8 @@
 		]
 	}
 }
+
+Shader: Shaders/Tree
+Name: LeavesColor; Type: vec3; Value: (0.0, 1.0, 0.0)
+Name: TruncColor; Type: vec3; Value: (0.8, 0.3, 0.0)
+Name: Specularity; Type: float; Value: 1.0

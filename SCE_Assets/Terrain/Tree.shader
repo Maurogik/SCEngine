@@ -15,14 +15,25 @@ _{
     uniform mat4 M;
     uniform mat4 V;
     uniform mat4 P;
+    uniform float PatchSize;
+    uniform mat4 TreeToTerrainSpace;
+    uniform sampler2D TerrainHeightMap;
 
     void main()
     {
-        gl_Position = MVP * vec4(vertexPosition_modelspace, 1.0);
-        fragUV = vertexUV;
         Position_modelspace = vertexPosition_modelspace;
-        Position_worldspace = ( M * vec4(vertexPosition_modelspace, 1.0) ).xyz;
+
+        vec4 pos_terrainspace = TreeToTerrainSpace * vec4(0.0, 0.0, 0.0, 1.0);
+        float height = texture(TerrainHeightMap, pos_terrainspace.zx * 0.5 + vec2(0.5)).a;
+
+        vec3 movedVertexPos = vertexPosition_modelspace;
+        movedVertexPos.y += (height - 0.005) * PatchSize;
+
+        fragUV = vertexUV;
+        Position_worldspace = ( M * vec4(movedVertexPos, 1.0) ).xyz;
         Normal_worldspace = ( M * vec4(vertexNormal_modelspace, 0.0) ).xyz;
+
+        gl_Position = MVP * vec4(movedVertexPos, 1.0);
     }
 _}
 
@@ -39,9 +50,13 @@ _{
     layout (location = 1) out vec3 oColor;
     layout (location = 2) out vec4 oNormal;
 
-    uniform vec3  LeavesColor;
-    uniform vec3  TruncColor;
-    uniform float Specularity;
+//    uniform vec3  LeavesColor;
+//    uniform vec3  TruncColor;
+//    uniform float Specularity;
+
+    vec3 LeavesColor = vec3(0.0, 1.0, 0.0);
+    vec3 TruncColor = vec3(0.8, 0.3, 0.0);
+    float Specularity = 1.0;
 
     void main()
     {
