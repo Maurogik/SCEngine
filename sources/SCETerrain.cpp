@@ -241,7 +241,7 @@ namespace Terrain
 #ifdef ISLAND_MODE
                     res = SCE::Math::mapToRange(-0.3f, 0.7f, 0.0f, 1.0f, res);
 #else
-                    res = SCE::Math::mapToRange(-0.35f, 1.0f, 0.0f, 1.0f, res);
+                    res = SCE::Math::mapToRange(-0.5f, 1.0f, 0.0f, 1.0f, res);
 #endif
                     heightmap[xCount * TERRAIN_TEXTURE_SIZE + zCount] = res * heightScale * edgeChange;
                 }
@@ -662,9 +662,8 @@ namespace Terrain
         terrainData->terrainSize = terrainSize;
         terrainData->patchSize = patchSize;
         terrainData->baseHeight = terrainBaseHeight;
-        terrainData->heightScale = 12.0f;
-        initializeRenderData();
-        SCE::Math::seedRandomGenerator(time(NULL));
+        terrainData->heightScale = 8.0f;
+        initializeRenderData();                
         float xOffset = SCE::Math::randRange(0.0f, 1.0f);
         float zOffset = SCE::Math::randRange(0.0f, 1.0f);
         initializeTerrainTextures(xOffset, zOffset, 2.0f, terrainData->heightScale);
