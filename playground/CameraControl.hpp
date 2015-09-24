@@ -3,7 +3,8 @@
 
 #include "../headers/SCE.hpp"
 
-class CameraControl : public SCE::GameObject {
+class CameraControl : public SCE::GameObject
+{
 
 public :
 
@@ -11,12 +12,13 @@ public :
 
 protected :
 
-                    CameraControl(SCE::SCEHandle<SCE::Container> container);
+    CameraControl(SCE::SCEHandle<SCE::Container> container, SCE::SCEHandle<SCE::Transform> target);
 
 private :
 
-                    float lastMouseX;
-                    float lastMouseY;
+    SCE::SCEHandle<SCE::Transform>  mTarget;
+    glm::vec3                       mDistanceFromTarget;
+
 };
 
 #endif

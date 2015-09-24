@@ -5,6 +5,7 @@
 #include "../headers/SCE.hpp"
 #include "Rotator.hpp"
 #include "CameraControl.hpp"
+#include "PlayerControl.hpp"
 
 using namespace SCE;
 using namespace std;
@@ -336,7 +337,6 @@ int main( void )
 
     SCEScene::CreateEmptyScene();
 
-
     lightOutdoor();
 //    redAndGreen();
 //    streetLights();
@@ -351,22 +351,20 @@ int main( void )
     //Camera
     SCEHandle<Container> cameraObject = SCEScene::CreateContainer("cameraObject");
     SCEHandle<Transform> cameraTransform = cameraObject->AddComponent<Transform>();
-    cameraObject->AddComponent<Camera>(40.0f, 16.0f/9.0f, 1.0f, 2000.0f);
+    cameraObject->AddComponent<Camera>(40.0f, 16.0f/9.0f, 1.0f, 2000.0f);    
 
 #ifdef EAGLE
     SCEHandle<Container> eagle = createModel("eagle2",
                                               "Meshes/EAGLE_2.OBJ", "Materials/Eagle",
                                               startPos);
     SCEHandle<Transform> eagleTransform = eagle->GetComponent<Transform>();
-    eagleTransform->RotateAroundAxis(vec3(0.0, 1.0, 0.0), 180.0f);
-    eagleTransform->AddChild(cameraTransform);
-    cameraTransform->SetLocalPosition(vec3(0.0f, 1.0f, -5.0f));
-//    cameraTransform->RotateAroundAxis(vec3(1.0f, 0.0f, 0.0f), 5.0f);
-
-    eagle->AddComponent<CameraControl>();
+//    eagleTransform->RotateAroundAxis(vec3(0.0, 1.0, 0.0), 180.0f);
+    eagle->AddComponent<PlayerControl>();
+    cameraTransform->SetWorldPosition(startPos + vec3(0.0, 1.0, -5.0));
+    SCEHandle<CameraControl> camControl = cameraObject->AddComponent<CameraControl>(eagleTransform);
 #else
     cameraTransform->SetLocalPosition(startPos);
-    cameraObject->AddComponent<CameraControl>();
+    cameraObject->AddComponent<PlayerControl>();
 #endif
 
     //load scene here

@@ -20,7 +20,7 @@ _{
     void main()
     {
 
-        float wings = step(-0.3, abs(vertexPosition_modelspace.x) + vertexPosition_modelspace.z)
+        float wings = step(-0.2, abs(vertexPosition_modelspace.x) + vertexPosition_modelspace.z)
                 * step(0.125, abs(vertexPosition_modelspace.x))
                 * step(-0.025, vertexPosition_modelspace.y);
 
@@ -67,7 +67,7 @@ _{
         //gamma expansion of texture because it is store gamma corrected and we will do
         //our own gamma correction in the last shading pass
         oColor = oColor * MainColor;
-        oColor = VertColor;
+//        oColor = VertColor;
         oColor = pow(oColor, vec3(2.2));
 
         oPosition = Position_worldspace;
