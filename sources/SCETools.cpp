@@ -77,9 +77,15 @@ namespace Math
         return a + (b - a) * v;
     }
 
-    void seedRandomGenerator(float val)
+    void seedRandomGenerator(int val)
     {
         srand(val);
+        int r = rand();
+        srand(r);
+        r = rand();
+        srand(r);
+        r = rand();
+        srand(r);
     }
 
     float randRange(float min, float max)
