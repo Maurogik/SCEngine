@@ -63,15 +63,18 @@ vec3 Transform::GetWorldScale() const
 
 vec3 Transform::GetLocalOrientation() const
 {
-    return degrees(QuatToEuler(mOrientation));
+    return degrees(eulerAngles(mOrientation));
 }
 
 vec3 Transform::GetWorldOrientation() const
 {
-    if(!mParent) {
+    if(!mParent)
+    {
         return GetLocalOrientation();
-    } else {
-        return degrees(QuatToEuler(GetWorldQuaternion()));
+    }
+    else
+    {
+        return degrees(eulerAngles(GetWorldQuaternion()));
     }
 }
 
@@ -82,9 +85,12 @@ const glm::quat& Transform::GetLocalQuaternion() const
 
 quat Transform::GetWorldQuaternion() const
 {
-    if(!mParent) {
+    if(!mParent)
+    {
         return GetLocalQuaternion();
-    } else {
+    }
+    else
+    {
         return mParent->GetWorldQuaternion() * mOrientation;
     }
 }
@@ -194,12 +200,27 @@ void Transform::SetWorldOrientation(const vec3 &orientation)
         quat parentQuat = mParent->GetWorldQuaternion();
         parentQuat = inverse(parentQuat);
         mOrientation = parentQuat * worldOrientation;
-        // math :
-        // newWorldOri = ParentQuat * newLocalOri
-        // newLocalOri = ParentQuat -1 * newWorldOri
     }
 }
 
+void Transform::SetLocalQuaternion(const quat &quaternion)
+{
+    mOrientation = quaternion;
+}
+
+void Transform::SetWorldQuaternion(const quat &quaternion)
+{
+    if(!mParent)
+    {
+        SetLocalQuaternion(quaternion);
+    }
+    else
+    {
+        quat parentQuat = mParent->GetWorldQuaternion();
+        parentQuat = inverse(parentQuat);
+        mOrientation = parentQuat * quaternion;
+    }
+}
 
 void Transform::RotateAroundAxis(const vec3 &axis, float angle)
 {
@@ -234,15 +255,49 @@ void Transform::LookAt(const glm::vec3& target)
     LookAt(target, vec3(0.0f, 1.0f, 0.0f));
 }
 
+glm::quat rotateBetweenVector(const glm::vec3& start, const glm::vec3& end)
+{
+    float dot = glm::dot(start, end);
+    quat rotation;
+
+    if (dot > 0.9999999f)//same forward vectors
+    {}
+    else if (dot < -0.9999999f)//opposite vectors
+    {
+        rotation = glm::angleAxis(glm::pi<float>(), vec3(0.0, 1.0, 0.0));
+    }
+    else
+    {
+        glm::vec3 rotationAxis = normalize(glm::cross(start, end));
+//        float rotationAngle = glm::acos(dot);
+//        rotation = angleAxis(rotationAngle, rotationAxis);
+
+        //other way without the acos
+        float halfCos = sqrt((dot + 1.0f)*0.5f);
+        float halfSin = sqrt(1.0f - halfCos*halfCos);
+        rotation = quat(halfCos, halfSin * rotationAxis.x, halfSin * rotationAxis.y, halfSin * rotationAxis.z);
+    }
+
+    return rotation;
+}
+
 //in world space
 void Transform::LookAt(const glm::vec3& target, const glm::vec3& upVector)
 {
-    /*vec3 direction = WorldToLocalPos(target);// - mTranslation;
+    glm::vec3 direction = WorldToLocalPos(target);
     direction = normalize(direction);
-    quat q = QuatLookAt(direction, upVector);
-    mOrientation = q;*/
+    glm::vec3 forward(0.0, 0.0, 1.0);
+    glm::vec3 localUp = WorldToLocalDir(upVector);
 
-    SCE::Debug::LogError("Not implemented yet");
+    quat rotation = rotateBetweenVector(forward, direction);
+
+    glm::vec3 right = normalize(glm::cross(direction, localUp));
+    glm::vec3 desiredUp = normalize(glm::cross(right, direction));
+    glm::vec3 newUp = rotation * glm::vec3(0.0, 1.0, 0.0);
+
+    quat upRotation = rotateBetweenVector(newUp, desiredUp);
+
+    mOrientation = mOrientation * upRotation * rotation;
 }
 
 void Transform::setParent(SCEHandle<Transform> parentPtr)
@@ -293,36 +348,6 @@ void Transform::RemoveChild(SCEHandle<Transform> child)
                , "Cannont remove because the transform is not a child");
     (*it)->removeParent();
     mChildren.erase(it);
-}
-
-vec3 Transform::QuatToEuler(const quat& q1)
-{
-    double heading, attitude, bank;
-
-    double sqw = q1.w*q1.w;
-    double sqx = q1.x*q1.x;
-    double sqy = q1.y*q1.y;
-    double sqz = q1.z*q1.z;
-    double unit = sqx + sqy + sqz + sqw; // if normalised is one, otherwise is correction factor
-    double test = q1.x*q1.y + q1.z*q1.w;
-    if (test > 0.499*unit) { // singularity at north pole
-        heading = 2 * atan2(q1.x,q1.w);
-        attitude = M_PI/2;
-        bank = 0;
-
-        return vec3(heading, attitude, bank);
-    }
-    if (test < -0.499*unit) { // singularity at south pole
-        heading = -2 * atan2(q1.x,q1.w);
-        attitude = -M_PI/2;
-        bank = 0;
-        return vec3(heading, attitude, bank);
-    }
-    heading = atan2(2*q1.y*q1.w-2*q1.x*q1.z , sqx - sqy - sqz + sqw);
-    attitude = asin(2*test/unit);
-    bank = atan2(2*q1.x*q1.w-2*q1.y*q1.z , -sqx + sqy - sqz + sqw);
-
-    return vec3(heading, attitude, bank);
 }
 
 
