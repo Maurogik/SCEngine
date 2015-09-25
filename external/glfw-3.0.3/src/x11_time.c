@@ -30,7 +30,7 @@
 #include <sys/time.h>
 #include <time.h>
 
-
+#include <stdio.h>
 // Return raw time
 //
 static uint64_t getRawTime(void)
@@ -39,7 +39,6 @@ static uint64_t getRawTime(void)
     if (_glfw.x11.timer.monotonic)
     {
         struct timespec ts;
-
         clock_gettime(CLOCK_MONOTONIC, &ts);
         return (uint64_t) ts.tv_sec * (uint64_t) 1000000000 + (uint64_t) ts.tv_nsec;
     }

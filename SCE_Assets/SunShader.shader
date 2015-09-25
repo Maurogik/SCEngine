@@ -87,7 +87,7 @@ _{
         return vec4(SunColor, sun);
     }
 
-//#define LIGHT_SHAFTS
+#define LIGHT_SHAFTS
 #ifdef LIGHT_SHAFTS
     float computeVolumetricLight(vec2 uv, vec2 sunUV)
     {
@@ -135,12 +135,12 @@ _{
 
         color = vec2(0.0);       
 
-#ifdef LIGHT_SHAFTS
         if(sunStrength > 0.0)
         {
             color.r = sunColor.a * notOccludedByScene * sunStrength;
+#ifdef LIGHT_SHAFTS
             color.g = computeVolumetricLight(uv, sunUV) * sunStrength;
-        }
 #endif
+        }
     }
 _}

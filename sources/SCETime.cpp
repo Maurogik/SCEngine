@@ -34,7 +34,7 @@ namespace Time
         timeData->mDeltaTime = currentTime - timeData->mLastTime;
         timeData->mDeltaTime *= timeData->mTimeSpeed;
         timeData->mTimeInSeconds += timeData->mDeltaTime;
-        timeData->mRealTimeInSeconds = timeData->mStartTime - currentTime;
+        timeData->mRealTimeInSeconds = currentTime - timeData->mStartTime;
         timeData->mLastTime = currentTime;
     }
 

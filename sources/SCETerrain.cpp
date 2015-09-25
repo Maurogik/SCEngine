@@ -14,7 +14,6 @@
 #include "../headers/SCEMeshLoader.hpp"
 #include "../headers/SCEMeshRender.hpp"
 
-
 #include <time.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/random.hpp>
@@ -42,8 +41,8 @@
 #define TREE_SHADER_NAME "Terrain/Tree"
 #define TREE_MODEL_NAME "Terrain/Meshes/low_poly_tree.obj"
 
-//#define TERRAIN_TEXTURE_SIZE 4096
-#define TERRAIN_TEXTURE_SIZE 2048
+#define TERRAIN_TEXTURE_SIZE 4096
+//#define TERRAIN_TEXTURE_SIZE 2048
 //#define TERRAIN_TEXTURE_SIZE 512
 #define TEX_TILE_SIZE 2.0f
 
