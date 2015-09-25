@@ -15,8 +15,10 @@ protected :
 
 private :
 
-                    float lastMouseX;
-                    float lastMouseY;
+                    float averageDx;
+                    float averageDy;
+                    float averageUpStr;
+                    float lastSpeed;
 };
 
 #endif

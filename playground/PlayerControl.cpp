@@ -15,8 +15,10 @@ PlayerControl::PlayerControl(SCE::SCEHandle<Container> container)
     xMouse /= SCECore::GetWindowWidth();
     yMouse /= SCECore::GetWindowHeight();
 
-    lastMouseX = xMouse;
-    lastMouseY = yMouse;
+    averageDx = 0.0f;
+    averageDy = 0.0f;
+    averageUpStr = 1.0f;
+    lastSpeed = 0.0f;
 }
 
 void PlayerControl::Update()
@@ -34,26 +36,20 @@ void PlayerControl::Update()
     xMouse /= SCECore::GetWindowWidth();
     yMouse /= SCECore::GetWindowHeight();
 
-    float dX = xMouse - 0.5f;// - lastMouseX;
-    float dY = yMouse - 0.5f;// - lastMouseY;
-
-    lastMouseX = xMouse;
-    lastMouseY = yMouse;
+    float dX = xMouse - 0.5f;
+    float dY = yMouse - 0.5f;
 
     float deltaTime = SCE::Time::DeltaTime();
-
-//    float xRotateSpeed = 4000.0f;
-//    float yRotateSpeed = 2000.0f;
-
-    float xRotateSpeed = 50.0f;
-    float yRotateSpeed = 50.0f;
-
+    float xRotateSpeed = 0.02f;
+    float yRotateSpeed = 0.03f;
+    float zRotateSpeed = 1.5f;
     float speed = 30.0f;
+    float turnSlowdown = 10.0f;
+    float diveSpeedIncrease = 40.0f;
+    float climbSlowdown = 10.0f;
 
     vec3 position = transform->GetWorldPosition();
-    vec3 forward = transform->Forward();
-    //constant mouvement
-    position += forward * deltaTime * speed;
+    vec3 forward = transform->Forward();    
 
     dX = 0.0f;
     dY = 0.0f;
@@ -62,13 +58,13 @@ void PlayerControl::Update()
             glfwGetKey( window, GLFW_KEY_Z ) == GLFW_PRESS ||
             glfwGetKey( window, GLFW_KEY_W ) == GLFW_PRESS)
     {
-        dY = 1.0f;
+        dY = -1.0f;
     }
     // Move backward
     if (glfwGetKey( window, GLFW_KEY_DOWN ) == GLFW_PRESS ||
             glfwGetKey( window, GLFW_KEY_S ) == GLFW_PRESS)
     {
-        dY = -1.0f;
+        dY = 1.0f;
     }
     // Strafe right
     if (glfwGetKey( window, GLFW_KEY_RIGHT ) == GLFW_PRESS ||
@@ -85,35 +81,51 @@ void PlayerControl::Update()
        dX = -1.0f;
     }
 
-
-//    vec3 yAxis = transform->WorldToLocalDir(vec3(0.0, 1.0, 0.0));
-//    vec3 xAxis = vec3(1.0, 0.0, 0.0);//transform->WorldToLocalDir(vec3(1.0, 0.0, 0.0));
-//    vec3 zAxis = transform->WorldToLocalDir(vec3(0.0, 0.0, 1.0));
-
-
+//    vec3 yAxis(transform->LocalToWorldDir(vec3(0.0, 1.0, 0.0)));
     vec3 yAxis(0.0, 1.0, 0.0);
     vec3 xAxis(transform->LocalToWorldDir(vec3(1.0, 0.0, 0.0)));
     xAxis.y = 0.0f;
     xAxis = normalize(xAxis);
 
-    vec3 target = dX * deltaTime * xAxis + dY * deltaTime * yAxis + transform->Forward();
-    target.y = glm::clamp(target.y, -0.75f, 0.75f);
+    float avgDuration = 0.5f;
+    float upStrAvgDuration = 0.8f;
+    averageDx = (averageDx * avgDuration + dX * deltaTime) / (avgDuration + deltaTime);
+    averageDy = (averageDy * avgDuration + dY * deltaTime) / (avgDuration + deltaTime);
+
+    dX = averageDx * xRotateSpeed;
+    dY = averageDy * yRotateSpeed;
+
+    vec3 target = dX * xAxis +
+            dY * yAxis +
+            transform->Forward();
+
+    float upLimit = 0.75f;
+    float lowLimit = -0.85f;
+
+    target.y = glm::clamp(target.y, lowLimit, upLimit);
+
+    float upStr = averageDx / (1.0f + abs(target.y * 5.0f))  * zRotateSpeed;
+    averageUpStr = (averageUpStr * upStrAvgDuration + upStr * deltaTime) / (upStrAvgDuration + deltaTime);
+
+//    Debug::Log(std::to_string(upStr));
+    vec3 upVector = normalize(averageUpStr * xAxis + vec3(0.0, 1.0, 0.0));
+
+    float turnModifier = abs(averageDx) * turnSlowdown;
+    float pitchModifier = target.y < 0.0f ? target.y * diveSpeedIncrease : target.y * climbSlowdown;
+    speed = speed - turnModifier - pitchModifier;
+
+    if(lastSpeed > speed)
+    {//deccelerate slowly
+        speed = (lastSpeed * 99.0f + speed)/100.0f;
+    }
+    lastSpeed = speed;
+
+    Debug::Log(std::to_string(speed));
     target = transform->GetWorldPosition() + target;
 
-    vec3 upVector = normalize(dX * deltaTime * xAxis * 10.0f + vec3(0.0, 1.0, 0.0));
-
-//    vec3 yAxis(0.0, 1.0, 0.0);
-//    vec3 xAxis(1.0, 0.0, 0.0);
-//    vec3 zAxis(0.0, 0.0, 1.0);
-
-//    transform->RotateAroundAxis(yAxis, dX * xRotateSpeed * deltaTime);
-//    transform->RotateAroundAxis(xAxis, dY * yRotateSpeed * deltaTime);
-
-//    vec3 orientation = transform->GetLocalOrientation();
-//    orientation.z = -dX * 40.0f;
-//    transform->SetLocalOrientation(orientation);
-
     transform->LookAt(target, upVector);
+    //constant mouvement
+    position += forward * deltaTime * speed;
     transform->SetWorldPosition(position);
 
 }

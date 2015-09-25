@@ -132,6 +132,21 @@ namespace SCE {
          */
         void                    LookAt(const glm::vec3& target, const glm::vec3& upVector);
 
+        /**
+         * @brief Rotate the object a fraction of the roation needed to look at the target
+         * @param target : a vector3 reprensenting the target in world space
+         * @param factor : how mush of the look-at rotation ot perform (1.0 = full look at)
+         */
+        void                    SmoothLookAt(const glm::vec3& target, float factor);
+
+        /**
+         * @brief Rotate the object a fraction of the roation needed to look at the target
+         * @param target : a vector3 reprensenting the target in world space
+         * @param upVector : a vector3 representing the desired up vector for the rotated transform
+         * @param factor : how mush of the look-at rotation ot perform (1.0 = full look at)
+         */
+        void                    SmoothLookAt(const glm::vec3& target, const glm::vec3& upVector, float factor);
+
         //-------------------- Transform
         /**
          * @brief Computes and returns the object's transformation matrix relative to it's parent's transformation matrix
@@ -242,8 +257,6 @@ namespace SCE {
          * @brief Removes the transform's parent, the local transform is now the world transform
          */
         void                    removeParent();
-
-        static glm::vec3        QuatToEuler(const glm::quat& q1);
 
         //glm::mat4                       mTransformMatrix;
         glm::vec3                       mTranslation;

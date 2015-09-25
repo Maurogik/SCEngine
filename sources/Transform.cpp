@@ -249,12 +249,6 @@ void Transform::RotateAroundPivot(const glm::vec3& pivot, const glm::vec3& axis,
     mTranslation -= move;
 }
 
-//in world space
-void Transform::LookAt(const glm::vec3& target)
-{
-    LookAt(target, vec3(0.0f, 1.0f, 0.0f));
-}
-
 glm::quat rotateBetweenVector(const glm::vec3& start, const glm::vec3& end)
 {
     float dot = glm::dot(start, end);
@@ -281,14 +275,9 @@ glm::quat rotateBetweenVector(const glm::vec3& start, const glm::vec3& end)
     return rotation;
 }
 
-//in world space
-void Transform::LookAt(const glm::vec3& target, const glm::vec3& upVector)
+glm::quat computeLookAtRotation(const glm::vec3& direction, const glm::vec3& localUp)
 {
-    glm::vec3 direction = WorldToLocalPos(target);
-    direction = normalize(direction);
     glm::vec3 forward(0.0, 0.0, 1.0);
-    glm::vec3 localUp = WorldToLocalDir(upVector);
-
     quat rotation = rotateBetweenVector(forward, direction);
 
     glm::vec3 right = normalize(glm::cross(direction, localUp));
@@ -297,7 +286,57 @@ void Transform::LookAt(const glm::vec3& target, const glm::vec3& upVector)
 
     quat upRotation = rotateBetweenVector(newUp, desiredUp);
 
-    mOrientation = mOrientation * upRotation * rotation;
+    return upRotation * rotation;
+}
+
+//in world space
+void Transform::LookAt(const glm::vec3& target)
+{
+    LookAt(target, vec3(0.0f, 1.0f, 0.0f));
+}
+
+//in world space
+void Transform::LookAt(const glm::vec3& target, const glm::vec3& upVector)
+{
+    glm::vec3 direction = WorldToLocalPos(target);
+    direction = normalize(direction);
+    glm::vec3 localUp = WorldToLocalDir(upVector);
+
+    glm::quat rotationToLookAt = computeLookAtRotation(direction, localUp);
+    mOrientation = mOrientation * rotationToLookAt;
+}
+
+void Transform::SmoothLookAt(const vec3 &target, float factor)
+{
+    SmoothLookAt(target, vec3(0.0f, 1.0f, 0.0f), factor);
+}
+
+void Transform::SmoothLookAt(const vec3 &target, const vec3 &upVector, float factor)
+{
+    glm::vec3 direction = WorldToLocalPos(target);
+    direction = normalize(direction);
+    glm::vec3 localUp = WorldToLocalDir(upVector);
+
+    glm::quat rotationToLookAt = computeLookAtRotation(direction, localUp);
+    glm::quat targetRotation = mOrientation * rotationToLookAt;
+    mOrientation = glm::mix(mOrientation, targetRotation, factor);
+}
+
+void Transform::AddChild(SCEHandle<Transform> child)
+{
+    Debug::Assert(find(mChildren.begin(), mChildren.end(), child) == mChildren.end()
+               , "Cannont add because the child was added");
+    mChildren.push_back(child);
+    child->setParent(this);
+}
+
+void Transform::RemoveChild(SCEHandle<Transform> child)
+{
+    auto it = find(begin(mChildren), end(mChildren), child);
+    Debug::Assert(it != end(mChildren)
+               , "Cannont remove because the transform is not a child");
+    (*it)->removeParent();
+    mChildren.erase(it);
 }
 
 void Transform::setParent(SCEHandle<Transform> parentPtr)
@@ -332,22 +371,4 @@ void Transform::removeParent()
     mOrientation = wQuat;
     mScale       = wScale;
 }
-
-void Transform::AddChild(SCEHandle<Transform> child)
-{
-    Debug::Assert(find(mChildren.begin(), mChildren.end(), child) == mChildren.end()
-               , "Cannont add because the child was added");
-    mChildren.push_back(child);
-    child->setParent(this);
-}
-
-void Transform::RemoveChild(SCEHandle<Transform> child)
-{
-    auto it = find(begin(mChildren), end(mChildren), child);
-    Debug::Assert(it != end(mChildren)
-               , "Cannont remove because the transform is not a child");
-    (*it)->removeParent();
-    mChildren.erase(it);
-}
-
 

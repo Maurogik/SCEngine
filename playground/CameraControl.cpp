@@ -13,13 +13,14 @@ void CameraControl::Update()
 {
     //move camera
     SCEHandle<Transform> transform = GetContainer()->GetComponent<Transform>();
-//    glm::vec3 pos = mTarget->LocalToWorldPos(mDistanceFromTarget);
     glm::vec3 targetPos = mTarget->GetWorldPosition();
     glm::vec3 pos = targetPos;
     pos += mTarget->Forward() * -3.5f + mTarget->Up() * 1.0f;
     transform->SetWorldPosition(pos);
 
     float lookAheadDist = 10.0f;
-    transform->LookAt(mTarget->GetWorldPosition() + mTarget->Forward() * lookAheadDist);
+    glm::vec3 lookAtTarget = mTarget->GetWorldPosition() + mTarget->Forward() * lookAheadDist +
+            mTarget->Up();
+    transform->SmoothLookAt(lookAtTarget, 0.2f);
 }
 
