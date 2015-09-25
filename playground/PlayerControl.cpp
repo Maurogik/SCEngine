@@ -40,12 +40,12 @@ void PlayerControl::Update()
     float dY = yMouse - 0.5f;
 
     float deltaTime = SCE::Time::DeltaTime();
-    float xRotateSpeed = 0.02f;
-    float yRotateSpeed = 0.03f;
+    float xRotateSpeed = 0.015f;
+    float yRotateSpeed = 0.02f;
     float zRotateSpeed = 1.5f;
-    float speed = 30.0f;
+    float speed = 20.0f;
     float turnSlowdown = 10.0f;
-    float diveSpeedIncrease = 40.0f;
+    float diveSpeedIncrease = 30.0f;
     float climbSlowdown = 10.0f;
 
     vec3 position = transform->GetWorldPosition();
@@ -53,33 +53,39 @@ void PlayerControl::Update()
 
     dX = 0.0f;
     dY = 0.0f;
-    // Move forward
+
     if (glfwGetKey( window, GLFW_KEY_UP ) == GLFW_PRESS ||
             glfwGetKey( window, GLFW_KEY_Z ) == GLFW_PRESS ||
             glfwGetKey( window, GLFW_KEY_W ) == GLFW_PRESS)
     {
         dY = -1.0f;
     }
-    // Move backward
+
     if (glfwGetKey( window, GLFW_KEY_DOWN ) == GLFW_PRESS ||
             glfwGetKey( window, GLFW_KEY_S ) == GLFW_PRESS)
     {
         dY = 1.0f;
     }
-    // Strafe right
+
     if (glfwGetKey( window, GLFW_KEY_RIGHT ) == GLFW_PRESS ||
             glfwGetKey( window, GLFW_KEY_D ) == GLFW_PRESS ||
             glfwGetKey( window, GLFW_KEY_D ) == GLFW_PRESS)
     {
         dX = 1.0f;
     }
-    // Strafe left
+
     if (glfwGetKey( window, GLFW_KEY_LEFT ) == GLFW_PRESS ||
             glfwGetKey( window, GLFW_KEY_Q ) == GLFW_PRESS ||
             glfwGetKey( window, GLFW_KEY_A ) == GLFW_PRESS)
     {
        dX = -1.0f;
     }
+
+    if (glfwGetKey( window, GLFW_KEY_SPACE ) == GLFW_PRESS)
+    {
+       speed = 150.0f;
+    }
+
 
 //    vec3 yAxis(transform->LocalToWorldDir(vec3(0.0, 1.0, 0.0)));
     vec3 yAxis(0.0, 1.0, 0.0);
@@ -120,7 +126,6 @@ void PlayerControl::Update()
     }
     lastSpeed = speed;
 
-    Debug::Log(std::to_string(speed));
     target = transform->GetWorldPosition() + target;
 
     transform->LookAt(target, upVector);

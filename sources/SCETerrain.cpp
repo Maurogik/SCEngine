@@ -42,7 +42,9 @@
 #define TREE_SHADER_NAME "Terrain/Tree"
 #define TREE_MODEL_NAME "Terrain/Meshes/low_poly_tree.obj"
 
-#define TERRAIN_TEXTURE_SIZE 512
+//#define TERRAIN_TEXTURE_SIZE 4096
+#define TERRAIN_TEXTURE_SIZE 2048
+//#define TERRAIN_TEXTURE_SIZE 512
 #define TEX_TILE_SIZE 2.0f
 
 //#define ISLAND_MODE
@@ -195,7 +197,7 @@ namespace Terrain
             float amplitude = 1.0f;
             float scale = 0.0f;
             float noise = 0.0f;
-            float persistence = 0.75f;
+            float persistence = 0.3f;
 
             float x, z;
             float y = 0.0f;
@@ -229,19 +231,19 @@ namespace Terrain
                     for(int l = 0; l < nbLayers; ++l)
                     {
                         //stb_perlin returns values between -0.6 & 0.6
-                        float tmpNoise = stb_perlin_noise3(x * scale, y * scale, z * scale) * amplitude;
-                        noise += tmpNoise;
+                        float tmpNoise = stb_perlin_noise3(x * scale, y * scale, z * scale);
+                        tmpNoise = SCE::Math::mapToRange(-0.7f, 0.7f, 0.0f, 1.0f, tmpNoise);
+                        noise += tmpNoise * amplitude;
                         maxValue += amplitude;
-                        amplitude *= persistence * (tmpNoise + 0.5f);
+                        amplitude *= persistence * (0.75f + tmpNoise);
                         scale *= 2.0f;
                     }
 
                     float res = noise / maxValue;
-//                  res  = SCE::Math::mapToRange(-0.5f, 0.5f, 0.0f, 1.0f, res);
 #ifdef ISLAND_MODE
-                    res = SCE::Math::mapToRange(-0.3f, 0.7f, 0.0f, 1.0f, res);
+                    res = SCE::Math::mapToRange(0.4f, 1.0f, 0.0f, 1.0f, res);
 #else
-                    res = SCE::Math::mapToRange(-0.5f, 1.0f, 0.0f, 1.0f, res);
+                    res = SCE::Math::mapToRange(0.0f, 1.0f, 0.0f, 1.0f, res);
 #endif
                     heightmap[xCount * TERRAIN_TEXTURE_SIZE + zCount] = res * heightScale * edgeChange;
                 }
@@ -662,7 +664,7 @@ namespace Terrain
         terrainData->terrainSize = terrainSize;
         terrainData->patchSize = patchSize;
         terrainData->baseHeight = terrainBaseHeight;
-        terrainData->heightScale = 8.0f;
+        terrainData->heightScale = 1200.0f / patchSize;
         initializeRenderData();                
         float xOffset = SCE::Math::randRange(0.0f, 1.0f);
         float zOffset = SCE::Math::randRange(0.0f, 1.0f);

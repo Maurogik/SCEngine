@@ -87,14 +87,14 @@ _{
         return vec4(SunColor, sun);
     }
 
-#define LIGHT_SHAFTS
+//#define LIGHT_SHAFTS
 #ifdef LIGHT_SHAFTS
     float computeVolumetricLight(vec2 uv, vec2 sunUV)
     {
-        float nbSamples = 80.0;
-        float decay = 4.0;
-        float density = 0.6;
-        float weight = 0.02;
+        float nbSamples = 32.0;
+        float decay = 2.0;
+        float density = 0.1;
+        float weight = 0.04;
 
         vec2 stepToFrag = (sunUV - uv);
         stepToFrag *= 1.0 / float(nbSamples) * density;

@@ -347,11 +347,11 @@ int main( void )
 
 //    waterGround(7.0f);
 
-    vec3 startPos = vec3(0, 250, -25);
+    vec3 startPos = vec3(0, 350, -25);
     //Camera
     SCEHandle<Container> cameraObject = SCEScene::CreateContainer("cameraObject");
     SCEHandle<Transform> cameraTransform = cameraObject->AddComponent<Transform>();
-    cameraObject->AddComponent<Camera>(40.0f, 16.0f/9.0f, 1.0f, 2000.0f);    
+    cameraObject->AddComponent<Camera>(40.0f, 16.0f/9.0f, 1.0f, 3000.0f);
 
 #ifdef EAGLE
     SCEHandle<Container> eagle = createModel("eagle2",

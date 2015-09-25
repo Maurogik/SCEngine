@@ -52,12 +52,13 @@ _{
             vec2 centerUv = (t0 - t1) * 0.5 + t1;
             float height = texture(TerrainHeightMap, centerUv).a;
 
-            float farDist = TerrainMaxDistance + 50.0;
+            float farDist = TerrainMaxDistance + 10.0;
             vec4 center_cameraspace = V * M * ((p0 - p1) * 0.5 + p1 + vec4(0.0, height, 0.0, 0.0));
-            float tess = 1.0 - clamp(center_cameraspace.z / farDist, 0.0, 1.0);//map to 0..64 range
-            tess = pow(tess, 6.0);
+            float dist = farDist * step(center_cameraspace.z, -100.0) + abs(center_cameraspace.z);
+            float tess = 1.0 - clamp(dist / farDist - 0.02, 0.0, 1.0);//map to 0..64 range
+            tess = pow(tess, 10.0);
 
-            return clamp(tess * 64.0, 6.0, 64.0);//between 0 and 64
+            return clamp(tess * 64.0, 4.0, 64.0);//between 0 and 64
         }
         else
         {
@@ -269,10 +270,10 @@ _{
         float flatness = pow(dot(normAndHeight.xyz, vec3(0.0, 1.0, 0.0)), 8.0);
         float slope = 1.0 - flatness;
 
-        float bottomEnd = 0.15;
-        float middleEnd = 0.35;
+        float bottomEnd = 0.35;
+        float middleEnd = 0.65;
 
-        float bottomToMiddleMix = 0.2;// * normAndHeight.y;
+        float bottomToMiddleMix = 0.4;// * normAndHeight.y;
         float middleToTopMix = 0.2;// * (normAndHeight.y);
 
 
