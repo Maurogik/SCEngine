@@ -87,8 +87,8 @@ void PlayerControl::Update()
     xAxis.y = 0.0f;
     xAxis = normalize(xAxis);
 
-    float avgDuration = 0.5f;
-    float upStrAvgDuration = 0.8f;
+    float avgDuration = 0.3f;
+    float upStrAvgDuration = 0.5f;
     averageDx = (averageDx * avgDuration + dX * deltaTime) / (avgDuration + deltaTime);
     averageDy = (averageDy * avgDuration + dY * deltaTime) / (avgDuration + deltaTime);
 

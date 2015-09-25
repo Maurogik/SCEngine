@@ -21,6 +21,6 @@ void CameraControl::Update()
     float lookAheadDist = 10.0f;
     glm::vec3 lookAtTarget = mTarget->GetWorldPosition() + mTarget->Forward() * lookAheadDist +
             mTarget->Up();
-    transform->SmoothLookAt(lookAtTarget, 0.2f);
+    transform->SmoothLookAt(lookAtTarget, 0.3f);
 }
 
