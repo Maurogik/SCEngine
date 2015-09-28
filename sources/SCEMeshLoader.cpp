@@ -338,11 +338,11 @@ namespace MeshLoader
 
         float radius    = 1.0f;
         float fTess     = (float)tesselation;
-        float angleStep = 90.0f / glm::pow(2.0f, fTess);
-        int nbSteps     = 360.0f / angleStep;
+        float angleStep = glm::pi<float>() * 0.5f / glm::pow(2.0f, fTess);
+        int nbSteps     = glm::ceil(glm::pi<float>() * 2.0f / angleStep);
 
         //indicies of vertices, normal and uvs stored by angle over x, angle over y;
-        short *angleIndices = new short[nbSteps * nbSteps];
+        std::vector<short> angleIndices(nbSteps * nbSteps);
         //set the array to -1 as default value
         for(int i = 0; i < nbSteps; ++i)
         {
@@ -357,7 +357,7 @@ namespace MeshLoader
         vector<vec2>    uvs;
         vector<ushort>  indices;
 
-        //loop over all the angles to make a full 360 over x and y axis
+        //loop over all the angles to make a 180 over x and a 360 over y axis
         for(int xStep = 0; xStep < nbSteps / 2; ++xStep)
         {
             float xAngle = xStep * angleStep;
@@ -427,7 +427,6 @@ namespace MeshLoader
         computeTangentBasisIndexed(indices, vertices, uvs, normals,
                                    tangents, bitangents);
 
-        delete[] angleIndices;
         return addMeshData(meshName, indices, vertices, normals, uvs, tangents, bitangents);
     }
 
@@ -442,14 +441,13 @@ namespace MeshLoader
         float length        = 1.0f;
         float fTess         = tesselation;
         //atefacts appear if angleStep is to low so clamp to min value
-        float angleStep     = glm::max(90.0f / glm::pow(2.0f, fTess), 5.0f);
+        float angleStep     = glm::max(glm::pi<float>() * 0.5f / glm::pow(2.0f, fTess), radians(5.0f));
         float lengthStep    = glm::max(length / glm::pow(2.0f, fTess), 0.2f);
-        int nbAngleSteps    = 360.0f / angleStep + 1;
+        int nbAngleSteps    = glm::ceil(glm::pi<float>() * 2.0f / angleStep) + 1;
         int nbLengthSteps   = length / lengthStep + 1;
 
-
         //indicies of vertices, normal and uvs stored by [angle over x, distance over z]
-        short *viewedVertices = new short[nbAngleSteps * nbLengthSteps];
+        std::vector<short> viewedVertices(nbAngleSteps * nbLengthSteps);
         //set the array to -1 as default value
         for(int i = 0; i < nbAngleSteps; ++i)
         {
@@ -470,7 +468,7 @@ namespace MeshLoader
         uvs.push_back(vec2(0.0, 0.0));
         short endVertexIndex = 0;
 
-        glm::quat coneRotation = glm::angleAxis(angle, vec3(1.0f, 0.0f, 0.0f));
+        glm::quat coneRotation = glm::angleAxis(radians(angle), vec3(1.0f, 0.0f, 0.0f));
 
         //Generate vertices for cone surface
         //loop over all the angles to make a full 360 around the cone's Z axis
@@ -540,7 +538,7 @@ namespace MeshLoader
                 indices.push_back(vertIndices[1]);
 
                 //Generate vertices for cone end
-                if(zPosStep == nbLengthSteps - 1)
+                if(zPosStep == nbLengthSteps - 2)
                 {
                     //push a triangle at the end of the cone
                     indices.push_back(vertIndices[3]);
@@ -548,7 +546,6 @@ namespace MeshLoader
                     indices.push_back(endVertexIndex);
                 }
             }
-            delete[] viewedVertices;
         }
 
         vector<vec3> tangents;
@@ -577,7 +574,8 @@ namespace MeshLoader
             vec3(-width/2.0f,  height/2.0f,  0.0f)
         };
 
-        vector<vec2> uvs = vector<vec2>{
+        vector<vec2> uvs = vector<vec2>
+        {
                vec2(0.0f, 0.0f),
                vec2(1.0f, 0.0f),
                vec2(1.0f, 1.0f),

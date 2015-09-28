@@ -1,9 +1,2 @@
-{
-    "Name": "Textures/CarvedSandstone/normal.png",
-    "Texture": {
-        "Format": "DDS",
-        "Mipmaps": true,
-        "Wrapping": "Repeat"
-    }
-}
-
+Name: Textures/CarvedSandstone/normal.png
+Format: DDS; Mipmaps: true; Wrapping: Repeat

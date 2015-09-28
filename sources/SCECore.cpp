@@ -8,8 +8,6 @@
 #include "../headers/SCE_GLDebug.hpp"
 #include "../headers/SCEInternal.hpp"
 #include "../headers/SCERender.hpp"
-#include "../headers/SCETextures.hpp"
-#include "../headers/SCEMeshLoader.hpp"
 
 using namespace SCE;
 using namespace std;

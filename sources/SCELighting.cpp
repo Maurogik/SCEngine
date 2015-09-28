@@ -24,11 +24,11 @@ using namespace std;
 #define DEPTH_MAT_UNIFORM_NAME "DepthConvertMat"
 #define FAR_SPLIT_UNIFORM_NAME "FarSplits_cameraspace"
 
-#define SHADOW_MAP_WIDTH (2048)
-#define SHADOW_MAP_HEIGHT (2048)
+#define SHADOW_MAP_WIDTH (4096)
+#define SHADOW_MAP_HEIGHT (4096)
 
 #define CASCADE_COUNT 4
-#define MAX_SHADOW_DISTANCE 300.0f
+#define MAX_SHADOW_DISTANCE 1500.0f
 
 SCELighting* SCELighting::s_instance = nullptr;
 
@@ -172,9 +172,16 @@ void SCELighting::RenderLightsToGBuffer(const CameraRenderData& renderData,
 
 void SCELighting::RenderSkyToGBuffer(const CameraRenderData& renderData, SCE_GBuffer& gBuffer)
 {
-    vec3 sunPos = s_instance->mMainLight->GetContainer()->GetComponent<Transform>()->GetWorldPosition();
-    //Render sky and sun
-    SCE::SkyRenderer::Render(renderData, gBuffer, sunPos);
+    if(s_instance->mMainLight)
+    {
+        vec3 sunPos = s_instance->mMainLight->GetContainer()->GetComponent<Transform>()->GetWorldPosition();
+        //Render sky and sun
+        SCE::SkyRenderer::Render(renderData, gBuffer, sunPos);
+    }
+    else
+    {
+        Debug::LogError("No sun light set, skipping sky rendering");
+    }
 }
 
 
@@ -402,6 +409,9 @@ std::vector<CameraRenderData> SCELighting::computeCascadedLightFrustrums(Frustru
 
     float lambda    = 0.75f;//split correction strength
     float near      = cameraFrustrum.near;
+    // do computation of sub-frustrum as if the camera frustrum was shorter (MAX_SHADOW_DISTANCE)
+    // in order to keep a good shadow quality no matter how large the far distance gets.
+    // the las shadow map will still cover the frustrum until the end (at very low resolution)
     float far       = glm::min(cameraFrustrum.far, MAX_SHADOW_DISTANCE);
     float ratio     = far / near;
 
@@ -419,7 +429,8 @@ std::vector<CameraRenderData> SCELighting::computeCascadedLightFrustrums(Frustru
                        + (1.0f - lambda) * (near + (far - near) * si);
         zSplits[i - 1].y = zSplits[i].x * 1.005f;//slightly offset to fix holes ?
     }
-
+    // here we set the last sub-frustrum (farthest for camera) to cover until the end of the camera frustrum
+    // that way, even very far objects have shadows
     zSplits[cascadeCount - 1].y = cameraFrustrum.far;
 
     for(uint i = 0; i < cascadeCount; ++i)

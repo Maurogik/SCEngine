@@ -30,7 +30,7 @@ Camera::Camera(SCEHandle<Container> &container)
     mFrustrumData.type          = PERSPECTIVE;
     mFrustrumData.near          = 1.0f;
     mFrustrumData.far           = 100.0f;
-    mFrustrumData.fov           = 90.0f;
+    mFrustrumData.fov           = radians(90.0f);
     mFrustrumData.aspectRatio   = 4.0f / 3.0f;
 
     init();
@@ -55,7 +55,7 @@ Camera::Camera(SCEHandle<Container> &container
     mFrustrumData.type          = PERSPECTIVE;
     mFrustrumData.near          = nearPlane;
     mFrustrumData.far           = farPlane;
-    mFrustrumData.fov           = fieldOfView;
+    mFrustrumData.fov           = radians(fieldOfView);
     mFrustrumData.aspectRatio   = aspectRatio;
 
     init();

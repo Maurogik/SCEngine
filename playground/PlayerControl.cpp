@@ -91,6 +91,10 @@ void PlayerControl::Update()
     {
        speed = 150.0f;
     }
+    else if (glfwGetKey( window, GLFW_KEY_LEFT_SHIFT ) == GLFW_PRESS)
+    {
+        speed = 1.0f;
+    }
 
 
 //    vec3 yAxis(transform->LocalToWorldDir(vec3(0.0, 1.0, 0.0)));

@@ -130,7 +130,7 @@ void Light::bindRenderDataForShader(const vec3& cameraPosition)
     lightDir = glm::normalize(lightDir);
 
     /* half angle because we want the dot from light Z to cone surfcade*/
-    vec3 rotatedZ = glm::angleAxis(mLightMaxAngle * 0.5f , vec3(1.0, 0.0, 0.0)) * vec3(0.0, 0.0, 1.0);
+    vec3 rotatedZ = glm::angleAxis(radians(mLightMaxAngle * 0.5f) , vec3(1.0, 0.0, 0.0)) * vec3(0.0, 0.0, 1.0);
     rotatedZ = normalize(rotatedZ);
     float maxDot = dot(rotatedZ, vec3(0.0, 0.0, 1.0));
 
@@ -174,7 +174,6 @@ void Light::bindLightModelForShader()
     //last param is array of subroutine index for each subroutine uniforms
     //array[i] = index of subroutine to pick for uniform i
     glUniformSubroutinesuiv(LIGHT_ROUTINE_SHADER_TYPE, LIGHT_ROUTINE_COUNT, &mLightSubroutineIndex);
-
 }
 
 const glm::vec4& Light::GetLightColor() const
@@ -276,7 +275,7 @@ ui16 Light::generateSpotLightMesh()
     //compute spot attenuation
 #ifdef LIGHT_BOUNDS_COMPLEX
     vec3 spotDir(0.0, 0.0, 1.0);
-    vec3 spotAngleDir = normalize(angleAxis(mLightMaxAngle, vec3(1.0, 0.0, 0.0)) * spotDir);
+    vec3 spotAngleDir = normalize(angleAxis(radians(mLightMaxAngle), vec3(1.0, 0.0, 0.0)) * spotDir);
     float maxDot = dot(spotDir, spotAngleDir);
     mSpotAttenuation = log(mLightCutoff) / log(maxDot) * 2.0;
 #endif

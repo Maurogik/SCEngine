@@ -39,6 +39,7 @@ SCEHandle<Container> createCone(const string& name, const float& tesselation,
 
     SCEHandle<Transform> transform = object->AddComponent<Transform>();
     transform->SetWorldPosition(pos);
+    transform->SetLocalScale(vec3(length));
 
     ui16 meshId = SCE::MeshLoader::CreateConeMesh(angle, tesselation);
     object->AddComponent<MeshRenderer>(meshId);
@@ -304,9 +305,9 @@ void redAndGreen()
     light1->GetComponent<Light>()->SetLightColor(vec4(1.0, 0.0, 0.0, 1.0));
     light1->GetComponent<Light>()->SetLightReach(30.0f);
 
-    SCEHandle<Container> light2 = createLight(vec3(-5, 10, -13), vec3(45, -45, 0), LightType::SPOT_LIGHT);
+    SCEHandle<Container> light2 = createLight(vec3(-2, 15, -17), vec3(45, -45, 0), LightType::SPOT_LIGHT);
     light2->GetComponent<Light>()->SetLightReach(40.0f);
-    light2->GetComponent<Light>()->SetLightMaxAngle(75.0f);
+    light2->GetComponent<Light>()->SetLightMaxAngle(50.0f);
     light2->GetComponent<Light>()->SetLightColor(vec4(0.0, 1.0, 0.0, 1.0));
 
 }
@@ -342,7 +343,7 @@ int main( void )
 
     SCEScene::CreateEmptyScene();
 
-    SCEScene::AddTerrain(3000.0f, 200.0f, 0.0f);
+//    SCEScene::AddTerrain(3000.0f, 200.0f, 0.0f);
 
     lightOutdoor();
 //    redAndGreen();
@@ -350,7 +351,7 @@ int main( void )
 
 //    scene1();
 //    scene2();
-//    scene3();
+    scene3();
 
 //    waterGround(7.0f);
 
