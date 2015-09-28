@@ -58,7 +58,6 @@ SCERender::SCERender()
 void SCERender::Init()
 {
     SCELighting::Init();
-    SCE::Terrain::Init(3000.0f, 200.0f, 0.0f);
     Debug::Assert(!s_instance, "An instance of the Render system already exists");
     s_instance = new SCERender();
 }
@@ -68,7 +67,6 @@ void SCERender::CleanUp()
     Debug::Assert(s_instance, "No Render system instance found, Init the system before using it");
     delete s_instance;
 
-    SCE::Terrain::Cleanup();
     SCELighting::CleanUp();
 }
 

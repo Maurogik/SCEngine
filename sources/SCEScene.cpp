@@ -9,6 +9,7 @@
 #include "../headers/Camera.hpp"
 #include "../headers/SCEInternal.hpp"
 #include "../headers/SCERender.hpp"
+#include "../headers/SCETerrain.hpp"
 
 #include "../headers/SCECore.hpp"
 
@@ -25,6 +26,7 @@ SCE::SCEScene::SCEScene()
 
 SCE::SCEScene::~SCEScene()
 {
+    SCE::Terrain::Cleanup();
     Internal::Log("Delete scene");
     Internal::Log("Clear stuff");
     for(auto cont : mContainers)
@@ -153,6 +155,16 @@ void SCEScene::UnregisterGameObject(SCEHandle<GameObject> gameObject)
     if(it != end(s_scene->mGameObjects)){
         s_scene-> mGameObjects.erase(it);
     }
+}
+
+void SCEScene::AddTerrain(float terrainSize, float patchSize, float baseHeight)
+{
+    SCE::Terrain::Init(3000.0f, 200.0f, 0.0f);
+}
+
+void SCEScene::RemoveTerrain()
+{
+    SCE::Terrain::Cleanup();
 }
 
 void SCEScene::renderSceneWithCamera(const SCEHandle<Camera> &camera)

@@ -40,6 +40,12 @@ namespace SCE {
         static void                                 RegisterGameObject(SCEHandle<GameObject> gameObject);
         static void                                 UnregisterGameObject(SCEHandle<GameObject> gameObject);
 
+        //Terrain
+        static void                                 AddTerrain(float terrainSize, float patchSize,
+                                                               float baseHeight);
+
+        static void                                 RemoveTerrain();
+
     private :
 
         SCEScene();
@@ -51,7 +57,7 @@ namespace SCE {
 
         std::vector<Container*>             mContainers;
         std::vector<SCEHandle<GameObject>>  mGameObjects;
-        int                                 mLastId;       
+        int                                 mLastId;
 
 
         /*****Static*****/

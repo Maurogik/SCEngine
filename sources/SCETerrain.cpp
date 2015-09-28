@@ -42,8 +42,8 @@
 #define TREE_MODEL_NAME "Terrain/Meshes/low_poly_tree.obj"
 
 //#define TERRAIN_TEXTURE_SIZE 4096
-#define TERRAIN_TEXTURE_SIZE 2048
-//#define TERRAIN_TEXTURE_SIZE 512
+//#define TERRAIN_TEXTURE_SIZE 2048
+#define TERRAIN_TEXTURE_SIZE 512
 #define TEX_TILE_SIZE 2.0f
 
 //#define ISLAND_MODE
@@ -87,8 +87,7 @@ namespace Terrain
     struct TerrainData
     {
         TerrainData()
-            : treeLayout(nullptr),
-              quadPatchIndices{0, 1, 2, 3},
+            : quadPatchIndices{0, 1, 2, 3},
               quadVertices { glm::vec3(0.0f, 0.0f, 0.0f),
                              glm::vec3(1.0f, 0.0f, 0.0f),
                              glm::vec3(1.0f, 0.0f, 1.0f),
@@ -105,8 +104,6 @@ namespace Terrain
         float baseHeight;
         float heightScale;
 
-        float* treeLayout;
-
         ushort quadPatchIndices[4]; //indices for a quad, not 2 triangles
         glm::vec3 quadVertices[4];
 
@@ -116,7 +113,7 @@ namespace Terrain
     };
 
 /*      File scope variables    */
-    static TerrainData* terrainData;
+    static TerrainData* terrainData = nullptr;
 
 /*  Translation unit local functions, with hidden names to avoid name conflicts in case of unity build */
     namespace
@@ -138,8 +135,8 @@ namespace Terrain
                 SCE::ShaderUtils::DeleteShaderProgram(terrainData->treeGlData.treeShaderProgram);
             }
 
-            SCE::MeshRender::DeleteMeshRenderData(terrainData->treeGlData.treeMeshId);
-            SCE::MeshLoader::DeleteMesh(terrainData->treeGlData.treeMeshId);
+//            SCE::MeshRender::DeleteMeshRenderData(terrainData->treeGlData.treeMeshId);
+//            SCE::MeshLoader::DeleteMesh(terrainData->treeGlData.treeMeshId);
         }
 
         void computeNormalsForQuad(int xCount, int zCount, glm::vec3 *normals, float* heightmap)
@@ -317,71 +314,6 @@ namespace Terrain
             delete[] packedHeightAndNormal;
         }
 
-        void initializeTrees(float xOffset, float zOffset, float scale)
-        {
-            int patchCount = (int)floor(terrainData->terrainSize/terrainData->patchSize);
-            terrainData->treeLayout = new float[patchCount*patchCount];
-
-            float xPos, zPos;
-
-            for(int x = 0; x < patchCount; ++x)
-            {
-                xPos = (float)x / (float)patchCount + xOffset;
-                for(int z = 0; z < patchCount; ++z)
-                {
-                    zPos = (float)z / (float)patchCount + zOffset;
-                    float noise = stb_perlin_noise3(xPos * scale, 0.0f, zPos * scale);
-                    noise = SCE::Math::mapToRange(-1.0f, 1.0f, 1.0f, -1.0f, noise);
-                    terrainData->treeLayout[x * patchCount + z] = noise;
-                }
-            }
-        }
-
-        float getSpacingModifier(float xPos, float zPos, float patchCount)
-        {
-            int maxCount = (int)patchCount;
-            int xLeft   = (int)floor(xPos * patchCount);
-            int zDown   = (int)floor(zPos * patchCount);
-            int xRight  = xLeft + 1;
-            int zUp     = zDown + 1;
-
-            float downLeft, downRight, upLeft, upRight;
-
-            downLeft = terrainData->treeLayout[xLeft * maxCount + zDown];
-
-            if(xRight < maxCount)
-            {
-                downRight = terrainData->treeLayout[xRight * maxCount + zDown];
-            }
-            else
-            {
-                downRight = 2.0f;
-            }
-
-            if(zUp < maxCount)
-            {
-                upLeft = terrainData->treeLayout[xLeft * maxCount + zUp];
-            }
-            else
-            {
-                upLeft = 2.0f;
-            }
-
-            if(zUp < maxCount && xRight < maxCount)
-            {
-                upRight = terrainData->treeLayout[xRight * maxCount + zUp];
-            }
-            else
-            {
-                upRight = 2.0f;
-            }
-
-            float down = downLeft*xPos + (1.0 - xPos)*downRight;
-            float up = upRight*xPos + (1.0 - xPos)*upLeft;
-
-            return down*zPos + (1.0 - zPos)*up;
-        }
-
         bool isQuadOffscreen(const glm::mat4& MVPMat)
         {
             int onScreenCount = 4;
@@ -540,9 +472,8 @@ namespace Terrain
                         float xPos = terrainX + x;
                         float zPos = terrainZ + z;
 
-                        float spacingModif = getSpacingModifier(xPos/halfTerrainSize * 0.5f + 0.5f,
-                                                                zPos/halfTerrainSize * 0.5f + 0.5f,
-                                                                patchCount);
+                        float spacingModif = 0.0f;
+
                         if(spacingModif > 0.00f)
                         {
 //                          spacing = originalSpacing * spacingModif;
@@ -572,6 +503,10 @@ namespace Terrain
                        const glm::mat4& viewMatrix,
                        float tesselationOverride)
     {
+        if(!terrainData)
+        {
+            return;
+        }
 
         TerrainGLData& glData = terrainData->glData;        
 
@@ -659,26 +594,28 @@ namespace Terrain
 
     void Init(float terrainSize, float patchSize, float terrainBaseHeight)
     {
-        terrainData = new TerrainData();
-        terrainData->terrainSize = terrainSize;
-        terrainData->patchSize = patchSize;
-        terrainData->baseHeight = terrainBaseHeight;
-        terrainData->heightScale = 1200.0f / patchSize;
-        initializeRenderData();                
-        float xOffset = SCE::Math::randRange(0.0f, 1.0f);
-        float zOffset = SCE::Math::randRange(0.0f, 1.0f);
-        initializeTerrainTextures(xOffset, zOffset, 2.0f, terrainData->heightScale);
-        initializeTrees(xOffset, zOffset, 2.0f);
+        if(!terrainData)
+        {
+            terrainData = new TerrainData();
+            terrainData->terrainSize = terrainSize;
+            terrainData->patchSize = patchSize;
+            terrainData->baseHeight = terrainBaseHeight;
+            terrainData->heightScale = 1200.0f / patchSize;
+            initializeRenderData();
+            float xOffset = SCE::Math::randRange(0.0f, 1.0f);
+            float zOffset = SCE::Math::randRange(0.0f, 1.0f);
+            initializeTerrainTextures(xOffset, zOffset, 2.0f, terrainData->heightScale);
+        }
     }
 
     void Cleanup()
     {
-        cleanupGLData();
-        if(terrainData->treeLayout != nullptr)
+        if(terrainData)
         {
-            delete[] terrainData->treeLayout;
+            cleanupGLData();
+            delete terrainData;
+            terrainData = nullptr;
         }
-        delete terrainData;
     }
 }
 
