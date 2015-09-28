@@ -12,6 +12,7 @@
 #include "../headers/SCELighting.hpp"
 #include "../headers/SCERender.hpp"
 #include "../headers/SCECore.hpp"
+#include "../headers/SCEMeshLoader.hpp"
 
 using namespace std;
 using namespace glm;
@@ -53,7 +54,7 @@ Light::Light(SCEHandle<Container>& container, LightType lightType,
       mLightColor(COLOR_DEFAULT),
       mIsSunLight(false),
       mLightUniforms(),
-      mLightMesh(nullptr),
+      mLightMeshId(-1),
       mLightRenderer(nullptr)
 {
     SCELighting::RegisterLight(SCEHandle<Light>(this));
@@ -117,7 +118,7 @@ void Light::InitLightRenderData(GLuint lightShaderProgram)
                                                   LIGHT_ROUTINE_SHADER_TYPE,
                                                   lightSubroutineName.c_str());
 
-    mLightRenderer = GetContainer()->AddComponent<MeshRenderer>();
+    mLightRenderer = GetContainer()->AddComponent<MeshRenderer>(mLightMeshId);
 }
 
 void Light::bindRenderDataForShader(const vec3& cameraPosition)
@@ -240,40 +241,37 @@ void Light::SetLightReach(float lightReach)
 
 void Light::generateLightMesh()
 {
-    if(mLightMesh)
-    {
-        GetContainer()->RemoveComponent<Mesh>(mLightMesh);
-    }
-
+    ui16 meshId = -1;
     switch(mLightType)
     {
     case POINT_LIGHT:
-        generatePointLightMesh();
+        meshId = generatePointLightMesh();
         break;
     case DIRECTIONAL_LIGHT :
-        generateDirectionalLightMesh();
+        meshId = generateDirectionalLightMesh();
         break;
     case SPOT_LIGHT :
-        generateSpotLightMesh();
+        meshId = generateSpotLightMesh();
         break;
     default :
         Debug::RaiseError("Unknow light type");
         break;
     }
 
+    mLightMeshId = meshId;
+
     if(mLightRenderer)
     {
-        mLightRenderer->UpdateRenderedMesh();
+        mLightRenderer->UpdateRenderedMesh(meshId);
     }
 }
 
-void Light::generateDirectionalLightMesh()
+ui16 Light::generateDirectionalLightMesh()
 {
-    SCEHandle<Container> container = GetContainer();
-    mLightMesh = Mesh::AddQuadMesh(container);
+    return SCE::MeshLoader::CreateQuadMesh();
 }
 
-void Light::generateSpotLightMesh()
+ui16 Light::generateSpotLightMesh()
 {
     //compute spot attenuation
 #ifdef LIGHT_BOUNDS_COMPLEX
@@ -284,13 +282,15 @@ void Light::generateSpotLightMesh()
 #endif
 
     SCEHandle<Container> container = GetContainer();
-    mLightMesh = Mesh::AddConeMesh(container, mLightMaxAngle, 4.0f);
+    ui16 meshId = SCE::MeshLoader::CreateConeMesh(mLightMaxAngle, 4.0f);
 
     SCEHandle<Transform> transform = container->GetComponent<Transform>();
     transform->SetLocalScale(vec3(mLightReach));
+
+    return meshId;
 }
 
-void Light::generatePointLightMesh()
+ui16 Light::generatePointLightMesh()
 {
 
 #ifdef LIGHT_BOUNDS_COMPLEX
@@ -305,8 +305,10 @@ void Light::generatePointLightMesh()
 #endif
 
     SCEHandle<Container> container = GetContainer();
-    mLightMesh = Mesh::AddSphereMesh(container, 4.0f);
+    ui16 meshId = SCE::MeshLoader::CreateSphereMesh(4.0f);
 
     SCEHandle<Transform> transform = container->GetComponent<Transform>();
     transform->SetLocalScale(vec3(lightSphereRadius));
+
+    return meshId;
 }

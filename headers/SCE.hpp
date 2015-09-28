@@ -7,7 +7,6 @@
 #define SCE_HPP
 
 //SCE
-#include "Mesh.hpp"
 #include "SCEScene.hpp"
 #include "Transform.hpp"
 #include "MeshRenderer.hpp"

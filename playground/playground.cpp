@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "../headers/SCEMeshLoader.hpp"
 #include "../headers/SCE.hpp"
 #include "Rotator.hpp"
 #include "CameraControl.hpp"
@@ -23,8 +24,8 @@ SCEHandle<Container> createSphere(const string& name, const float& tesselation, 
     SCEHandle<Transform> transform = object->AddComponent<Transform>();
     transform->SetWorldPosition(pos);
 
-    Mesh::AddSphereMesh(object, tesselation);
-    object->AddComponent<MeshRenderer>();    
+    ui16 meshId = SCE::MeshLoader::CreateSphereMesh(tesselation);
+    object->AddComponent<MeshRenderer>(meshId);
 
     return object;
 }
@@ -39,8 +40,8 @@ SCEHandle<Container> createCone(const string& name, const float& tesselation,
     SCEHandle<Transform> transform = object->AddComponent<Transform>();
     transform->SetWorldPosition(pos);
 
-    Mesh::AddConeMesh(object, angle, tesselation);
-    object->AddComponent<MeshRenderer>();
+    ui16 meshId = SCE::MeshLoader::CreateConeMesh(angle, tesselation);
+    object->AddComponent<MeshRenderer>(meshId);
 
     return object;
 }
@@ -55,8 +56,8 @@ SCEHandle<Container> createCube(const string& name, const vec3& pos,
     SCEHandle<Transform> transform = object->AddComponent<Transform>();
     transform->SetWorldPosition(pos);
 
-    Mesh::AddCubeMesh(object);
-    object->AddComponent<MeshRenderer>();
+    ui16 meshId = SCE::MeshLoader::CreateCubeMesh();
+    object->AddComponent<MeshRenderer>(meshId);
 
     return object;
 }
@@ -71,8 +72,8 @@ SCEHandle<Container> createPlane(const string& name, const string& mat, float si
     transform->SetWorldPosition(pos);
     transform->SetLocalScale(vec3(size, size, size));
 
-    Mesh::AddQuadMesh(object);
-    object->AddComponent<MeshRenderer>();
+    ui16 meshId = SCE::MeshLoader::CreateQuadMesh();
+    object->AddComponent<MeshRenderer>(meshId);
 
     return object;
 }
@@ -85,8 +86,7 @@ SCEHandle<Container> createModel(const string& objectName, const string& filenam
 
     SCEHandle<Transform> transform = object->AddComponent<Transform>();
     transform->SetWorldPosition(pos);
-    object->AddComponent<Mesh>(filename);
-    object->AddComponent<MeshRenderer>();
+    object->AddComponent<MeshRenderer>(filename);
 
     return object;
 }

@@ -9,7 +9,6 @@
 #include "SCEDefines.hpp"
 #include "Component.hpp"
 #include "Camera.hpp"
-#include "Mesh.hpp"
 #include "MeshRenderer.hpp"
 #include "SCE_GBuffer.hpp"
 #include <map>
@@ -75,7 +74,7 @@ namespace SCE
         //array containing a map of uniforms Id by shader ID, for each light uniform type
         GLint                       mLightUniforms[LIGHT_UNIFORMS_COUNT];
         GLuint                      mLightSubroutineIndex;
-        SCEHandle<Mesh>             mLightMesh;
+        ui16                        mLightMeshId;
         SCEHandle<MeshRenderer>     mLightRenderer;
 
         void                        initRenderDataForShader(GLuint lightShaderId);
@@ -83,9 +82,9 @@ namespace SCE
         void                        bindLightModelForShader();
 
         void                        generateLightMesh();
-        void                        generateDirectionalLightMesh();
-        void                        generateSpotLightMesh();
-        void                        generatePointLightMesh();
+        ui16 generateDirectionalLightMesh();
+        ui16 generateSpotLightMesh();
+        ui16 generatePointLightMesh();
     };
 
 }

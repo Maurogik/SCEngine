@@ -20,11 +20,12 @@ namespace SCE {
     public :
 
         void            Render(const CameraRenderData& renderData, bool renderFullScreenQuad = false);
-        void            UpdateRenderedMesh();
+        void            UpdateRenderedMesh(ui16 meshId);
 
     protected :
 
-                        MeshRenderer(SCEHandle<Container>& container, const std::string& typeName = "");
+                        MeshRenderer(SCEHandle<Container>& container, ui16 meshId);
+                        MeshRenderer(SCEHandle<Container>& container, const std::string& filename);
 
     private :
 
