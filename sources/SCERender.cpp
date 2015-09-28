@@ -12,6 +12,7 @@
 #include "../headers/SCEMeshRender.hpp"
 #include "../headers/SCEShaders.hpp"
 #include "../headers/SCETerrain.hpp"
+#include "../headers/SCEDebugText.hpp"
 
 
 using namespace SCE;
@@ -82,7 +83,7 @@ void SCERender::Render(const SCEHandle<Camera>& camera,
     // Clear the screen (default framebuffer)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    //render shadows to shadowmap
+//    //render shadows to shadowmap
     SCEHandle<Transform> camTransform = camera->GetContainer()->GetComponent<Transform>();
     glm::mat4 camToWorld = camTransform->GetWorldTransform();
     SCELighting::RenderCascadedShadowMap(renderData, camera->GetFrustrumData(),
@@ -100,7 +101,7 @@ void SCERender::Render(const SCEHandle<Camera>& camera,
     ToneMappingData& tonemap = s_instance->mToneMapData;
     glDisable(GL_DEPTH_TEST);
     glCullFace(GL_FRONT);
-    glUseProgram(tonemap.luminanceShader);    
+    glUseProgram(tonemap.luminanceShader);
     s_instance->mGBuffer.BindForLuminancePass();
     RenderFullScreenPass(tonemap.luminanceShader, renderData.projectionMatrix, renderData.viewMatrix);
     s_instance->mGBuffer.GenerateLuminanceMimap();
@@ -113,11 +114,14 @@ void SCERender::Render(const SCEHandle<Camera>& camera,
     glUniform1f(tonemap.maxBrightnessUniform, tonemap.maxBrightness);
     RenderFullScreenPass(tonemap.toneMapShader, renderData.projectionMatrix, renderData.viewMatrix);
 
-    glEnable(GL_DEPTH_TEST);
     glCullFace(GL_BACK);
-
     //reset to default framebufffer
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    //render debug text
+    SCE::DebugText::RenderMessages(renderData.viewMatrix, renderData.projectionMatrix);
+    glEnable(GL_DEPTH_TEST);
+
 }
 
 void SCERender::renderGeometryPass(const CameraRenderData& renderData,
@@ -162,7 +166,6 @@ mat4 SCERender::FixOpenGLProjectionMatrix(const mat4& projMat)
 void SCERender::RenderFullScreenPass(GLuint shaderId, const mat4& projectionMatrix, const mat4& viewMatrix)
 {
     glm::mat4 modelMatrix = inverse(projectionMatrix * viewMatrix);
-    SCE::ShaderUtils::BindDefaultUniforms(shaderId, modelMatrix, viewMatrix, projectionMatrix);
     SCE::MeshRender::RenderMesh(s_instance->mQuadMeshId, projectionMatrix, viewMatrix, modelMatrix);
 }
 

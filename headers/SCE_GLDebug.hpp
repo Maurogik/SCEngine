@@ -43,7 +43,7 @@ std::string FormatDebugOutput(
         , const char* msg);
 
 
-#endif //_DEBUG
+#endif
 
 #endif
 

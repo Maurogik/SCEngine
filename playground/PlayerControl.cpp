@@ -1,5 +1,6 @@
 #include "PlayerControl.hpp"
 #include "../headers/SCECore.hpp"
+#include "../headers/SCEDebugText.hpp"
 
 using namespace SCE;
 using namespace std;
@@ -40,6 +41,11 @@ void PlayerControl::Update()
     float dY = yMouse - 0.5f;
 
     float deltaTime = SCE::Time::DeltaTime();
+    float deltaGoodness = SCE::Math::mapToRange(0.010, 0.033, 0.0, 1.0, deltaTime);
+    glm::vec3 printColor = glm::vec3(deltaGoodness, 1.0 - deltaGoodness, 0.0);
+    SCE::DebugText::Print("FPS   : " + std::to_string(1.0f/deltaTime), printColor);
+    SCE::DebugText::Print("Frame : " + std::to_string(deltaTime), printColor);
+
     float xRotateSpeed = 0.015f;
     float yRotateSpeed = 0.02f;
     float zRotateSpeed = 1.5f;

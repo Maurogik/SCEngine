@@ -330,6 +330,11 @@ void streetLights()
 
 #define EAGLE
 
+int sizeV(const vector<int>& x)
+{
+    return x.size();
+}
+
 int main( void )
 {
     SCECore engine;
