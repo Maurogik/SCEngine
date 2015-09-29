@@ -456,8 +456,6 @@ namespace Terrain
 
             if(!isQuadOffscreen(quadMVP))
             {
-                float terrainX = position_terrainSpace.x;
-                float terrainZ = position_terrainSpace.z;
                 float originalSpacing = 50.0f;
                 float spacing = originalSpacing;
 
@@ -468,9 +466,6 @@ namespace Terrain
                         glm::vec3 treePos(x, 0.0f, z);
                         mat4 treeToTerrainspace = quadToTerrainspace *
                                 glm::translate(mat4(1.0f), treePos);
-
-                        float xPos = terrainX + x;
-                        float zPos = terrainZ + z;
 
                         float spacingModif = 0.0f;
 

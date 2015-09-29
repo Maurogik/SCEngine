@@ -9,7 +9,15 @@
 #include "../headers/SCEMetadataParser.hpp"
 #include "../headers/SCEInternal.hpp"
 
-#include "../external/SOIL/src/SOIL2.h"
+//disable unneeded image formats
+#define STBI_NO_TGA
+#define STBI_NO_GIF
+#define STBI_NO_PNM
+#define STBI_NO_PIC
+#define STBI_NO_HDR
+#define STBI_NO_PSD
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 
 #include <map>
 #include <vector>
@@ -92,65 +100,21 @@ namespace TextureUtils
         return res;
     }
 
-/*      Some SOIL helper functions      */
-
-    //build SOIL flag bitfield from texture parameters
-    uint getSoilFlags(SCETextureFormat format, SCETextureWrap wrapMode, bool mipmapsOn)
+    GLuint createTextureWithData(uint width, uint height,
+                                 GLint internalGPUFormat, GLenum textureFormat, GLenum componentType,
+                                 SCETextureWrap wrapMode, bool mipmapsOn,
+                                 void* textureData)
     {
-        uint soilFlags = 0;
+        GLuint textureID;
 
-        switch(format) {
-        case DDS_FORMAT :
-            soilFlags |= SOIL_FLAG_COMPRESS_TO_DXT;
-            break;
-        case UNCOMPRESSED_FORMAT :
-            //if not specified, Soil use uncompressed texture
-            break;
-        default ://DDS_FORMAT is the default
-            soilFlags |= SOIL_FLAG_COMPRESS_TO_DXT;
-            break;
-        }
-
-        switch(wrapMode){
-        case REPEAT_WRAP :
-            soilFlags |= SOIL_FLAG_TEXTURE_REPEATS;
-            break;
-        case CLAMP_WRAP :
-            //if not specified, CLAMP is used
-            break;
-        }
-
-        if(mipmapsOn) {
-            soilFlags |= SOIL_FLAG_GL_MIPMAPS;
-        }
-
-        return soilFlags;
-    }
-
-    //loads texture from disk and create and OpenGL texture with it
-    GLuint loadTexture(const string &filename, SCETextureFormat format,
-                       SCETextureWrap wrapMode, bool mipmapsOn)
-    {        
-        string fullTexturePath = RESSOURCE_PATH + filename;
-
-        if(!ifstream(fullTexturePath.c_str()))
-        {
-            fullTexturePath = ENGINE_RESSOURCE_PATH + filename;
-        }
-
-        uint soilFlags = getSoilFlags(format, wrapMode, mipmapsOn);
-
-        Internal::Log("TODO : Find a way to get the width and height of the loaded texture");
-
-        //create a new openGL texture
-        //force_channels : 0 = channels auto
-        //reuse texture : 0 = create new texture
-        GLuint textureID = SOIL_load_OGL_texture(fullTexturePath.c_str(), 0, 0, soilFlags);
-
+        glGenTextures(1, &textureID);
         glBindTexture(GL_TEXTURE_2D, textureID);
+        glTexImage2D(GL_TEXTURE_2D, 0, internalGPUFormat, width, height, 0, textureFormat,
+                     componentType, textureData);
 
         if(mipmapsOn)
         {
+            glGenerateMipmap(GL_TEXTURE_2D);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         }
@@ -169,31 +133,79 @@ namespace TextureUtils
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
         }
-
         return textureID;
     }
 
-    GLuint createTexture(int width, int height, vec4 color, SCETextureFormat textureFormat,
-                         SCETextureWrap wrapMode, bool mipmapsOn)
-    {
-        int channelCount = 4;
-        uint soilFlags = getSoilFlags(textureFormat, wrapMode, mipmapsOn);
-        unsigned char *textureData = new unsigned char [width * height * channelCount];
-        int xstart, ystart;
-        for(int x = 0; x < width; ++x){
-            xstart = x * height * channelCount;
-            for(int y = 0; y < height; ++y){
-                ystart = y * channelCount;
-                textureData[xstart + ystart + 0] = Tools::floatToColorRange(color.x);
-                textureData[xstart + ystart + 1] = Tools::floatToColorRange(color.y);
-                textureData[xstart + ystart + 2] = Tools::floatToColorRange(color.z);
-                textureData[xstart + ystart + 3] = Tools::floatToColorRange(color.w);
-            }
+    //loads texture from disk and create and OpenGL texture with it
+    GLuint loadTexture(const string &filename, SCETextureFormat compressionFormat,
+                       SCETextureWrap wrapMode, bool mipmapsOn)
+    {        
+        string fullTexturePath = RESSOURCE_PATH + filename;
+
+        if(!ifstream(fullTexturePath.c_str()))
+        {
+            fullTexturePath = ENGINE_RESSOURCE_PATH + filename;
         }
 
-        GLuint textureID = SOIL_create_OGL_texture(textureData, &width, &height,
-                                                   channelCount, 0, soilFlags);
-        delete[](textureData);
+        Internal::Log("TODO : Compression format not yet used : " + compressionFormat);
+
+        //create a new openGL texture
+        //force_channels : 0 = channels auto
+        //reuse texture : 0 = create new texture
+
+        int width, height, nbComponent;
+        unsigned char* textureData = stbi_load(fullTexturePath.c_str(),
+                  &width,
+                  &height,
+                  &nbComponent, //will store the actual number of component read
+                  0); // force to fill # number of component if not zero
+
+        if(!textureData)
+        {
+            Debug::RaiseError("Coul not load image at : " + fullTexturePath);
+        }
+
+        GLuint textureID = -1;
+        GLint internalGPUFormat;
+        GLenum textureFormat, type;
+        type = GL_UNSIGNED_BYTE;
+
+        switch(nbComponent)
+        {
+        case 0 :
+            Debug::RaiseError("texture contains no component !" + nbComponent);
+            break;
+        case 1 :
+            internalGPUFormat = GL_R8;
+            textureFormat = GL_R;
+            break;
+        case 2 :
+            internalGPUFormat = GL_RG16;
+            textureFormat = GL_RG;
+            break;
+        case 3 :
+            internalGPUFormat = GL_RGB32F;
+            textureFormat = GL_RGB;
+            break;
+        case 4 :
+            internalGPUFormat = GL_RGBA32F;
+            textureFormat = GL_RGBA;
+            break;
+        default :
+            Debug::RaiseError("Unexpected number of texture component : " + nbComponent);
+            break;
+        }
+
+        if(textureData && nbComponent > 0 && nbComponent <= 4)
+        {
+            textureID = createTextureWithData(width, height, internalGPUFormat, textureFormat, type,
+                                  wrapMode, mipmapsOn, textureData);
+        }
+
+        if(textureData)
+        {
+            stbi_image_free(textureData);
+        }
 
         return textureID;
     }
@@ -259,10 +271,27 @@ namespace TextureUtils
 
     GLuint CreateTexture(int width, int height,
                                       vec4 color,
-                                      SCETextureFormat textureFormat, SCETextureWrap wrapMode,
+                                      SCETextureFormat compressionFormat, SCETextureWrap wrapMode,
                                       bool mipmapsOn)
     {
-        GLuint texId = createTexture(width, height, color, textureFormat, wrapMode, mipmapsOn);
+        Internal::Log("TODO : Compression format not yet used : " + compressionFormat);
+
+        uint channelCount = 4;
+        unsigned char *textureData = new unsigned char [width * height * channelCount];
+        int xstart, ystart;
+        for(int x = 0; x < width; ++x){
+            xstart = x * height * channelCount;
+            for(int y = 0; y < height; ++y){
+                ystart = y * channelCount;
+                textureData[xstart + ystart + 0] = Tools::floatToColorRange(color.x);
+                textureData[xstart + ystart + 1] = Tools::floatToColorRange(color.y);
+                textureData[xstart + ystart + 2] = Tools::floatToColorRange(color.z);
+                textureData[xstart + ystart + 3] = Tools::floatToColorRange(color.w);
+            }
+        }
+
+        GLuint texId = createTextureWithData(width, height, GL_RGBA32F, GL_RGBA, GL_UNSIGNED_BYTE,
+                                             wrapMode, mipmapsOn, textureData);
         texturesData.createdTextures.push_back(texId);
 
         return texId;

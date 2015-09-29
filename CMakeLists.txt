@@ -53,7 +53,6 @@ set(ALL_LIBS
     ${OPENGL_LIBRARY}
     GLFW_303
     GLEW_190    
-    #SOIL
 )
 
 
@@ -129,12 +128,11 @@ target_link_libraries(${TARGET}
 
 message(${ALL_LIBS})
 
-target_link_libraries(${TARGET}
-    SOIL
-)
-
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-long-long -Wno-variadic-macros -Wunused-local-typedefs -pedantic")
+if(UNIX)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -Wall -Wno-long-long -Wno-variadic-macros -pedantic")
+else()
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+endif(UNIX)
 set(QMAKE_CXXFLAGS "${QMAKE_CXXFLAGS} -std=c++11")
 set(QMAKE_LFLAGS "${QMAKE_LFLAGS} -std=c++11")
 

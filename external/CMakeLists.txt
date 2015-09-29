@@ -59,18 +59,3 @@ target_link_libraries(GLEW_190
 	${EXTRA_LIBS}
 )
 
-### SOIL ###
-
-file(GLOB SOIL_SOURCE
-        "SOIL/src/*.c"
-)
-
-file(GLOB SOIL_HEADERS
-        "SOIL/src/*.h"
-)
-
-add_library( SOIL STATIC
-        ${SOIL_SOURCE}
-        ${SOIL_HEADERS}
-)
-

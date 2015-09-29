@@ -29,3 +29,13 @@ How to build (requires CMake) :
 
 
 
+
+### Dependencies
+
+* GLEW : loading OpenGL extensions
+* GLFW : window creation OpenGL window context initialization and keyboard inputs
+* GLM : matrix and vector math
+* stb_perlin.h : perlin noise function
+* stb_truetype.h and stb_rect_pack.h : loaf .ttf file into a font atlas
+* stb_image.h : read images files from disk
+
