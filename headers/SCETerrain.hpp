@@ -9,7 +9,6 @@
 #include "SCEDefines.hpp"
 
 //TODO make terrain textures and texture sizes customizable
-//TODO make terrain component or access from scene
 //TODO have terrain shadows
 
 namespace SCE

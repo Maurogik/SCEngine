@@ -343,7 +343,7 @@ int main( void )
 
     SCEScene::CreateEmptyScene();
 
-//    SCEScene::AddTerrain(3000.0f, 200.0f, 0.0f);
+    SCEScene::AddTerrain(4000.0f, 100.0f, 0.0f);
 
     lightOutdoor();
 //    redAndGreen();
@@ -351,7 +351,7 @@ int main( void )
 
 //    scene1();
 //    scene2();
-    scene3();
+//    scene3();
 
 //    waterGround(7.0f);
 
@@ -359,7 +359,7 @@ int main( void )
     //Camera
     SCEHandle<Container> cameraObject = SCEScene::CreateContainer("cameraObject");
     SCEHandle<Transform> cameraTransform = cameraObject->AddComponent<Transform>();
-    cameraObject->AddComponent<Camera>(40.0f, 16.0f/9.0f, 1.0f, 3000.0f);
+    cameraObject->AddComponent<Camera>(40.0f, 16.0f/9.0f, 1.0f, 8000.0f);
 
 #ifdef EAGLE
     SCEHandle<Container> eagle = createModel("eagle2",

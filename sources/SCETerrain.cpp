@@ -41,9 +41,9 @@
 #define TREE_SHADER_NAME "Terrain/Tree"
 #define TREE_MODEL_NAME "Terrain/Meshes/low_poly_tree.obj"
 
-//#define TERRAIN_TEXTURE_SIZE 4096
+#define TERRAIN_TEXTURE_SIZE 4096
 //#define TERRAIN_TEXTURE_SIZE 2048
-#define TERRAIN_TEXTURE_SIZE 512
+//#define TERRAIN_TEXTURE_SIZE 512
 #define TEX_TILE_SIZE 2.0f
 
 //#define ISLAND_MODE
@@ -604,7 +604,8 @@ namespace Terrain
             initializeRenderData();
             float xOffset = SCE::Math::randRange(0.0f, 1.0f);
             float zOffset = SCE::Math::randRange(0.0f, 1.0f);
-            initializeTerrainTextures(xOffset, zOffset, 2.0f, terrainData->heightScale);
+            initializeTerrainTextures(xOffset, zOffset, 2.0f * terrainSize / 3000.0f,
+                                      terrainData->heightScale);
         }
     }
 

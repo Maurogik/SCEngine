@@ -44,7 +44,7 @@ void PlayerControl::Update()
     float deltaGoodness = SCE::Math::mapToRange(0.010, 0.033, 0.0, 1.0, deltaTime);
     glm::vec3 printColor = glm::vec3(deltaGoodness, 1.0 - deltaGoodness, 0.0);
     SCE::DebugText::Print("FPS   : " + std::to_string(1.0f/deltaTime), printColor);
-    SCE::DebugText::Print("Frame : " + std::to_string(deltaTime), printColor);
+    SCE::DebugText::Print("Frame : " + std::to_string(deltaTime * 1000.0f) + " ms", printColor);
 
     float xRotateSpeed = 0.015f;
     float yRotateSpeed = 0.02f;
@@ -89,11 +89,19 @@ void PlayerControl::Update()
 
     if (glfwGetKey( window, GLFW_KEY_SPACE ) == GLFW_PRESS)
     {
+#ifdef SCE_DEBUG
        speed = 150.0f;
+#else
+       speed = 50.0f;
+#endif
     }
     else if (glfwGetKey( window, GLFW_KEY_LEFT_SHIFT ) == GLFW_PRESS)
     {
-        speed = 1.0f;
+#ifdef SCE_DEBUG
+       speed = 1.0f;
+#else
+       speed = 5.0f;
+#endif
     }
 
 

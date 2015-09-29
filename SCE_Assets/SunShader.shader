@@ -91,10 +91,10 @@ _{
 #ifdef LIGHT_SHAFTS
     float computeVolumetricLight(vec2 uv, vec2 sunUV)
     {
-        float nbSamples = 32.0;
-        float decay = 2.0;
+        float nbSamples = 24.0;
+        float decay = 3.0;
         float density = 0.1;
-        float weight = 0.04;
+        float weight = 0.015;
 
         vec2 stepToFrag = (sunUV - uv);
         stepToFrag *= 1.0 / float(nbSamples) * density;

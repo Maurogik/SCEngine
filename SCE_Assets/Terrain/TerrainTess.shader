@@ -54,9 +54,10 @@ _{
 
             float farDist = TerrainMaxDistance + 10.0;
             vec4 center_cameraspace = V * M * ((p0 - p1) * 0.5 + p1 + vec4(0.0, height, 0.0, 0.0));
-            float dist = farDist * step(center_cameraspace.z, -100.0) + abs(center_cameraspace.z);
+            float dist = length(center_cameraspace);
+            dist = farDist * step(center_cameraspace.z, -100.0) + dist;
             float tess = 1.0 - clamp(dist / farDist - 0.02, 0.0, 1.0);//map to 0..64 range
-            tess = pow(tess, 10.0);
+            tess = pow(tess, 6.0);
 
             return clamp(tess * 64.0, 4.0, 64.0);//between 0 and 64
         }
