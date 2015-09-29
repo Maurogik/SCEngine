@@ -105,7 +105,7 @@ void SCECore::InitEngine(const std::string &windowName)
         Debug::Log("Warning : OpenGL error found : " + std::to_string(errorCode));
     }
 
-    SCE::Math::seedRandomGenerator(time(NULL));
+    SCE::Math::seedRandomGenerator(glfwGetTime());
     //Init Engine subcomponents in order
     SCE::Time::Init();
     //Rendering
