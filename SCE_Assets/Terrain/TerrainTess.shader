@@ -9,7 +9,8 @@
 _{
 #version 430 core
 
-    uniform mat4 QuadToTerrainSpace;
+    uniform mat4 WorldToTerrainSpace;
+    uniform mat4 M;
 
     in vec3 vertexPosition_modelspace;
 
@@ -17,7 +18,7 @@ _{
 
     void main()
     {
-        vec4 pos_terrainspace = QuadToTerrainSpace * vec4(vertexPosition_modelspace, 1.0);
+        vec4 pos_terrainspace = WorldToTerrainSpace * M * vec4(vertexPosition_modelspace, 1.0);
         VS_terrainTexCoord = pos_terrainspace.zx * 0.5 + vec2(0.5);
         gl_Position = vec4(vertexPosition_modelspace, 1.0);
     }

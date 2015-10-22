@@ -33,7 +33,7 @@
 #define TEX_TILE_SIZE_UNIFORM "TextureTileScale"
 #define PATCH_SIZE_UNIFORM "PatchSize"
 #define TERRAIN_MAX_DIST_UNIFORM "TerrainMaxDistance"
-#define QUAD_TO_TERRAIN_UNIFORM "QuadToTerrainSpace"
+#define WORLD_TO_TERRAIN_UNIFORM "WorldToTerrainSpace"
 #define TREE_TO_TERRAIN_UNIFORM "TreeToTerrainSpace"
 #define HEIGHT_SCALE_UNIFORM "HeightScale"
 #define TESS_OVERRIDE_UNIFORM "TesselationOverride"
@@ -41,9 +41,9 @@
 #define TREE_SHADER_NAME "Terrain/Tree"
 #define TREE_MODEL_NAME "Terrain/Meshes/low_poly_tree.obj"
 
-#define TERRAIN_TEXTURE_SIZE 4096
+//#define TERRAIN_TEXTURE_SIZE 4096
 //#define TERRAIN_TEXTURE_SIZE 2048
-//#define TERRAIN_TEXTURE_SIZE 512
+#define TERRAIN_TEXTURE_SIZE 512
 #define TEX_TILE_SIZE 2.0f
 
 //#define ISLAND_MODE
@@ -53,11 +53,6 @@ namespace SCE
 
 namespace Terrain
 {
-    struct TerrainQuadUniforms
-    {
-        GLint quadToTerrainMatrix;
-    };
-
     struct TerrainGLData
     {
         GLuint terrainProgram;
@@ -73,6 +68,7 @@ namespace Terrain
         GLint dirtTextureUniform;
         GLint snowTextureUniform;
         GLint textureTileScaleUniform;
+        GLint worldToTerrainMatUniform;
     };
 
     struct TreeGLData
@@ -80,8 +76,8 @@ namespace Terrain
         ui16    treeMeshId;
         GLuint  treeShaderProgram;
         GLint   terrainTextureUniform;
-        GLint   patchSizeUniform;
-        GLint   treeToTerrainMatUniform;
+        GLint   patchSizeUniform;        
+        GLint   worldToTerrainMatUniform;
     };
 
     struct TerrainData
@@ -109,7 +105,6 @@ namespace Terrain
 
         TerrainGLData   glData;
         TreeGLData      treeGlData;
-        TerrainQuadUniforms quadUniforms;
     };
 
 /*      File scope variables    */
@@ -135,8 +130,8 @@ namespace Terrain
                 SCE::ShaderUtils::DeleteShaderProgram(terrainData->treeGlData.treeShaderProgram);
             }
 
-//            SCE::MeshRender::DeleteMeshRenderData(terrainData->treeGlData.treeMeshId);
-//            SCE::MeshLoader::DeleteMesh(terrainData->treeGlData.treeMeshId);
+            SCE::MeshRender::DeleteMeshRenderData(terrainData->treeGlData.treeMeshId);
+            SCE::MeshLoader::DeleteMesh(terrainData->treeGlData.treeMeshId);
         }
 
         void computeNormalsForQuad(int xCount, int zCount, glm::vec3 *normals, float* heightmap)
@@ -337,7 +332,6 @@ namespace Terrain
         void initializeRenderData()
         {
             TerrainGLData& glData = terrainData->glData;
-            TerrainQuadUniforms &quadUniforms = terrainData->quadUniforms;
 
             GLuint terrainProgram = SCE::ShaderUtils::CreateShaderProgram(TERRAIN_SHADER_NAME);
 
@@ -354,8 +348,8 @@ namespace Terrain
             glData.tesselationOverrideUniform =
                     glGetUniformLocation(terrainProgram, TESS_OVERRIDE_UNIFORM);
 
-            quadUniforms.quadToTerrainMatrix =
-                    glGetUniformLocation(terrainProgram, QUAD_TO_TERRAIN_UNIFORM);
+            glData.worldToTerrainMatUniform =
+                    glGetUniformLocation(terrainProgram, WORLD_TO_TERRAIN_UNIFORM);
 
             glData.grassTexture = SCE::TextureUtils::LoadTexture(GRASS_TEX_FILE);
             glData.dirtTexture = SCE::TextureUtils::LoadTexture(DIRT_TEX_FILE);
@@ -391,16 +385,16 @@ namespace Terrain
             //Load tree model
             ui16 meshId = SCE::MeshLoader::CreateMeshFromFile(TREE_MODEL_NAME);
             SCE::MeshRender::InitializeMeshRenderData(meshId);
+            SCE::MeshRender::MakeMeshInstanced(meshId);
             TreeGLData& treeData = terrainData->treeGlData;
             treeData.treeMeshId = meshId;
             treeData.treeShaderProgram = SCE::ShaderUtils::CreateShaderProgram(TREE_SHADER_NAME);
             treeData.patchSizeUniform =
                     glGetUniformLocation(treeData.treeShaderProgram, PATCH_SIZE_UNIFORM);
-            treeData.treeToTerrainMatUniform =
-                    glGetUniformLocation(treeData.treeShaderProgram, TREE_TO_TERRAIN_UNIFORM);
             treeData.terrainTextureUniform =
                     glGetUniformLocation(treeData.treeShaderProgram, TERRAIN_TEXTURE_UNIFORM);
-
+            treeData.worldToTerrainMatUniform =
+                    glGetUniformLocation(treeData.treeShaderProgram, WORLD_TO_TERRAIN_UNIFORM);
 
         }
 
@@ -411,12 +405,6 @@ namespace Terrain
                          float patchSize,
                          float halfTerrainSize)
         {
-
-            //create matrix to convert vertex pos to terrain space coord
-            glm::mat4 quadToTerrainspace = glm::scale(mat4(1.0f), glm::vec3(1.0f / (halfTerrainSize))) *
-                                           glm::translate(mat4(1.0f), position_terrainSpace) *
-                                           glm::scale(mat4(1.0f), glm::vec3(patchSize));
-
             //Model to world matrix is concatenation of quad and terrain matrices
             glm::mat4 modelMatrix = terrainToWorldspace *
                                     glm::translate(mat4(1.0f), position_terrainSpace) *
@@ -426,8 +414,6 @@ namespace Terrain
             if(!isQuadOffscreen(MVPMat))
             {
                 //do the rendering
-                glUniformMatrix4fv(terrainData->quadUniforms.quadToTerrainMatrix,
-                                   1, GL_FALSE, &(quadToTerrainspace[0][0]));
                 SCE::ShaderUtils::BindDefaultUniforms(terrainData->glData.terrainProgram, modelMatrix,
                                                       viewMatrix, projectionMatrix);
                 glDrawElements(GL_PATCHES,
@@ -437,57 +423,33 @@ namespace Terrain
             }
         }
 
-
-        void renderPatchTrees(const glm::mat4& projectionMatrix,
-                         const glm::mat4& viewMatrix,
-                         const glm::mat4& terrainToWorldspace,
-                         const glm::vec3& position_terrainSpace,
-                         float patchSize,
-                         float halfTerrainSize,
-                         int patchCount)
+        void initializeTrees()
         {
-            glm::mat4 quadToTerrainspace = glm::scale(mat4(1.0f), glm::vec3(1.0f / (halfTerrainSize))) *
-                                           glm::translate(mat4(1.0f), position_terrainSpace);
+            float patchSize = terrainData->patchSize;
+            float terrainSize = terrainData->terrainSize;
+            //compute the actual terrain size we will cover with patches
+            terrainSize = floor(terrainSize/patchSize) * patchSize;
+            float halfTerrainSize = terrainSize / 2.0f;
 
-            glm::mat4 quadModelMatrix = terrainToWorldspace *
-                                    glm::translate(mat4(1.0f), position_terrainSpace) *
-                                    glm::scale(mat4(1.0f), glm::vec3(patchSize));
-            glm::mat4 quadMVP = projectionMatrix * viewMatrix * quadModelMatrix;
+            float spacing = 50.0f;
 
-            if(!isQuadOffscreen(quadMVP))
+            std::vector<glm::mat4> treeMatrices;
+            treeMatrices.reserve(terrainSize / spacing);
+
+            for(float x = -halfTerrainSize + patchSize * 0.5f; x < halfTerrainSize - patchSize;
+                x += spacing)
             {
-                float originalSpacing = 50.0f;
-                float spacing = originalSpacing;
-
-                for(float x = 0.0f; x < patchSize; x += spacing)
+                for(float z = -halfTerrainSize + patchSize * 0.5f; z < halfTerrainSize - patchSize;
+                    z += spacing)
                 {
-                    for(float z = 0.0f; z < patchSize; z += spacing)
-                    {
-                        glm::vec3 treePos(x, 0.0f, z);
-                        mat4 treeToTerrainspace = quadToTerrainspace *
-                                glm::translate(mat4(1.0f), treePos);
-
-                        float spacingModif = 0.0f;
-
-                        if(spacingModif > 0.00f)
-                        {
-//                          spacing = originalSpacing * spacingModif;
-                            glUniformMatrix4fv(terrainData->treeGlData.treeToTerrainMatUniform,
-                                               1, GL_FALSE, &(treeToTerrainspace[0][0]));
-
-                            //render a tree
-                            glm::mat4 modelMatrix = terrainToWorldspace *
-                                                    glm::translate(mat4(1.0f), position_terrainSpace) *
-                                                    glm::translate(mat4(1.0f), treePos);
-
-                            SCE::MeshRender::RenderMesh(terrainData->treeGlData.treeMeshId,
-                                                        projectionMatrix,
-                                                        viewMatrix,
-                                                        modelMatrix);
-                        }
-                    }
+                    glm::vec3 treePos(x, 0.0f, z);
+                    glm::mat4 modelMatrix = glm::translate(mat4(1.0f), treePos);
+                    treeMatrices.push_back(modelMatrix);
                 }
             }
+
+            SCE::MeshRender::SetMeshInstances(terrainData->treeGlData.treeMeshId,
+                                              treeMatrices, GL_STATIC_DRAW);
         }
 
     //end of anonymous namespace
@@ -498,6 +460,7 @@ namespace Terrain
                        const glm::mat4& viewMatrix,
                        float tesselationOverride)
     {
+        //TODO find a better way to not render when there is no terrain
         if(!terrainData)
         {
             return;
@@ -509,10 +472,16 @@ namespace Terrain
         float terrainSize = terrainData->terrainSize;
         //compute the actual terrain size we will cover with patches
         terrainSize = floor(terrainSize/patchSize) * patchSize;
-        float halfTerrainSize = terrainSize / 2.0f;
+        float halfTerrainSize = terrainSize / 2.0f;       
 
-        //setup gl state that at common for all patches
-        glUseProgram(glData.terrainProgram);        
+        glm::vec3 terrainPosition_worldspace = vec3(0.0);//glm::vec3(cameraPosition);
+        terrainPosition_worldspace.y = terrainData->baseHeight;
+        glm::mat4 terrainToWorldspace = glm::translate(glm::mat4(1.0f), terrainPosition_worldspace);
+
+        //setup gl state that is common for all patches
+        glUseProgram(glData.terrainProgram);
+
+        //bind terrain textures
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, glData.terrainTexture);
 
@@ -528,19 +497,20 @@ namespace Terrain
         glBindTexture(GL_TEXTURE_2D, glData.snowTexture);
         glUniform1i(glData.snowTextureUniform, 3);
 
+        //uniforms
         glUniform1i(glData.terrainTextureUniform, 0);//terrain height map is sampler 0
         glUniform1f(glData.terrainMaxDistanceUniform, terrainSize);
         glUniform1f(glData.heightScaleUniform, terrainData->heightScale);
         glUniform1f(glData.tesselationOverrideUniform, tesselationOverride);
         glUniform1f(glData.textureTileScaleUniform, terrainSize / TEX_TILE_SIZE);
 
+        //create matrix to convert from woldspace to terrain space coord
+        glm::mat4 worldToTerrainspace = glm::scale(mat4(1.0f), glm::vec3(1.0f / (halfTerrainSize))) *
+                                       glm::translate(mat4(1.0f), -terrainPosition_worldspace);
+        glUniformMatrix4fv(glData.worldToTerrainMatUniform, 1, GL_FALSE, &(worldToTerrainspace[0][0]));
+
         glBindVertexArray(terrainData->quadVao);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, terrainData->quadIndicesVbo);
-
-        glm::vec3 terrainPosition_worldspace = vec3(0.0);//glm::vec3(cameraPosition);
-        terrainPosition_worldspace.y = terrainData->baseHeight;
-
-        glm::mat4 terrainToWorldspace = glm::translate(glm::mat4(1.0f), terrainPosition_worldspace);
 
         //Render all the terrain patches
         for(float x = -halfTerrainSize + patchSize * 0.5f; x < halfTerrainSize - patchSize;
@@ -562,29 +532,16 @@ namespace Terrain
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
 
+        //render trees
         TreeGLData& treeData = terrainData->treeGlData;
         glUseProgram(treeData.treeShaderProgram);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, glData.terrainTexture);
         glUniform1i(treeData.terrainTextureUniform, 0);
         glUniform1f(treeData.patchSizeUniform, patchSize);
+        glUniformMatrix4fv(treeData.worldToTerrainMatUniform, 1, GL_FALSE, &(worldToTerrainspace[0][0]));
 
-//        int patchCount = (int)floor(terrainData->terrainSize/terrainData->patchSize);
-//        for(int x = 1; x < patchCount - 1; ++x)
-//        {
-//            for(int z = 1; z < patchCount - 1; ++z)
-//            {
-//                glm::vec3 pos_terrainspace((float)x * patchSize - halfTerrainSize, 0.0f,
-//                                           (float)z * patchSize - halfTerrainSize);
-//                renderPatchTrees(projectionMatrix,
-//                                 viewMatrix,
-//                                 terrainToWorldspace,
-//                                 pos_terrainspace,
-//                                 patchSize,
-//                                 halfTerrainSize,
-//                                 patchCount);
-//            }
-//        }
+        SCE::MeshRender::DrawInstances(treeData.treeMeshId, projectionMatrix, viewMatrix);
     }
 
     void Init(float terrainSize, float patchSize, float terrainBaseHeight)
@@ -601,6 +558,7 @@ namespace Terrain
             float zOffset = SCE::Math::randRange(0.0f, 1.0f);
             initializeTerrainTextures(xOffset, zOffset, 2.0f * terrainSize / 3000.0f,
                                       terrainData->heightScale);
+            initializeTrees();
         }
     }
 

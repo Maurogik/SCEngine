@@ -40,6 +40,7 @@ namespace MeshRender
     struct ShaderData
     {
         GLint attribLocations[VERTEX_ATTRIB_COUNT];
+        GLint instanceMatrixAttrib;
     };
 
     //Per mesh data
@@ -50,13 +51,17 @@ namespace MeshRender
               indiceBuffer(-1),
               indiceCount(0),
               vaoID(-1),
-              attributes()
+              attributes(),
+              instancesBuffer(-1),
+              instancesCount(0)
         {}
         std::map<GLuint,ShaderData>     shaderData;
         GLuint                          indiceBuffer;
         GLuint                          indiceCount;
         GLuint                          vaoID;
         std::vector<AttributeData>      attributes;
+        GLuint                          instancesBuffer;
+        uint                            instancesCount;
     };
 
 
@@ -74,10 +79,10 @@ namespace MeshRender
             "vertexBitangent"
         };
 
-        struct MeshRendererData
+        struct RendererData
         {
-            MeshRendererData() : meshRenderData() {}
-            ~MeshRendererData()
+            RendererData() : meshRenderData() {}
+            ~RendererData()
             {
                 Internal::Log("Cleaning up mesh render system, will delete Vaos and Vbos");
                 auto beginIt = begin(meshRenderData);
@@ -91,7 +96,7 @@ namespace MeshRender
         };
 
         /***    Mesh Render System Data variable    ***/
-        MeshRendererData meshRendererData;
+        RendererData rendererData;
 
 
         void addAttribute(MeshRenderData& renderData,
@@ -128,7 +133,7 @@ namespace MeshRender
             glBindVertexArray(vaoId);
 
             //initialize and get reference at the same time
-            MeshRenderData &renderData = meshRendererData.meshRenderData[meshId];
+            MeshRenderData &renderData = rendererData.meshRenderData[meshId];
 
             renderData.indiceCount = meshData.indices.size();
             renderData.vaoID = vaoId;
@@ -183,6 +188,7 @@ namespace MeshRender
 
             glEnableVertexAttribArray(0); // Disable the Vertex Buffer Object
             glBindVertexArray(0); // Disable the Vertex Array Object
+
         }
 
         void initializeShaderData(MeshRenderData& renderData, GLuint programID)
@@ -195,6 +201,8 @@ namespace MeshRender
                 GLuint id = glGetAttribLocation(programID, attribNames[i].c_str());
                 data.attribLocations[i] = id;
             }
+
+            data.instanceMatrixAttrib = glGetAttribLocation(programID, "instanceMatrix");
         }
 
         void cleanupGLRenderData(MeshRenderData& renderData)
@@ -203,7 +211,69 @@ namespace MeshRender
                 glDeleteBuffers(1, &(renderData.attributes[i].dataBufferId));
             }
             glDeleteBuffers(1, &(renderData.indiceBuffer));
+
+            if(renderData.indiceBuffer != GLuint(-1) )
+            {
+                glDeleteBuffers(1, &(renderData.instancesBuffer));
+            }
             glDeleteVertexArrays(1, &(renderData.vaoID));
+        }
+
+        MeshRenderData& getMeshRenderData(ui16 meshId)
+        {
+            Debug::Assert(rendererData.meshRenderData.count(meshId) > 0, "Render data for mesh : "
+                          + std::to_string(meshId) + " not initialized yet");
+
+            MeshRenderData& renderData = rendererData.meshRenderData[meshId];
+            return renderData;
+        }
+
+        void prepareMeshAttributes(MeshRenderData& meshRenderData, GLuint shaderProgram)
+        {
+            if(meshRenderData.shaderData.count(shaderProgram) == 0)
+            {
+                initializeShaderData(meshRenderData, shaderProgram);
+            }
+
+            const ShaderData &shaderData = meshRenderData.shaderData[shaderProgram];
+            const std::vector<AttributeData>& attributes = meshRenderData.attributes;
+
+            //bind mesh vao
+            glBindVertexArray(meshRenderData.vaoID);
+
+            //set the attributes
+            for(size_t i = 0; i < attributes.size(); ++i)
+            {
+                GLuint attribLocation = shaderData.attribLocations[i];
+
+                if(attribLocation != GLuint(-1))
+                {
+                    glEnableVertexAttribArray(attribLocation);
+                    glBindBuffer(GL_ARRAY_BUFFER, attributes[i].dataBufferId);
+                    glVertexAttribPointer(
+                                attribLocation,             // The attribute we want to configure
+                                attributes[i].nbValues,     // size
+                                attributes[i].type,         // typeC
+                                GL_FALSE,                   // normalized?
+                                0,                          // stride
+                                (void*)0                    // array buffer offset
+                                );
+                }
+            }
+        }
+
+        void cleanMeshAttributes(MeshRenderData& meshRenderData, GLint shaderProgram)
+        {
+            const ShaderData &shaderData = meshRenderData.shaderData[shaderProgram];
+            //clean the attributes
+            for(size_t i = 0; i < meshRenderData.attributes.size(); ++i)
+            {
+                GLuint attribLocation = shaderData.attribLocations[i];
+                if(attribLocation < (GLuint)-1)
+                {
+                    glDisableVertexAttribArray(attribLocation);
+                }
+            }
         }
     }
 
@@ -213,75 +283,38 @@ namespace MeshRender
     void InitializeMeshRenderData(ui16 meshId)
     {
         //render data for this mesh are not initalized yet
-        if(meshRendererData.meshRenderData.count(meshId) == 0)
+        if(rendererData.meshRenderData.count(meshId) == 0)
         {
             initializeGLData(meshId);
         }
     }
 
-    MeshRenderData& GetMeshRenderData(ui16 meshId, GLuint shaderProgram)
-    {
-        Debug::Assert(meshRendererData.meshRenderData.count(meshId) > 0, "Render data for mesh : "
-                      + std::to_string(meshId) + " not initialized yet");
-
-        MeshRenderData& renderData = meshRendererData.meshRenderData[meshId];
-
-        if(renderData.shaderData.count(shaderProgram) == 0)
-        {
-            initializeShaderData(renderData, shaderProgram);
-        }
-        return renderData;
-    }
-
     void DeleteMeshRenderData(ui16 meshId)
     {
-        Debug::Assert(meshRendererData.meshRenderData.count(meshId) > 0, "Render data for mesh : "
+        Debug::Assert(rendererData.meshRenderData.count(meshId) > 0, "Render data for mesh : "
                       + std::to_string(meshId) + " not initialized yet");
 
-        MeshRenderData& renderData = meshRendererData.meshRenderData[meshId];
+        MeshRenderData& renderData = rendererData.meshRenderData[meshId];
 
         cleanupGLRenderData(renderData);
 
-        auto it = meshRendererData.meshRenderData.find(meshId);
-        meshRendererData.meshRenderData.erase(it);
+        auto it = rendererData.meshRenderData.find(meshId);
+        rendererData.meshRenderData.erase(it);
     }
 
     void RenderMesh(ui16 meshId, const glm::mat4& projectionMatrix,
-                                   const glm::mat4& viewMatrix, const glm::mat4& modelMatrix)
+                    const glm::mat4& viewMatrix, const glm::mat4& modelMatrix)
     {
         GLint shaderProgram;
         glGetIntegerv(GL_CURRENT_PROGRAM, &shaderProgram);
 
         SCE::ShaderUtils::BindDefaultUniforms(shaderProgram, modelMatrix, viewMatrix, projectionMatrix);
 
-        MeshRenderData& meshRenderData = GetMeshRenderData(meshId, shaderProgram);
-        const ShaderData &shaderData = meshRenderData.shaderData[shaderProgram];
-        const std::vector<AttributeData>& attributes = meshRenderData.attributes;
+        MeshRenderData& meshRenderData = getMeshRenderData(meshId);
+        prepareMeshAttributes(meshRenderData, shaderProgram);
+
         GLuint indiceCount = meshRenderData.indiceCount;
         GLuint indiceBuffer = meshRenderData.indiceBuffer;
-
-        //bind mesh data
-        glBindVertexArray(meshRenderData.vaoID);
-
-        //set the attributes
-        for(size_t i = 0; i < attributes.size(); ++i)
-        {
-            GLuint attribLocation = shaderData.attribLocations[i];
-
-            if(attribLocation < (GLuint)-1)
-            {
-                glEnableVertexAttribArray(attribLocation);
-                glBindBuffer(GL_ARRAY_BUFFER, attributes[i].dataBufferId);
-                glVertexAttribPointer(
-                            attribLocation,             // The attribute we want to configure
-                            attributes[i].nbValues,     // size
-                            attributes[i].type,         // typeC
-                            GL_FALSE,                   // normalized?
-                            0,                          // stride
-                            (void*)0                    // array buffer offset
-                            );
-            }
-        }
 
         // Index buffer
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indiceBuffer);
@@ -289,23 +322,91 @@ namespace MeshRender
         // Draw the triangles !
         glDrawElements(
                     GL_TRIANGLES,       // mode
-                    indiceCount,       // count
+                    indiceCount,        // count
                     GL_UNSIGNED_SHORT,  // type
                     (void*)0            // element array buffer offset
                     );
 
-        //clean the attributes
-        for(size_t i = 0; i < attributes.size(); ++i)
-        {
-            GLuint attribLocation = shaderData.attribLocations[i];
-            if(attribLocation < (GLuint)-1)
-            {
-                glDisableVertexAttribArray(attribLocation);
-            }
-        }
+        cleanMeshAttributes(meshRenderData, shaderProgram);
 
         glBindVertexArray(0);
     }
+
+    void MakeMeshInstanced(ui16 meshId)
+    {
+        MeshRenderData &renderData = getMeshRenderData(meshId);
+        glGenBuffers(1, &(renderData.instancesBuffer));
+    }
+
+    void SetMeshInstances(ui16 meshId, const std::vector<mat4> &instanceMatrices, GLenum drawType)
+    {
+        MeshRenderData &renderData = getMeshRenderData(meshId);
+        SCE::Debug::Assert(renderData.instancesBuffer != GLuint(-1),
+                           std::string("Mesh was not set as instances,") +
+                           "use 'MakeMeshInstanced' to set mesh as instanced");
+
+        glBindBuffer(GL_ARRAY_BUFFER, renderData.instancesBuffer);
+        int size = sizeof(mat4) * instanceMatrices.size();
+        glBufferData(GL_ARRAY_BUFFER, size, &(instanceMatrices[0]), drawType);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        renderData.instancesCount = instanceMatrices.size();
+    }
+
+    void DrawInstances(ui16 meshId, const glm::mat4& projectionMatrix,
+                       const glm::mat4& viewMatrix)
+    {
+        GLint shaderProgram;
+        glGetIntegerv(GL_CURRENT_PROGRAM, &shaderProgram);
+
+        SCE::ShaderUtils::BindDefaultUniforms(shaderProgram, glm::mat4(), viewMatrix, projectionMatrix);
+
+        MeshRenderData& meshRenderData = getMeshRenderData(meshId);
+
+        SCE::Debug::Assert(meshRenderData.instancesBuffer != GLuint(-1),
+                           std::string("Mesh was not set as instances,") +
+                           "use 'MakeMeshInstanced' to set mesh as instanced");
+
+        prepareMeshAttributes(meshRenderData, shaderProgram);
+
+        const ShaderData &shaderData = meshRenderData.shaderData[shaderProgram];
+
+        //bind buffer attribute for instanced rendering
+        glBindBuffer(GL_ARRAY_BUFFER, meshRenderData.instancesBuffer);
+        GLint instanceAttribLoc = shaderData.instanceMatrixAttrib;
+
+        for (int i = 0; i < 4; i++)
+        {
+            // Set up the vertex attribute
+            glVertexAttribPointer(instanceAttribLoc + i,             // Location
+                                  4, GL_FLOAT, GL_FALSE,       // vec4
+                                  sizeof(mat4),                // Stride
+                                  (void *)(sizeof(vec4) * i)); // Start offset
+            // Enable it
+            glEnableVertexAttribArray(instanceAttribLoc + i);
+            // Make it instanced
+            glVertexAttribDivisor(instanceAttribLoc + i, 1);
+        }
+
+        GLuint indiceCount = meshRenderData.indiceCount;
+        GLuint indiceBuffer = meshRenderData.indiceBuffer;
+
+        // Index buffer
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indiceBuffer);
+
+        // Draw the triangles !
+        glDrawElementsInstanced(
+                    GL_TRIANGLES,       // mode
+                    indiceCount,       // count
+                    GL_UNSIGNED_SHORT,  // type
+                    (void*)0,            // element array buffer offset
+                    meshRenderData.instancesCount);
+
+        cleanMeshAttributes(meshRenderData, shaderProgram);
+        glDisableVertexAttribArray(instanceAttribLoc);
+
+        glBindVertexArray(0);
+    }
+
 }
 
 }

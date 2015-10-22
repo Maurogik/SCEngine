@@ -5,35 +5,33 @@ _{
     in vec3 vertexPosition_modelspace;
     in vec2 vertexUV;
     in vec3 vertexNormal_modelspace;
+    in mat4 instanceMatrix;
 
     out vec2 fragUV;
     out vec3 Normal_worldspace;
     out vec3 Position_worldspace;
     out vec3 Position_modelspace;
 
-    uniform mat4 MVP;
-    uniform mat4 M;
+    uniform mat4 WorldToTerrainSpace;
     uniform mat4 V;
     uniform mat4 P;
     uniform float PatchSize;
-    uniform mat4 TreeToTerrainSpace;
     uniform sampler2D TerrainHeightMap;
 
     void main()
     {
         Position_modelspace = vertexPosition_modelspace;
+        Position_worldspace = ( instanceMatrix * vec4(vertexPosition_modelspace, 1.0) ).xyz;
 
-        vec4 pos_terrainspace = TreeToTerrainSpace * vec4(0.0, 0.0, 0.0, 1.0);
+        vec4 pos_terrainspace = WorldToTerrainSpace * vec4(Position_worldspace, 1.0);
         float height = texture(TerrainHeightMap, pos_terrainspace.zx * 0.5 + vec2(0.5)).a;
 
-        vec3 movedVertexPos = vertexPosition_modelspace;
-        movedVertexPos.y += (height - 0.005) * PatchSize;
+        Position_worldspace.y += (height - 0.005) * PatchSize;
 
         fragUV = vertexUV;
-        Position_worldspace = ( M * vec4(movedVertexPos, 1.0) ).xyz;
-        Normal_worldspace = ( M * vec4(vertexNormal_modelspace, 0.0) ).xyz;
+        Normal_worldspace = ( instanceMatrix * vec4(vertexNormal_modelspace, 0.0) ).xyz;
 
-        gl_Position = MVP * vec4(movedVertexPos, 1.0);
+        gl_Position = P * V * vec4(Position_worldspace, 1.0);
     }
 _}
 
