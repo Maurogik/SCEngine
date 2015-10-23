@@ -90,12 +90,16 @@ namespace Terrain
     struct TerrainData
     {
         TerrainData()
-            : quadPatchIndices{0, 1, 2, 3},
-              quadVertices { glm::vec3(0.0f, 0.0f, 0.0f),
-                             glm::vec3(1.0f, 0.0f, 0.0f),
-                             glm::vec3(1.0f, 0.0f, 1.0f),
-                             glm::vec3(0.0f, 0.0f, 1.0f)}
-        {}
+        {
+			quadPatchIndices[0] = 0;
+			quadPatchIndices[1] = 1;
+			quadPatchIndices[2] = 2;
+			quadPatchIndices[3] = 3;
+			quadVertices[0] = glm::vec3(0.0f, 0.0f, 0.0f);
+			quadVertices[0] = glm::vec3(1.0f, 0.0f, 0.0f);
+			quadVertices[0] = glm::vec3(1.0f, 0.0f, 1.0f);
+			quadVertices[0] = glm::vec3(0.0f, 0.0f, 1.0f);
+		}
 
         //Terrain quad render data
         GLuint  quadVao;

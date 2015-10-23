@@ -25,9 +25,17 @@ How to build (requires CMake) :
 
     *./playground*
 
-#### Windows - CMake
+#### Windows - CMake and Visual Studio
 
+* **clone or download the project**
 
+* **Open CMake and browse to where you extracted the project**
+
+* **Configure and Generate the build files with CMake (you will have to pick a build directory first)**
+
+* **Open the generated SCEngine.sln solution with visual studio**
+
+* **Build and run**
 
 
 ### Dependencies
