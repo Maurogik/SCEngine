@@ -42,8 +42,8 @@
 #define TREE_MODEL_NAME "Terrain/Meshes/low_poly_tree.obj"
 
 //#define TERRAIN_TEXTURE_SIZE 4096
-//#define TERRAIN_TEXTURE_SIZE 2048
-#define TERRAIN_TEXTURE_SIZE 512
+#define TERRAIN_TEXTURE_SIZE 2048
+//#define TERRAIN_TEXTURE_SIZE 512
 #define TEX_TILE_SIZE 2.0f
 
 //#define ISLAND_MODE
@@ -80,6 +80,13 @@ namespace Terrain
         GLint   worldToTerrainMatUniform;
     };
 
+    struct TreeGroup
+    {
+        glm::vec2 position;
+        float radius;
+        float spacing;
+    };
+
     struct TerrainData
     {
         TerrainData()
@@ -105,6 +112,8 @@ namespace Terrain
 
         TerrainGLData   glData;
         TreeGLData      treeGlData;
+
+        std::vector<TreeGroup> treeGroups;
     };
 
 /*      File scope variables    */
@@ -173,6 +182,48 @@ namespace Terrain
              *      | \ |
              *     0|__\|
              */
+        }
+
+        void initializeTreeLayout(glm::vec4* normAndHeightTex, float xOffset, float zOffset,
+                                  float startScale, float heightScale,
+                                  float halfTerrainSize)
+        {
+            int treeGroupIter = 32;
+            float scale = startScale;
+            float baseGroupRadius = 1.0f / float(treeGroupIter) * halfTerrainSize;
+            float maxRadiusScale = 2.0f;
+            float baseSpacing = 20.0f;
+
+            float y = 115.0f; //any value will do, just need to be something else than the terrain height
+
+            for(int xCount = 0; xCount < treeGroupIter; ++xCount)
+            {
+                float x = float(xCount) / float(treeGroupIter);
+
+                for(int zCount = 0; zCount < treeGroupIter; ++zCount)
+                {
+                    float z = float(zCount) / float(treeGroupIter);
+
+                    vec4 normAndHeight = normAndHeightTex[int(x * TERRAIN_TEXTURE_SIZE) *
+                            TERRAIN_TEXTURE_SIZE + int(z * TERRAIN_TEXTURE_SIZE)];
+
+                    float noise = stb_perlin_noise3((x + xOffset) * scale, y * scale, (z + zOffset) * scale);
+                    noise = SCE::Math::mapToRange(-0.7f, 0.7f, 0.0f, maxRadiusScale, noise);
+
+                    float flatness = pow(dot(vec3(normAndHeight.x, normAndHeight.y, normAndHeight.z),
+                                             vec3(0.0, 1.0, 0.0)), 8.0);
+                    float height = normAndHeight.a / heightScale;
+                    if(height < 0.5f && flatness > 0.4f && noise > 0.7f)
+                    {
+                        TreeGroup group;
+                        group.position = (glm::vec2(x, z) * 2.0f - vec2(1.0, 1.0))
+                                * halfTerrainSize;
+                        group.radius = noise * baseGroupRadius;
+                        group.spacing = baseSpacing;
+                        terrainData->treeGroups.push_back(group);
+                    }
+                }
+            }
         }
 
         //generate perlin noise texture
@@ -293,6 +344,9 @@ namespace Terrain
                 }
             }
 
+            initializeTreeLayout(packedHeightAndNormal, xOffset, zOffset, startScale, heightScale,
+                                 terrainData->terrainSize * 0.5f);
+
             glGenTextures(1, &(terrainData->glData.terrainTexture));
             glBindTexture(GL_TEXTURE_2D, terrainData->glData.terrainTexture);
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, TERRAIN_TEXTURE_SIZE, TERRAIN_TEXTURE_SIZE, 0,
@@ -327,6 +381,21 @@ namespace Terrain
             }
 
             return onScreenCount == 0;
+        }
+
+        bool isObjectOffscreen(const glm::mat4& MVPMat, float radius)
+        {
+            float tolerance = terrainData->heightScale + radius / terrainData->heightScale;
+
+            glm::vec4 pos = MVPMat * glm::vec4(0.0, 0.0, 0.0, 1.0);
+            pos /= pos.w;
+            if(pos.z > tolerance || pos.z < -tolerance ||
+               pos.x > tolerance || pos.x < -tolerance )
+            {
+                return true;
+            }
+
+            return false;
         }
 
         void initializeRenderData()
@@ -402,8 +471,7 @@ namespace Terrain
                          const glm::mat4& viewMatrix,
                          const glm::mat4& terrainToWorldspace,
                          const glm::vec3& position_terrainSpace,
-                         float patchSize,
-                         float halfTerrainSize)
+                         float patchSize)
         {
             //Model to world matrix is concatenation of quad and terrain matrices
             glm::mat4 modelMatrix = terrainToWorldspace *
@@ -423,33 +491,55 @@ namespace Terrain
             }
         }
 
-        void initializeTrees()
+        void computeTreeInstances(const glm::mat4& projectionMatrix,
+                                  const glm::mat4& viewMatrix)
         {
+            glm::mat4 MVPMat;
+
             float patchSize = terrainData->patchSize;
             float terrainSize = terrainData->terrainSize;
             //compute the actual terrain size we will cover with patches
             terrainSize = floor(terrainSize/patchSize) * patchSize;
             float halfTerrainSize = terrainSize / 2.0f;
 
-            float spacing = 50.0f;
-
             std::vector<glm::mat4> treeMatrices;
-            treeMatrices.reserve(terrainSize / spacing);
+            treeMatrices.reserve(terrainData->treeGroups.size() * 50); //reserve some space to work with
+            float noiseX, noiseZ;
 
-            for(float x = -halfTerrainSize + patchSize * 0.5f; x < halfTerrainSize - patchSize;
-                x += spacing)
+            for(TreeGroup& group : terrainData->treeGroups)
             {
-                for(float z = -halfTerrainSize + patchSize * 0.5f; z < halfTerrainSize - patchSize;
-                    z += spacing)
+                glm::vec3 groupPos(group.position.x, 0.0f, group.position.y);
+                glm::mat4 modelMatrix = glm::translate(mat4(1.0f), groupPos);
+                MVPMat = projectionMatrix * viewMatrix * modelMatrix;
+                glm::vec3 viewSpacePos = glm::vec3(viewMatrix * glm::vec4(groupPos, 1.0));
+
+                if(!isObjectOffscreen(MVPMat, group.radius) && length(viewSpacePos) < 2000.0f)
                 {
-                    glm::vec3 treePos(x, 0.0f, z);
-                    glm::mat4 modelMatrix = glm::translate(mat4(1.0f), treePos);
-                    treeMatrices.push_back(modelMatrix);
+                    for(float x = -group.radius; x < group.radius; x += group.spacing)
+                    {
+                        for(float z = -group.radius; z < group.radius; z += group.spacing)
+                        {
+                            glm::vec3 treePos(x + group.position.x, 0.0f, z + group.position.y);
+                            noiseX = stb_perlin_noise3(treePos.x, 25.0f, treePos.z);
+                            noiseZ = stb_perlin_noise3(treePos.z, 25.0f, treePos.x);
+
+                            treePos.x += noiseX * group.spacing * 10.0f;
+                            treePos.z += noiseZ * group.spacing * 10.0f;
+                            glm::mat4 instanceMatrix = glm::translate(mat4(1.0f), treePos);
+
+                            if( abs(treePos.x) < halfTerrainSize - patchSize
+                                && abs(treePos.z) < halfTerrainSize - patchSize
+                                && length(groupPos - treePos) < group.radius)
+                            {
+                                treeMatrices.push_back(instanceMatrix);
+                            }
+                        }
+                    }
                 }
             }
 
             SCE::MeshRender::SetMeshInstances(terrainData->treeGlData.treeMeshId,
-                                              treeMatrices, GL_STATIC_DRAW);
+                                              treeMatrices, GL_DYNAMIC_DRAW);
         }
 
     //end of anonymous namespace
@@ -524,8 +614,7 @@ namespace Terrain
                             viewMatrix,
                             terrainToWorldspace,
                             pos_terrainspace,
-                            patchSize,
-                            halfTerrainSize);
+                            patchSize);
             }
         }
 
@@ -540,6 +629,8 @@ namespace Terrain
         glUniform1i(treeData.terrainTextureUniform, 0);
         glUniform1f(treeData.patchSizeUniform, patchSize);
         glUniformMatrix4fv(treeData.worldToTerrainMatUniform, 1, GL_FALSE, &(worldToTerrainspace[0][0]));
+
+        computeTreeInstances(projectionMatrix, viewMatrix);
 
         SCE::MeshRender::DrawInstances(treeData.treeMeshId, projectionMatrix, viewMatrix);
     }
@@ -557,8 +648,7 @@ namespace Terrain
             float xOffset = SCE::Math::randRange(0.0f, 1.0f);
             float zOffset = SCE::Math::randRange(0.0f, 1.0f);
             initializeTerrainTextures(xOffset, zOffset, 2.0f * terrainSize / 3000.0f,
-                                      terrainData->heightScale);
-            initializeTrees();
+                                      terrainData->heightScale);            
         }
     }
 

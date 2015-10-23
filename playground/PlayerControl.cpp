@@ -90,9 +90,9 @@ void PlayerControl::Update()
     if (glfwGetKey( window, GLFW_KEY_SPACE ) == GLFW_PRESS)
     {
 #ifdef SCE_DEBUG
-       speed = 150.0f;
+       speed = 500.0f;
 #else
-       speed = 50.0f;
+       speed = 500.0f;
 #endif
     }
     else if (glfwGetKey( window, GLFW_KEY_LEFT_SHIFT ) == GLFW_PRESS)

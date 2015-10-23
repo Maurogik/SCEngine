@@ -48,17 +48,13 @@ _{
     layout (location = 1) out vec3 oColor;
     layout (location = 2) out vec4 oNormal;
 
-//    uniform vec3  LeavesColor;
-//    uniform vec3  TruncColor;
-//    uniform float Specularity;
-
-    vec3 LeavesColor = vec3(0.0, 1.0, 0.0);
-    vec3 TruncColor = vec3(0.8, 0.3, 0.0);
-    float Specularity = 1.0;
+    vec3 LeavesColor = vec3(0.0, 0.2, 0.0);
+    vec3 TruncColor = vec3(0.15, 0.05, 0.0);
+    float Specularity = 0.1;
 
     void main()
     {
-        float trunc = step(Position_modelspace.y, 3.0);
+        float trunc = step(Position_modelspace.y, 5.9);
         oColor = trunc * TruncColor + (1.0 - trunc) * LeavesColor;
 
         oPosition = Position_worldspace;

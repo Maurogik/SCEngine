@@ -159,7 +159,7 @@ void SCEScene::UnregisterGameObject(SCEHandle<GameObject> gameObject)
 
 void SCEScene::AddTerrain(float terrainSize, float patchSize, float baseHeight)
 {
-    SCE::Terrain::Init(3000.0f, 200.0f, 0.0f);
+    SCE::Terrain::Init(terrainSize, patchSize, baseHeight);
 }
 
 void SCEScene::RemoveTerrain()
