@@ -8,6 +8,7 @@
 #include "../headers/SCE_GLDebug.hpp"
 #include "../headers/SCEInternal.hpp"
 #include "../headers/SCERender.hpp"
+#include <time.h>
 
 using namespace SCE;
 using namespace std;
@@ -108,7 +109,9 @@ void SCECore::InitEngine(const std::string &windowName)
         Debug::Log("Warning : OpenGL error found : " + std::to_string(errorCode));
     }
 
-    SCE::Math::seedRandomGenerator(glfwGetTime());
+    time_t ctime = time(0);
+    tm* calendarTime = localtime(&ctime);
+    SCE::Math::seedRandomGenerator(calendarTime->tm_sec);
     //Init Engine subcomponents in order
     SCE::Time::Init();
     //Rendering

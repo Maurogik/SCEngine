@@ -429,7 +429,8 @@ std::vector<CameraRenderData> SCELighting::computeCascadedLightFrustrums(Frustru
                        + (1.0f - lambda) * (near + (far - near) * si);
         zSplits[i - 1].y = zSplits[i].x * 1.005f;//slightly offset to fix holes ?
     }
-    // here we set the last sub-frustrum (farthest for camera) to cover until the end of the camera frustrum
+    // here we set the last sub-frustrum (farthest for camera) to cover until the end of
+    //the camera frustrum
     // that way, even very far objects have shadows
     zSplits[cascadeCount - 1].y = cameraFrustrum.far;
 

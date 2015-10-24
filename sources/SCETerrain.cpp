@@ -13,6 +13,7 @@
 #include "../headers/SCETime.hpp"
 #include "../headers/SCEMeshLoader.hpp"
 #include "../headers/SCEMeshRender.hpp"
+#include "../headers/SCEDebugText.hpp"
 
 #include <time.h>
 #include <glm/gtc/matrix_transform.hpp>
@@ -39,10 +40,11 @@
 #define TESS_OVERRIDE_UNIFORM "TesselationOverride"
 
 #define TREE_SHADER_NAME "Terrain/Tree"
-#define TREE_MODEL_NAME "Terrain/Meshes/low_poly_tree.obj"
+#define TREE_MODEL_NAME "Terrain/Meshes/tree_lod"
+#define TREE_LOD_COUNT 4
 
-#define TERRAIN_TEXTURE_SIZE 4096
-//#define TERRAIN_TEXTURE_SIZE 2048
+//#define TERRAIN_TEXTURE_SIZE 4096
+#define TERRAIN_TEXTURE_SIZE 2048
 //#define TERRAIN_TEXTURE_SIZE 512
 #define TEX_TILE_SIZE 2.0f
 
@@ -73,7 +75,7 @@ namespace Terrain
 
     struct TreeGLData
     {
-        ui16    treeMeshId;
+        ui16    treeMeshIds[TREE_LOD_COUNT];
         GLuint  treeShaderProgram;
         GLint   terrainTextureUniform;
         GLint   patchSizeUniform;        
@@ -96,9 +98,9 @@ namespace Terrain
 			quadPatchIndices[2] = 2;
 			quadPatchIndices[3] = 3;
 			quadVertices[0] = glm::vec3(0.0f, 0.0f, 0.0f);
-			quadVertices[0] = glm::vec3(1.0f, 0.0f, 0.0f);
-			quadVertices[0] = glm::vec3(1.0f, 0.0f, 1.0f);
-			quadVertices[0] = glm::vec3(0.0f, 0.0f, 1.0f);
+            quadVertices[1] = glm::vec3(1.0f, 0.0f, 0.0f);
+            quadVertices[2] = glm::vec3(1.0f, 0.0f, 1.0f);
+            quadVertices[3] = glm::vec3(0.0f, 0.0f, 1.0f);
 		}
 
         //Terrain quad render data
@@ -143,8 +145,12 @@ namespace Terrain
                 SCE::ShaderUtils::DeleteShaderProgram(terrainData->treeGlData.treeShaderProgram);
             }
 
-            SCE::MeshRender::DeleteMeshRenderData(terrainData->treeGlData.treeMeshId);
-            SCE::MeshLoader::DeleteMesh(terrainData->treeGlData.treeMeshId);
+            for(uint lod = 0; lod < TREE_LOD_COUNT; ++lod)
+            {
+                SCE::MeshRender::DeleteMeshRenderData(terrainData->treeGlData.treeMeshIds[lod]);
+                SCE::MeshLoader::DeleteMesh(terrainData->treeGlData.treeMeshIds[lod]);
+                terrainData->treeGlData.treeMeshIds[lod] = ui16(-1);
+            }
         }
 
         void computeNormalsForQuad(int xCount, int zCount, glm::vec3 *normals, float* heightmap)
@@ -192,11 +198,12 @@ namespace Terrain
                                   float startScale, float heightScale,
                                   float halfTerrainSize)
         {
-            int treeGroupIter = 32;
+            //number of time the map is divided to form tree groups
+            int treeGroupIter = 24;
             float scale = startScale;
             float baseGroupRadius = 1.0f / float(treeGroupIter) * halfTerrainSize;
             float maxRadiusScale = 2.0f;
-            float baseSpacing = 20.0f;
+            float baseSpacing = 40.0f;
 
             float y = 115.0f; //any value will do, just need to be something else than the terrain height
 
@@ -217,7 +224,7 @@ namespace Terrain
                     float flatness = pow(dot(vec3(normAndHeight.x, normAndHeight.y, normAndHeight.z),
                                              vec3(0.0, 1.0, 0.0)), 8.0);
                     float height = normAndHeight.a / heightScale;
-                    if(height < 0.5f && flatness > 0.4f && noise > 0.7f)
+                    if(height < 0.45f && flatness > 0.45f && noise > 0.7f)
                     {
                         TreeGroup group;
                         group.position = (glm::vec2(x, z) * 2.0f - vec2(1.0, 1.0))
@@ -455,12 +462,17 @@ namespace Terrain
             // We work with 4 points per patch.
             glPatchParameteri(GL_PATCH_VERTICES, 4);
 
-            //Load tree model
-            ui16 meshId = SCE::MeshLoader::CreateMeshFromFile(TREE_MODEL_NAME);
-            SCE::MeshRender::InitializeMeshRenderData(meshId);
-            SCE::MeshRender::MakeMeshInstanced(meshId);
+            //Load tree models
             TreeGLData& treeData = terrainData->treeGlData;
-            treeData.treeMeshId = meshId;
+            for(int lod = 0; lod < TREE_LOD_COUNT; ++lod)
+            {
+                ui16 meshId = SCE::MeshLoader::CreateMeshFromFile(TREE_MODEL_NAME + std::to_string(lod)
+                                                                  + ".obj");
+                SCE::MeshRender::InitializeMeshRenderData(meshId);
+                SCE::MeshRender::MakeMeshInstanced(meshId);
+                treeData.treeMeshIds[lod] = meshId;
+            }
+
             treeData.treeShaderProgram = SCE::ShaderUtils::CreateShaderProgram(TREE_SHADER_NAME);
             treeData.patchSizeUniform =
                     glGetUniformLocation(treeData.treeShaderProgram, PATCH_SIZE_UNIFORM);
@@ -500,50 +512,74 @@ namespace Terrain
         {
             glm::mat4 MVPMat;
 
+            float perlinScale = 10.0f;
             float patchSize = terrainData->patchSize;
             float terrainSize = terrainData->terrainSize;
             //compute the actual terrain size we will cover with patches
             terrainSize = floor(terrainSize/patchSize) * patchSize;
             float halfTerrainSize = terrainSize / 2.0f;
 
-            std::vector<glm::mat4> treeMatrices;
-            treeMatrices.reserve(terrainData->treeGroups.size() * 50); //reserve some space to work with
+            std::vector<glm::mat4> treeMatrices[TREE_LOD_COUNT];
             float noiseX, noiseZ;
 
+            float power = 1.5f;
+            float maxDistToCam = terrainSize;
+
+
+            glm::vec3 cameraPosition = glm::vec3(glm::inverse(viewMatrix) * glm::vec4(0.0, 0.0, 0.0, 1.0));
+            cameraPosition.y = 0.0f;
+            SCE::DebugText::Print("Cam : " + std::to_string(cameraPosition.x) + ", " +
+                                  std::to_string(cameraPosition.z));
+
+            int lodGroup = 0;
             for(TreeGroup& group : terrainData->treeGroups)
             {
                 glm::vec3 groupPos(group.position.x, 0.0f, group.position.y);
                 glm::mat4 modelMatrix = glm::translate(mat4(1.0f), groupPos);
-                MVPMat = projectionMatrix * viewMatrix * modelMatrix;
-                glm::vec3 viewSpacePos = glm::vec3(viewMatrix * glm::vec4(groupPos, 1.0));
+                MVPMat = projectionMatrix * viewMatrix * modelMatrix;                
 
-                if(!isObjectOffscreen(MVPMat, group.radius) && length(viewSpacePos) < 2000.0f)
+                if(!isObjectOffscreen(MVPMat, group.radius))
                 {
                     for(float x = -group.radius; x < group.radius; x += group.spacing)
                     {
                         for(float z = -group.radius; z < group.radius; z += group.spacing)
                         {
                             glm::vec3 treePos(x + group.position.x, 0.0f, z + group.position.y);
-                            noiseX = stb_perlin_noise3(treePos.x, 25.0f, treePos.z);
-                            noiseZ = stb_perlin_noise3(treePos.z, 25.0f, treePos.x);
+                            noiseX = stb_perlin_noise3(treePos.x*perlinScale, 25.0f,
+                                                       treePos.z*perlinScale);
+                            noiseZ = stb_perlin_noise3(treePos.z*perlinScale, 25.0f,
+                                                       treePos.x*perlinScale);
+
+                            float scale = SCE::Math::mapToRange(-1.0f, 1.0f, 0.4f, 1.6f, noiseZ);
 
                             treePos.x += noiseX * group.spacing * 10.0f;
                             treePos.z += noiseZ * group.spacing * 10.0f;
-                            glm::mat4 instanceMatrix = glm::translate(mat4(1.0f), treePos);
+                            glm::mat4 instanceMatrix = glm::translate(mat4(1.0f), treePos) *
+                                    glm::rotate(mat4(1.0), noiseX * 10.0f, glm::vec3(0.0, 1.0, 0.0)) *
+                                    glm::scale(mat4(1.0), glm::vec3(scale));
 
-                            if( abs(treePos.x) < halfTerrainSize - patchSize
-                                && abs(treePos.z) < halfTerrainSize - patchSize
-                                && length(groupPos - treePos) < group.radius)
+                            if( abs(treePos.x) < halfTerrainSize - patchSize*0.5f
+                                && abs(treePos.z) < halfTerrainSize - patchSize*0.5f)
+//                                && length(groupPos - treePos) < group.radius)
                             {
-                                treeMatrices.push_back(instanceMatrix);
+                                float distToCam = length(cameraPosition - treePos);
+                                lodGroup = min(int(floor(pow(distToCam , power)/ maxDistToCam)),
+                                               TREE_LOD_COUNT - 1);
+
+                                treeMatrices[lodGroup].push_back(instanceMatrix);
                             }
                         }
                     }
                 }
             }
 
-            SCE::MeshRender::SetMeshInstances(terrainData->treeGlData.treeMeshId,
-                                              treeMatrices, GL_DYNAMIC_DRAW);
+            for(uint lod = 0; lod < TREE_LOD_COUNT; ++lod)
+            {
+                SCE::MeshRender::SetMeshInstances(terrainData->treeGlData.treeMeshIds[lod],
+                                                  treeMatrices[lod], GL_DYNAMIC_DRAW);
+                SCE::DebugText::Print("Trees lod " + std::to_string(lod) + " : " +
+                                      std::to_string(treeMatrices[lod].size()));
+            }
         }
 
     //end of anonymous namespace
@@ -568,7 +604,7 @@ namespace Terrain
         terrainSize = floor(terrainSize/patchSize) * patchSize;
         float halfTerrainSize = terrainSize / 2.0f;       
 
-        glm::vec3 terrainPosition_worldspace = vec3(0.0);//glm::vec3(cameraPosition);
+        glm::vec3 terrainPosition_worldspace = vec3(0.0);
         terrainPosition_worldspace.y = terrainData->baseHeight;
         glm::mat4 terrainToWorldspace = glm::translate(glm::mat4(1.0f), terrainPosition_worldspace);
 
@@ -636,7 +672,10 @@ namespace Terrain
 
         computeTreeInstances(projectionMatrix, viewMatrix);
 
-        SCE::MeshRender::DrawInstances(treeData.treeMeshId, projectionMatrix, viewMatrix);
+        for(uint lod = 0; lod < TREE_LOD_COUNT; ++lod)
+        {
+            SCE::MeshRender::DrawInstances(treeData.treeMeshIds[lod], projectionMatrix, viewMatrix);
+        }
     }
 
     void Init(float terrainSize, float patchSize, float terrainBaseHeight)

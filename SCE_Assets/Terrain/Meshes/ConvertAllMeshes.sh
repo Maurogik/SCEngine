@@ -17,7 +17,7 @@ eval "rm $PWD/*_convert*"
 # ${PWD}/*.OBJ"
 
 #path scale flipUV(0/1) windCW(0/1)
-COMMAND_ARGS="$PWD/low_poly_tree.obj 0.04 0 0"
+COMMAND_ARGS="$PWD/tree_lod0.obj 0.04 0 0, $PWD/tree_lod1.obj 0.04 0 0, $PWD/tree_lod2.obj 0.04 0 0, $PWD/tree_lod3.obj 0.04 0 0"
 # for file in $FILES
 # do
 # 	echo "Processing $file"

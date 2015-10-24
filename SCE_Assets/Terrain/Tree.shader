@@ -59,7 +59,7 @@ _{
 
         oPosition = Position_worldspace;
 
-        oNormal.xyz = Normal_worldspace;
+        oNormal.xyz = normalize(Normal_worldspace);
         oNormal.a = Specularity;
     }
 _}
