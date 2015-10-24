@@ -26,8 +26,6 @@ _{
         vec4 pos_terrainspace = WorldToTerrainSpace * vec4(Position_worldspace, 1.0);
         float height = texture(TerrainHeightMap, pos_terrainspace.zx * 0.5 + vec2(0.5)).a;
 
-        Position_worldspace.y += (height - 0.005) * PatchSize;
-
         fragUV = vertexUV;
         Normal_worldspace = ( instanceMatrix * vec4(vertexNormal_modelspace, 0.0) ).xyz;
 
@@ -48,9 +46,9 @@ _{
     layout (location = 1) out vec3 oColor;
     layout (location = 2) out vec4 oNormal;
 
-    vec3 LeavesColor = vec3(0.0, 0.2, 0.0);
-    vec3 TruncColor = vec3(0.15, 0.05, 0.0);
-    float Specularity = 0.1;
+    vec3 LeavesColor = vec3(0.0, 0.1, 0.0);
+    vec3 TruncColor = vec3(0.10, 0.025, 0.0);
+    float Specularity = 0.02;
 
     void main()
     {

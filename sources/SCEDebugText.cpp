@@ -63,7 +63,7 @@ namespace DebugText
 
     void Print(const std::string &message)
     {
-        Print(message, glm::vec3(1.0, 0.0, 0.0));
+        Print(message, glm::vec3(0.0, 0.0, 0.0));
     }
 
     void Print(const std::string &message, const vec3& color)

@@ -54,11 +54,12 @@ _{
             float height = texture(TerrainHeightMap, centerUv).a;
 
             float farDist = TerrainMaxDistance + 10.0;
-            vec4 center_cameraspace = V * M * ((p0 - p1) * 0.5 + p1 + vec4(0.0, height, 0.0, 0.0));
+            vec4 center_cameraspace = V * ( M * ((p0 - p1) * 0.5 + p1) + vec4(0.0, height, 0.0, 0.0));
             float dist = length(center_cameraspace);
-            dist = farDist * step(center_cameraspace.z, -100.0) + dist;
-            float tess = 1.0 - clamp(dist / farDist - 0.02, 0.0, 1.0);//map to 0..64 range
-            tess = pow(tess, 6.0);
+            //minimum tesselation if edge is behind camera
+            dist = farDist * step(center_cameraspace.z, -110.0) + dist;
+            float tess = 1.0 - clamp((dist - 150)/ farDist, 0.0, 1.0);//map to 0..64 range
+            tess = pow(tess, 12.0);
 
             return clamp(tess * 64.0, 4.0, 64.0);//between 0 and 64
         }
@@ -109,8 +110,9 @@ _}
 _{
 #version 430 core
 
-    uniform mat4 MVP;
     uniform mat4 M;
+    uniform mat4 V;
+    uniform mat4 P;
     uniform sampler2D TerrainHeightMap;    
 
     //in
@@ -142,12 +144,13 @@ _{
         vec3 norm = normAndHeight.xyz;
 
         float height = normAndHeight.a;
-        position.y += height;
 
-        gl_Position = MVP * position;
         TES_tessLevel = gl_TessLevelOuter[0];
         TES_Position_worldspace = (M * position).xyz;
+        TES_Position_worldspace.y += height;
         TES_terrainTexCoord = terrainTexCoord;
+
+        gl_Position = P * V * vec4(TES_Position_worldspace, 1.0);
     }
 _}
 
