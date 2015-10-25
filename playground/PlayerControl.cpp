@@ -100,7 +100,9 @@ void PlayerControl::Update()
 #ifdef SCE_DEBUG
        speed = 1.0f;
 #else
-       speed = 5.0f;
+//       speed = 5.0f;
+        speed = 0.0f;
+        lastSpeed = speed;
 #endif
     }
 

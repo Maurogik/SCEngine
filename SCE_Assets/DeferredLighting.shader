@@ -265,7 +265,7 @@ _{
 
     void main()
     {
-        vec3 ambiantColor = vec3(0.7, 0.7, 1.0) * 0.05;
+        vec3 ambiantColor = vec3(1.0, 1.0, 1.0) * 0.005;
 
         vec2 uv = gl_FragCoord.xy / SCE_ScreenSize;
         vec3 Position_worldspace    = texture2D(PositionTex, uv).xyz;

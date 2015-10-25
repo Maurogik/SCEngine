@@ -46,7 +46,7 @@ _{
     layout (location = 1) out vec3 oColor;
     layout (location = 2) out vec4 oNormal;
 
-    vec3 LeavesColor = vec3(0.0, 0.1, 0.0);
+    vec3 LeavesColor = vec3(0.0, 0.05, 0.0);
     vec3 TruncColor = vec3(0.10, 0.025, 0.0);
     float Specularity = 0.02;
 

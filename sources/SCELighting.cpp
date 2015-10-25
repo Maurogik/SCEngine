@@ -28,7 +28,7 @@ using namespace std;
 #define SHADOW_MAP_HEIGHT (4096)
 
 #define CASCADE_COUNT 4
-#define MAX_SHADOW_DISTANCE 500.0f
+#define MAX_SHADOW_DISTANCE 4500.0f
 
 SCELighting* SCELighting::s_instance = nullptr;
 
@@ -176,7 +176,8 @@ void SCELighting::RenderSkyToGBuffer(const CameraRenderData& renderData, SCE_GBu
     {
         vec3 sunPos = s_instance->mMainLight->GetContainer()->GetComponent<Transform>()->GetWorldPosition();
         //Render sky and sun
-        SCE::SkyRenderer::Render(renderData, gBuffer, sunPos);
+        SCE::SkyRenderer::Render(renderData, gBuffer, sunPos,
+                                 glm::vec3(s_instance->mMainLight->GetLightColor()));
     }
     else
     {
@@ -383,7 +384,7 @@ void SCELighting::renderShadowmapPass(const CameraRenderData& lightRenderData,
         container->GetComponent<MeshRenderer>()->Render(lightRenderData);
     }
 
-//    SCE::Terrain::RenderTerrain(lightRenderData.projectionMatrix, lightRenderData.viewMatrix, 8.0f);
+    SCE::Terrain::RenderTerrain(lightRenderData.projectionMatrix, lightRenderData.viewMatrix, 8.0f);
 
     glm::mat4 biasMatrix(
     0.5, 0.0, 0.0, 0.0,

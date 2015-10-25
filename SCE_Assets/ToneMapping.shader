@@ -26,6 +26,7 @@ _}
 _{
 #version 430 core
 
+//#define NO_TONEMAPPING
 //#define DEBUG
 
     uniform vec2        SCE_ScreenSize;
@@ -68,6 +69,10 @@ _{
         color.rgb += Uncharted2Tonemap(hdrColor*exposure) / Uncharted2Tonemap(whitePoint) * step(uv.x, 0.5);
 #else
         color.rgb += Uncharted2Tonemap(hdrColor*exposure) / Uncharted2Tonemap(whitePoint);
+#endif
+
+#ifdef NO_TONEMAPPING
+        color.rgb = hdrColor;
 #endif
 
         //gamma correction

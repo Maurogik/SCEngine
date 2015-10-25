@@ -43,9 +43,9 @@
 #define TREE_MODEL_NAME "Terrain/Meshes/tree_lod"
 #define TREE_LOD_COUNT 4
 
-#define TERRAIN_TEXTURE_SIZE 4096
+//#define TERRAIN_TEXTURE_SIZE 4096
 //#define TERRAIN_TEXTURE_SIZE 2048
-//#define TERRAIN_TEXTURE_SIZE 512
+#define TERRAIN_TEXTURE_SIZE 512
 #define TEX_TILE_SIZE 2.0f
 
 //#define ISLAND_MODE
@@ -501,7 +501,7 @@ namespace Terrain
             return false;
         }
 
-        void computeTreeInstances(const glm::mat4& viewMatrix, const glm::mat4& worldToTerrainspaceMatrix)
+        void spawnTreeInstances(const glm::mat4& viewMatrix, const glm::mat4& worldToTerrainspaceMatrix)
         {
             float perlinScale = 10.0f;
             float patchSize = terrainData->patchSize;
@@ -550,7 +550,8 @@ namespace Terrain
                             int terrX = int((terrainPos.x * 0.5 + 0.5) * TERRAIN_TEXTURE_SIZE);
                             int terrZ = int((terrainPos.z * 0.5 + 0.5) * TERRAIN_TEXTURE_SIZE);
                             float height = terrainData->heightmap[terrX*TERRAIN_TEXTURE_SIZE + terrZ];
-                            treePos.y += height - 1.0f * scale;//go slightly down to avoid sticking out of the ground
+                            //go slightly down to avoid sticking out of the ground
+                            treePos.y += height - 1.0f * scale;
 
                             //matrix to tree position, rotation and scale
                             glm::mat4 instanceMatrix = glm::translate(mat4(1.0f), treePos) *
@@ -647,11 +648,11 @@ namespace Terrain
             {
                 glm::vec3 pos_terrainspace(x, 0.0f, z);
                 bool rendered = renderPatch(projectionMatrix,
-                            viewMatrix,
-                            terrainToWorldspace,
-                            worldToTerrainspace,
-                            pos_terrainspace,
-                            patchSize);
+                                            viewMatrix,
+                                            terrainToWorldspace,
+                                            worldToTerrainspace,
+                                            pos_terrainspace,
+                                            patchSize);
                 ++patchCount;
                 if(!rendered)
                 {
@@ -660,6 +661,7 @@ namespace Terrain
             }
         }
 
+        SCE::DebugText::Print("Rendering terrain");
         SCE::DebugText::Print("Patches rendered : " + std::to_string(patchCount));
         SCE::DebugText::Print("Patches offscreen : " + std::to_string(offscreenCount));
 
@@ -675,7 +677,7 @@ namespace Terrain
         glUniform1f(treeData.patchSizeUniform, patchSize);
         glUniformMatrix4fv(treeData.worldToTerrainMatUniform, 1, GL_FALSE, &(worldToTerrainspace[0][0]));
 
-        computeTreeInstances(viewMatrix, worldToTerrainspace);
+        spawnTreeInstances(viewMatrix, worldToTerrainspace);
 
         for(uint lod = 0; lod < TREE_LOD_COUNT; ++lod)
         {

@@ -11,11 +11,12 @@ public :
 
 protected :
 
-                    Rotator(SCE::SCEHandle<SCE::Container> container);
+                    Rotator(SCE::SCEHandle<SCE::Container> container, float speed, glm::vec3 axis);
 
 private :
 
-    double mSpeed;
+    float mSpeed;
+    glm::vec3 mRotationAxis;
 
 };
 

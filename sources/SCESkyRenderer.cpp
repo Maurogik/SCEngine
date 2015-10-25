@@ -24,8 +24,7 @@ namespace SkyRenderer
         struct SunShaderData
         {
             SunShaderData()
-                : sunShaftTexture(-1), sunShaftProgram(-1),
-                  sunColor(1.0, 1.0, 0.7)
+                : sunShaftTexture(-1), sunShaftProgram(-1)
             {}
 
             GLuint  sunShaftTexture;
@@ -33,7 +32,6 @@ namespace SkyRenderer
             GLint   qualityUniform;
             GLint   sunPositionUniform;
             GLint   sunColorUniform;
-            vec3    sunColor;
         };
 
         struct SkyShaderData
@@ -121,7 +119,7 @@ namespace SkyRenderer
     }
 
     void Render(const SCE::CameraRenderData& renderData, SCE_GBuffer& gBuffer,
-                const glm::vec3& sunPosition)
+                const glm::vec3& sunPosition, const vec3 &sunColor)
     {
         GLint viewportDims[4];
         glGetIntegerv( GL_VIEWPORT, viewportDims );
@@ -142,7 +140,7 @@ namespace SkyRenderer
                             0, 0);
         glUniform1f(sunData.qualityUniform, SUN_TEXTURE_QUALITY);
         glUniform3f(sunData.sunPositionUniform, sunPosition.x, sunPosition.y, sunPosition.z);
-        glUniform3fv(sunData.sunColorUniform, 1, &sunData.sunColor[0]);
+        glUniform3fv(sunData.sunColorUniform, 1, &sunColor[0]);
 
         //Render sun pass to texture
         SCERender::RenderFullScreenPass(sunData.sunShaftProgram, renderData.projectionMatrix,
@@ -161,7 +159,7 @@ namespace SkyRenderer
 
         glUniform1f(skyData.skyFadeUniform, skyData.skyFadeFactor);
         glUniform3fv(skyData.sunPositionUniform, 1, &sunPosition[0]);
-        glUniform3fv(skyData.sunColorUniform, 1, &sunData.sunColor[0]);
+        glUniform3fv(skyData.sunColorUniform, 1, &sunColor[0]);
         glUniform3fv(skyData.skyBottomColorUniform, 1, &skyData.skyBottomColor[0]);
         glUniform3fv(skyData.skyTopColorUniform, 1, &skyData.skyTopColor[0]);
         glUniform3fv(skyData.fogColorUniform, 1, &skyData.fogColor[0]);
@@ -188,6 +186,13 @@ namespace SkyRenderer
 
         SCE::ShaderUtils::DeleteShaderProgram(skyData.skyProgram);
         SCE::ShaderUtils::DeleteShaderProgram(sunData.sunShaftProgram);
+    }
+
+    void SetSkyColors(const vec3 &skyBottomColor, const vec3 &skyTopColor, const vec3 &fogColor)
+    {
+        skyData.fogColor = fogColor;
+        skyData.skyBottomColor = skyBottomColor;
+        skyData.skyTopColor = skyTopColor;
     }
 
 }

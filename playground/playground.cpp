@@ -5,6 +5,7 @@
 #include "../headers/SCEMeshLoader.hpp"
 #include "../headers/SCE.hpp"
 #include "Rotator.hpp"
+#include "SunCycle.hpp"
 #include "CameraControl.hpp"
 #include "PlayerControl.hpp"
 
@@ -158,7 +159,6 @@ void scene1()
     //Suzanne model
     SCEHandle<Container> suz = createModel("suzanneObject", "Meshes/suzanne.obj", vec3(0, 3, 0));
     suz->GetComponent<Transform>()->RotateAroundAxis(vec3(0.0f, 1.0f, 0.0f), 180.0f);
-    suz->AddComponent<Rotator>();
 
     float spreadDist = 10.0f;
     float nbSpheres = 5;
@@ -170,7 +170,6 @@ void scene1()
 
             SCEHandle<Container> cube = createCube("cubeObject", vec3(-2.0 - x * spreadDist, 0.0f, z * spreadDist),
                        MATERIAL);
-            cube->AddComponent<Rotator>();
             cube->GetComponent<Transform>()->RotateAroundAxis(vec3(0.0, 1.0, 0.0), 45.0f);
         }
     }
@@ -292,11 +291,8 @@ void scene3()
 
 void lightOutdoor()
 {
-        SCEHandle<Container> dirLight = createLight(vec3(0, 2000, -2000),
-                                                    vec3(40, 0, 0),
-                                                    LightType::DIRECTIONAL_LIGHT);
-        dirLight->GetComponent<Light>()->SetLightColor(vec4(1.0, 1.0, 0.8, 0.7));
-        dirLight->GetComponent<Light>()->SetIsSunLight(true);
+    SCEHandle<Container> sunObject = SCEScene::CreateContainer("sunObject");
+    sunObject->AddComponent<SunCycle>(10.0f, glm::vec3(1.0, 0.0, 0.0));
 }
 
 void redAndGreen()
