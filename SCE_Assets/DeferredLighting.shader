@@ -21,7 +21,7 @@ _{
 #version 430 core
 
     #define CASCADE_COUNT 4
-    #define SHADOW_MAP_SIZE 2048.0
+    #define SHADOW_MAP_SIZE 1024.0
 
     uniform vec2    SCE_ScreenSize;
     uniform vec3    SCE_EyePosition_worldspace;
@@ -82,10 +82,14 @@ _{
         vec3 halway         = normalize(dirToEye + dirToLight);
         float EdotL         = clamp( dot(in_Normal_worldspace, halway), 0.0 ,1.0 );
 
-        float shadow = getShadowDepth(in_Position_worldspace,
+        float shadow = 0.0f;
+        if(SCE_ShadowStrength > 0.0f)
+        {
+            shadow = getShadowDepth(in_Position_worldspace,
                                       in_Normal_worldspace,
                                       SCE_LightDirection_worldspace);
-        shadow *= SCE_ShadowStrength;
+            shadow *= SCE_ShadowStrength;
+        }
 
         vec3 light  = vec3(
                     NdotL, //diffuse lighting
@@ -220,6 +224,8 @@ _{
         float kernelSize = sqrt(fsamples);
         float shadow = 0.0;
 
+        float baseValue = (1.0 - sampleMyTex(uv, cascade, z_depthspace));
+
         for(float off = 0.0; off < fsamples; ++off)
         {
             float u = floor(off / kernelSize);
@@ -235,7 +241,7 @@ _{
 
     float getShadowDepth(vec3 pos_worldspace, vec3 normal_worldspace, vec3 lightDir_worldspace)
     {
-        int sampleCount = 4;
+        int sampleCount = 8;
         float eyeDist = distance(pos_worldspace, SCE_EyePosition_worldspace);
         vec3 pos_cameraspace = (V * vec4(pos_worldspace, 1.0)).xyz;
 
@@ -255,6 +261,8 @@ _{
     //                                      pos_worldspace, float(i));
                 shadow = samplePCF(sampleCount, position_depthspace.z - bias,
                                    position_depthspace.xy, float(i));
+//                shadow = (1.0 - sampleMyTex(position_depthspace.xy, float(i),
+//                                            position_depthspace.z + bias));
                 return shadow;
             }
         }

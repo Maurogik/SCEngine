@@ -44,8 +44,8 @@
 #define TREE_LOD_COUNT 4
 
 //#define TERRAIN_TEXTURE_SIZE 4096
-//#define TERRAIN_TEXTURE_SIZE 2048
-#define TERRAIN_TEXTURE_SIZE 512
+#define TERRAIN_TEXTURE_SIZE 2048
+//#define TERRAIN_TEXTURE_SIZE 512
 #define TEX_TILE_SIZE 2.0f
 
 //#define ISLAND_MODE
@@ -164,16 +164,16 @@ namespace Terrain
             float y1, y2, y3, y4;
             float stepSize = terrainSize / float(TERRAIN_TEXTURE_SIZE);
 
-            x = float(xCount) * stepSize;
-            z = float(zCount) * stepSize;
+            x = float(xCount)*stepSize;
+            z = float(zCount)*stepSize;
 
             int xOff = xCount < TERRAIN_TEXTURE_SIZE - 1 ? 1 : 0;
             int zOff = zCount < TERRAIN_TEXTURE_SIZE - 1 ? 1 : 0;
 
-            y1 = heightmap[xCount * TERRAIN_TEXTURE_SIZE + zCount];
-            y2 = heightmap[(xCount + xOff) * TERRAIN_TEXTURE_SIZE + zCount];
-            y3 = heightmap[xCount * TERRAIN_TEXTURE_SIZE + (zCount + zOff)];
-            y4 = heightmap[(xCount + xOff) * TERRAIN_TEXTURE_SIZE + (zCount + zOff)];
+            y1 = heightmap[xCount*TERRAIN_TEXTURE_SIZE + zCount];
+            y2 = heightmap[(xCount + xOff)*TERRAIN_TEXTURE_SIZE + zCount];
+            y3 = heightmap[xCount*TERRAIN_TEXTURE_SIZE + (zCount + zOff)];
+            y4 = heightmap[(xCount + xOff)*TERRAIN_TEXTURE_SIZE + (zCount + zOff)];
 
             glm::vec3 p1(x           , y1, z);
             glm::vec3 p2(x + stepSize, y2, z);
@@ -189,9 +189,9 @@ namespace Terrain
             normals[(xCount*TERRAIN_TEXTURE_SIZE + zCount)*2 + 1] = normal2;
 
             /* following this pattern (le badass ascii art)
-             *      |\--|1
-             *      | \ |
-             *     0|__\|
+            *     |\--|1
+            *     | \ |
+            *    0|__\|
              */
         }
 
@@ -203,7 +203,7 @@ namespace Terrain
             //number of time the map is divided to form tree groups
             int treeGroupIter = 24;
             float scale = startScale;
-            float baseGroupRadius = 1.0f / float(treeGroupIter) * halfTerrainSize;
+            float baseGroupRadius = 1.0f / float(treeGroupIter)*halfTerrainSize;
             float maxRadiusScale = 2.0f;
             float baseSpacing = 20.0f;
 
@@ -217,10 +217,10 @@ namespace Terrain
                 {
                     float z = float(zCount) / float(treeGroupIter);
 
-                    vec4 normAndHeight = normAndHeightTex[int(x * TERRAIN_TEXTURE_SIZE) *
-                            TERRAIN_TEXTURE_SIZE + int(z * TERRAIN_TEXTURE_SIZE)];
+                    vec4 normAndHeight = normAndHeightTex[int(x*TERRAIN_TEXTURE_SIZE) *
+                            TERRAIN_TEXTURE_SIZE + int(z*TERRAIN_TEXTURE_SIZE)];
 
-                    float noise = stb_perlin_noise3((x + xOffset) * scale, y * scale, (z + zOffset) * scale);
+                    float noise = stb_perlin_noise3((x + xOffset)*scale, y*scale, (z + zOffset)*scale);
                     noise = SCE::Math::mapToRange(-0.7f, 0.7f, 0.0f, maxRadiusScale, noise);
 
                     float flatness = pow(dot(vec3(normAndHeight.x, normAndHeight.y, normAndHeight.z),
@@ -230,9 +230,9 @@ namespace Terrain
                     if(height < 0.45f && flatness > 0.45f && noise > 0.6f)
                     {
                         TreeGroup group;
-                        group.position = (glm::vec2(x, z) * 2.0f - vec2(1.0, 1.0))
-                                * halfTerrainSize;
-                        group.radius = noise * baseGroupRadius;
+                        group.position = (glm::vec2(x, z)*2.0f - vec2(1.0, 1.0))
+                               *halfTerrainSize;
+                        group.radius = noise*baseGroupRadius;
                         group.spacing = baseSpacing;
                         terrainData->treeGroups.push_back(group);
                     }
@@ -244,9 +244,9 @@ namespace Terrain
         void initializeTerrainTextures(float xOffset, float zOffset, float startScale, float heightScale)
         {
             //8MB array, does not fit on stack so heap allocate it
-            float *heightmap = new float[TERRAIN_TEXTURE_SIZE * TERRAIN_TEXTURE_SIZE];
-            glm::vec3 *normals = new glm::vec3[TERRAIN_TEXTURE_SIZE * TERRAIN_TEXTURE_SIZE * 2];
-            glm::vec4 *packedNormalAndHeight = new glm::vec4[TERRAIN_TEXTURE_SIZE * TERRAIN_TEXTURE_SIZE];
+            float *heightmap = new float[TERRAIN_TEXTURE_SIZE*TERRAIN_TEXTURE_SIZE];
+            glm::vec3 *normals = new glm::vec3[TERRAIN_TEXTURE_SIZE*TERRAIN_TEXTURE_SIZE*2];
+            glm::vec4 *packedNormalAndHeight = new glm::vec4[TERRAIN_TEXTURE_SIZE*TERRAIN_TEXTURE_SIZE];
 
             int nbLayers = 16;
             float maxValue = 0.0f;
@@ -287,11 +287,11 @@ namespace Terrain
                     for(int l = 0; l < nbLayers; ++l)
                     {
                         //stb_perlin returns values between -0.6 & 0.6
-                        float tmpNoise = stb_perlin_noise3(x * scale, y * scale, z * scale);
+                        float tmpNoise = stb_perlin_noise3(x*scale, y*scale, z*scale);
                         tmpNoise = SCE::Math::mapToRange(-0.7f, 0.7f, 0.0f, 1.0f, tmpNoise);
-                        noise += tmpNoise * amplitude;
+                        noise += tmpNoise*amplitude;
                         maxValue += amplitude;
-                        amplitude *= persistence * (0.75f + tmpNoise);
+                        amplitude *= persistence*(0.75f + tmpNoise);
                         scale *= 2.0f;
                     }
 
@@ -301,7 +301,7 @@ namespace Terrain
 #else
                     res = SCE::Math::mapToRange(0.0f, 1.0f, 0.0f, 1.0f, res);
 #endif
-                    heightmap[xCount * TERRAIN_TEXTURE_SIZE + zCount] = res * heightScale * edgeChange;
+                    heightmap[xCount*TERRAIN_TEXTURE_SIZE + zCount] = res*heightScale*edgeChange;
                 }
             }
 
@@ -320,42 +320,42 @@ namespace Terrain
             {
                 for(int zCount = 0; zCount < TERRAIN_TEXTURE_SIZE; ++zCount)
                 {
-                    glm::vec3 normalSum(0.0f);//normals[xCount * TERRAIN_TEXTURE_SIZE + zCount];
+                    glm::vec3 normalSum(0.0f);//normals[xCount*TERRAIN_TEXTURE_SIZE + zCount];
 
                     //lower left tri
                     if(xCount > 0 && zCount >0)
                     {
                         lookX = xCount - 1;
                         lookZ = zCount - 1;
-                        normalSum += normals[(lookX * TERRAIN_TEXTURE_SIZE + lookZ) * 2 + 1];
+                        normalSum += normals[(lookX*TERRAIN_TEXTURE_SIZE + lookZ)*2 + 1];
                     }
                     //upper right tri
-                    normalSum += normals[(xCount * TERRAIN_TEXTURE_SIZE + zCount) * 2];                    
+                    normalSum += normals[(xCount*TERRAIN_TEXTURE_SIZE + zCount)*2];
                     //lower right tri
                     if(zCount >0)
                     {
                         lookX = xCount;
                         lookZ = zCount - 1;
-                        normalSum += normals[(lookX * TERRAIN_TEXTURE_SIZE + lookZ) * 2];
-                        normalSum += normals[(lookX * TERRAIN_TEXTURE_SIZE + lookZ) * 2 + 1];
+                        normalSum += normals[(lookX*TERRAIN_TEXTURE_SIZE + lookZ)*2];
+                        normalSum += normals[(lookX*TERRAIN_TEXTURE_SIZE + lookZ)*2 + 1];
                     }
                     //upper left tri
                     if(xCount > 0)
                     {
                         lookX = xCount - 1;
                         lookZ = zCount;
-                        normalSum += normals[(lookX * TERRAIN_TEXTURE_SIZE + lookZ) * 2];
-                        normalSum += normals[(lookX * TERRAIN_TEXTURE_SIZE + lookZ) * 2 + 1];
+                        normalSum += normals[(lookX*TERRAIN_TEXTURE_SIZE + lookZ)*2];
+                        normalSum += normals[(lookX*TERRAIN_TEXTURE_SIZE + lookZ)*2 + 1];
                     }
 
-                    y = heightmap[xCount * TERRAIN_TEXTURE_SIZE + zCount];
-                    packedNormalAndHeight[xCount * TERRAIN_TEXTURE_SIZE + zCount] =
+                    y = heightmap[xCount*TERRAIN_TEXTURE_SIZE + zCount];
+                    packedNormalAndHeight[xCount*TERRAIN_TEXTURE_SIZE + zCount] =
                             glm::vec4(normalize(normalSum), y);
                 }
             }
 
             initializeTreeLayout(packedNormalAndHeight, xOffset, zOffset, startScale, heightScale,
-                                 terrainData->terrainSize * 0.5f);
+                                 terrainData->terrainSize*0.5f);
 
             glGenTextures(1, &(terrainData->glData.terrainTexture));
             glBindTexture(GL_TEXTURE_2D, terrainData->glData.terrainTexture);
@@ -376,23 +376,32 @@ namespace Terrain
 
         bool isQuadOffscreen(const glm::mat4& modelMatrix,
                              const glm::mat4& viewMatrix,
+                             const glm::mat4& projectionMatrix,
                              const glm::mat4& worldToTerrainMatrix)
         {
             int onScreenCount = 4;
             for(int i = 0; i < 4; ++i)
             {
-                glm::vec4 pos_worldspace = modelMatrix * glm::vec4(terrainData->quadVertices[i], 1.0);
+                glm::vec4 pos_worldspace = modelMatrix*glm::vec4(terrainData->quadVertices[i], 1.0);
                 //get terrain height to offset worldspace position
-                glm::vec4 pos_terrainSpace = worldToTerrainMatrix * pos_worldspace;
-                int x = int((pos_terrainSpace.x*0.5f + 0.5f) * TERRAIN_TEXTURE_SIZE);
-                int z = int((pos_terrainSpace.z*0.5f + 0.5f) * TERRAIN_TEXTURE_SIZE);
+                glm::vec4 pos_terrainSpace = worldToTerrainMatrix*pos_worldspace;
+                int x = int((pos_terrainSpace.x*0.5f + 0.5f)*TERRAIN_TEXTURE_SIZE);
+                int z = int((pos_terrainSpace.z*0.5f + 0.5f)*TERRAIN_TEXTURE_SIZE);
                 float height = terrainData->heightmap[x*TERRAIN_TEXTURE_SIZE + z];
                 pos_worldspace.y += height;
-                glm::vec3 pos_viewspace = glm::vec3(viewMatrix * pos_worldspace);
+                glm::vec4 pos_viewspace = viewMatrix*pos_worldspace;
+                glm::vec4 pos_screenspace = projectionMatrix*pos_viewspace;
 
-                float dot = glm::dot(vec3(0.0, 0.0, 1.0), glm::normalize(pos_viewspace));
-                //discard if out of an abitrary view cone
-                if(dot < 0.35)
+//                float dot = glm::dot(vec3(0.0, 0.0, 1.0), glm::normalize(glm::vec3(pos_viewspace)));
+//                //discard if out of an abitrary view cone
+//                if(dot < 0.35)
+//                {
+//                    --onScreenCount;
+//                }
+                pos_screenspace /= pos_screenspace.w;
+                float tolerance = 1.7f;
+                if(abs(pos_screenspace.x) > tolerance || abs(pos_screenspace.y) > tolerance
+                   || pos_screenspace.z < -2.0f)
                 {
                     --onScreenCount;
                 }
@@ -487,7 +496,7 @@ namespace Terrain
                                     glm::translate(mat4(1.0f), position_terrainSpace) *
                                     glm::scale(mat4(1.0f), glm::vec3(patchSize));
 
-            if(!isQuadOffscreen(modelMatrix, viewMatrix, worldToTerrainspace))
+            if(!isQuadOffscreen(modelMatrix, viewMatrix, projectionMatrix, worldToTerrainspace))
             {
                 //do the rendering
                 SCE::ShaderUtils::BindDefaultUniforms(terrainData->glData.terrainProgram, modelMatrix,
@@ -503,11 +512,11 @@ namespace Terrain
 
         void spawnTreeInstances(const glm::mat4& viewMatrix, const glm::mat4& worldToTerrainspaceMatrix)
         {
-            float perlinScale = 10.0f;
+            float perlinScale = 50.0f;
             float patchSize = terrainData->patchSize;
             float terrainSize = terrainData->terrainSize;
             //compute the actual terrain size we will cover with patches
-            terrainSize = floor(terrainSize/patchSize) * patchSize;
+            terrainSize = floor(terrainSize/patchSize)*patchSize;
             float halfTerrainSize = terrainSize / 2.0f;
 
             std::vector<glm::mat4> treeMatrices[TREE_LOD_COUNT];
@@ -517,9 +526,10 @@ namespace Terrain
             float power = 1.5f;
             float maxDistToCam = terrainSize;
 
-            glm::vec3 cameraPosition = glm::vec3(glm::inverse(viewMatrix) * glm::vec4(0.0, 0.0, 0.0, 1.0));
-            SCE::DebugText::Print("Cam : " + std::to_string(cameraPosition.x) + ", " +
-                                  std::to_string(cameraPosition.z));
+            glm::vec3 cameraPosition = glm::vec3(glm::inverse(viewMatrix)*glm::vec4(0.0, 0.0, 0.0, 1.0));
+            SCE::DebugText::Print("Cam : " + std::to_string(cameraPosition.x)
+                                  + ", " + std::to_string(cameraPosition.y)
+                                  + ", " + std::to_string(cameraPosition.z));
 
             //Spawn trees from tree groups
             uint lodGroup = 0;
@@ -538,24 +548,24 @@ namespace Terrain
                         //scale to apply to the tree
                         float scale = SCE::Math::mapToRange(-0.6f, 0.6f, 0.8f, 1.4f, noiseZ);
 
-                        treePos.x += noiseX * group.spacing * 10.0f;
-                        treePos.z += noiseZ * group.spacing * 10.0f;
+                        treePos.x += noiseX*group.spacing*10.0f;
+                        treePos.z += noiseZ*group.spacing*10.0f;
 
                         //tree could have spawn outside of terrain, only keep if inside
                         if( abs(treePos.x) < halfTerrainSize - patchSize*0.5f
                             && abs(treePos.z) < halfTerrainSize - patchSize*0.5f)
                         {
                             //put tree at the surface of terrain
-                            glm::vec4 terrainPos = worldToTerrainspaceMatrix * glm::vec4(treePos, 1.0);
-                            int terrX = int((terrainPos.x * 0.5 + 0.5) * TERRAIN_TEXTURE_SIZE);
-                            int terrZ = int((terrainPos.z * 0.5 + 0.5) * TERRAIN_TEXTURE_SIZE);
+                            glm::vec4 terrainPos = worldToTerrainspaceMatrix*glm::vec4(treePos, 1.0);
+                            int terrX = int((terrainPos.x*0.5 + 0.5)*TERRAIN_TEXTURE_SIZE);
+                            int terrZ = int((terrainPos.z*0.5 + 0.5)*TERRAIN_TEXTURE_SIZE);
                             float height = terrainData->heightmap[terrX*TERRAIN_TEXTURE_SIZE + terrZ];
                             //go slightly down to avoid sticking out of the ground
-                            treePos.y += height - 1.0f * scale;
+                            treePos.y += height - 1.0f*scale;
 
                             //matrix to tree position, rotation and scale
                             glm::mat4 instanceMatrix = glm::translate(mat4(1.0f), treePos) *
-                                    glm::rotate(mat4(1.0), noiseX * 10.0f, glm::vec3(0.0, 1.0, 0.0)) *
+                                    glm::rotate(mat4(1.0), noiseX*10.0f, glm::vec3(0.0, 1.0, 0.0)) *
                                     glm::scale(mat4(1.0), glm::vec3(scale));
 
                             float distToCam = length(cameraPosition - treePos);
@@ -596,7 +606,7 @@ namespace Terrain
         float patchSize = terrainData->patchSize;
         float terrainSize = terrainData->terrainSize;
         //compute the actual terrain size we will cover with patches
-        terrainSize = floor(terrainSize/patchSize) * patchSize;
+        terrainSize = floor(terrainSize/patchSize)*patchSize;
         float halfTerrainSize = terrainSize / 2.0f;       
 
         glm::vec3 terrainPosition_worldspace = vec3(0.0);
@@ -640,10 +650,10 @@ namespace Terrain
         uint patchCount = 0;
         uint offscreenCount = 0;
         //Render all the terrain patches
-        for(float x = -halfTerrainSize + patchSize * 0.5f; x < halfTerrainSize - patchSize;
+        for(float x = -halfTerrainSize + patchSize*0.5f; x < halfTerrainSize - patchSize;
             x += patchSize)
         {
-            for(float z = -halfTerrainSize + patchSize * 0.5f; z < halfTerrainSize - patchSize;
+            for(float z = -halfTerrainSize + patchSize*0.5f; z < halfTerrainSize - patchSize;
                 z += patchSize)
             {
                 glm::vec3 pos_terrainspace(x, 0.0f, z);
@@ -677,11 +687,14 @@ namespace Terrain
         glUniform1f(treeData.patchSizeUniform, patchSize);
         glUniformMatrix4fv(treeData.worldToTerrainMatUniform, 1, GL_FALSE, &(worldToTerrainspace[0][0]));
 
-        spawnTreeInstances(viewMatrix, worldToTerrainspace);
-
-        for(uint lod = 0; lod < TREE_LOD_COUNT; ++lod)
+//        if(tesselationOverride <= 0.0f)
         {
-            SCE::MeshRender::DrawInstances(treeData.treeMeshIds[lod], projectionMatrix, viewMatrix);
+            spawnTreeInstances(viewMatrix, worldToTerrainspace);
+
+            for(uint lod = 0; lod < TREE_LOD_COUNT; ++lod)
+            {
+                SCE::MeshRender::DrawInstances(treeData.treeMeshIds[lod], projectionMatrix, viewMatrix);
+            }
         }
     }
 
@@ -697,7 +710,7 @@ namespace Terrain
             initializeRenderData();
             float xOffset = SCE::Math::randRange(0.0f, 1.0f);
             float zOffset = SCE::Math::randRange(0.0f, 1.0f);
-            initializeTerrainTextures(xOffset, zOffset, 2.0f * terrainSize / 3000.0f,
+            initializeTerrainTextures(xOffset, zOffset, 2.0f*terrainSize / 3000.0f,
                                       terrainData->heightScale);            
         }
     }

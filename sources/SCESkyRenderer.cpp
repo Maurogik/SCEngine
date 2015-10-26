@@ -11,7 +11,7 @@
 #include "../headers/SCE_GBuffer.hpp"
 
 
-#define SUN_TEXTURE_QUALITY 0.5f
+#define SUN_TEXTURE_QUALITY 0.25f
 
 namespace SCE
 {

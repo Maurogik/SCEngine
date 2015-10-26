@@ -22,11 +22,11 @@ SunCycle::SunCycle(SCE::SCEHandle<Container> container, float speed, vec3 axis)
     mLight->SetIsSunLight(true);
 
     //create additional sky light to act as ambiant lighting
-    SCEHandle<Container> skyLightCont = SCE::SCEScene::CreateContainer("SkyLightContainer");
-    SCEHandle<Transform> skyLightTransform = skyLightCont->AddComponent<Transform>();
-    mSkyLight = skyLightCont->AddComponent<Light>(LightType::DIRECTIONAL_LIGHT);
-    skyLightTransform->SetWorldPosition(glm::vec3(0.0, 2000.0, 0.0));
-    skyLightTransform->SetWorldOrientation(glm::vec3(90.0, 0.0, 0.0));
+//    SCEHandle<Container> skyLightCont = SCE::SCEScene::CreateContainer("SkyLightContainer");
+//    SCEHandle<Transform> skyLightTransform = skyLightCont->AddComponent<Transform>();
+//    mSkyLight = skyLightCont->AddComponent<Light>(LightType::DIRECTIONAL_LIGHT);
+//    skyLightTransform->SetWorldPosition(glm::vec3(0.0, 2000.0, 0.0));
+//    skyLightTransform->SetWorldOrientation(glm::vec3(90.0, 0.0, 0.0));
 }
 
 void SunCycle::Update()
@@ -61,7 +61,7 @@ void SunCycle::Update()
     SCE::SkyRenderer::SetSkyColors(skyBottomColor, skyTopColor, fogColor);
 
     //Sky light hase the same color than the sky
-    glm::vec3 skyAvgColor = glm::mix(skyTopColor, skyBottomColor, 0.7f);
-    mSkyLight->SetLightColor(glm::vec4(skyAvgColor,
-                                       glm::max(0.2f * dot(skyAvgColor, skyAvgColor), 0.005f)));
+//    glm::vec3 skyAvgColor = glm::mix(skyTopColor, skyBottomColor, 0.7f);
+//    mSkyLight->SetLightColor(glm::vec4(skyAvgColor,
+//                                       glm::max(0.2f * dot(skyAvgColor, skyAvgColor), 0.005f)));
 }

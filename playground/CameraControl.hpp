@@ -18,6 +18,8 @@ private :
 
     SCE::SCEHandle<SCE::Transform>  mTarget;
     glm::vec3                       mDistanceFromTarget;
+    glm::vec3                       mLookAheadTarget;
+    glm::vec3                       mAverageOffset;
 
 };
 

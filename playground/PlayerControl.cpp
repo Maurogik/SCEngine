@@ -44,18 +44,16 @@ void PlayerControl::Update()
     float deltaGoodness = SCE::Math::mapToRange(0.010, 0.033, 0.0, 1.0, deltaTime);
     glm::vec3 printColor = glm::vec3(deltaGoodness, 1.0 - deltaGoodness, 0.0);
     SCE::DebugText::Print("FPS   : " + std::to_string(1.0f/deltaTime), printColor);
-    SCE::DebugText::Print("Frame : " + std::to_string(deltaTime * 1000.0f) + " ms", printColor);
+    SCE::DebugText::Print("Frame : " + std::to_string(deltaTime*1000.0f) + " ms", printColor);
 
-    float xRotateSpeed = 0.015f;
-    float yRotateSpeed = 0.02f;
+//    float xRotateSpeed = 0.015f;
+//    float yRotateSpeed = 0.015f;
+    float xRotateSpeed = 1.0f;
+    float yRotateSpeed = 1.0f;
     float zRotateSpeed = 1.5f;
-    float speed = 20.0f;
-    float turnSlowdown = 10.0f;
-    float diveSpeedIncrease = 30.0f;
+    float speed = 30.0f;
+    float diveSpeedIncrease = 50.0f;
     float climbSlowdown = 10.0f;
-
-    vec3 position = transform->GetWorldPosition();
-    vec3 forward = transform->Forward();    
 
     dX = 0.0f;
     dY = 0.0f;
@@ -101,8 +99,8 @@ void PlayerControl::Update()
        speed = 1.0f;
 #else
 //       speed = 5.0f;
-        speed = 0.0f;
-        lastSpeed = speed;
+        speed = 5.0f;
+        lastSpeed *= 0.8f;
 #endif
     }
 
@@ -113,44 +111,43 @@ void PlayerControl::Update()
     xAxis.y = 0.0f;
     xAxis = normalize(xAxis);
 
-    float avgDuration = 0.3f;
-    float upStrAvgDuration = 0.5f;
-    averageDx = (averageDx * avgDuration + dX * deltaTime) / (avgDuration + deltaTime);
-    averageDy = (averageDy * avgDuration + dY * deltaTime) / (avgDuration + deltaTime);
+    float avgDuration = 0.4f;
+    float upStrAvgDuration = 0.3f;
+    averageDx = (averageDx*avgDuration + dX*deltaTime)/(avgDuration + deltaTime);
+    averageDy = (averageDy*avgDuration + dY*deltaTime)/(avgDuration + deltaTime);
 
-    dX = averageDx * xRotateSpeed;
-    dY = averageDy * yRotateSpeed;
+    dX = averageDx*xRotateSpeed*deltaTime;
+    dY = averageDy*yRotateSpeed*deltaTime;
 
-    vec3 target = dX * xAxis +
-            dY * yAxis +
-            transform->Forward();
+    vec3 target = dX*xAxis + dY*yAxis + transform->Forward();
 
-    float upLimit = 0.75f;
-    float lowLimit = -0.85f;
+    target.y = glm::clamp(target.y, -0.85f, 0.75f);
 
-    target.y = glm::clamp(target.y, lowLimit, upLimit);
+    //make eagle take sharp turns by rotating the up vector
+    float upStr = averageDx / (1.0f + abs(target.y*5.0f));
+    averageUpStr = (averageUpStr*upStrAvgDuration + upStr*deltaTime)/(upStrAvgDuration + deltaTime);
+    vec3 upVector = normalize(averageUpStr*xAxis*zRotateSpeed + vec3(0.0, 1.0, 0.0));
 
-    float upStr = averageDx / (1.0f + abs(target.y * 5.0f))  * zRotateSpeed;
-    averageUpStr = (averageUpStr * upStrAvgDuration + upStr * deltaTime) / (upStrAvgDuration + deltaTime);
-
-//    Debug::Log(std::to_string(upStr));
-    vec3 upVector = normalize(averageUpStr * xAxis + vec3(0.0, 1.0, 0.0));
-
-    float turnModifier = abs(averageDx) * turnSlowdown;
-    float pitchModifier = target.y < 0.0f ? target.y * diveSpeedIncrease : target.y * climbSlowdown;
-    speed = speed - turnModifier - pitchModifier;
+    //slowdown when going up, accelerate when going down
+    float pitchModifier = target.y < 0.0f ? target.y*diveSpeedIncrease : target.y*climbSlowdown;
+    speed = speed - pitchModifier;
 
     if(lastSpeed > speed)
     {//deccelerate slowly
-        speed = (lastSpeed * 99.0f + speed)/100.0f;
+        float speedAvgDuration = 3.0f;
+        speed = (lastSpeed*speedAvgDuration + speed*deltaTime)/(speedAvgDuration + deltaTime);
     }
     lastSpeed = speed;
 
-    target = transform->GetWorldPosition() + target;
+    SCE::DebugText::Print("Mvt speed : " + std::to_string(speed));
+
+    float turnStrength = glm::clamp(40.0f/speed, 0.1f, 2.0f);
+    target = transform->GetWorldPosition() + target * turnStrength;
 
     transform->LookAt(target, upVector);
     //constant mouvement
-    position += forward * deltaTime * speed;
+    vec3 position = transform->GetWorldPosition();
+    position += transform->Forward()*deltaTime*speed;
     transform->SetWorldPosition(position);
 
 }

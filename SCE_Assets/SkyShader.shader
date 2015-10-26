@@ -77,19 +77,12 @@ _{
     {
         vec2 uv = gl_FragCoord.xy / SCE_ScreenSize;
         vec4 sceneColor = texture(FinalColorTex, uv);
-        vec3 Position_worldspace = texture(PositionTex, uv).xyz;
+        vec3 Position_worldspace = texture(PositionTex, uv).xyz;        
         vec4 sunData = texture(SunTex, uv);
         vec3 sunColor = sunData.r * SunColor;
         float lightScatering = sunData.g;
 
         float notOccludedByScene = step(dot(Position_worldspace, Position_worldspace), 0.0001);
-
-        //compute normalized device coord and screenspace sun position
-        vec3 sun_cameraspace = (V * vec4(SunPosition_worldspace, 1.0)).xyz;
-        vec2 ndcUv = uv * 2.0 - vec2(1.0);
-        vec4 sun_projectionspace = (P * vec4(sun_cameraspace, 1.0));
-        sun_projectionspace /= sun_projectionspace.w;
-        vec2 sunUV = sun_projectionspace.xy * 0.5 + vec2(0.5);
 
         //compute fog strength
         float height = Position_worldspace.y;
@@ -99,11 +92,22 @@ _{
         dist *= dist;
         float fogAmount = (1.0 - exp( -dist * fogStr )) * exp(-height * heightDensity);
 
-        vec3 skyColor = getSkyColor(ndcUv);
-        skyColor += sunColor;
-
         color = vec4(0.0, 0.0, 0.0, 1.0);
-        color.rgb += skyColor * notOccludedByScene;
+
+        if(notOccludedByScene > 0.2f)
+        {
+            //compute normalized device coord and screenspace sun position
+            vec3 sun_cameraspace = (V * vec4(SunPosition_worldspace, 1.0)).xyz;
+            vec2 ndcUv = uv * 2.0 - vec2(1.0);
+            vec4 sun_projectionspace = (P * vec4(sun_cameraspace, 1.0));
+            sun_projectionspace /= sun_projectionspace.w;
+            vec2 sunUV = sun_projectionspace.xy * 0.5 + vec2(0.5);
+
+            vec3 skyColor = getSkyColor(ndcUv);
+            skyColor += sunColor;
+
+            color.rgb += skyColor * notOccludedByScene;
+        }
         color.rgb += mix(sceneColor.rgb, getFogColor(height), fogAmount) * (1.0 - notOccludedByScene);
         color.rgb += lightScatering * SunColor;
     }
