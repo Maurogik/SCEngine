@@ -111,7 +111,7 @@ void SCECore::InitEngine(const std::string &windowName)
 
     time_t ctime = time(0);
     tm* calendarTime = localtime(&ctime);
-    SCE::Math::seedRandomGenerator(calendarTime->tm_sec);
+    SCE::Math::SeedRandomGenerator(calendarTime->tm_sec);
     //Init Engine subcomponents in order
     SCE::Time::Init();
     //Rendering

@@ -56,7 +56,7 @@ namespace Tools
         return res;
     }
 
-    uint floatToColorRange(float val)
+    uint FloatToColorRange(float val)
     {
         return (int)(val * 255.0f);
     }
@@ -64,20 +64,15 @@ namespace Tools
 
 namespace Math
 {
-    float mapToRange(float fromMin, float fromMax, float toMin, float toMax, float val)
+    float MapToRange(float fromMin, float fromMax, float toMin, float toMax, float val)
     {
         val = glm::max(fromMin, (glm::min(fromMax, val)));//clamp in range if outside
         float fromSize = fromMax - fromMin;
         val = (val - fromMin) / fromSize;
-        return lerp(toMin, toMax, val);
+        return glm::mix(toMin, toMax, val);
     }
 
-    float lerp(float a, float b, float v)
-    {
-        return a + (b - a) * v;
-    }
-
-    void seedRandomGenerator(int val)
+    void SeedRandomGenerator(int val)
     {
         srand(val);
         int r = rand();
@@ -88,7 +83,7 @@ namespace Math
         srand(r);
     }
 
-    float randRange(float min, float max)
+    float RandRange(float min, float max)
     {
         return ((float)rand() / (float)RAND_MAX) * (max - min) + min;
     }

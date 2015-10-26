@@ -283,10 +283,10 @@ namespace TextureUtils
             xstart = x * height * channelCount;
             for(int y = 0; y < height; ++y){
                 ystart = y * channelCount;
-                textureData[xstart + ystart + 0] = Tools::floatToColorRange(color.x);
-                textureData[xstart + ystart + 1] = Tools::floatToColorRange(color.y);
-                textureData[xstart + ystart + 2] = Tools::floatToColorRange(color.z);
-                textureData[xstart + ystart + 3] = Tools::floatToColorRange(color.w);
+                textureData[xstart + ystart + 0] = Tools::FloatToColorRange(color.x);
+                textureData[xstart + ystart + 1] = Tools::FloatToColorRange(color.y);
+                textureData[xstart + ystart + 2] = Tools::FloatToColorRange(color.z);
+                textureData[xstart + ystart + 3] = Tools::FloatToColorRange(color.w);
             }
         }
 

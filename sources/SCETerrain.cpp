@@ -221,7 +221,7 @@ namespace Terrain
                             TERRAIN_TEXTURE_SIZE + int(z*TERRAIN_TEXTURE_SIZE)];
 
                     float noise = stb_perlin_noise3((x + xOffset)*scale, y*scale, (z + zOffset)*scale);
-                    noise = SCE::Math::mapToRange(-0.7f, 0.7f, 0.0f, maxRadiusScale, noise);
+                    noise = SCE::Math::MapToRange(-0.7f, 0.7f, 0.0f, maxRadiusScale, noise);
 
                     float flatness = pow(dot(vec3(normAndHeight.x, normAndHeight.y, normAndHeight.z),
                                              vec3(0.0, 1.0, 0.0)), 8.0);
@@ -288,7 +288,7 @@ namespace Terrain
                     {
                         //stb_perlin returns values between -0.6 & 0.6
                         float tmpNoise = stb_perlin_noise3(x*scale, y*scale, z*scale);
-                        tmpNoise = SCE::Math::mapToRange(-0.7f, 0.7f, 0.0f, 1.0f, tmpNoise);
+                        tmpNoise = SCE::Math::MapToRange(-0.7f, 0.7f, 0.0f, 1.0f, tmpNoise);
                         noise += tmpNoise*amplitude;
                         maxValue += amplitude;
                         amplitude *= persistence*(0.75f + tmpNoise);
@@ -299,7 +299,7 @@ namespace Terrain
 #ifdef ISLAND_MODE
                     res = SCE::Math::mapToRange(0.4f, 1.0f, 0.0f, 1.0f, res);
 #else
-                    res = SCE::Math::mapToRange(0.0f, 1.0f, 0.0f, 1.0f, res);
+                    res = SCE::Math::MapToRange(0.0f, 1.0f, 0.0f, 1.0f, res);
 #endif
                     heightmap[xCount*TERRAIN_TEXTURE_SIZE + zCount] = res*heightScale*edgeChange;
                 }
@@ -546,7 +546,7 @@ namespace Terrain
                         noiseZ = stb_perlin_noise3(treePos.z*perlinScale, 25.0f,
                                                    treePos.x*perlinScale);
                         //scale to apply to the tree
-                        float scale = SCE::Math::mapToRange(-0.6f, 0.6f, 0.8f, 1.4f, noiseZ);
+                        float scale = SCE::Math::MapToRange(-0.6f, 0.6f, 0.8f, 1.4f, noiseZ);
 
                         treePos.x += noiseX*group.spacing*10.0f;
                         treePos.z += noiseZ*group.spacing*10.0f;
@@ -708,8 +708,8 @@ namespace Terrain
             terrainData->baseHeight = terrainBaseHeight;
             terrainData->heightScale = 1200.0f;
             initializeRenderData();
-            float xOffset = SCE::Math::randRange(0.0f, 1.0f);
-            float zOffset = SCE::Math::randRange(0.0f, 1.0f);
+            float xOffset = SCE::Math::RandRange(0.0f, 1.0f);
+            float zOffset = SCE::Math::RandRange(0.0f, 1.0f);
             initializeTerrainTextures(xOffset, zOffset, 2.0f*terrainSize / 3000.0f,
                                       terrainData->heightScale);            
         }

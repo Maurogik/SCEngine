@@ -16,7 +16,7 @@ namespace Tools
 {
     int         HashFromString(const std::string& str);
     std::string ToLowerCase(const std::string &str);
-    uint floatToColorRange(float val);
+    uint FloatToColorRange(float val);
 }
 
 namespace Debug
@@ -29,10 +29,10 @@ namespace Debug
 
 namespace Math
 {
-    float lerp(float a, float b, float v);
-    float mapToRange(float fromMin, float fromMax, float toMin, float toMax, float val);
-    void seedRandomGenerator(int val);
-    float randRange(float min, float max);
+    float Lamederp(float a, float b, float v);
+    float MapToRange(float fromMin, float fromMax, float toMin, float toMax, float val);
+    void SeedRandomGenerator(int val);
+    float RandRange(float min, float max);
 }
 
 }
