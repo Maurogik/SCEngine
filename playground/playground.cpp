@@ -339,7 +339,7 @@ int main( void )
 
     SCEScene::CreateEmptyScene();
 
-    SCEScene::AddTerrain(3000.0f, 150.0f, 0.0f);
+    SCEScene::AddTerrain(3000.0f, 100.0f, 0.0f);
 
     lightOutdoor();
 //    redAndGreen();

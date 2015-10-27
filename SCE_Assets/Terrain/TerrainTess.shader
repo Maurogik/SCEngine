@@ -263,8 +263,8 @@ _{
         uv *= TextureTileScale;
 
         vec4 topColor = vec4(1.0, 1.0, 1.0, 1.0);
-        vec4 middleColor = vec4(0.7, 0.4, 0.2, 0.2);
-        vec4 bottomColor = vec4(0.2, 0.7, 0.1, 0.1);
+        vec4 middleColor = vec4(0.7, 0.4, 0.2, 0.1);
+        vec4 bottomColor = vec4(0.2, 0.7, 0.1, 0.05);
 
         bottomColor.rgb = texture(GrassTex, uv).rgb;
         middleColor.rgb = texture(DirtTex, uv).rgb;
@@ -293,7 +293,7 @@ _{
         lerpLow = clamp(lerpLow, 0.0, 1.0);
 
         float lerpHigh = (height - MtoTStart) / (middleToTopMix);
-        lerpHigh = pow(flatness, 4.0) * lerpHigh * 3.0 + pow(lerpHigh, 4.0);
+        lerpHigh = pow(flatness, 4.0) * lerpHigh * 5.0 + pow(lerpHigh, 8.0);
         lerpHigh = clamp(lerpHigh, 0.0, 1.0);
 
         vec4 resColor = vec4(0.0);//, slope, 0.0);

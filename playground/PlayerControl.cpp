@@ -1,6 +1,7 @@
 #include "PlayerControl.hpp"
 #include "../headers/SCECore.hpp"
 #include "../headers/SCEDebugText.hpp"
+#include "../headers/SCETerrain.hpp"
 
 using namespace SCE;
 using namespace std;
@@ -20,14 +21,19 @@ PlayerControl::PlayerControl(SCE::SCEHandle<Container> container)
     averageDy = 0.0f;
     averageUpStr = 1.0f;
     lastSpeed = 0.0f;
+    averageHeight = 0.0f;
+
+    mTransform = GetContainer()->GetComponent<Transform>();
+    glm::vec3 pos = mTransform->GetWorldPosition();
+    pos.y = SCE::Terrain::GetTerrainHeight(pos) + 20.0f;
+    mTransform->SetWorldPosition(pos);
 }
 
 void PlayerControl::Update()
 {
     //move player
 
-    GLFWwindow* window = SCECore::GetWindow();
-    SCEHandle<Transform> transform = GetContainer()->GetComponent<Transform>();
+    GLFWwindow* window = SCECore::GetWindow();    
 
     double xMouse = 0.0;
     double yMouse = 0.0;
@@ -50,7 +56,7 @@ void PlayerControl::Update()
 //    float yRotateSpeed = 0.015f;
     float xRotateSpeed = 1.0f;
     float yRotateSpeed = 1.0f;
-    float zRotateSpeed = 1.5f;
+    float zRotateSpeed = 1.8f;
     float speed = 30.0f;
     float diveSpeedIncrease = 50.0f;
     float climbSlowdown = 10.0f;
@@ -107,7 +113,7 @@ void PlayerControl::Update()
 
 //    vec3 yAxis(transform->LocalToWorldDir(vec3(0.0, 1.0, 0.0)));
     vec3 yAxis(0.0, 1.0, 0.0);
-    vec3 xAxis(transform->LocalToWorldDir(vec3(1.0, 0.0, 0.0)));
+    vec3 xAxis(mTransform->LocalToWorldDir(vec3(1.0, 0.0, 0.0)));
     xAxis.y = 0.0f;
     xAxis = normalize(xAxis);
 
@@ -119,7 +125,7 @@ void PlayerControl::Update()
     dX = averageDx*xRotateSpeed*deltaTime;
     dY = averageDy*yRotateSpeed*deltaTime;
 
-    vec3 target = dX*xAxis + dY*yAxis + transform->Forward();
+    vec3 target = dX*xAxis + dY*yAxis + mTransform->Forward();
 
     target.y = glm::clamp(target.y, -0.85f, 0.75f);
 
@@ -142,12 +148,20 @@ void PlayerControl::Update()
     SCE::DebugText::Print("Mvt speed : " + std::to_string(speed));
 
     float turnStrength = glm::clamp(40.0f/speed, 0.1f, 2.0f);
-    target = transform->GetWorldPosition() + target * turnStrength;
+    target = mTransform->GetWorldPosition() + target * turnStrength;
 
-    transform->LookAt(target, upVector);
+    float heightOffset = 4.0f;
+    mTransform->LookAt(target, upVector);
     //constant mouvement
-    vec3 position = transform->GetWorldPosition();
-    position += transform->Forward()*deltaTime*speed;
-    transform->SetWorldPosition(position);
+    vec3 position = mTransform->GetWorldPosition();
+    position += mTransform->Forward()*deltaTime*speed;
+    float height = SCE::Terrain::GetTerrainHeight(position);
+    float heightAvgDur = 0.1f;
+    averageHeight = (averageHeight*heightAvgDur + height*deltaTime)/(heightAvgDur + deltaTime);
+    if(position.y < averageHeight + heightOffset)
+    {
+        position.y = averageHeight + heightOffset;
+    }
+    mTransform->SetWorldPosition(position);
 
 }

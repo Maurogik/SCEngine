@@ -24,8 +24,8 @@ using namespace std;
 #define DEPTH_MAT_UNIFORM_NAME "DepthConvertMat"
 #define FAR_SPLIT_UNIFORM_NAME "FarSplits_cameraspace"
 
-#define SHADOW_MAP_WIDTH (4096)
-#define SHADOW_MAP_HEIGHT (4096)
+#define SHADOW_MAP_WIDTH (2048)
+#define SHADOW_MAP_HEIGHT (2048)
 
 #define CASCADE_COUNT 4
 #define MAX_SHADOW_DISTANCE 4500.0f

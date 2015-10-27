@@ -43,9 +43,9 @@
 #define TREE_MODEL_NAME "Terrain/Meshes/tree_lod"
 #define TREE_LOD_COUNT 4
 
-//#define TERRAIN_TEXTURE_SIZE 4096
+#define TERRAIN_TEXTURE_SIZE 4096
 //#define TERRAIN_TEXTURE_SIZE 2048
-#define TERRAIN_TEXTURE_SIZE 512
+//#define TERRAIN_TEXTURE_SIZE 512
 #define TEX_TILE_SIZE 2.0f
 
 //#define ISLAND_MODE
@@ -392,9 +392,9 @@ namespace Terrain
                 glm::vec4 pos_screenspace = projectionMatrix*pos_viewspace;
 
                 pos_screenspace /= pos_screenspace.w;
-                float tolerance = 1.7f;
+                float tolerance = 1.9f;
                 if(abs(pos_screenspace.x) > tolerance || abs(pos_screenspace.y) > tolerance
-                   || abs(pos_screenspace.z) > 1.1f)
+                   || abs(pos_screenspace.z) > 1.00001f)
                 {
                     --onScreenCount;
                 }
@@ -608,9 +608,10 @@ namespace Terrain
                 glm::mat4 bigGroupModelMatrix = glm::translate(mat4(1.0), groupPos) *
                         glm::scale(mat4(1.0), glm::vec3(totalRadius*2.0f));
 
-                groupPos = glm::vec3(group.position.x, 0.0f, group.position.y);
+                totalRadius = group.radius*0.5;
+                groupPos = glm::vec3(group.position.x - totalRadius, 0.0f, group.position.y - totalRadius);
                 glm::mat4 groupModelMatrix = glm::translate(mat4(1.0), groupPos) *
-                        glm::scale(mat4(1.0), glm::vec3(0.1f));
+                        glm::scale(mat4(1.0), glm::vec3(totalRadius));
 
                 if(!isQuadOffscreen(bigGroupModelMatrix, viewMatrix, projectionMatrix) ||
                    !isQuadOffscreen(groupModelMatrix, viewMatrix, projectionMatrix))
@@ -772,8 +773,7 @@ namespace Terrain
         uint offscreenCount = 0;
         for(uint i = 0; i < terrainData->patchModelMatrices.size(); ++i)
         {
-            //if(!isQuadOffscreen(terrainData->patchModelMatrices[i], viewMatrix, projectionMatrix))
-            if(true)
+            if(!isQuadOffscreen(terrainData->patchModelMatrices[i], viewMatrix, projectionMatrix))
             {
                 renderPatch(projectionMatrix,
                             viewMatrix,
@@ -865,7 +865,7 @@ namespace Terrain
             int z = int((pos_terrainSpace.z*0.5f + 0.5f)*TERRAIN_TEXTURE_SIZE);
             if(x >= 0 && x < TERRAIN_TEXTURE_SIZE && z >= 0 && z < TERRAIN_TEXTURE_SIZE)
             {
-                return terrainData->heightmap[x*TERRAIN_TEXTURE_SIZE + z];
+                return terrainData->heightmap[x*TERRAIN_TEXTURE_SIZE + z] + terrainData->baseHeight;
             }
         }
         return 0.0f;

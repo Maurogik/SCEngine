@@ -18,7 +18,9 @@ private :
                     float averageDx;
                     float averageDy;
                     float averageUpStr;
+                    float averageHeight;
                     float lastSpeed;
+                    SCE::SCEHandle<SCE::Transform> mTransform;
 };
 
 #endif
