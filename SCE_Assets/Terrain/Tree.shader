@@ -52,7 +52,7 @@ _{
 
     void main()
     {
-        float trunc = step(Position_modelspace.y, 5.9);
+        float trunc = step(Position_modelspace.y, 8.9);
         oColor = trunc * TruncColor + (1.0 - trunc) * LeavesColor;
 
         oPosition = Position_worldspace;

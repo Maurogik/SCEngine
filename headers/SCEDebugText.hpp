@@ -16,6 +16,7 @@ namespace DebugText
     void Print(const std::string& message);
     void Print(const std::string& message, const vec3 &color);
     void RenderMessages(const mat4 &viewMatrix, const mat4 &projectionMatrix);
+    void SetDefaultPrintColor(const vec3 &color);
 }
 
 }

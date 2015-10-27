@@ -29,10 +29,13 @@ namespace Debug
 
 namespace Math
 {
-    float Lamederp(float a, float b, float v);
-    float MapToRange(float fromMin, float fromMax, float toMin, float toMax, float val);
-    void SeedRandomGenerator(int val);
-    float RandRange(float min, float max);
+    float       Lamederp(float a, float b, float v);
+    float       MapToRange(float fromMin, float fromMax, float toMin, float toMax, float val);
+    void        SeedRandomGenerator(int val);
+    float       RandRange(float min, float max);
+    glm::vec3   GetRayPlaneIntersection(const glm::vec3& rayStart, const glm::vec3& rayDir,
+                                        const vec3 &planeNormal, float planeDistToOrigin);
+    glm::vec3   GetBarycentricCoord(const glm::vec3& point, const vec3 triangleVectices[]);
 }
 
 }

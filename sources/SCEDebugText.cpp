@@ -10,7 +10,7 @@
 #include "../headers/SCECore.hpp"
 #include "../headers/SCEShaders.hpp"
 
-#define FONT_SIZE 60
+#define FONT_SIZE 30
 
 namespace SCE
 {
@@ -40,6 +40,7 @@ namespace DebugText
 
         DebugTextData debugTextRenderData;
         std::vector<DebugTextEntry> debugMessages;
+        glm::vec3 defaultTextColor;
 
         void initializeDebugTextRenderData()
         {
@@ -63,7 +64,7 @@ namespace DebugText
 
     void Print(const std::string &message)
     {
-        Print(message, glm::vec3(0.0, 0.0, 0.0));
+        Print(message, defaultTextColor);
     }
 
     void Print(const std::string &message, const vec3& color)
@@ -125,6 +126,11 @@ namespace DebugText
         int nbEntries = debugMessages.size();
         debugMessages.clear();
         debugMessages.reserve(nbEntries);
+    }
+
+    void SetDefaultPrintColor(const vec3 &color)
+    {
+        defaultTextColor = color;
     }
 
 }

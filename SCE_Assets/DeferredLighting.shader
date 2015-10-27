@@ -21,7 +21,7 @@ _{
 #version 430 core
 
     #define CASCADE_COUNT 4
-    #define SHADOW_MAP_SIZE 1024.0
+    #define SHADOW_MAP_SIZE 4096.0
 
     uniform vec2    SCE_ScreenSize;
     uniform vec3    SCE_EyePosition_worldspace;
