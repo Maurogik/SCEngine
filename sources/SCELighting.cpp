@@ -384,7 +384,7 @@ void SCELighting::renderShadowmapPass(const CameraRenderData& lightRenderData,
         container->GetComponent<MeshRenderer>()->Render(lightRenderData);
     }
 
-    SCE::Terrain::RenderTerrain(lightRenderData.projectionMatrix, lightRenderData.viewMatrix, 8.0f);
+//    SCE::Terrain::RenderTerrain(lightRenderData.projectionMatrix, lightRenderData.viewMatrix, 8.0f);
 
     glm::mat4 biasMatrix(
     0.5, 0.0, 0.0, 0.0,

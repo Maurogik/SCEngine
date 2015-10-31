@@ -43,7 +43,7 @@ void SCECore::InitEngine(const std::string &windowName)
     glfwWindowHint(GLFW_STENCIL_BITS, 8);
 
     glfwWindowHint(GLFW_DECORATED, 0);
-//    glfwWindowHint(GLFW_REFRESH_RATE, 60);
+    glfwWindowHint(GLFW_REFRESH_RATE, 60);
 
 #ifdef SCE_DEBUG
     // Create a debug OpenGL context or tell your OpenGL library (GLFW, SDL) to do so.

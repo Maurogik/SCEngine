@@ -292,7 +292,7 @@ void scene3()
 void lightOutdoor()
 {
     SCEHandle<Container> sunObject = SCEScene::CreateContainer("sunObject");
-    sunObject->AddComponent<SunCycle>(2.0f, glm::vec3(1.0, 0.0, 0.0));
+    sunObject->AddComponent<SunCycle>(1.0f, glm::vec3(1.0, 0.0, 0.0));
 }
 
 void redAndGreen()

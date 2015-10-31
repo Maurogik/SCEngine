@@ -20,7 +20,6 @@ namespace DebugText
 
     namespace
     {
-
         struct DebugTextData
         {
             DebugTextData() : shaderProgram(-1) {}
@@ -69,16 +68,19 @@ namespace DebugText
 
     void Print(const std::string &message, const vec3& color)
     {
+#ifdef SCE_DEBUG_ENGINE
         DebugTextEntry entry;
         entry.color = color;
         entry.message = message;
 
         debugMessages.push_back(entry);
+#endif
     }
 
     void RenderMessages(const glm::mat4& viewMatrix,
                         const glm::mat4& projectionMatrix)
     {
+#ifdef SCE_DEBUG_ENGINE
         if(debugTextRenderData.shaderProgram == GLuint(-1))
         {
             initializeDebugTextRenderData();
@@ -126,11 +128,14 @@ namespace DebugText
         int nbEntries = debugMessages.size();
         debugMessages.clear();
         debugMessages.reserve(nbEntries);
+#endif
     }
 
     void SetDefaultPrintColor(const vec3 &color)
     {
+#ifdef SCE_DEBUG_ENGINE
         defaultTextColor = color;
+#endif
     }
 
 }

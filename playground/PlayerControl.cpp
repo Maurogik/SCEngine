@@ -56,7 +56,7 @@ void PlayerControl::Update()
 //    float yRotateSpeed = 0.015f;
     float xRotateSpeed = 1.0f;
     float yRotateSpeed = 1.0f;
-    float zRotateSpeed = 1.8f;
+    float zRotateSpeed = 1.65f;
     float speed = 30.0f;
     float diveSpeedIncrease = 50.0f;
     float climbSlowdown = 10.0f;
@@ -96,7 +96,7 @@ void PlayerControl::Update()
 #ifdef SCE_DEBUG
        speed = 500.0f;
 #else
-       speed = 500.0f;
+       speed = 80.0f;
 #endif
     }
     else if (glfwGetKey( window, GLFW_KEY_LEFT_SHIFT ) == GLFW_PRESS)
@@ -105,8 +105,8 @@ void PlayerControl::Update()
        speed = 1.0f;
 #else
 //       speed = 5.0f;
-        speed = 5.0f;
-        lastSpeed *= 0.8f;
+        speed = 10.0f;
+        lastSpeed *= 0.9f;
 #endif
     }
 
@@ -117,7 +117,7 @@ void PlayerControl::Update()
     xAxis.y = 0.0f;
     xAxis = normalize(xAxis);
 
-    float avgDuration = 0.4f;
+    float avgDuration = 0.8f;
     float upStrAvgDuration = 0.3f;
     averageDx = (averageDx*avgDuration + dX*deltaTime)/(avgDuration + deltaTime);
     averageDy = (averageDy*avgDuration + dY*deltaTime)/(avgDuration + deltaTime);

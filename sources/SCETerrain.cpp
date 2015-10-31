@@ -385,16 +385,16 @@ namespace Terrain
             int onScreenCount = 4;
             for(int i = 0; i < 4; ++i)
             {
-                glm::vec4 pos_worldspace = modelMatrix*glm::vec4(terrainData->quadVertices[i], 1.0);                
+                glm::vec4 pos_worldspace = modelMatrix*glm::vec4(terrainData->quadVertices[i], 1.0);
                 float height = GetTerrainHeight(glm::vec3(pos_worldspace));
                 pos_worldspace.y += height;
                 glm::vec4 pos_viewspace = viewMatrix*pos_worldspace;
                 glm::vec4 pos_screenspace = projectionMatrix*pos_viewspace;
 
                 pos_screenspace /= pos_screenspace.w;
-                float tolerance = 1.9f;
-                if(abs(pos_screenspace.x) > tolerance || abs(pos_screenspace.y) > tolerance
-                   || abs(pos_screenspace.z) > 1.00001f)
+                float tolerance = 1.7f;
+                if((abs(pos_screenspace.x) > tolerance || abs(pos_screenspace.y) > tolerance
+                   || abs(pos_screenspace.z) > 1.0001f) && length(pos_screenspace) > 3.0f)
                 {
                     --onScreenCount;
                 }
@@ -451,16 +451,19 @@ namespace Terrain
 
                         for(int triInd = 0; triInd < 2; ++triInd)
                         {
-                            planeNormal = glm::normalize(glm::cross(tris[triInd*3 + 1] - tris[triInd*3 + 0],
-                                                                    tris[triInd*3 + 2] - tris[triInd*3 + 0]));
+                            planeNormal = glm::normalize(glm::cross(
+                                                             tris[triInd*3 + 1] - tris[triInd*3 + 0],
+                                                             tris[triInd*3 + 2] - tris[triInd*3 + 0]));
                             planeDistToOrigin = glm::dot(-planeNormal, patchVert[0]);
 
-                            rayPlaneIntersect = Math::GetRayPlaneIntersection(cameraPos_worldspace, rayDir,
-                                                                              planeNormal, planeDistToOrigin);
+                            rayPlaneIntersect = Math::GetRayPlaneIntersection(cameraPos_worldspace,
+                                                                              rayDir, planeNormal,
+                                                                              planeDistToOrigin);
                             //intersect point is (0,0,0) when no intersection found
                             if(rayPlaneIntersect != vec3(0.0f))
                             {
-                                baryCoord = Math::GetBarycentricCoord(rayPlaneIntersect, &(tris[triInd*3]));
+                                baryCoord = Math::GetBarycentricCoord(rayPlaneIntersect,
+                                                                      &(tris[triInd*3]));
                                 if( baryCoord.x < 0.0f || baryCoord.x > 1.0f ||
                                     baryCoord.y < 0.0f || baryCoord.y > 1.0f ||
                                     baryCoord.z < 0.0f || baryCoord.z > 1.0f )
@@ -531,7 +534,8 @@ namespace Terrain
 
             //setup VAO operations for automagic reuse
             glBindBuffer(GL_ARRAY_BUFFER, terrainData->quadVerticesVbo);
-            GLuint vertexAttribLocation = glGetAttribLocation(terrainProgram, "vertexPosition_modelspace");
+            GLuint vertexAttribLocation = glGetAttribLocation(terrainProgram,
+                                                              "vertexPosition_modelspace");
             glEnableVertexAttribArray(vertexAttribLocation);
             glVertexAttribPointer(vertexAttribLocation, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
@@ -590,7 +594,8 @@ namespace Terrain
             float noiseX, noiseZ;
 
             //apply a power to the distance to the tree to have the LOD group be exponentionally large
-            float power = 1.6f;
+//            float power = 1.6f;
+            float power = 1.4f;
             float maxDistToCam = terrainSize;
 
             int discardedGroups = 0;
@@ -604,12 +609,14 @@ namespace Terrain
                 //make a bigger radius to account for possible displacement
                 float totalRadius = group.radius*2.0f;
                 //creates model matrix for a imaginary quad containing the trees in this group
-                glm::vec3 groupPos = glm::vec3(group.position.x - totalRadius, 0.0f, group.position.y - totalRadius);
+                glm::vec3 groupPos = glm::vec3(group.position.x - totalRadius, 0.0f,
+                                               group.position.y - totalRadius);
                 glm::mat4 bigGroupModelMatrix = glm::translate(mat4(1.0), groupPos) *
                         glm::scale(mat4(1.0), glm::vec3(totalRadius*2.0f));
 
                 totalRadius = group.radius*0.5;
-                groupPos = glm::vec3(group.position.x - totalRadius, 0.0f, group.position.y - totalRadius);
+                groupPos = glm::vec3(group.position.x - totalRadius, 0.0f,
+                                     group.position.y - totalRadius);
                 glm::mat4 groupModelMatrix = glm::translate(mat4(1.0), groupPos) *
                         glm::scale(mat4(1.0), glm::vec3(totalRadius));
 
@@ -803,13 +810,13 @@ namespace Terrain
         glUniformMatrix4fv(treeData.worldToTerrainMatUniform, 1, GL_FALSE,
                            &(terrainData->worldToTerrainspace[0][0]));
 
-        spawnTreeInstances(viewMatrix, projectionMatrix,
-                           terrainData->worldToTerrainspace, cameraPosition);
+//        spawnTreeInstances(viewMatrix, projectionMatrix,
+//                           terrainData->worldToTerrainspace, cameraPosition);
 
-        for(uint lod = 0; lod < TREE_LOD_COUNT; ++lod)
-        {
-            SCE::MeshRender::DrawInstances(treeData.treeMeshIds[lod], projectionMatrix, viewMatrix);
-        }
+//        for(uint lod = 0; lod < TREE_LOD_COUNT; ++lod)
+//        {
+//            SCE::MeshRender::DrawInstances(treeData.treeMeshIds[lod], projectionMatrix, viewMatrix);
+//        }
 
     }
 
