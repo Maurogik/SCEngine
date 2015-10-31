@@ -103,14 +103,17 @@ namespace TextRenderer
             int atlasHeight = fontSizeInPixel;
 
             fseek(fontFile, 0, SEEK_END);
-            long fileLength = ftell(fontFile);
+            unsigned long fileLength = ftell(fontFile);
             fseek(fontFile, 0, SEEK_SET);
 
             std::vector<unsigned char> ttfFileData(fileLength);
             std::vector<unsigned char> fontAtlasData(atlasWidth * atlasHeight);
             stbtt_pack_context atlasContext;
 
-            fread(&ttfFileData[0], fileLength, 1, fontFile);
+            if(fread(&ttfFileData[0], fileLength, 1, fontFile) != fileLength)
+            {
+                SCE::Debug::RaiseError("Error during font file loading, could no read whole file.");
+            }
             //close file once we've read it
             fclose(fontFile);
 
@@ -119,9 +122,6 @@ namespace TextRenderer
             {
                 Debug::RaiseError("Could not load font : " + fullPath);
             }
-//            int x0, x1, y0, y1;
-              // BB containing all the fonts characers at the same time, not wat we want
-//            stbtt_GetFontBoundingBox(&fontInfo, &x0, &x1, &y0, &y1);
 
             loadedFont.firstCodepoint = firstCodepoint;
             loadedFont.charData.resize(numchars);
@@ -130,7 +130,7 @@ namespace TextRenderer
             loadedFont.atlasWidth = atlasWidth;
             loadedFont.atlasHeight = atlasHeight;
 
-//            //pack rendered characters into a font atlas
+            //pack rendered characters into a font atlas
             stbtt_PackBegin(&atlasContext, &fontAtlasData[0], atlasWidth, atlasHeight, 0, 1,  nullptr);
             //create atlas in bitmap
             int atlasRes = stbtt_PackFontRange(&atlasContext, &ttfFileData[0], 0, fontSizeInPixel,
