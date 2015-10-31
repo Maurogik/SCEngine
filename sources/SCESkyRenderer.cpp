@@ -85,8 +85,8 @@ namespace SkyRenderer
         glGenTextures(1, &(sunData.sunShaftTexture));
         //texture will store additive sun color as RGB and fog strength as A
         glBindTexture(GL_TEXTURE_2D, sunData.sunShaftTexture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RG16F, commonSkyData.renderWidth, commonSkyData.renderHeight,
-                     0, GL_RG, GL_FLOAT, NULL);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, commonSkyData.renderWidth, commonSkyData.renderHeight,
+                     0, GL_RGB, GL_FLOAT, NULL);
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
