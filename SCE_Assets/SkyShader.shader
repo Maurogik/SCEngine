@@ -80,6 +80,7 @@ _{
         vec3 Position_worldspace = texture(PositionTex, uv).xyz;        
         vec4 sunData = texture(SunTex, uv);
         vec3 sunColor = sunData.r * SunColor;
+        vec3 flareColor = sunData.b * SunColor;
         float lightScatering = sunData.g;
 
         float notOccludedByScene = step(dot(Position_worldspace, Position_worldspace), 0.0001);
@@ -94,15 +95,10 @@ _{
 
         color = vec4(0.0, 0.0, 0.0, 1.0);
 
-        if(notOccludedByScene > 0.2f)
+        if(notOccludedByScene > 0.0)
         {
-            //compute normalized device coord and screenspace sun position
-            vec3 sun_cameraspace = (V * vec4(SunPosition_worldspace, 1.0)).xyz;
+            //compute normalized device coord
             vec2 ndcUv = uv * 2.0 - vec2(1.0);
-            vec4 sun_projectionspace = (P * vec4(sun_cameraspace, 1.0));
-            sun_projectionspace /= sun_projectionspace.w;
-            vec2 sunUV = sun_projectionspace.xy * 0.5 + vec2(0.5);
-
             vec3 skyColor = getSkyColor(ndcUv);
             skyColor += sunColor;
 
@@ -110,5 +106,6 @@ _{
         }
         color.rgb += mix(sceneColor.rgb, getFogColor(height), fogAmount) * (1.0 - notOccludedByScene);
         color.rgb += lightScatering * SunColor;
+        color.rgb += flareColor;
     }
 _}

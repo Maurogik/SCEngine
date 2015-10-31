@@ -29,14 +29,13 @@ _{
 
     uniform vec2        SCE_ScreenSize;
     uniform vec3        SunPosition_worldspace;
-    uniform vec3        SunColor;
     uniform float       SizeQuality;
     layout (location = 0) uniform sampler2D   PositionTex;
 
     uniform mat4 V;
     uniform mat4 P;
 
-    out vec2 color;
+    out vec3 color;
 
     float pent(in vec2 fragCoord){
         vec2 sunToFrag = abs(fragCoord);
@@ -45,13 +44,18 @@ _{
     }
 
     //originaly from https://www.shadertoy.com/view/XtS3DD
-    float flare(vec2 fragCoord, vec2 sunCoord)
+    vec2 flare(vec2 fragCoord, vec2 sunCoord)
     {
+        vec2 res;
         vec2 sunToFrag = fragCoord - sunCoord;
         float a = atan(sunToFrag.x,sunToFrag.y);
 
         float fra = fract(a * 0.8 + 0.12);
         float rz = 0.55*(pow(abs(fra-0.5),3.0)*exp2((-dot(sunToFrag,sunToFrag)*4.))); //Spokes
+        //squared spokes
+//        float rz = pow(abs(fract(a * 0.61) - 0.5), 4.0)*exp2((-dot(sunToFrag,sunToFrag)*4.));
+        res.r = rz;
+        rz = 0.0;
 
         vec2 pds = fragCoord * (length(fragCoord)) * 0.75;
         rz += max(1.0/(1.0+32.0*pent(pds+0.8*sunCoord)),.0)*0.2; //Projected ghost (main lens)
@@ -64,27 +68,29 @@ _{
         rz += max(0.01-pow(pent(-(p2 - .5*sunCoord)),2.),.0)*4.0;
         rz += max(0.01-pow(pent(-(p2 + .7*sunCoord)),5.),.0)*3.0;
 
-        return clamp(rz,0.,1.);
+        res.g = clamp(rz,0.,1.);
+        return res;
     }
 
 
-    vec4 getSunColor(vec2 ndcUv, vec3 sun_projectionspace)
+    vec2 getSunColor(vec2 ndcUv, vec3 sun_projectionspace)
     {
-        vec2 fixedNdc = ndcUv * vec2(1.0, SCE_ScreenSize.y/SCE_ScreenSize.x); //compensate for aspect ratio
-        sun_projectionspace.xy *= vec2(1.0, SCE_ScreenSize.y/SCE_ScreenSize.x);
-        vec2 ndcToSun = sun_projectionspace.xy - fixedNdc;
-        float sun = clamp(1.0 - length(ndcToSun), 0.0, 1.0);
-        sun = pow(sun, 4.0) * 0.8 + smoothstep(0.0, 0.050, sun - 0.92) * 3.0;
         float sunStrength = 10.0;
 
         sunStrength *= step(0.001, sun_projectionspace.z) *
                 step(abs(sun_projectionspace.x), 1.2) *
                 step(abs(sun_projectionspace.y), 1.2);
 
-        float flare = flare(fixedNdc, sun_projectionspace.xy);
-        sun = clamp(sun + flare * 2.0, 0.0, sunStrength);
+        vec2 fixedNdc = ndcUv * vec2(1.0, SCE_ScreenSize.y/SCE_ScreenSize.x); //compensate for aspect ratio
+        sun_projectionspace.xy *= vec2(1.0, SCE_ScreenSize.y/SCE_ScreenSize.x);
+        vec2 ndcToSun = sun_projectionspace.xy - fixedNdc;
+        float sun = clamp(1.0 - length(ndcToSun), 0.0, 1.0);
+        sun = pow(sun, 4.0) * 0.8 + smoothstep(0.0, 0.050, sun - 0.92) * 3.0;
 
-        return vec4(SunColor, sun);
+        vec2 flare = flare(fixedNdc, sun_projectionspace.xy);
+
+        return vec2(clamp(sun + flare.r*2.0, 0.0, sunStrength),
+                    clamp(flare.g, 0.0, sunStrength));
     }
 
 #define LIGHT_SHAFTS
@@ -129,18 +135,21 @@ _{
         sun_projectionspace /= sun_projectionspace.w;
         vec2 sunUV = sun_projectionspace.xy * 0.5 + vec2(0.5);
 
-        vec4 sunColor = getSunColor(ndcUv, sun_projectionspace.xyz);
-        float sunStrength = 1.0 - dot(sun_projectionspace.xy, sun_projectionspace.xy) * 0.2;
-        sunStrength *= step(0.0, sun_cameraspace.z);
+        float sunSqLen = dot(sun_projectionspace.xy, sun_projectionspace.xy);
 
-        color = vec2(0.0);       
+        color = vec3(0.0);
 
-        if(sunStrength > 0.0)
+        if(sunSqLen < 2.0)
         {
-            color.r = sunColor.a * notOccludedByScene * sunStrength;
+            float sunStrength = 1.1 - sunSqLen * 0.5;
+            sunStrength *= step(0.0, sun_cameraspace.z);
+
+            vec2 sunColor = getSunColor(ndcUv, sun_projectionspace.xyz);
+            color.r = sunColor.r * notOccludedByScene * sunStrength;
 #ifdef LIGHT_SHAFTS
             color.g = computeVolumetricLight(uv, sunUV) * sunStrength;
 #endif
+            color.b = sunColor.g * pow(sunStrength, 2.0);
         }
     }
 _}
