@@ -43,9 +43,9 @@
 #define TREE_MODEL_NAME "Terrain/Meshes/tree_lod"
 #define TREE_LOD_COUNT 4
 
-#define TERRAIN_TEXTURE_SIZE 4096
+//#define TERRAIN_TEXTURE_SIZE 4096
 //#define TERRAIN_TEXTURE_SIZE 2048
-//#define TERRAIN_TEXTURE_SIZE 512
+#define TERRAIN_TEXTURE_SIZE 512
 #define TEX_TILE_SIZE 2.0f
 
 //#define ISLAND_MODE
@@ -87,6 +87,16 @@ namespace Terrain
         glm::vec2 position;
         float radius;
         float spacing;
+    };
+
+    struct FrustrumCullingData
+    {
+        glm::vec4 leftPlane;
+        glm::vec4 rightPlane;
+        glm::vec4 bottomPlane;
+        glm::vec4 topPlane;
+        glm::vec4 nearPlane;
+        glm::vec4 farPlane;
     };
 
     struct TerrainData
@@ -378,6 +388,20 @@ namespace Terrain
             terrainData->heightmap = heightmap;
         }
 
+        FrustrumCullingData computeCullingData(const glm::mat4& projectionMatrix)
+        {
+            glm::mat4 invP = glm::inverse(projectionMatrix);
+            FrustrumCullingData data;
+            data.leftPlane = invP*vec4(1.0, 0.0, 0.0, 1.0);
+            data.rightPlane = invP*vec4(-1.0, 0.0, 0.0, 1.0);
+            data.bottomPlane = invP*vec4(0.0, 1.0, 0.0, 1.0);
+            data.topPlane = invP*vec4(0.0, -1.0, 0.0, 1.0);
+            data.nearPlane = invP*vec4(0.0, 0.0, 1.0, 1.0);
+            data.farPlane = invP*vec4(0.0, 0.0, -1.0, 1.0);
+
+            return data;
+        }
+
         bool isQuadOffscreen(const glm::mat4& modelMatrix,
                              const glm::mat4& viewMatrix,
                              const glm::mat4& projectionMatrix)
@@ -394,13 +418,86 @@ namespace Terrain
                 pos_screenspace /= pos_screenspace.w;
                 float tolerance = 1.7f;
                 if((abs(pos_screenspace.x) > tolerance || abs(pos_screenspace.y) > tolerance
-                   || abs(pos_screenspace.z) > 1.0001f) && length(pos_screenspace) > 3.0f)
+                   || abs(pos_screenspace.z) > 1.00001f) && length(pos_screenspace) > 2.0f)
                 {
                     --onScreenCount;
                 }
             }
 
             return onScreenCount == 0;
+        }
+
+        bool isSphereInFrustrum(const FrustrumCullingData& cullingData,
+                             const glm::vec4& pos_cameraspace,
+                             float radius_cameraspace)
+        {
+            if(     glm::dot(cullingData.leftPlane, pos_cameraspace)   < -radius_cameraspace ||
+                    glm::dot(cullingData.rightPlane, pos_cameraspace)  < -radius_cameraspace ||
+                    glm::dot(cullingData.topPlane, pos_cameraspace)    < -radius_cameraspace ||
+                    glm::dot(cullingData.bottomPlane, pos_cameraspace) < -radius_cameraspace ||
+                    glm::dot(cullingData.nearPlane, pos_cameraspace)   < -radius_cameraspace ||
+                    glm::dot(cullingData.farPlane, pos_cameraspace)    < -radius_cameraspace )
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        bool isBoxInFrustrum(const FrustrumCullingData& cullingData,
+                             const glm::vec4& pos_cameraspace,
+                             const glm::vec4& R_cameraspace,
+                             const glm::vec4& S_cameraspace,
+                             const glm::vec4& T_cameraspace)
+        {
+            glm::vec4 xVec = R_cameraspace;
+            glm::vec4 yVec = S_cameraspace;
+            glm::vec4 zVec = T_cameraspace;
+
+            //compute effective radius in each frustrum direction
+            float radiusProjLeft =
+                    (glm::abs(glm::dot(cullingData.leftPlane, xVec)) +
+                    glm::abs(glm::dot(cullingData.leftPlane, yVec)) +
+                    glm::abs(glm::dot(cullingData.leftPlane, zVec)))*0.5;
+
+            float radiusProjRight =
+                    (glm::abs(glm::dot(cullingData.rightPlane, xVec)) +
+                    glm::abs(glm::dot(cullingData.rightPlane, yVec)) +
+                    glm::abs(glm::dot(cullingData.rightPlane, zVec)))*0.5;
+
+            float radiusProjTop =
+                    (glm::abs(glm::dot(cullingData.topPlane, xVec)) +
+                    glm::abs(glm::dot(cullingData.topPlane, yVec)) +
+                    glm::abs(glm::dot(cullingData.topPlane, zVec)))*0.5;
+
+            float radiusProjBottom =
+                    (glm::abs(glm::dot(cullingData.bottomPlane, xVec)) +
+                    glm::abs(glm::dot(cullingData.bottomPlane, yVec)) +
+                    glm::abs(glm::dot(cullingData.bottomPlane, zVec)))*0.5;
+
+            float radiusProjNear =
+                    (glm::abs(glm::dot(cullingData.nearPlane, xVec)) +
+                    glm::abs(glm::dot(cullingData.nearPlane, yVec)) +
+                    glm::abs(glm::dot(cullingData.nearPlane, zVec)))*0.5;
+
+            float radiusProjFar =
+                    (glm::abs(glm::dot(cullingData.farPlane, xVec)) +
+                    glm::abs(glm::dot(cullingData.farPlane, yVec)) +
+                    glm::abs(glm::dot(cullingData.farPlane, zVec)))*0.5;
+
+            //for each plane, compare the distance from the (center, plane) to the effective radius
+            //in this frustrum direction
+            if(     glm::dot(cullingData.leftPlane, pos_cameraspace)   < -radiusProjLeft   ||
+                    glm::dot(cullingData.rightPlane, pos_cameraspace)  < -radiusProjRight  ||
+                    glm::dot(cullingData.topPlane, pos_cameraspace)    < -radiusProjTop    ||
+                    glm::dot(cullingData.bottomPlane, pos_cameraspace) < -radiusProjBottom ||
+                    glm::dot(cullingData.nearPlane, pos_cameraspace)   < -radiusProjNear   ||
+                    glm::dot(cullingData.farPlane, pos_cameraspace)    < -radiusProjFar    )
+            {
+                return false;
+            }
+
+            return true;
         }
 
 //attempt at occlusion culling, needs more work
@@ -581,7 +678,8 @@ namespace Terrain
         void spawnTreeInstances(const glm::mat4& viewMatrix,
                                 const glm::mat4& projectionMatrix,
                                 const glm::mat4& worldToTerrainspaceMatrix,
-                                const glm::vec3& cameraPosition)
+                                const glm::vec3& cameraPosition,
+                                const FrustrumCullingData& cullingData)
         {
             float perlinScale = 0.05f;
             float patchSize = terrainData->patchSize;
@@ -594,34 +692,23 @@ namespace Terrain
             float noiseX, noiseZ;
 
             //apply a power to the distance to the tree to have the LOD group be exponentionally large
-//            float power = 1.6f;
-            float power = 1.4f;
+            float power = 1.6f;
             float maxDistToCam = terrainSize;
 
             int discardedGroups = 0;
             //Spawn trees from tree groups
             uint lodGroup = 0;
-            int i = 0;
 
             for(TreeGroup& group : terrainData->treeGroups)
             {
-                ++i;
                 //make a bigger radius to account for possible displacement
                 float totalRadius = group.radius*2.0f;
-                //creates model matrix for a imaginary quad containing the trees in this group
-                glm::vec3 groupPos = glm::vec3(group.position.x - totalRadius, 0.0f,
-                                               group.position.y - totalRadius);
-                glm::mat4 bigGroupModelMatrix = glm::translate(mat4(1.0), groupPos) *
-                        glm::scale(mat4(1.0), glm::vec3(totalRadius*2.0f));
+                glm::vec3 groupPos = glm::vec3(group.position.x, 0.0f,
+                                               group.position.y);
+                groupPos.y = GetTerrainHeight(groupPos);
+                glm::vec4 groupPos_cameraspace = viewMatrix*glm::vec4(groupPos, 1.0);
 
-                totalRadius = group.radius*0.5;
-                groupPos = glm::vec3(group.position.x - totalRadius, 0.0f,
-                                     group.position.y - totalRadius);
-                glm::mat4 groupModelMatrix = glm::translate(mat4(1.0), groupPos) *
-                        glm::scale(mat4(1.0), glm::vec3(totalRadius));
-
-                if(!isQuadOffscreen(bigGroupModelMatrix, viewMatrix, projectionMatrix) ||
-                   !isQuadOffscreen(groupModelMatrix, viewMatrix, projectionMatrix))
+                if(isSphereInFrustrum(cullingData, groupPos_cameraspace, totalRadius))
                 {
                     for(float x = -group.radius; x < group.radius; x += group.spacing)
                     {
@@ -776,11 +863,26 @@ namespace Terrain
         glBindVertexArray(terrainData->quadVao);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, terrainData->quadIndicesVbo);
 
+        FrustrumCullingData cullingData = computeCullingData(projectionMatrix);
+        float patchSize = terrainData->patchSize;
+
+        glm::vec4 R_cameraspace = viewMatrix*glm::vec4(patchSize, 0.0, 0.0, 0.0);
+        glm::vec4 S_cameraspace = viewMatrix*glm::vec4(0.0, patchSize, 0.0, 0.0);
+        glm::vec4 T_cameraspace = viewMatrix*glm::vec4(0.0, 0.0, patchSize, 0.0);
+
         uint patchCount = 0;
         uint offscreenCount = 0;
         for(uint i = 0; i < terrainData->patchModelMatrices.size(); ++i)
         {
-            if(!isQuadOffscreen(terrainData->patchModelMatrices[i], viewMatrix, projectionMatrix))
+            glm::vec4 pos_worldspace = terrainData->patchModelMatrices[i]*glm::vec4(0.0, 0.0, 0.0, 1.0);
+            pos_worldspace+= glm::vec4(patchSize, patchSize, patchSize, 0.0)*0.5f;
+            float height = GetTerrainHeight(glm::vec3(pos_worldspace));
+            pos_worldspace.y = height;
+
+            glm::vec4 pos_cameraspace = viewMatrix*pos_worldspace;
+
+            if(isBoxInFrustrum(cullingData, pos_cameraspace, R_cameraspace,
+                               S_cameraspace, T_cameraspace))
             {
                 renderPatch(projectionMatrix,
                             viewMatrix,
@@ -810,13 +912,13 @@ namespace Terrain
         glUniformMatrix4fv(treeData.worldToTerrainMatUniform, 1, GL_FALSE,
                            &(terrainData->worldToTerrainspace[0][0]));
 
-//        spawnTreeInstances(viewMatrix, projectionMatrix,
-//                           terrainData->worldToTerrainspace, cameraPosition);
+        spawnTreeInstances(viewMatrix, projectionMatrix, terrainData->worldToTerrainspace,
+                           cameraPosition, cullingData);
 
-//        for(uint lod = 0; lod < TREE_LOD_COUNT; ++lod)
-//        {
-//            SCE::MeshRender::DrawInstances(treeData.treeMeshIds[lod], projectionMatrix, viewMatrix);
-//        }
+        for(uint lod = 0; lod < TREE_LOD_COUNT; ++lod)
+        {
+            SCE::MeshRender::DrawInstances(treeData.treeMeshIds[lod], projectionMatrix, viewMatrix);
+        }
 
     }
 
