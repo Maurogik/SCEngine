@@ -110,7 +110,7 @@ namespace TextRenderer
             std::vector<unsigned char> fontAtlasData(atlasWidth * atlasHeight);
             stbtt_pack_context atlasContext;
 
-            if(fread(&ttfFileData[0], fileLength, 1, fontFile) != fileLength)
+            if(fread(&ttfFileData[0], 1, fileLength, fontFile) != fileLength)
             {
                 SCE::Debug::RaiseError("Error during font file loading, could no read whole file.");
             }
