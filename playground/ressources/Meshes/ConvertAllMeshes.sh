@@ -17,7 +17,7 @@ eval "rm $PWD/*_convert*"
 # ${PWD}/*.OBJ"
 
 #path scale flipUV(0/1) windCW(0/1)
-COMMAND_ARGS="$PWD/suzanne.obj 1.0 0 0, $PWD/CobbleStones2.obj 1.0 0 0, $PWD/house_obj.obj 0.015 0 0, $PWD/SCORPION.OBJ 30.0 0 0, $PWD/T_REX.OBJ 1.0 0 0, $PWD/RB-SideSwipe.obj 0.025 0 0, $PWD/GringottsDragon.obj 30.0 0 0, $PWD/Goku.obj 0.105 0 0, $PWD/Eurofighter.obj 1.0 0 0, $PWD/Wolf.obj 0.5 0 0, $PWD/EAGLE_3.OBJ 2.0 0 0, $PWD/EAGLE_2.OBJ 2.0 0 0, $PWD/low_poly_tree.obj 0.02 0 0"
+COMMAND_ARGS="$PWD/suzanne.obj 1.0 0 0, $PWD/CobbleStones2.obj 1.0 0 0, $PWD/house_obj.obj 0.015 0 0, $PWD/SCORPION.OBJ 30.0 0 0, $PWD/T_REX.OBJ 1.0 0 0, $PWD/RB-SideSwipe.obj 0.025 0 0, $PWD/GringottsDragon.obj 30.0 0 0, $PWD/Goku.obj 0.105 0 0, $PWD/Eurofighter.obj 1.0 0 0, $PWD/Wolf.obj 0.5 0 0, $PWD/EAGLE_3.OBJ 2.0 0 0, $PWD/EAGLE_2.OBJ 2.0 0 0, $PWD/eagle_low.obj 2.0 0 0"
 # for file in $FILES
 # do
 # 	echo "Processing $file"
