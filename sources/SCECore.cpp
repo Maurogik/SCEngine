@@ -64,9 +64,14 @@ void SCECore::InitEngine(const std::string &windowName)
     glfwMakeContextCurrent(s_window);
     glewExperimental=true; // Needed in core profile
 
-#ifndef SCE_DEBUG
+#ifdef SCE_DEBUG
+        //no vsync
+       glfwSwapInterval(0);
+#else
     //enable v-sync
-    glfwSwapInterval(1);
+//    glfwSwapInterval(1);
+    //adaptative v-sync
+    glfwSwapInterval(-1);
 #endif
 
 
@@ -74,7 +79,6 @@ void SCECore::InitEngine(const std::string &windowName)
     if (glewInit() != GLEW_OK) {
         Debug::RaiseError("Failed to initialize GLEW.");
     }
-
 
     glfwSetCursorPos(s_window, 0.0, 0.0);
 
