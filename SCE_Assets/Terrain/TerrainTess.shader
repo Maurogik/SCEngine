@@ -263,23 +263,23 @@ _{
         uv *= TextureTileScale;
 
         vec4 topColor = vec4(1.0, 1.0, 1.0, 1.0);
-        vec4 middleColor = vec4(0.7, 0.4, 0.2, 0.1);
-        vec4 bottomColor = vec4(0.2, 0.7, 0.1, 0.05);
+        vec4 middleColor = vec4(0.7, 0.4, 0.2, 0.02);
+        vec4 bottomColor = vec4(0.2, 0.7, 0.1, 0.01);
 
-        bottomColor.rgb = texture(GrassTex, uv).rgb;
-        middleColor.rgb = texture(DirtTex, uv).rgb;
-        topColor.rgb += texture(SnowTex, uv).rgb;
+        bottomColor.rgb = pow(texture(GrassTex, uv).rgb, vec3(2.2));
+        middleColor.rgb = pow(texture(DirtTex, uv).rgb, vec3(2.2));
+        topColor.rgb += pow(texture(SnowTex, uv).rgb, vec3(2.2));
         topColor.rgb *= 2.0;
 
         float height = normAndHeight.a / HeightScale;
         float flatness = pow(dot(normAndHeight.xyz, vec3(0.0, 1.0, 0.0)), 8.0);
         float slope = 1.0 - flatness;
 
-        float bottomEnd = 0.35;
-        float middleEnd = 0.65;
+        float bottomEnd = 0.3;
+        float middleEnd = 0.6;
 
-        float bottomToMiddleMix = 0.4;// * normAndHeight.y;
-        float middleToTopMix = 0.2;// * (normAndHeight.y);
+        float bottomToMiddleMix = 0.3;
+        float middleToTopMix = 0.2;
 
 
         float BtoMStart = bottomEnd - bottomToMiddleMix*0.5;
@@ -289,7 +289,7 @@ _{
         float MtoTEnd = middleEnd + middleToTopMix*0.5;
 
         float lerpLow = (height - BtoMStart) / (bottomToMiddleMix);
-        lerpLow = pow(lerpLow, 4.0) - flatness*0.85*(1.0 - lerpLow);
+        lerpLow = pow(lerpLow, 4.0) - flatness*(1.0 - lerpLow);
         lerpLow = clamp(lerpLow, 0.0, 1.0);
 
         float lerpHigh = (height - MtoTStart) / (middleToTopMix);

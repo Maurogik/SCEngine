@@ -319,8 +319,7 @@ _{
                      + SCE_ShadowStrength * ambiantColor * MaterialDiffuseColor;
 
 #ifdef DEBUG
-//        color = vec4(MaterialDiffuseColor, 1.0);
-        color = vec4(Normal_worldspace, 1.0);
+        color = vec4(MaterialDiffuseColor, 1.0);
 #endif
     }
 _}

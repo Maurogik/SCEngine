@@ -1,6 +1,6 @@
 [VertexShader]
 _{
-#version 400 core
+#version 430 core
 
     in vec3 vertexPosition_modelspace;
     in vec2 vertexUV;
@@ -9,25 +9,21 @@ _{
 
     out vec2 fragUV;
     out vec3 Normal_worldspace;
+    out vec3 Normal_modelspace;
     out vec3 Position_worldspace;
     out vec3 Position_modelspace;
 
-    uniform mat4 WorldToTerrainSpace;
     uniform mat4 V;
     uniform mat4 P;
-    uniform float PatchSize;
-    uniform sampler2D TerrainHeightMap;
 
     void main()
     {
         Position_modelspace = vertexPosition_modelspace;
         Position_worldspace = ( instanceMatrix * vec4(vertexPosition_modelspace, 1.0) ).xyz;
 
-        vec4 pos_terrainspace = WorldToTerrainSpace * vec4(Position_worldspace, 1.0);
-        float height = texture(TerrainHeightMap, pos_terrainspace.zx * 0.5 + vec2(0.5)).a;
-
         fragUV = vertexUV;
         Normal_worldspace = ( instanceMatrix * vec4(vertexNormal_modelspace, 0.0) ).xyz;
+        Normal_modelspace = vertexNormal_modelspace;
 
         gl_Position = P * V * vec4(Position_worldspace, 1.0);
     }
@@ -35,10 +31,11 @@ _}
 
 [FragmentShader]
 _{
-#version 400 core
+#version 430 core
 
     in vec2 fragUV;
     in vec3 Normal_worldspace;
+    in vec3 Normal_modelspace;
     in vec3 Position_worldspace;
     in vec3 Position_modelspace;
 
