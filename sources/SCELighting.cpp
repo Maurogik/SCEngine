@@ -29,6 +29,7 @@ using namespace std;
 
 #define CASCADE_COUNT 4
 #define MAX_SHADOW_DISTANCE 4500.0f
+#define TERRAIN_SHADOW
 
 SCELighting* SCELighting::s_instance = nullptr;
 
@@ -138,7 +139,9 @@ void SCELighting::RenderLightsToGBuffer(const CameraRenderData& renderData,
         glUniform1fv(s_instance->mShadowFarSplitUnifom, CASCADE_COUNT,
                      &(s_instance->mFarSplit_cameraspace[0]));
 
+        glCullFace(GL_FRONT);
         s_instance->renderLightingPass(renderData, light);
+        glCullFace(GL_BACK);
     }
 
     //Disable stencil because directional lights don't need it
@@ -351,13 +354,11 @@ void SCELighting::renderLightingPass(const CameraRenderData& renderData, SCEHand
 
     glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
     glDisable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_FRONT);
+    glEnable(GL_CULL_FACE);    
 
     //render light
     light->RenderWithLightData(renderData);
 
-    glCullFace(GL_BACK);
     glDisable(GL_BLEND);
 }
 
@@ -384,7 +385,9 @@ void SCELighting::renderShadowmapPass(const CameraRenderData& lightRenderData,
         container->GetComponent<MeshRenderer>()->Render(lightRenderData);
     }
 
+#ifdef TERRAIN_SHADOW
     SCE::Terrain::RenderTerrain(lightRenderData.projectionMatrix, lightRenderData.viewMatrix, 8.0f);
+#endif
 
     glm::mat4 biasMatrix(
     0.5, 0.0, 0.0, 0.0,

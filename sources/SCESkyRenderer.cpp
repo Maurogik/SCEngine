@@ -127,7 +127,6 @@ namespace SkyRenderer
         //only a screen space quad, don't need depth testing
         glDepthMask(GL_FALSE);
         glDisable(GL_DEPTH_TEST);
-        glCullFace(GL_FRONT);
 
         //Renders sun shaft in smaller res
         glViewport(0, 0, commonSkyData.renderWidth, commonSkyData.renderHeight);
@@ -167,7 +166,6 @@ namespace SkyRenderer
         SCERender::RenderFullScreenPass(skyData.skyProgram, renderData.projectionMatrix,
                                         renderData.viewMatrix);
 
-        glCullFace(GL_BACK);
         glEnable(GL_DEPTH_TEST);
         glDepthMask(GL_TRUE);
     }

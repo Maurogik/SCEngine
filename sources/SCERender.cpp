@@ -81,7 +81,7 @@ void SCERender::Render(const SCEHandle<Camera>& camera,
     // Clear the screen (default framebuffer)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-//    //render shadows to shadowmap
+    //render shadows to shadowmap
     SCEHandle<Transform> camTransform = camera->GetContainer()->GetComponent<Transform>();
     glm::mat4 camToWorld = camTransform->GetWorldTransform();
     SCELighting::RenderCascadedShadowMap(renderData, camera->GetFrustrumData(),
@@ -98,7 +98,7 @@ void SCERender::Render(const SCEHandle<Camera>& camera,
     //luminance
     ToneMappingData& tonemap = s_instance->mToneMapData;
     glDisable(GL_DEPTH_TEST);
-    glCullFace(GL_FRONT);
+    glCullFace(GL_BACK);
     glUseProgram(tonemap.luminanceShader);
     s_instance->mGBuffer.BindForLuminancePass();
     RenderFullScreenPass(tonemap.luminanceShader, renderData.projectionMatrix, renderData.viewMatrix);
