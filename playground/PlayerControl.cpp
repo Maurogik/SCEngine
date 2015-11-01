@@ -102,7 +102,8 @@ void PlayerControl::Update()
     else if (glfwGetKey( window, GLFW_KEY_LEFT_SHIFT ) == GLFW_PRESS)
     {
 #ifdef SCE_DEBUG
-       speed = 1.0f;
+       speed = 0.0f;
+       lastSpeed = 0.0f;
 #else
 //       speed = 5.0f;
         speed = 10.0f;
@@ -110,8 +111,6 @@ void PlayerControl::Update()
 #endif
     }
 
-
-//    vec3 yAxis(transform->LocalToWorldDir(vec3(0.0, 1.0, 0.0)));
     vec3 yAxis(0.0, 1.0, 0.0);
     vec3 xAxis(mTransform->LocalToWorldDir(vec3(1.0, 0.0, 0.0)));
     xAxis.y = 0.0f;
