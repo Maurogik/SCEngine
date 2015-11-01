@@ -46,7 +46,10 @@ namespace TextureUtils
     {
         TexturesData()
             : loadedTextures(), createdTextures()
-        {}
+        {
+            //some setup of stb_image needed
+            stbi_set_flip_vertically_on_load(1);
+        }
 
         ~TexturesData()
         {
@@ -148,10 +151,6 @@ namespace TextureUtils
         }
 
         Internal::Log("TODO : Compression format not yet used : " + compressionFormat);
-
-        //create a new openGL texture
-        //force_channels : 0 = channels auto
-        //reuse texture : 0 = create new texture
 
         int width, height, nbComponent;
         unsigned char* textureData = stbi_load(fullTexturePath.c_str(),
