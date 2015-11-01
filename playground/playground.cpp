@@ -339,7 +339,7 @@ int main( void )
 
     SCEScene::CreateEmptyScene();
 
-    SCEScene::AddTerrain(3000.0f, 100.0f, 0.0f);
+    SCEScene::AddTerrain(3000.0f, 150.0f, 0.0f);
 
     lightOutdoor();
 //    redAndGreen();
@@ -357,19 +357,20 @@ int main( void )
     SCEHandle<Transform> cameraTransform = cameraObject->AddComponent<Transform>();
     cameraObject->AddComponent<Camera>(40.0f, 16.0f/9.0f, 1.0f, 8000.0f);
 
+
+    SCEHandle<Container> eagle = SCEScene::CreateContainer("eagle");
+
+    SCEHandle<Transform> eagleTransform = eagle->AddComponent<Transform>();
+    eagleTransform->SetWorldPosition(startPos);
+
 #ifdef EAGLE
-    SCEHandle<Container> eagle = createModel("eagle2",
-                                              "Meshes/EAGLE_2.OBJ", "Materials/Eagle",
-                                              startPos);
-    SCEHandle<Transform> eagleTransform = eagle->GetComponent<Transform>();
-//    eagleTransform->RotateAroundAxis(vec3(0.0, 1.0, 0.0), 180.0f);
+    eagle->AddComponent<Material>("Materials/Eagle");
+    eagle->AddComponent<MeshRenderer>("Meshes/eagle_low.obj");
+#endif
+
     eagle->AddComponent<PlayerControl>();
     cameraTransform->SetWorldPosition(startPos + vec3(0.0, 1.0, -5.0));
     SCEHandle<CameraControl> camControl = cameraObject->AddComponent<CameraControl>(eagleTransform);
-#else
-    cameraTransform->SetLocalPosition(startPos);
-    cameraObject->AddComponent<PlayerControl>();
-#endif
 
     //load scene here
     engine.RunEngine();

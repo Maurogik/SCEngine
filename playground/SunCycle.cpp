@@ -4,6 +4,8 @@
 using namespace SCE;
 using namespace std;
 
+#define SKY_LIGHT
+
 SunCycle::SunCycle(SCE::SCEHandle<Container> container, float speed, vec3 axis)
     : GameObject(container, "SunCycle"), mSpeed(speed), mRotationAxis(axis),
       mNoonSunColor(1.0, 1.0, 0.8, 0.7), mSunsetColor(0.35, 0.2, 0.0, 0.4),
@@ -14,19 +16,21 @@ SunCycle::SunCycle(SCE::SCEHandle<Container> container, float speed, vec3 axis)
     mTransform =  container->AddComponent<Transform>();
     mLight = container->AddComponent<Light>(LightType::DIRECTIONAL_LIGHT);
 
-    glm::vec3 sunPos = glm::vec3(0.0, 0.0, -20000.0);
+    glm::vec3 sunPos = glm::vec3(10.0, 0.0, -20000.0);
     mTransform->SetWorldPosition(sunPos);
     mTransform->LookAt(glm::vec3(0.0));
 
     mLight->SetLightColor(glm::vec4(1.0, 1.0, 0.8, 0.7));
     mLight->SetIsSunLight(true);
 
+#ifdef SKY_LIGHT
     //create additional sky light to act as ambiant lighting
     SCEHandle<Container> skyLightCont = SCE::SCEScene::CreateContainer("SkyLightContainer");
     SCEHandle<Transform> skyLightTransform = skyLightCont->AddComponent<Transform>();
     mSkyLight = skyLightCont->AddComponent<Light>(LightType::DIRECTIONAL_LIGHT);
     skyLightTransform->SetWorldPosition(glm::vec3(0.0, 2000.0, 0.0));
     skyLightTransform->SetWorldOrientation(glm::vec3(90.0, 0.0, 0.0));
+#endif
 }
 
 void SunCycle::Update()
@@ -41,7 +45,7 @@ void SunCycle::Update()
     glm::vec3 sunDir = normalize(-worldPos);
 
     float noonStr = glm::dot(sunDir, glm::vec3(0.0, -1.0, 0.0));
-    float midnightStr = glm::clamp(noonStr * -1.5f - 0.1f, 0.0f , 1.0f);
+    float midnightStr = glm::clamp(noonStr * -3.0f, 0.0f , 1.0f);
     noonStr = pow(glm::max(0.0f, noonStr), 2.0f);
     float sunsetStr = glm::dot(sunDir, glm::vec3(0.0, 0.0, 1.0));
     float sunsetPow = pow(abs(sunsetStr) + (1.0f - noonStr), 1.2f);
@@ -60,8 +64,10 @@ void SunCycle::Update()
 
     SCE::SkyRenderer::SetSkyColors(skyBottomColor, skyTopColor, fogColor);
 
+#ifdef SKY_LIGHT
     //Sky light hase the same color than the sky
     glm::vec3 skyAvgColor = glm::mix(skyTopColor, skyBottomColor, 0.7f);
     mSkyLight->SetLightColor(glm::vec4(skyAvgColor,
                                        glm::max(0.2f * dot(skyAvgColor, skyAvgColor), 0.005f)));
+#endif
 }
