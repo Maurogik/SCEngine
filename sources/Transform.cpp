@@ -249,40 +249,40 @@ void Transform::RotateAroundPivot(const glm::vec3& pivot, const glm::vec3& axis,
     mTranslation -= move;
 }
 
-glm::quat rotateBetweenVector(const glm::vec3& start, const glm::vec3& end)
+glm::quat rotateBetweenVector(const glm::highp_dvec3& start, const glm::highp_dvec3& end)
 {
-    float dot = glm::dot(start, end);
+    double dot = glm::dot(start, end);
     quat rotation;
 
-    if (dot > 0.9999999f)//same forward vectors
+    if (dot > 0.99999992)//same forward vectors
     {}
-    else if (dot < -0.9999999f)//opposite vectors
+    else if (dot < -0.9999992)//opposite vectors
     {
         rotation = glm::angleAxis(glm::pi<float>(), vec3(0.0, 1.0, 0.0));
     }
     else
     {
-        glm::vec3 rotationAxis = normalize(glm::cross(start, end));
+        glm::highp_dvec3 rotationAxis = normalize(glm::cross(start, end));
 //        float rotationAngle = glm::acos(dot);
 //        rotation = angleAxis(rotationAngle, rotationAxis);
 
         //other way without the acos
-        float halfCos = sqrt((dot + 1.0f)*0.5f);
-        float halfSin = sqrt(1.0f - halfCos*halfCos);
+        double halfCos = glm::sqrt((dot + 1.0)*0.5);
+        double halfSin = glm::sqrt(1.0 - halfCos*halfCos);
         rotation = quat(halfCos, halfSin * rotationAxis.x, halfSin * rotationAxis.y, halfSin * rotationAxis.z);
     }
 
     return rotation;
 }
 
-glm::quat computeLookAtRotation(const glm::vec3& direction, const glm::vec3& localUp)
+glm::quat computeLookAtRotation(const glm::highp_dvec3& direction, const glm::highp_dvec3& localUp)
 {
-    glm::vec3 forward(0.0, 0.0, 1.0);
+    glm::highp_dvec3 forward(0.0, 0.0, 1.0);
     quat rotation = rotateBetweenVector(forward, direction);
 
-    glm::vec3 right = normalize(glm::cross(direction, localUp));
-    glm::vec3 desiredUp = normalize(glm::cross(right, direction));
-    glm::vec3 newUp = rotation * glm::vec3(0.0, 1.0, 0.0);
+    glm::highp_dvec3 right = normalize(glm::cross(direction, localUp));
+    glm::highp_dvec3 desiredUp = normalize(glm::cross(right, direction));
+    glm::highp_dvec3 newUp = rotation * glm::vec3(0.0, 1.0, 0.0);
 
     quat upRotation = rotateBetweenVector(newUp, desiredUp);
 
