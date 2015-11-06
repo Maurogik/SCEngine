@@ -9,20 +9,22 @@ _{
     in vec3 vertexTangent;
     in vec3 vertexBitangent;
 
-    out vec2 fragUV;
+    out vec2 FragUV;
     out mat3 TangentToWorldspace;
     out vec3 Position_worldspace;
 
+    uniform mat4 ScaleInvertMat;
     uniform mat4 V;
     uniform mat4 P;
 
     void main()
     {
-        fragUV = vertexUV;
-        Position_worldspace = (instanceMatrix * vec4(vertexPosition_modelspace, 1.0)).xyz;
-        vec3 Normal_worldspace = ( instanceMatrix * vec4(vertexNormal_modelspace, 0.0) ).xyz;
-        vec3 Tangent_worldspace = ( instanceMatrix * vec4(vertexTangent, 0.0) ).xyz;
-        vec3 Bitangent_worldspace = ( instanceMatrix * vec4(vertexBitangent, 0.0) ).xyz;
+        FragUV = vertexUV;
+        Position_worldspace = (instanceMatrix*vec4(vertexPosition_modelspace, 1.0)).xyz;
+        mat4 normalModelMatrix = instanceMatrix;ScaleInvertMat;
+        vec3 Normal_worldspace = ( normalModelMatrix*vec4(vertexNormal_modelspace, 0.0) ).xyz;
+        vec3 Tangent_worldspace = ( normalModelMatrix*vec4(vertexTangent, 0.0) ).xyz;
+        vec3 Bitangent_worldspace = ( normalModelMatrix*vec4(vertexBitangent, 0.0) ).xyz;
 
         TangentToWorldspace = (mat3(
             Tangent_worldspace,
@@ -30,7 +32,7 @@ _{
             Normal_worldspace
         ));
 
-        gl_Position = P * V * vec4(Position_worldspace, 1.0);
+        gl_Position = P*V*vec4(Position_worldspace, 1.0);
     }
 _}
 
@@ -38,7 +40,7 @@ _}
 _{
 #version 430 core
 
-    in vec2 fragUV;
+    in vec2 FragUV;
     in mat3 TangentToWorldspace;
     in vec3 Position_worldspace;
 
@@ -51,20 +53,20 @@ _{
 
     void main()
     {
-        vec4 color = texture(ImpostorTex, fragUV);
+        vec4 color = texture(ImpostorTex, FragUV);
         color.rgb = pow(color.rgb, vec3(2.2));
 
         if(color.a > 0.999)
         {
-            vec3 normal = texture(ImpostorNormalTex, fragUV).xyz;
+            vec3 normal = texture(ImpostorNormalTex, FragUV).xyz;
             normal = pow(normal, vec3(2.2));
-            normal = normal * 2.0 - vec3(1.0);
-            normal = normalize(TangentToWorldspace * normal);
+            normal = normal*2.0 - vec3(1.0);
+            normal = normalize(TangentToWorldspace*normal);
             oNormal.xyz = normal;
 
             oColor = color.rgb;
             oPosition = Position_worldspace;
-            oNormal.a = 0.0;
+            oNormal.a = 0.01;
         }
         else
         {
