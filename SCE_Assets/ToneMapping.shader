@@ -72,7 +72,7 @@ _{
 #endif
 
 #ifdef NO_TONEMAPPING
-        color.rgb = hdrColor;
+        color.rgb = sceneColor.xyz;
 #endif
 
         //gamma correction
