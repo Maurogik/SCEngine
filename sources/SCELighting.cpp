@@ -120,6 +120,7 @@ void SCELighting::RenderLightsToGBuffer(const CameraRenderData& renderData,
 
     //Render with stencil test and no writting to depth buffer
     glEnable(GL_STENCIL_TEST);
+    glCullFace(GL_FRONT);
 
     //render lights needing a stencil pass (Point and Spot lights)
     for(SCEHandle<Light> light : s_instance->mStenciledLights)
@@ -139,9 +140,7 @@ void SCELighting::RenderLightsToGBuffer(const CameraRenderData& renderData,
         glUniform1fv(s_instance->mShadowFarSplitUnifom, CASCADE_COUNT,
                      &(s_instance->mFarSplit_cameraspace[0]));
 
-        glCullFace(GL_FRONT);
         s_instance->renderLightingPass(renderData, light);
-        glCullFace(GL_BACK);
     }
 
     //Disable stencil because directional lights don't need it
@@ -168,7 +167,7 @@ void SCELighting::RenderLightsToGBuffer(const CameraRenderData& renderData,
         s_instance->renderLightingPass(renderData, light);
     }
 
-
+    glCullFace(GL_BACK);
     //reset depth writting to default
     glDepthMask(GL_TRUE);
 }
@@ -386,7 +385,7 @@ void SCELighting::renderShadowmapPass(const CameraRenderData& lightRenderData,
     }
 
 #ifdef TERRAIN_SHADOW
-    SCE::Terrain::RenderTerrain(lightRenderData.projectionMatrix, lightRenderData.viewMatrix, 8.0f);
+    SCE::Terrain::RenderTerrain(lightRenderData.projectionMatrix, lightRenderData.viewMatrix, true);
 #endif
 
     glm::mat4 biasMatrix(

@@ -85,7 +85,7 @@ void SCERender::Render(const SCEHandle<Camera>& camera,
     SCEHandle<Transform> camTransform = camera->GetContainer()->GetComponent<Transform>();
     glm::mat4 camToWorld = camTransform->GetWorldTransform();
     SCELighting::RenderCascadedShadowMap(renderData, camera->GetFrustrumData(),
-                                        camToWorld, objectsToRender);
+                                         camToWorld, objectsToRender);
 
     //render objects without lighting
     s_instance->renderGeometryPass(renderData, objectsToRender);
@@ -93,12 +93,12 @@ void SCERender::Render(const SCEHandle<Camera>& camera,
     //lighting & sky
     s_instance->mGBuffer.ClearFinalBuffer();
     SCELighting::RenderLightsToGBuffer(renderData, s_instance->mGBuffer);
+    glCullFace(GL_FRONT);
     SCELighting::RenderSkyToGBuffer(renderData, s_instance->mGBuffer);
 
     //luminance
     ToneMappingData& tonemap = s_instance->mToneMapData;
     glDisable(GL_DEPTH_TEST);
-    glCullFace(GL_BACK);
     glUseProgram(tonemap.luminanceShader);
     s_instance->mGBuffer.BindForLuminancePass();
     RenderFullScreenPass(tonemap.luminanceShader, renderData.projectionMatrix, renderData.viewMatrix);
@@ -119,7 +119,6 @@ void SCERender::Render(const SCEHandle<Camera>& camera,
     //render debug text
     SCE::DebugText::RenderMessages(renderData.viewMatrix, renderData.projectionMatrix);
     glEnable(GL_DEPTH_TEST);
-
 }
 
 void SCERender::renderGeometryPass(const CameraRenderData& renderData,
@@ -132,6 +131,7 @@ void SCERender::renderGeometryPass(const CameraRenderData& renderData,
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
 
+    SCE::Terrain::UpdateTerrain(renderData.projectionMatrix, renderData.viewMatrix);
     SCE::Terrain::RenderTerrain(renderData.projectionMatrix, renderData.viewMatrix);
 
     for(Container* container : objectsToRender)

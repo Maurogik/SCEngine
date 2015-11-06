@@ -212,7 +212,6 @@ namespace
             glm::vec3 bitangent = (deltaPos2 * deltaUV1.x   - deltaPos1 * deltaUV2.x)*r;
 
             // Set the same tangent for all three vertices of the triangle.
-            // They will be merged later, in vboindexer.cpp
             tangents[indices[i+0]] = tangent;
             tangents[indices[i+1]] = tangent;
             tangents[indices[i+2]] = tangent;
@@ -224,7 +223,6 @@ namespace
 
         }
 
-        // See "Going Further"
         for (unsigned int i=0; i<vertices.size(); i+=1 )
         {
             glm::vec3 & n = normals[i];
@@ -238,7 +236,7 @@ namespace
             if (glm::dot(glm::cross(n, t), b) < 0.0f){
                 t = t * -1.0f;
             }
-
+            b = glm::normalize(b);
         }
     }
 }
@@ -591,7 +589,7 @@ namespace MeshLoader
 
         vector<ushort> indices = vector<ushort>
         {
-            2,  0,  1,      2,  3,  0
+            2,  1,  0,      2,  0,  3
         };
 
         vector<vec3> tangents;
