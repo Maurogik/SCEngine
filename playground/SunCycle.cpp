@@ -4,8 +4,8 @@
 using namespace SCE;
 using namespace std;
 
-//#define SKY_LIGHT
-//#define AMBIANT_LIGHT
+#define SKY_LIGHT
+#define AMBIANT_LIGHT
 
 SunCycle::SunCycle(SCE::SCEHandle<Container> container, float speed, vec3 axis)
     : GameObject(container, "SunCycle"), mSpeed(speed),
