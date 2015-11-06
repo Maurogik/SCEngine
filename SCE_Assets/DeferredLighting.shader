@@ -237,7 +237,7 @@ _{
         return shadow;
     }
 
-    #define SHADOW_BIAS 0.0005
+    #define SHADOW_BIAS 0.00005
 
     float getShadowDepth(vec3 pos_worldspace, vec3 normal_worldspace, vec3 lightDir_worldspace)
     {
@@ -246,7 +246,7 @@ _{
         vec3 pos_cameraspace = (V * vec4(pos_worldspace, 1.0)).xyz;
 
         float biasOffset = min(1.0 - dot(-lightDir_worldspace, normal_worldspace), 0.5);
-        float bias = 0.0;//SHADOW_BIAS * biasOffset;
+        float bias = SHADOW_BIAS * biasOffset;
 
         float shadow = 0.0;
         vec4 position_depthspace = vec4(0.0);
@@ -257,8 +257,8 @@ _{
 
             if(pos_cameraspace.z <= FarSplits_cameraspace[i])
             {
-    //              shadow = samplePoisson(sampleCount, position_depthspace.z, position_depthspace.xy,
-    //                                      pos_worldspace, float(i));
+//              shadow = samplePoisson(sampleCount, position_depthspace.z, position_depthspace.xy,
+//                                      pos_worldspace, float(i));
                 shadow = samplePCF(sampleCount, position_depthspace.z - bias,
                                    position_depthspace.xy, float(i));
 //                shadow = (1.0 - sampleMyTex(position_depthspace.xy, float(i),
@@ -287,13 +287,11 @@ _{
 
         vec3 MaterialDiffuseColor   = texture2D(DiffuseTex, uv).xyz;
         vec4 normSpec               = texture2D(NormalTex, uv);
-        vec3 Normal_worldspace      = normSpec.xyz;
+        vec3 Normal_worldspace      = normSpec.rgb;
 
         float Specularity           = normSpec.a;
 
         color = vec4(MaterialDiffuseColor, 1.0);
-
-        //Position worldspace (0,0,0), no object rendered here, use color directly;
 
         vec3 LightToFrag_cameraspace = Position_worldspace - SCE_LightPosition_worldspace;
         vec3 EyeToFrag_cameraspace = Position_worldspace - SCE_EyePosition_worldspace;
@@ -319,7 +317,9 @@ _{
                      + SCE_ShadowStrength * ambiantColor * MaterialDiffuseColor;
 
 #ifdef DEBUG
-        color = vec4(MaterialDiffuseColor, 1.0);
+//        color = vec4(MaterialDiffuseColor, 1.0);
+        color = vec4((Normal_worldspace * 0.5 + vec3(0.5)), 1.0);
+//        color = vec4(Specularity, Specularity, Specularity, 1.0);
 #endif
     }
 _}
