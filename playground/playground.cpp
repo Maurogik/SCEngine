@@ -326,6 +326,7 @@ void streetLights()
 }
 
 #define EAGLE
+//#define PLANE
 
 int sizeV(const vector<int>& x)
 {
@@ -363,14 +364,31 @@ int main( void )
     SCEHandle<Transform> eagleTransform = eagle->AddComponent<Transform>();
     eagleTransform->SetWorldPosition(startPos);
 
+    glm::vec3 distanceToTarget;
+
 #ifdef EAGLE
+    distanceToTarget = glm::vec3(0.0f, 1.0f, -3.5f);
     eagle->AddComponent<Material>("Materials/Eagle");
     eagle->AddComponent<MeshRenderer>("Meshes/eagle_low.obj");
 #endif
 
+#ifdef PLANE
+    distanceToTarget = glm::vec3(0.0f, 3.0f, -10.5f);
+    SCEHandle<Container> planeObj = SCEScene::CreateContainer("planeObj");
+    SCEHandle<Transform> planeTransform = planeObj->AddComponent<Transform>();
+    eagleTransform->AddChild(planeTransform);
+
+    planeTransform->SetLocalOrientation(glm::vec3(0.0f, 180.0f, 0.0f));
+    planeTransform->SetLocalPosition(glm::vec3(0.0));
+
+    planeObj->AddComponent<Material>("Materials/Plane");
+    planeObj->AddComponent<MeshRenderer>("Meshes/Eurofighter.obj");
+
+#endif
+
     eagle->AddComponent<PlayerControl>();
     cameraTransform->SetWorldPosition(startPos + vec3(0.0, 1.0, -5.0));
-    SCEHandle<CameraControl> camControl = cameraObject->AddComponent<CameraControl>(eagleTransform);
+    cameraObject->AddComponent<CameraControl>(eagleTransform, distanceToTarget);
 
     //load scene here
     engine.RunEngine();

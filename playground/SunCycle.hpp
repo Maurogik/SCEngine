@@ -16,6 +16,7 @@ protected :
 private :
 
     float mSpeed;
+    float mAmbiantStrength;
     glm::vec3 mRotationAxis;
     glm::vec4 mNoonSunColor;
     glm::vec4 mSunsetColor;
@@ -26,6 +27,8 @@ private :
     glm::vec3 mSunsetFogColor;
     SCE::SCEHandle<SCE::Light> mLight;
     SCE::SCEHandle<SCE::Light> mSkyLight;
+    SCE::SCEHandle<SCE::Light> mAmbiantLight;
+    SCE::SCEHandle<SCE::Transform> mAmbiantLightTransform;
     SCE::SCEHandle<SCE::Transform> mTransform;
 
 };

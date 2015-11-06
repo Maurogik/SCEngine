@@ -5,8 +5,9 @@ using namespace SCE;
 using namespace std;
 
 
-CameraControl::CameraControl(SCE::SCEHandle<Container> container, SCE::SCEHandle<Transform> target)
-    : GameObject(container, "CamControl"), mTarget(target), mDistanceFromTarget(0.0f, 1.0f, -3.5f),
+CameraControl::CameraControl(SCE::SCEHandle<Container> container, SCE::SCEHandle<Transform> target,
+                             vec3 distFromTarget)
+    : GameObject(container, "CamControl"), mTarget(target), mDistanceFromTarget(distFromTarget),
       mLookAheadTarget(0.0f, 1.0f, 10.0f)
 {  
     mAverageOffset = mTarget->Forward()*mLookAheadTarget.z + mTarget->Up()*mLookAheadTarget.y;;
@@ -27,6 +28,10 @@ void CameraControl::Update()
     mAverageOffset = (lookAtTarget*deltaTime + mAverageOffset*avgDuration)
             / (avgDuration + deltaTime);
 
-    transform->LookAt(mAverageOffset + mTarget->GetWorldPosition());
+//    mAverageOffset = lookAtTarget;
+    glm::vec3 dirToTarget = mTarget->GetWorldPosition() + mAverageOffset - targetPos;
+    dirToTarget = normalize(dirToTarget);
+    float smoothStrength = (1.0f - (dot(dirToTarget, transform->Forward())));
+    transform->SmoothLookAt(mAverageOffset + mTarget->GetWorldPosition(), 0.9f + smoothStrength*0.1f);
 }
 

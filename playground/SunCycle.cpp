@@ -4,10 +4,12 @@
 using namespace SCE;
 using namespace std;
 
-#define SKY_LIGHT
+//#define SKY_LIGHT
+//#define AMBIANT_LIGHT
 
 SunCycle::SunCycle(SCE::SCEHandle<Container> container, float speed, vec3 axis)
-    : GameObject(container, "SunCycle"), mSpeed(speed), mRotationAxis(axis),
+    : GameObject(container, "SunCycle"), mSpeed(speed),
+      mAmbiantStrength(0.1f), mRotationAxis(axis),
       mNoonSunColor(1.0, 1.0, 0.8, 0.7), mSunsetColor(0.35, 0.2, 0.0, 0.4),
       mMidnightSunColor(0.3, 0.3, 1.0, 0.01), mBaseFogColor(0.3, 0.6, 0.9),
       mBaseSkyTopColor(0.06, 0.4, 0.85), mBaseSkyBottomColor(0.65, 0.9, 1.0),
@@ -31,6 +33,13 @@ SunCycle::SunCycle(SCE::SCEHandle<Container> container, float speed, vec3 axis)
     skyLightTransform->SetWorldPosition(glm::vec3(0.0, 2000.0, 0.0));
     skyLightTransform->SetWorldOrientation(glm::vec3(90.0, 0.0, 0.0));
 #endif
+
+#ifdef AMBIANT_LIGHT
+    //create additional sky light to act as ambiant lighting
+    SCEHandle<Container> ambLightCont = SCE::SCEScene::CreateContainer("AmbiantLightContainer");
+    mAmbiantLightTransform = ambLightCont->AddComponent<Transform>();
+    mAmbiantLight = ambLightCont->AddComponent<Light>(LightType::DIRECTIONAL_LIGHT);
+#endif
 }
 
 void SunCycle::Update()
@@ -52,6 +61,14 @@ void SunCycle::Update()
 
     glm::vec4 color = noonStr*mNoonSunColor + midnightStr*mMidnightSunColor + sunsetPow*mSunsetColor;
     mLight->SetLightColor(color);
+
+#ifdef AMBIANT_LIGHT
+    glm::vec3 ambWorldPos = -1.0f*worldPos;
+    ambWorldPos.y = -10.0f;
+    mAmbiantLightTransform->SetWorldPosition(ambWorldPos);
+    mAmbiantLightTransform->LookAt(glm::vec3(0.0));
+    mAmbiantLight->SetLightColor(color*mAmbiantStrength*(1.0f - midnightStr));
+#endif
 
     //Color sky and fog for sunsets/sunraise/night
     glm::vec3 skyColorModifier = glm::mix(glm::vec3(1.0), glm::vec3(1.2, 0.4, 0.2),

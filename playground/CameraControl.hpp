@@ -12,7 +12,8 @@ public :
 
 protected :
 
-    CameraControl(SCE::SCEHandle<SCE::Container> container, SCE::SCEHandle<SCE::Transform> target);
+    CameraControl(SCE::SCEHandle<SCE::Container> container, SCE::SCEHandle<SCE::Transform> target,
+                  glm::vec3 distFromTarget);
 
 private :
 
