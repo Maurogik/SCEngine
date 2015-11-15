@@ -11,7 +11,7 @@ SunCycle::SunCycle(SCE::SCEHandle<Container> container, float speed, vec3 axis)
     : GameObject(container, "SunCycle"), mSpeed(speed),
       mAmbiantStrength(0.1f), mRotationAxis(axis),
       mNoonSunColor(1.0, 1.0, 0.8, 0.7), mSunsetColor(0.35, 0.2, 0.0, 0.4),
-      mMidnightSunColor(0.3, 0.3, 1.0, 0.01), mBaseFogColor(0.3, 0.6, 0.9),
+      mMidnightSunColor(0.3, 0.3, 1.0, 0.001), mBaseFogColor(0.3, 0.6, 0.9),
       mBaseSkyTopColor(0.06, 0.4, 0.85), mBaseSkyBottomColor(0.65, 0.9, 1.0),
       mSunsetFogColor(0.8, 0.4, 0.2)
 {
@@ -59,7 +59,9 @@ void SunCycle::Update()
     float sunsetStr = glm::dot(sunDir, glm::vec3(0.0, 0.0, 1.0));
     float sunsetPow = pow(abs(sunsetStr) + (1.0f - noonStr), 1.2f);
 
-    glm::vec4 color = noonStr*mNoonSunColor + midnightStr*mMidnightSunColor + sunsetPow*mSunsetColor;
+    glm::vec4 color = noonStr*mNoonSunColor + midnightStr*mMidnightSunColor
+            + sunsetPow*mSunsetColor;
+    color.a *= 1.0f - midnightStr;
     mLight->SetLightColor(color);
 
 #ifdef AMBIANT_LIGHT
