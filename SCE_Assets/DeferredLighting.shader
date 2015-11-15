@@ -20,8 +20,8 @@ _}
 _{
 #version 430 core
 
-    #define CASCADE_COUNT 4
-    #define SHADOW_MAP_SIZE 2048.0
+    #define CASCADE_COUNT 2
+    #define SHADOW_MAP_SIZE 4096.0
 
     uniform vec2    SCE_ScreenSize;
     uniform vec3    SCE_EyePosition_worldspace;
@@ -237,7 +237,7 @@ _{
         return shadow;
     }
 
-    #define SHADOW_BIAS 0.00005
+    #define SHADOW_BIAS 0.00001
 
     float getShadowDepth(vec3 pos_worldspace, vec3 normal_worldspace, vec3 lightDir_worldspace)
     {
@@ -245,26 +245,35 @@ _{
         float eyeDist = distance(pos_worldspace, SCE_EyePosition_worldspace);
         vec3 pos_cameraspace = (V * vec4(pos_worldspace, 1.0)).xyz;
 
-        float biasOffset = min(1.0 - dot(-lightDir_worldspace, normal_worldspace), 0.5);
+//        float biasOffset = min(1.0 - dot(-lightDir_worldspace, normal_worldspace), 0.5);
+        float biasOffset = 1.0 - abs(dot(-lightDir_worldspace, normal_worldspace));
         float bias = SHADOW_BIAS * biasOffset;
 
         float shadow = 0.0;
         vec4 position_depthspace = vec4(0.0);
+        float shadowStrength = 1.0;
+        float fadeDist = 15.0;//cross fabe distance
 
         for(int i = 0; i < CASCADE_COUNT; ++i)
         {
             position_depthspace = DepthConvertMat[i] * vec4(pos_worldspace, 1.0);
+            //do a cross fade between shadow cascade
+            float splitStrength = step(pos_cameraspace.z, FarSplits_cameraspace[i]);
+            splitStrength *= clamp((FarSplits_cameraspace[i] - pos_cameraspace.z)/fadeDist,
+                                         0.0, 1.0);
+            splitStrength *= shadowStrength;
+            shadowStrength = clamp(shadowStrength - splitStrength, 0.0, 1.0);
 
-            if(pos_cameraspace.z <= FarSplits_cameraspace[i])
+//            if(pos_cameraspace.z <= FarSplits_cameraspace[i])
             {
 //              shadow = samplePoisson(sampleCount, position_depthspace.z, position_depthspace.xy,
 //                                      pos_worldspace, float(i));
-                shadow = samplePCF(sampleCount, position_depthspace.z - bias,
+                shadow += splitStrength*samplePCF(sampleCount, position_depthspace.z - bias,
                                    position_depthspace.xy, float(i));
 //                shadow = (1.0 - sampleMyTex(position_depthspace.xy, float(i),
 //                                            position_depthspace.z + bias));
-                return shadow;
-            }
+//                return shadow;
+            }            
         }
         return shadow;
     }
