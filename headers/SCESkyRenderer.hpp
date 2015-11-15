@@ -21,7 +21,7 @@ namespace SCE
     {
         void Init(uint windowWidth, uint windowHeight);
         void Render(const SCE::CameraRenderData& renderData, SCE::SCE_GBuffer& gBuffer,
-                    const glm::vec3& sunPosition, const glm::vec3& sunColor);
+                    const glm::vec3& sunPosition, const vec4 &sunColor);
         void SetSkyColors(const glm::vec3& skyBottomColor, const glm::vec3& skyTopColor,
                           const glm::vec3& fogColor);
         void Cleanup();

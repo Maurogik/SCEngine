@@ -29,7 +29,7 @@ _{
 
     uniform vec2        SCE_ScreenSize;
     uniform vec3        SunPosition_worldspace;
-    uniform vec3        SunColor;
+    uniform vec4        SunColor;
     uniform vec3        SkyTopColor;
     uniform vec3        SkyBottomColor;
     uniform vec3        FogColor;
@@ -77,18 +77,18 @@ _{
     {
         vec2 uv = gl_FragCoord.xy / SCE_ScreenSize;
         vec4 sceneColor = texture(FinalColorTex, uv);
-        vec3 Position_worldspace = texture(PositionTex, uv).xyz;        
+        vec3 Position_worldspace = texture(PositionTex, uv).xyz;
         vec4 sunData = texture(SunTex, uv);
-        vec3 sunColor = sunData.r * SunColor;
-        vec3 flareColor = sunData.b * SunColor;
+        vec3 coloredSun = sunData.r * SunColor.rgb * SunColor.a;
+        vec3 flareColor = sunData.b * SunColor.rgb * SunColor.a;
         float lightScatering = sunData.g;
 
         float notOccludedByScene = step(dot(Position_worldspace, Position_worldspace), 0.0001);
 
         //compute fog strength
         float height = Position_worldspace.y;
-        float fogStr = 0.0000001;
-        float heightDensity = 0.0005;
+        float fogStr = 0.000000025;
+        float heightDensity = 0.00005;
         float dist = abs((V * vec4(Position_worldspace, 1.0)).z);
         dist *= dist;
         float fogAmount = (1.0 - exp( -dist * fogStr )) * exp(-height * heightDensity);
@@ -100,12 +100,12 @@ _{
             //compute normalized device coord
             vec2 ndcUv = uv * 2.0 - vec2(1.0);
             vec3 skyColor = getSkyColor(ndcUv);
-            skyColor += sunColor;
+            skyColor += coloredSun;
 
             color.rgb += skyColor * notOccludedByScene;
         }
         color.rgb += mix(sceneColor.rgb, getFogColor(height), fogAmount) * (1.0 - notOccludedByScene);
-        color.rgb += lightScatering * SunColor;
+        color.rgb += lightScatering * SunColor.rgb * SunColor.a;
         color.rgb += flareColor;
     }
 _}

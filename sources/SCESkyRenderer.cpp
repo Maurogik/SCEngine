@@ -119,7 +119,7 @@ namespace SkyRenderer
     }
 
     void Render(const SCE::CameraRenderData& renderData, SCE_GBuffer& gBuffer,
-                const glm::vec3& sunPosition, const vec3 &sunColor)
+                const glm::vec3& sunPosition, const vec4 &sunColor)
     {
         GLint viewportDims[4];
         glGetIntegerv( GL_VIEWPORT, viewportDims );
@@ -158,7 +158,7 @@ namespace SkyRenderer
 
         glUniform1f(skyData.skyFadeUniform, skyData.skyFadeFactor);
         glUniform3fv(skyData.sunPositionUniform, 1, &sunPosition[0]);
-        glUniform3fv(skyData.sunColorUniform, 1, &sunColor[0]);
+        glUniform4fv(skyData.sunColorUniform, 1, &sunColor[0]);
         glUniform3fv(skyData.skyBottomColorUniform, 1, &skyData.skyBottomColor[0]);
         glUniform3fv(skyData.skyTopColorUniform, 1, &skyData.skyTopColor[0]);
         glUniform3fv(skyData.fogColorUniform, 1, &skyData.fogColor[0]);
