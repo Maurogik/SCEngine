@@ -280,7 +280,7 @@ void scene3()
     SCEHandle<Container> trex = createModel("t-rex",
                                               "Meshes/T_REX.OBJ", "Materials/Rex",
                                               vec3(-10.0f, groundY - 0.1f, -5.0f));
-    trex->GetComponent<Transform>()->RotateAroundAxis(vec3(0.0, 1.0, 0.0), 135.0f);
+    trex->GetComponente<Transform>()->RotateAroundAxis(vec3(0.0, 1.0, 0.0), 135.0f);
 
 
     SCEHandle<Container> scorpion = createModel("scorpion",

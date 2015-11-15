@@ -41,6 +41,7 @@
 #define TREE_SHADER_NAME "Terrain/Tree"
 #define TREE_MODEL_NAME "Terrain/Meshes/tree_lod"
 #define TREE_LOD_COUNT 3
+#define TREE_LOD_MIN 0
 
 #define IMPOSTOR_SHADER_NAME "Terrain/TreeImpostor"
 #define IMPOSTOR_TEXTURE_UNIFORM "ImpostorTex"
@@ -51,8 +52,8 @@
 #define IMPOSTOR_SIZE 12.0f
 
 //#define TERRAIN_TEXTURE_SIZE 4096
-//#define TERRAIN_TEXTURE_SIZE 2048
-#define TERRAIN_TEXTURE_SIZE 512
+#define TERRAIN_TEXTURE_SIZE 2048
+//#define TERRAIN_TEXTURE_SIZE 512
 #define TEX_TILE_SIZE 2.0f
 
 #define DISPLAY_TREES
@@ -102,8 +103,8 @@ namespace Terrain
 
     struct TreeGLData
     {
-        ui16    treeMeshIds[TREE_LOD_COUNT];        
-        GLuint  treeShaderProgram;
+        ui16    meshIds[TREE_LOD_COUNT];
+        GLuint  shaderProgram;
 
         ImpostorGLData impostorData;
     };
@@ -183,16 +184,16 @@ namespace Terrain
                 SCE::ShaderUtils::DeleteShaderProgram(terrainData->glData.terrainProgram);
             }
 
-            if(terrainData->treeGlData.treeShaderProgram != GLuint(-1))
+            if(terrainData->treeGlData.shaderProgram != GLuint(-1))
             {
-                SCE::ShaderUtils::DeleteShaderProgram(terrainData->treeGlData.treeShaderProgram);
+                SCE::ShaderUtils::DeleteShaderProgram(terrainData->treeGlData.shaderProgram);
             }
 
             for(uint lod = 0; lod < TREE_LOD_COUNT; ++lod)
             {
-                SCE::MeshRender::DeleteMeshRenderData(terrainData->treeGlData.treeMeshIds[lod]);
-                SCE::MeshLoader::DeleteMesh(terrainData->treeGlData.treeMeshIds[lod]);
-                terrainData->treeGlData.treeMeshIds[lod] = ui16(-1);
+                SCE::MeshRender::DeleteMeshRenderData(terrainData->treeGlData.meshIds[lod]);
+                SCE::MeshLoader::DeleteMesh(terrainData->treeGlData.meshIds[lod]);
+                terrainData->treeGlData.meshIds[lod] = ui16(-1);
             }
         }       
 
@@ -587,15 +588,18 @@ namespace Terrain
 
             //Load tree models
             TreeGLData& treeData = terrainData->treeGlData;
+            treeData.shaderProgram = SCE::ShaderUtils::CreateShaderProgram(TREE_SHADER_NAME);
+
             for(int lod = 0; lod < TREE_LOD_COUNT; ++lod)
             {
-                ui16 meshId = SCE::MeshLoader::CreateMeshFromFile(TREE_MODEL_NAME + std::to_string(lod)
-                                                                  + ".obj");
+                ui16 meshId = SCE::MeshLoader::CreateMeshFromFile(TREE_MODEL_NAME +
+                                                                  std::to_string(lod+TREE_LOD_MIN) +
+                                                                  ".obj");
+
                 SCE::MeshRender::InitializeMeshRenderData(meshId);
                 SCE::MeshRender::MakeMeshInstanced(meshId);
-                treeData.treeMeshIds[lod] = meshId;
+                treeData.meshIds[lod] = meshId;
             }
-            treeData.treeShaderProgram = SCE::ShaderUtils::CreateShaderProgram(TREE_SHADER_NAME);
 
             //Set up impostor render data
             treeData.impostorData.meshId = SCE::MeshLoader::CreateQuadMesh();
@@ -655,9 +659,8 @@ namespace Terrain
                     glm::translate(mat4(1.0), glm::vec3(0.0, 1.0, 0.0));
 
             //apply a power to the distance to the tree to have the LOD group be exponentionally large
-//            float power = 1.45f;
-            float power = 1.6f;
-            float maxDistToCam = 6000;
+            float power = 1.45f;
+            float maxDistToCam = 4500;
 
             int discardedGroups = 0;
             //Spawn trees from tree groups
@@ -746,7 +749,7 @@ namespace Terrain
 
             for(uint lod = 0; lod < TREE_LOD_COUNT; ++lod)
             {
-                SCE::MeshRender::SetMeshInstances(terrainData->treeGlData.treeMeshIds[lod],
+                SCE::MeshRender::SetMeshInstances(terrainData->treeGlData.meshIds[lod],
                                                   treeMatrices[lod], GL_DYNAMIC_DRAW);
                 SCE::DebugText::Print("Trees lod " + std::to_string(lod) + " : " +
                                       std::to_string(treeMatrices[lod].size()));
@@ -904,15 +907,15 @@ namespace Terrain
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
 
-        //render trees
-        TreeGLData& treeData = terrainData->treeGlData;
-        glUseProgram(treeData.treeShaderProgram);
 
 #ifdef DISPLAY_TREES
+        //render trees
+        TreeGLData& treeData = terrainData->treeGlData;
+        glUseProgram(treeData.shaderProgram);
 
         for(uint lod = 0; lod < TREE_LOD_COUNT; ++lod)
         {
-            SCE::MeshRender::DrawInstances(treeData.treeMeshIds[lod], projectionMatrix, viewMatrix);
+            SCE::MeshRender::DrawInstances(treeData.meshIds[lod], projectionMatrix, viewMatrix);
         }
 
         if(!isShadowPass)//impostors don't cast shadows
