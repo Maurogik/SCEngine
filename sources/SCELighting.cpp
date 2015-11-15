@@ -24,10 +24,10 @@ using namespace std;
 #define DEPTH_MAT_UNIFORM_NAME "DepthConvertMat"
 #define FAR_SPLIT_UNIFORM_NAME "FarSplits_cameraspace"
 
-#define SHADOW_MAP_WIDTH (2048)
-#define SHADOW_MAP_HEIGHT (2048)
+#define SHADOW_MAP_WIDTH (4096)
+#define SHADOW_MAP_HEIGHT (4096)
 
-#define CASCADE_COUNT 4
+#define CASCADE_COUNT 2
 #define MAX_SHADOW_DISTANCE 4500.0f
 #define TERRAIN_SHADOW
 
@@ -179,7 +179,7 @@ void SCELighting::RenderSkyToGBuffer(const CameraRenderData& renderData, SCE_GBu
         vec3 sunPos = s_instance->mMainLight->GetContainer()->GetComponent<Transform>()->GetWorldPosition();
         //Render sky and sun
         SCE::SkyRenderer::Render(renderData, gBuffer, sunPos,
-                                 glm::vec3(s_instance->mMainLight->GetLightColor()));
+                                 s_instance->mMainLight->GetLightColor());
     }
     else
     {
