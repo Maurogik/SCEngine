@@ -261,8 +261,9 @@ namespace TextureUtils
         }
         else
         {
-            Debug::RaiseError("Failed to open file " + metadataFile);
-            return 0;
+            //try to open as a raw image directly
+            return loadTexture(filename, SCETextureFormat::DDS_FORMAT,
+                               SCETextureWrap::CLAMP_WRAP, true);
         }
     }
 
