@@ -6,9 +6,6 @@ _{
     in vec3 vertexNormal_modelspace;
 
     uniform mat4 MVP;
-    uniform mat4 M;
-    uniform mat4 V;
-    uniform mat4 P;
 
     void main()
     {
@@ -32,16 +29,15 @@ _{
     uniform float   SCE_LightMaxDotAngle;
     uniform float   SCE_ShadowStrength;
 
-    uniform mat4        DepthConvertMat[CASCADE_COUNT];
-    uniform mat4        V;
-    uniform mat4        P;
+    uniform mat4    DepthConvertMat[CASCADE_COUNT];
+    uniform mat4    V;
+    uniform mat4    P;
 
-    uniform float       FarSplits_cameraspace[CASCADE_COUNT];
+    uniform float   FarSplits_cameraspace[CASCADE_COUNT];
 
     uniform sampler2D   PositionTex;
     uniform sampler2D   DiffuseTex;
     uniform sampler2D   NormalTex;
-    //    uniform sampler2D   ShadowTex;
     uniform sampler2DArrayShadow ShadowTex;
 
     out vec4 color;
@@ -54,7 +50,8 @@ _{
     in vec3 in_EyeToFrag_worldspace,\
     in vec3 in_LightToFrag_worldspace,\
     in float in_LightReach_worldspace,\
-    in float in_Light_Specular\
+    in float in_Surface_Specularity,\
+    in float in_Light_Intensity\
 
 
     float mapToRange(float fromMin, float fromMax, float toMin, float toMax, float val)
@@ -76,24 +73,24 @@ _{
         //Diffuse component
         vec3 dirToLight = normalize(-in_LightDirection_worldspace);
         float NdotL     = dot(in_Normal_worldspace, dirToLight);
-        NdotL           = clamp(NdotL, 0, 1);
+        NdotL           = max(NdotL, 0.0);
 
         vec3 dirToEye       = normalize(-in_EyeToFrag_worldspace);
         vec3 halway         = normalize(dirToEye + dirToLight);
-        float EdotL         = clamp( dot(in_Normal_worldspace, halway), 0.0 ,1.0 );
+        float HdotL         = max(dot(in_Normal_worldspace, halway), 0.0);
 
         float shadow = 0.0f;
         if(SCE_ShadowStrength > 0.0f)
         {
             shadow = getShadowDepth(in_Position_worldspace,
-                                      in_Normal_worldspace,
-                                      SCE_LightDirection_worldspace);
-            shadow *= SCE_ShadowStrength;
+                                    in_Normal_worldspace,
+                                    SCE_LightDirection_worldspace)*SCE_ShadowStrength;
         }
 
-        vec3 light  = vec3(
-                    NdotL, //diffuse lighting
-                    pow(EdotL, 16.0) * in_Light_Specular, //specular component
+
+        vec3 light = vec3(
+                    in_Light_Intensity*NdotL, //diffuse lighting
+                    in_Light_Intensity*pow(HdotL, 16.0)*in_Surface_Specularity, //specular component
                     shadow);
 
         return light;
@@ -109,18 +106,19 @@ _{
 
         vec3 dirToEye       = normalize(-in_EyeToFrag_worldspace);
         vec3 halway         = normalize(dirToEye + dirToLight);
-        float EdotL         = clamp( dot(in_Normal_worldspace, halway), 0.0 ,1.0 );
+        float HdotL         = clamp( dot(in_Normal_worldspace, halway), 0.0, 1.0);
 
         float lightReach    = in_LightReach_worldspace;
 
         //hackish attenuation, but works well
-        float dist          = length(in_LightToFrag_worldspace);
-        float d             = mapToRange(0.0, lightReach, 1.0, 0.0, dist);
-        float attenuation   = d*d;
+        float squaredDist   = dot(in_LightToFrag_worldspace, in_LightToFrag_worldspace);
+        float attenuation   = mix(lightReach*in_Light_Intensity/squaredDist,
+                                  0,
+                                  squaredDist/(lightReach*lightReach));
 
         vec3 light  = vec3(
                     NdotL, //diffuse lighting
-                    pow(EdotL, 16.0) * in_Light_Specular, //specular component
+                    pow(HdotL, 16.0)*in_Surface_Specularity, //specular component
                     0.0);
 
         light *= attenuation;
@@ -138,14 +136,15 @@ _{
 
         vec3 dirToEye       = normalize(-in_EyeToFrag_worldspace);
         vec3 halway         = normalize(dirToEye + dirToLight);
-        float EdotL         = clamp( dot(in_Normal_worldspace, halway), 0.0 ,1.0 );
+        float HdotL         = clamp( dot(in_Normal_worldspace, halway), 0.0, 1.0);
 
         float lightReach    = in_LightReach_worldspace;
 
         //use very simple fallof approximation to fade spot light with distance
-        float dist          = length(in_LightToFrag_worldspace);
-        float d             = mapToRange(0.0, lightReach, 1.0, 0.0, dist);
-        float attenuation   = d*d;
+        float squaredDist   = dot(in_LightToFrag_worldspace, in_LightToFrag_worldspace);
+        float attenuation   = mix(lightReach*in_Light_Intensity/squaredDist,
+                                  0,
+                                  squaredDist/(lightReach*lightReach));
 
         float fragDotL = dot(dirToLight, invLightDir);
         float surfDotL = SCE_LightMaxDotAngle;
@@ -155,7 +154,7 @@ _{
 
         vec3 light  = vec3(
                     NdotL, //diffuse lighting
-                    pow(EdotL, 16.0) * in_Light_Specular, //specular component
+                    pow(HdotL, 16.0) * in_Surface_Specularity, //specular component
                     0.0);
 
         light *= attenuation * spotAttenuation;
@@ -312,15 +311,16 @@ _{
                     EyeToFrag_cameraspace,
                     LightToFrag_cameraspace,
                     SCE_LightReach_worldspace,
-                    Specularity
+                    Specularity,
+                    SCE_LightColor.a
                     );
 
 
         color.rgb =
                 //Diffuse
-                (MaterialDiffuseColor * lightCol.x * SCE_LightColor.rgb * SCE_LightColor.a)
+                (MaterialDiffuseColor * lightCol.x * SCE_LightColor.rgb)
                 //Specular
-                + (SCE_LightColor.rgb * lightCol.y * lightCol.x * SCE_LightColor.a);
+                + (SCE_LightColor.rgb * lightCol.y * lightCol.x);
         //shadow and ambiant
         color.rgb = color.rgb * (1.0 - lightCol.z)
                      + SCE_ShadowStrength * ambiantColor * MaterialDiffuseColor;
