@@ -17,50 +17,19 @@ namespace SCE
     class Camera;
     class Container;
 
-    struct ToneMappingData
-    {
-        ToneMappingData()
-            : toneMapShader(-1), luminanceShader(-1),
-              exposureUniform(-1), maxBrightnessUniform(-1),
-              exposure(1.0f), maxBrightness(1.5f) {}
+    namespace SCERender
+    {       
 
-        GLuint  toneMapShader;
-        GLuint  luminanceShader;
-        GLint   exposureUniform;
-        GLint   maxBrightnessUniform;
-        float   exposure;
-        float   maxBrightness;
-    };
-
-    class SCERender
-    {
-    public :        
-
-        static void         Init();
-        static void         CleanUp();
-        static void         Render(const SCEHandle<Camera> &camera,
+        void         Init();
+        void         CleanUp();
+        void         Render(const SCEHandle<Camera> &camera,
                                    std::vector<Container*> objectsToRender);
-        static void         ResetClearColorToDefault();
-        static glm::mat4    FixOpenGLProjectionMatrix(const glm::mat4& projMat);
-        static void         RenderFullScreenPass(GLuint shaderId,
+        void         ResetClearColorToDefault();
+        glm::mat4    FixOpenGLProjectionMatrix(const glm::mat4& projMat);
+        void         RenderFullScreenPass(GLuint shaderId,
                                                  const glm::mat4 &projectionMatrix,
                                                  const glm::mat4 &viewMatrix);
-
-    private :
-
-        static SCERender*   s_instance;
-
-        ToneMappingData     mToneMapData;
-        SCE_GBuffer         mGBuffer;
-        glm::vec4           mDefaultClearColor;
-        ui16                mQuadMeshId;
-
-        SCERender();
-
-        void                renderGeometryPass(const CameraRenderData& renderData,
-                                               std::vector<Container*> objectsToRender);
-
-    };
+    }
 }
 
 #endif
