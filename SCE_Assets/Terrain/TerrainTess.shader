@@ -69,7 +69,6 @@ _{
         }
     }
 
-
     void main(void)
     {
         if(gl_InvocationID == 0)
