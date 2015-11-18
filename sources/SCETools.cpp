@@ -27,6 +27,8 @@ namespace Debug
     #ifdef SCE_DEBUG
         LogError(errorMsg);
         abort();
+    #else
+        LogError(errorMsg);
     #endif
     }
 
