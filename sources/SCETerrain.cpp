@@ -806,6 +806,12 @@ namespace Terrain
     void UpdateTerrain(const glm::mat4& projectionMatrix,
                        const glm::mat4& viewMatrix)
     {
+        //TODO find a better way to not render when there is no terrain
+        if(!terrainData)
+        {
+            return;
+        }
+
         glm::vec3 cameraPosition = glm::vec3(glm::inverse(viewMatrix)*glm::vec4(0.0, 0.0, 0.0, 1.0));
         SCE::DebugText::Print("Cam : " + std::to_string(cameraPosition.x)
                               + ", " + std::to_string(cameraPosition.y)
