@@ -107,7 +107,9 @@ namespace SCERender
 
     void CleanUp()
     {
-        SCELighting::CleanUp();
+        SCE::ShaderUtils::DeleteShaderProgram(mToneMapData.toneMapShader);
+        SCE::ShaderUtils::DeleteShaderProgram(mToneMapData.luminanceShader);
+        SCELighting::CleanUp();     
     }
 
     void Render(const SCEHandle<Camera>& camera,
