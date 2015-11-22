@@ -29,7 +29,9 @@ using namespace std;
 
 #define CASCADE_COUNT 2
 #define MAX_SHADOW_DISTANCE 4500.0f
-#define TERRAIN_SHADOW
+//#define TERRAIN_SHADOW
+#define TERRAIN_TREES_SHADOW
+#define RAYMACHED_TERRAIN_SHADOW
 
 SCELighting* SCELighting::s_instance = nullptr;
 
@@ -122,6 +124,11 @@ void SCELighting::RenderLightsToGBuffer(const CameraRenderData& renderData,
     glEnable(GL_STENCIL_TEST);
     glCullFace(GL_FRONT);
 
+    //setup blending between lighting results
+    glEnable(GL_BLEND);
+    glBlendEquation(GL_FUNC_ADD);
+    glBlendFunc(GL_ONE, GL_ONE);
+
     //render lights needing a stencil pass (Point and Spot lights)
     for(SCEHandle<Light> light : s_instance->mStenciledLights)
     {
@@ -131,7 +138,7 @@ void SCELighting::RenderLightsToGBuffer(const CameraRenderData& renderData,
 
         glUseProgram(s_instance->mLightShader);
         gBuffer.BindForLightPass();
-        gBuffer.BindTexturesForLighting();
+        gBuffer.SetupTexturesForLighting();
 
         //bind for shadow calculations even if there won't be shadows on screen
         s_instance->mShadowMapFBO.BindTextureToLightShader(SCE_GBuffer::GBUFFER_NUM_TEXTURES);
@@ -151,7 +158,7 @@ void SCELighting::RenderLightsToGBuffer(const CameraRenderData& renderData,
     {
         glUseProgram(s_instance->mLightShader);
         gBuffer.BindForLightPass();
-        gBuffer.BindTexturesForLighting();
+        gBuffer.SetupTexturesForLighting();
 
         //bind the shadowmap to the next free texture unit
         s_instance->mShadowMapFBO.BindTextureToLightShader(SCE_GBuffer::GBUFFER_NUM_TEXTURES);
@@ -166,6 +173,18 @@ void SCELighting::RenderLightsToGBuffer(const CameraRenderData& renderData,
 
         s_instance->renderLightingPass(renderData, light);
     }
+
+    glDisable(GL_BLEND);
+
+#ifdef RAYMACHED_TERRAIN_SHADOW
+    if(s_instance->mMainLight)
+    {
+        glm::vec3 sunPosition =
+                s_instance->mMainLight->GetContainer()->GetComponent<Transform>()->GetWorldPosition();
+        SCE::Terrain::RenderShadow(renderData.projectionMatrix, renderData.projectionMatrix,
+                                   sunPosition, gBuffer);
+    }
+#endif
 
     glCullFace(GL_BACK);
     //reset depth writting to default
@@ -342,12 +361,7 @@ void SCELighting::renderLightStencilPass(const CameraRenderData& renderData, SCE
 }
 
 void SCELighting::renderLightingPass(const CameraRenderData& renderData, SCEHandle<Light> &light)
-{    
-    //setup blending between lighting results
-    glEnable(GL_BLEND);
-    glBlendEquation(GL_FUNC_ADD);
-    glBlendFunc(GL_ONE, GL_ONE);
-
+{
     glStencilMask(0x00); //dont write to stencil buffer in this pass
     glStencilFunc(GL_NOTEQUAL, 0, 0xFF);//only render pixels with stendil value > 0
 
@@ -357,8 +371,6 @@ void SCELighting::renderLightingPass(const CameraRenderData& renderData, SCEHand
 
     //render light
     light->RenderWithLightData(renderData);
-
-    glDisable(GL_BLEND);
 }
 
 void SCELighting::renderShadowmapPass(const CameraRenderData& lightRenderData,
@@ -386,6 +398,9 @@ void SCELighting::renderShadowmapPass(const CameraRenderData& lightRenderData,
 
 #ifdef TERRAIN_SHADOW
     SCE::Terrain::RenderTerrain(lightRenderData.projectionMatrix, lightRenderData.viewMatrix, true);
+#endif
+#ifdef TERRAIN_TREES_SHADOW
+    SCE::Terrain::RenderTrees(lightRenderData.projectionMatrix, lightRenderData.viewMatrix, true);
 #endif
 
     glm::mat4 biasMatrix(

@@ -12,13 +12,24 @@
 
 namespace SCE
 {
+    class SCE_GBuffer;
     namespace Terrain
     {
         void Init(float terrainSize, float patchSize, float terrainBaseHeight);
+
         void UpdateTerrain(const glm::mat4& projectionMatrix, const glm::mat4& viewMatrix);
+
         void RenderTerrain(const mat4& projectionMatrix, const mat4& viewMatrix,
                            bool isShadowPass = false);
+
+        void RenderShadow(const mat4& projectionMatrix, const mat4& viewMatrix,
+                          const vec3 &sunPosition, SCE_GBuffer &gbuffer);
+
+        void RenderTrees(const glm::mat4& projectionMatrix, const glm::mat4& viewMatrix,
+                         bool isShadowPass = false);
+
         float GetTerrainHeight(const vec3 &pos_worldspace);
+
         void Cleanup();
     }
 }

@@ -150,7 +150,7 @@ void SCE_GBuffer::BindForStencilPass()
 
 void SCE_GBuffer::BindForLightPass()
 {
-    //bind FBO for reading and drawing (because the stencil buffer used for test is the one
+    //bind FBO for reading and drawing (because the stencil buffer used for stencil test is the one
     // from the draw framebuffer
     glBindFramebuffer(GL_FRAMEBUFFER, mFBOId);
     glDrawBuffer(GL_COLOR_ATTACHMENT0 + FINAL_TEXT_ATTACHMENT);
@@ -206,7 +206,7 @@ void SCE_GBuffer::BindForToneMapPass()
     glUniform1i(1, 1);//LuminanceTex is sampler1
 }
 
-void SCE_GBuffer::BindTexturesForLighting()
+void SCE_GBuffer::SetupTexturesForLighting()
 {
     for (uint i = 0; i < GBUFFER_TEXTURE_COUNT; i++)
     {
@@ -217,7 +217,14 @@ void SCE_GBuffer::BindTexturesForLighting()
     }
 }
 
-void SCE_GBuffer::BindTexture(SCE_GBuffer::GBUFFER_TEXTURE_TYPE type, uint uniform, uint sampler)
+void SCE_GBuffer::SetupFinalTexture(uint uniform, uint sampler)
+{
+    glActiveTexture(GL_TEXTURE0 + sampler);
+    glBindTexture(GL_TEXTURE_2D, mFinalTexture);
+    glUniform1i(uniform, sampler);
+}
+
+void SCE_GBuffer::SetupTexture(SCE_GBuffer::GBUFFER_TEXTURE_TYPE type, uint uniform, uint sampler)
 {
     glActiveTexture(GL_TEXTURE0 + sampler);
     glBindTexture(GL_TEXTURE_2D, mTextures[type]);

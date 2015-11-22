@@ -243,18 +243,6 @@ void scene2()
                                               vec3(-15.0f, -1.87f, -5.0f));
     scorpion->GetComponent<Transform>()->RotateAroundAxis(vec3(0.0, 1.0, 0.0), -45.0f);
 
-
-    SCEHandle<Container> dragon = createModel("dragon",
-                                              "Meshes/GringottsDragon.obj",
-                                              vec3(-20.0f, 50.0f, 10.0f));
-    dragon->GetComponent<Transform>()->RotateAroundAxis(vec3(1.0, 0.0, 0.0), -90.0f);
-
-    SCEHandle<Container> mecha = createModel("mecha",
-                                              "Meshes/RB-SideSwipe.obj",
-                                              vec3(-25.0f, -2.0f, -10.0f));
-    mecha->GetComponent<Transform>()->RotateAroundAxis(vec3(1.0, 0.0, 0.0), -90.0f);
-    mecha->GetComponent<Transform>()->RotateAroundAxis(vec3(0.0, 0.0, 1.0), 30.0f);
-
 }
 
 
@@ -280,7 +268,7 @@ void scene3()
     SCEHandle<Container> trex = createModel("t-rex",
                                               "Meshes/T_REX.OBJ", "Materials/Rex",
                                               vec3(-10.0f, groundY - 0.1f, -5.0f));
-    trex->GetComponente<Transform>()->RotateAroundAxis(vec3(0.0, 1.0, 0.0), 135.0f);
+    trex->GetComponent<Transform>()->RotateAroundAxis(vec3(0.0, 1.0, 0.0), 135.0f);
 
 
     SCEHandle<Container> scorpion = createModel("scorpion",

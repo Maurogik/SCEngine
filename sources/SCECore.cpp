@@ -72,6 +72,7 @@ void SCECore::InitEngine(const std::string &windowName)
 //    glfwSwapInterval(1);
     //adaptative v-sync
     glfwSwapInterval(-1);
+//    glfwSwapInterval(0);
 #endif
 
 

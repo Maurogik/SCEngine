@@ -11,11 +11,12 @@
 #include "../headers/SCERenderStructs.hpp"
 #include "../headers/SCETools.hpp"
 #include "../headers/SCETime.hpp"
-#include "../headers/SCEMeshLoader.hpp"
-#include "../headers/SCEMeshRender.hpp"
 #include "../headers/SCEDebugText.hpp"
+#include "../headers/SCE_GBuffer.hpp"
+#include "../headers/SCEFrustrumCulling.hpp"
+#include "../headers/SCETerrainShadow.hpp"
+#include "../headers/SCETerrainTrees.hpp"
 
-#include <time.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/random.hpp>
 
@@ -38,22 +39,9 @@
 #define HEIGHT_SCALE_UNIFORM "HeightScale"
 #define TESS_OVERRIDE_UNIFORM "TesselationOverride"
 
-#define TREE_SHADER_NAME "Terrain/Tree"
-#define TREE_MODEL_NAME "Terrain/Meshes/tree_lod"
-#define TREE_LOD_COUNT 3
-#define TREE_LOD_MIN 0
-
-#define IMPOSTOR_SHADER_NAME "Terrain/TreeImpostor"
-#define IMPOSTOR_TEXTURE_UNIFORM "ImpostorTex"
-#define IMPOSTOR_NORMAL_UNIFORM "ImpostorNormalTex"
-#define IMPOSTOR_SCALE_INVERT_UNIFORM "ScaleInvertMat"
-#define IMPOSTOR_TEXTURE_NAME "Terrain/Textures/treeImpostor"
-#define IMPOSTOR_NORMAL_NAME "Terrain/Textures/treeImpostorNormal"
-#define IMPOSTOR_SIZE 12.0f
-
 //#define TERRAIN_TEXTURE_SIZE 4096
-#define TERRAIN_TEXTURE_SIZE 2048
-//#define TERRAIN_TEXTURE_SIZE 512
+//#define TERRAIN_TEXTURE_SIZE 2048
+#define TERRAIN_TEXTURE_SIZE 512
 #define TEX_TILE_SIZE 2.0f
 
 #define DISPLAY_TREES
@@ -83,47 +71,6 @@ namespace Terrain
         GLint   snowTextureUniform;
         GLint   textureTileScaleUniform;
         GLint   worldToTerrainMatUniform;
-    };
-
-    struct ImpostorGLData
-    {
-        ImpostorGLData()
-            : scaleMatrix(glm::scale(mat4(1.0), glm::vec3(0.5, 1.0, 1.0)))
-        {}
-
-        ui16        meshId;
-        GLuint      texture;
-        GLint       textureUniform;
-        GLint       scaleInvertMatUniform;
-        GLuint      normalTexture;
-        GLint       normalUniform;
-        GLuint      shaderProgram;
-        glm::mat4   scaleMatrix;
-    };
-
-    struct TreeGLData
-    {
-        ui16    meshIds[TREE_LOD_COUNT];
-        GLuint  shaderProgram;
-
-        ImpostorGLData impostorData;
-    };
-
-    struct TreeGroup
-    {
-        glm::vec2 position;
-        float radius;
-        float spacing;
-    };
-
-    struct FrustrumCullingData
-    {
-        glm::vec4 leftPlane;
-        glm::vec4 rightPlane;
-        glm::vec4 bottomPlane;
-        glm::vec4 topPlane;
-        glm::vec4 nearPlane;
-        glm::vec4 farPlane;
     };
 
     struct TerrainData
@@ -156,14 +103,14 @@ namespace Terrain
         ushort quadPatchIndices[4]; //indices for a quad, not 2 triangles
         glm::vec3 quadVertices[4];
 
-        TerrainGLData   glData;
-        TreeGLData      treeGlData;
+        TerrainGLData   glData;        
 
         float *heightmap;
         std::vector<glm::mat4> patchModelMatrices;
         std::vector<glm::vec4> patchBoundingBoxCenters;
 
-        std::vector<TreeGroup> treeGroups;
+        TerrainShadow terrainShadow;
+        TerrainTrees terrainTrees;
     };
 
 /*      File scope variables    */
@@ -179,23 +126,30 @@ namespace Terrain
                 glDeleteTextures(1, &(terrainData->glData.terrainTexture));
             }
 
+            glDeleteBuffers(1, &(terrainData->quadIndicesVbo));
+            glDeleteBuffers(1, &(terrainData->quadVerticesVbo));
+            glDeleteVertexArrays(1, &(terrainData->quadVao));
+
             if(terrainData->glData.terrainProgram != GLuint(-1))
             {
                 SCE::ShaderUtils::DeleteShaderProgram(terrainData->glData.terrainProgram);
             }
 
-            if(terrainData->treeGlData.shaderProgram != GLuint(-1))
+            if(terrainData->glData.grassTexture != GLuint(-1))
             {
-                SCE::ShaderUtils::DeleteShaderProgram(terrainData->treeGlData.shaderProgram);
+                SCE::TextureUtils::DeleteTexture(terrainData->glData.grassTexture);
             }
 
-            for(uint lod = 0; lod < TREE_LOD_COUNT; ++lod)
+            if(terrainData->glData.dirtTexture != GLuint(-1))
             {
-                SCE::MeshRender::DeleteMeshRenderData(terrainData->treeGlData.meshIds[lod]);
-                SCE::MeshLoader::DeleteMesh(terrainData->treeGlData.meshIds[lod]);
-                terrainData->treeGlData.meshIds[lod] = ui16(-1);
+                SCE::TextureUtils::DeleteTexture(terrainData->glData.dirtTexture);
             }
-        }       
+
+            if(terrainData->glData.snowTexture != GLuint(-1))
+            {
+                SCE::TextureUtils::DeleteTexture(terrainData->glData.snowTexture);
+            }
+        }
 
         void computeNormalsForQuad(int xCount, int zCount, glm::vec3 *normals, float* heightmap)
         {
@@ -235,50 +189,6 @@ namespace Terrain
             */
         }
 
-        //Spread tree groups over the terrain
-        void initializeTreeLayout(glm::vec4* normAndHeightTex, float xOffset, float zOffset,
-                                  float startScale, float heightScale,
-                                  float halfTerrainSize)
-        {
-            //number of time the map is divided to form tree groups
-            int treeGroupIter = 16;
-            float scale = startScale;
-            float baseGroupRadius = 1.0f / float(treeGroupIter)*halfTerrainSize;
-            float maxRadiusScale = 3.0f;
-            float baseSpacing = 40.0f;
-
-            float y = 115.0f; //any value will do, just need to be something else than the terrain height
-
-            for(int xCount = 0; xCount < treeGroupIter; ++xCount)
-            {
-                float x = float(xCount) / float(treeGroupIter);
-
-                for(int zCount = 0; zCount < treeGroupIter; ++zCount)
-                {
-                    float z = float(zCount) / float(treeGroupIter);
-
-                    vec4 normAndHeight = normAndHeightTex[int(x*TERRAIN_TEXTURE_SIZE) *
-                            TERRAIN_TEXTURE_SIZE + int(z*TERRAIN_TEXTURE_SIZE)];
-
-                    float noise = stb_perlin_noise3((x + xOffset)*scale, y*scale, (z + zOffset)*scale);
-                    noise = SCE::Math::MapToRange(-0.7f, 0.7f, 0.0f, maxRadiusScale, noise);
-
-                    float flatness = pow(dot(vec3(normAndHeight.x, normAndHeight.y, normAndHeight.z),
-                                             vec3(0.0, 1.0, 0.0)), 8.0);
-                    float height = normAndHeight.a / heightScale;
-                    //Spawn tree at low height on flat terrain
-                    if(height < 0.45f && flatness > 0.45f && noise > 0.6f)
-                    {
-                        TreeGroup group;
-                        group.position = (glm::vec2(x, z)*2.0f - vec2(1.0, 1.0))
-                               *halfTerrainSize;
-                        group.radius = noise*baseGroupRadius;
-                        group.spacing = baseSpacing;
-                        terrainData->treeGroups.push_back(group);
-                    }
-                }
-            }
-        }
 
         //generate perlin noise texture
         void initializeTerrain(float xOffset, float zOffset, float startScale, float heightScale)
@@ -396,8 +306,10 @@ namespace Terrain
                 }
             }
 
-            initializeTreeLayout(packedNormalAndHeight, xOffset, zOffset, startScale, heightScale,
-                                 terrainData->terrainSize*0.5f);
+            terrainData->terrainTrees.InitializeTreeLayout(packedNormalAndHeight, TERRAIN_TEXTURE_SIZE,
+                                                           xOffset, zOffset,
+                                                           startScale, heightScale,
+                                                           terrainData->terrainSize*0.5f);
 
             glGenTextures(1, &(terrainData->glData.terrainTexture));
             glBindTexture(GL_TEXTURE_2D, terrainData->glData.terrainTexture);
@@ -415,121 +327,6 @@ namespace Terrain
             delete[] normals;
             delete[] packedNormalAndHeight;
             terrainData->heightmap = heightmap;
-        }
-
-        FrustrumCullingData computeCullingData(const glm::mat4& projectionMatrix)
-        {
-            glm::mat4 invP = glm::inverse(projectionMatrix);
-            FrustrumCullingData data;
-            data.leftPlane = invP*vec4(1.0, 0.0, 0.0, 1.0);
-            data.rightPlane = invP*vec4(-1.0, 0.0, 0.0, 1.0);
-            data.bottomPlane = invP*vec4(0.0, 1.0, 0.0, 1.0);
-            data.topPlane = invP*vec4(0.0, -1.0, 0.0, 1.0);
-            data.nearPlane = invP*vec4(0.0, 0.0, 1.0, 1.0);
-            data.farPlane = invP*vec4(0.0, 0.0, -1.0, 1.0);
-
-            return data;
-        }
-
-// old frustrum culing function, fast but does not handle case where a quad is bigger than the screen
-#if 0
-        bool isQuadOffscreen(const glm::mat4& modelMatrix,
-                             const glm::mat4& viewMatrix,
-                             const glm::mat4& projectionMatrix)
-        {
-            int onScreenCount = 4;
-            for(int i = 0; i < 4; ++i)
-            {
-                glm::vec4 pos_worldspace = modelMatrix*glm::vec4(terrainData->quadVertices[i], 1.0);
-                float height = GetTerrainHeight(glm::vec3(pos_worldspace));
-                pos_worldspace.y += height;
-                glm::vec4 pos_viewspace = viewMatrix*pos_worldspace;
-                glm::vec4 pos_screenspace = projectionMatrix*pos_viewspace;
-
-                pos_screenspace /= pos_screenspace.w;
-                float tolerance = 1.7f;
-                if((abs(pos_screenspace.x) > tolerance || abs(pos_screenspace.y) > tolerance
-                   || abs(pos_screenspace.z) > 1.00001f) && length(pos_screenspace) > 2.0f)
-                {
-                    --onScreenCount;
-                }
-            }
-
-            return onScreenCount == 0;
-        }
-#endif
-
-        bool isSphereInFrustrum(const FrustrumCullingData& cullingData,
-                             const glm::vec4& pos_cameraspace,
-                             float radius_cameraspace)
-        {
-            if(     glm::dot(cullingData.leftPlane, pos_cameraspace)   < -radius_cameraspace ||
-                    glm::dot(cullingData.rightPlane, pos_cameraspace)  < -radius_cameraspace ||
-                    glm::dot(cullingData.topPlane, pos_cameraspace)    < -radius_cameraspace ||
-                    glm::dot(cullingData.bottomPlane, pos_cameraspace) < -radius_cameraspace ||
-                    glm::dot(cullingData.nearPlane, pos_cameraspace)   < -radius_cameraspace ||
-                    glm::dot(cullingData.farPlane, pos_cameraspace)    < -radius_cameraspace )
-            {
-                return false;
-            }
-
-            return true;
-        }
-
-        bool isBoxInFrustrum(const FrustrumCullingData& cullingData,
-                             const glm::vec4& pos_cameraspace,
-                             const glm::vec4& R_cameraspace,
-                             const glm::vec4& S_cameraspace,
-                             const glm::vec4& T_cameraspace)
-        {
-            glm::vec4 xVec = R_cameraspace;
-            glm::vec4 yVec = S_cameraspace;
-            glm::vec4 zVec = T_cameraspace;
-
-            //compute effective radius in each frustrum direction
-            float radiusProjLeft =
-                    (glm::abs(glm::dot(cullingData.leftPlane, xVec)) +
-                    glm::abs(glm::dot(cullingData.leftPlane, yVec)) +
-                    glm::abs(glm::dot(cullingData.leftPlane, zVec)))*0.5;
-
-            float radiusProjRight =
-                    (glm::abs(glm::dot(cullingData.rightPlane, xVec)) +
-                    glm::abs(glm::dot(cullingData.rightPlane, yVec)) +
-                    glm::abs(glm::dot(cullingData.rightPlane, zVec)))*0.5;
-
-            float radiusProjTop =
-                    (glm::abs(glm::dot(cullingData.topPlane, xVec)) +
-                    glm::abs(glm::dot(cullingData.topPlane, yVec)) +
-                    glm::abs(glm::dot(cullingData.topPlane, zVec)))*0.5;
-
-            float radiusProjBottom =
-                    (glm::abs(glm::dot(cullingData.bottomPlane, xVec)) +
-                    glm::abs(glm::dot(cullingData.bottomPlane, yVec)) +
-                    glm::abs(glm::dot(cullingData.bottomPlane, zVec)))*0.5;
-
-            float radiusProjNear =
-                    (glm::abs(glm::dot(cullingData.nearPlane, xVec)) +
-                    glm::abs(glm::dot(cullingData.nearPlane, yVec)) +
-                    glm::abs(glm::dot(cullingData.nearPlane, zVec)))*0.5;
-
-            float radiusProjFar =
-                    (glm::abs(glm::dot(cullingData.farPlane, xVec)) +
-                    glm::abs(glm::dot(cullingData.farPlane, yVec)) +
-                    glm::abs(glm::dot(cullingData.farPlane, zVec)))*0.5;
-
-            //for each plane, compare the distance from the (center, plane) to the effective radius
-            //in this frustrum direction
-            if(     glm::dot(cullingData.leftPlane, pos_cameraspace)   < -radiusProjLeft   ||
-                    glm::dot(cullingData.rightPlane, pos_cameraspace)  < -radiusProjRight  ||
-                    glm::dot(cullingData.topPlane, pos_cameraspace)    < -radiusProjTop    ||
-                    glm::dot(cullingData.bottomPlane, pos_cameraspace) < -radiusProjBottom ||
-                    glm::dot(cullingData.nearPlane, pos_cameraspace)   < -radiusProjNear   ||
-                    glm::dot(cullingData.farPlane, pos_cameraspace)    < -radiusProjFar    )
-            {
-                return false;
-            }
-
-            return true;
         }
 
         void initializeRenderData()
@@ -586,41 +383,6 @@ namespace Terrain
             // We work with 4 points per patch.
             glPatchParameteri(GL_PATCH_VERTICES, 4);
 
-            //Load tree models
-            TreeGLData& treeData = terrainData->treeGlData;
-            treeData.shaderProgram = SCE::ShaderUtils::CreateShaderProgram(TREE_SHADER_NAME);
-
-            for(int lod = 0; lod < TREE_LOD_COUNT; ++lod)
-            {
-                ui16 meshId = SCE::MeshLoader::CreateMeshFromFile(TREE_MODEL_NAME +
-                                                                  std::to_string(lod+TREE_LOD_MIN) +
-                                                                  ".obj");
-
-                SCE::MeshRender::InitializeMeshRenderData(meshId);
-                SCE::MeshRender::MakeMeshInstanced(meshId);
-                treeData.meshIds[lod] = meshId;
-            }
-
-            //Set up impostor render data
-            treeData.impostorData.meshId = SCE::MeshLoader::CreateQuadMesh();
-            SCE::MeshRender::InitializeMeshRenderData(treeData.impostorData.meshId);
-            SCE::MeshRender::MakeMeshInstanced(treeData.impostorData.meshId);
-            treeData.impostorData.shaderProgram =
-                    SCE::ShaderUtils::CreateShaderProgram(IMPOSTOR_SHADER_NAME);
-
-            treeData.impostorData.texture = SCE::TextureUtils::LoadTexture(IMPOSTOR_TEXTURE_NAME);
-            treeData.impostorData.normalTexture = SCE::TextureUtils::LoadTexture(IMPOSTOR_NORMAL_NAME);
-            glBindTexture(GL_TEXTURE_2D, treeData.impostorData.texture);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-            treeData.impostorData.textureUniform =
-                    glGetUniformLocation(treeData.impostorData.shaderProgram, IMPOSTOR_TEXTURE_UNIFORM);
-            treeData.impostorData.normalUniform =
-                    glGetUniformLocation(treeData.impostorData.shaderProgram, IMPOSTOR_NORMAL_UNIFORM);
-            treeData.impostorData.scaleInvertMatUniform =
-                glGetUniformLocation(treeData.impostorData.shaderProgram, IMPOSTOR_SCALE_INVERT_UNIFORM);
-
         }
 
         void renderPatch(const glm::mat4& projectionMatrix,
@@ -634,132 +396,6 @@ namespace Terrain
                            4,//indices count
                            GL_UNSIGNED_SHORT,
                            0);
-        }
-
-        void spawnTreeInstances(const glm::mat4& viewMatrix,
-                                const glm::mat4& worldToTerrainspaceMatrix,
-                                const glm::vec3& cameraPosition,
-                                const FrustrumCullingData& cullingData)
-        {
-            float perlinScale = 0.05f;
-            float patchSize = terrainData->patchSize;
-            float terrainSize = terrainData->terrainSize;
-            //compute the actual terrain size we will cover with patches
-            terrainSize = floor(terrainSize/patchSize)*patchSize;
-            float halfTerrainSize = terrainSize / 2.0f;
-
-            std::vector<glm::mat4> treeMatrices[TREE_LOD_COUNT];
-            std::vector<glm::mat4> treeImpostorMatrices;
-            float noiseX, noiseZ;
-
-            //scale impostor quad so that it looks like a regular tree
-            glm::mat4 impostorScaleMat =
-                    terrainData->treeGlData.impostorData.scaleMatrix*
-                    glm::scale(mat4(1.0), glm::vec3(IMPOSTOR_SIZE))*
-                    glm::translate(mat4(1.0), glm::vec3(0.0, 1.0, 0.0));
-
-            //apply a power to the distance to the tree to have the LOD group be exponentionally large
-            float power = 1.45f;
-            float maxDistToCam = 4500;
-
-            int discardedGroups = 0;
-            //Spawn trees from tree groups
-            int lodGroup = 0;
-
-            for(TreeGroup& group : terrainData->treeGroups)
-            {
-                //make a bigger radius to account for possible displacement
-                float totalRadius = group.radius*2.0f;
-                glm::vec3 groupPos = glm::vec3(group.position.x, 0.0f,
-                                               group.position.y);
-                groupPos.y = GetTerrainHeight(groupPos);
-                glm::vec4 groupPos_cameraspace = viewMatrix*glm::vec4(groupPos, 1.0);
-
-                if(isSphereInFrustrum(cullingData, groupPos_cameraspace, totalRadius))
-                {
-                    float distToCam = glm::max(0.0f, length(groupPos_cameraspace) - group.radius);
-                    distToCam = pow(distToCam , power);
-                    lodGroup = int(floor(distToCam/maxDistToCam));
-
-                    for(float x = -group.radius; x < group.radius; x += group.spacing)
-                    {
-                        for(float z = -group.radius; z < group.radius; z += group.spacing)
-                        {
-                            //compute tree position from group and non-random noise
-                            glm::vec3 treePos(x + group.position.x, 0.0f, z + group.position.y);
-                            noiseX = stb_perlin_noise3(treePos.x*perlinScale, 25.0f,
-                                                       treePos.z*perlinScale);
-                            noiseZ = stb_perlin_noise3(treePos.z*perlinScale, 25.0f,
-                                                       treePos.x*perlinScale);
-                            //scale to apply to the tree
-                            float scale = SCE::Math::MapToRange(-0.6f, 0.6f, 0.8f, 1.4f, noiseZ);
-
-                            treePos.x += noiseX*group.spacing*2.0f;
-                            treePos.z += noiseZ*group.spacing*2.0f;
-
-                            //tree could have spawn outside of terrain, only keep if inside
-                            if( abs(treePos.x) < halfTerrainSize - patchSize*0.5f
-                                && abs(treePos.z) < halfTerrainSize - patchSize*0.5f)
-                            {
-                                //put tree at the surface of terrain
-                                glm::vec4 terrainPos = worldToTerrainspaceMatrix*glm::vec4(treePos, 1.0);
-                                int terrX = int((terrainPos.x*0.5 + 0.5)*TERRAIN_TEXTURE_SIZE);
-                                int terrZ = int((terrainPos.z*0.5 + 0.5)*TERRAIN_TEXTURE_SIZE);
-                                float height = terrainData->heightmap[terrX*TERRAIN_TEXTURE_SIZE + terrZ];
-                                //go slightly down to avoid sticking out of the ground
-                                treePos.y += height - 1.5f*scale;
-
-                                glm::mat4 instanceMatrix;
-
-                                //make a tree model
-                                if(lodGroup < TREE_LOD_COUNT)
-                                {
-                                    lodGroup = clamp(lodGroup, 0, TREE_LOD_COUNT - 1);
-                                    instanceMatrix = glm::translate(mat4(1.0f), treePos)*
-                                            glm::rotate(mat4(1.0), noiseX*10.0f, glm::vec3(0.0, 1.0, 0.0))*
-                                            glm::scale(mat4(1.0), glm::vec3(scale));
-                                    treeMatrices[lodGroup].push_back(instanceMatrix);
-                                }
-                                //make an impostor
-                                else
-                                {
-                                    //rotate plane to face camera
-                                    glm::vec3 dirToCam = glm::normalize(cameraPosition - treePos);
-                                    float angleYAxis = glm::atan(1.0f, 0.0f) -
-                                            glm::atan(dirToCam.z, dirToCam.x);
-
-                                    instanceMatrix = glm::translate(mat4(1.0f), treePos)*
-                                            glm::rotate(mat4(1.0), angleYAxis, glm::vec3(0.0, 1.0, 0.0))*
-                                            glm::scale(mat4(1.0), glm::vec3(scale))*
-                                            impostorScaleMat;
-                                    treeImpostorMatrices.push_back(instanceMatrix);
-                                }
-                            }
-                        }
-                    }
-                }
-                else
-                {
-                    ++discardedGroups;
-                }
-            }
-
-            SCE::DebugText::Print("Tree groups : " + std::to_string(terrainData->treeGroups.size()));
-            SCE::DebugText::Print("Tree groups skipped: " + std::to_string(discardedGroups));
-
-            for(uint lod = 0; lod < TREE_LOD_COUNT; ++lod)
-            {
-                SCE::MeshRender::SetMeshInstances(terrainData->treeGlData.meshIds[lod],
-                                                  treeMatrices[lod], GL_DYNAMIC_DRAW);
-                SCE::DebugText::Print("Trees lod " + std::to_string(lod) + " : " +
-                                      std::to_string(treeMatrices[lod].size()));
-            }
-
-            SCE::DebugText::Print("Trees impostors " +
-                                  std::to_string(treeImpostorMatrices.size()));
-
-            SCE::MeshRender::SetMeshInstances(terrainData->treeGlData.impostorData.meshId,
-                                              treeImpostorMatrices, GL_DYNAMIC_DRAW);
         }
 
         //pre-compute model matrices for all patches
@@ -818,9 +454,17 @@ namespace Terrain
                               + ", " + std::to_string(cameraPosition.z));
 
 #ifdef DISPLAY_TREES
-        FrustrumCullingData cullingData = computeCullingData(projectionMatrix);
-        spawnTreeInstances(viewMatrix, terrainData->worldToTerrainspace,
-                           cameraPosition, cullingData);
+
+        float patchSize = terrainData->patchSize;
+        float terrainSize = terrainData->terrainSize;
+        //compute the actual terrain size we will cover with patches
+        terrainSize = floor(terrainSize/patchSize)*patchSize;
+        float halfTerrainSize = terrainSize / 2.0f;
+
+        float maxDistFromCenter = halfTerrainSize - patchSize * 0.5;
+
+        terrainData->terrainTrees.SpawnTreeInstances(viewMatrix, terrainData->worldToTerrainspace,
+                                                     cameraPosition, maxDistFromCenter);
 #endif
     }
 
@@ -844,8 +488,6 @@ namespace Terrain
         }
 
         TerrainGLData& glData = terrainData->glData;        
-
-
 
         //setup gl state that is common for all patches
         glUseProgram(glData.terrainProgram);
@@ -879,7 +521,6 @@ namespace Terrain
         glBindVertexArray(terrainData->quadVao);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, terrainData->quadIndicesVbo);
 
-        FrustrumCullingData cullingData = computeCullingData(projectionMatrix);
         float patchSize = terrainData->patchSize;
 
         glm::vec4 R_cameraspace = viewMatrix*glm::vec4(patchSize, 0.0, 0.0, 0.0);
@@ -892,8 +533,8 @@ namespace Terrain
         {
             glm::vec4 center_cameraspace = viewMatrix*terrainData->patchBoundingBoxCenters[i];
 
-            if(isBoxInFrustrum(cullingData, center_cameraspace, R_cameraspace,
-                               S_cameraspace, T_cameraspace))
+            if(SCE::FrustrumCulling::IsBoxInFrustrum(center_cameraspace,
+                                                     R_cameraspace, S_cameraspace, T_cameraspace))
             {
                 renderPatch(projectionMatrix,
                             viewMatrix,
@@ -912,36 +553,33 @@ namespace Terrain
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
+    }
 
+    void RenderTrees(const glm::mat4& projectionMatrix,
+                     const glm::mat4& viewMatrix,
+                     bool isShadowPass)
+    {
 
 #ifdef DISPLAY_TREES
-        //render trees
-        TreeGLData& treeData = terrainData->treeGlData;
-        glUseProgram(treeData.shaderProgram);
-
-        for(uint lod = 0; lod < TREE_LOD_COUNT; ++lod)
-        {
-            SCE::MeshRender::DrawInstances(treeData.meshIds[lod], projectionMatrix, viewMatrix);
-        }
-
-        if(!isShadowPass)//impostors don't cast shadows
-        {
-            //render tree impostors
-            glUseProgram(treeData.impostorData.shaderProgram);
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, treeData.impostorData.texture);
-            glUniform1i(treeData.impostorData.textureUniform, 0);
-            glActiveTexture(GL_TEXTURE1);
-            glBindTexture(GL_TEXTURE_2D, treeData.impostorData.normalTexture);
-            glUniform1i(treeData.impostorData.normalUniform, 1);
-
-            glm::mat4 scaleInvert = glm::inverse(treeData.impostorData.scaleMatrix);
-            glUniformMatrix4fv(treeData.impostorData.scaleInvertMatUniform, 1, GL_FALSE, &(scaleInvert[0][0]));
-
-            SCE::MeshRender::DrawInstances(treeData.impostorData.meshId, projectionMatrix, viewMatrix);
-        }
+        terrainData->terrainTrees.RenderTrees(projectionMatrix, viewMatrix, isShadowPass);
 #endif
 
+    }
+
+    void RenderShadow(const mat4 &projectionMatrix, const mat4 &viewMatrix,
+                      const glm::vec3 &sunPosition, SCE_GBuffer &gbuffer)
+    {
+        //only a screen space quad, don't need depth testing
+        glDepthMask(GL_FALSE);
+        glDisable(GL_DEPTH_TEST);
+
+        terrainData->terrainShadow.RenderShadow(projectionMatrix, viewMatrix,
+                                                sunPosition, gbuffer, terrainData->worldToTerrainspace,
+                                                terrainData->glData.terrainTexture,
+                                                terrainData->heightScale);
+
+        glEnable(GL_DEPTH_TEST);
+        glDepthMask(GL_TRUE);
     }
 
     void Init(float terrainSize, float patchSize, float terrainBaseHeight)
@@ -1001,6 +639,7 @@ namespace Terrain
         }
         return 0.0f;
     }
+
 
 }
 

@@ -13,6 +13,7 @@
 #include "../headers/SCEShaders.hpp"
 #include "../headers/SCETerrain.hpp"
 #include "../headers/SCEDebugText.hpp"
+#include "../headers/SCEFrustrumCulling.hpp"
 
 
 using namespace std;
@@ -56,8 +57,8 @@ namespace SCERender
             glEnable(GL_CULL_FACE);
             glCullFace(GL_BACK);
 
-            SCE::Terrain::UpdateTerrain(renderData.projectionMatrix, renderData.viewMatrix);
             SCE::Terrain::RenderTerrain(renderData.projectionMatrix, renderData.viewMatrix);
+            SCE::Terrain::RenderTrees(renderData.projectionMatrix, renderData.viewMatrix);
 
             for(Container* container : objectsToRender)
             {
@@ -121,6 +122,9 @@ namespace SCERender
         // Clear the screen (default framebuffer)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        SCE::FrustrumCulling::UpdateCulling(renderData.projectionMatrix);
+        SCE::Terrain::UpdateTerrain(renderData.projectionMatrix, renderData.viewMatrix);
+
         //render shadows to shadowmap
         SCEHandle<Transform> camTransform = camera->GetContainer()->GetComponent<Transform>();
         glm::mat4 camToWorld = camTransform->GetWorldTransform();
@@ -132,8 +136,8 @@ namespace SCERender
 
         //lighting & sky
         mGBuffer.ClearFinalBuffer();
-        SCELighting::RenderLightsToGBuffer(renderData, mGBuffer);
-        glCullFace(GL_FRONT);
+        SCELighting::RenderLightsToGBuffer(renderData, mGBuffer);               
+
         SCELighting::RenderSkyToGBuffer(renderData, mGBuffer);
 
         //luminance
@@ -152,7 +156,6 @@ namespace SCERender
         glUniform1f(tonemap.maxBrightnessUniform, tonemap.maxBrightness);
         RenderFullScreenPass(tonemap.toneMapShader, renderData.projectionMatrix, renderData.viewMatrix);
 
-        glCullFace(GL_BACK);
         //reset to default framebufffer
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -178,8 +181,10 @@ namespace SCERender
 
     void RenderFullScreenPass(GLuint shaderId, const mat4& projectionMatrix, const mat4& viewMatrix)
     {
+        glCullFace(GL_FRONT);
         glm::mat4 modelMatrix = inverse(projectionMatrix * viewMatrix);
         SCE::MeshRender::RenderMesh(mQuadMeshId, projectionMatrix, viewMatrix, modelMatrix);
+        glCullFace(GL_BACK);
     }
 
 }
