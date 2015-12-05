@@ -275,12 +275,18 @@ void scene3()
                                               "Meshes/SCORPION.OBJ", string("Materials/Scorpion"),
                                               vec3(-5.0f, groundY, -10.0f));
     scorpion->GetComponent<Transform>()->RotateAroundAxis(vec3(0.0, 1.0, 0.0), -45.0f);
+    scorpion->GetComponent<Transform>()->SetLocalScale(vec3(5.0));
 }
 
+//#define START_NIGHT
 void lightOutdoor()
 {
     SCEHandle<Container> sunObject = SCEScene::CreateContainer("sunObject");
-    sunObject->AddComponent<SunCycle>(1.0f, glm::vec3(1.0, 0.0, 0.0));
+    sunObject->AddComponent<SunCycle>(1.0f, glm::vec3(1.0, 0.0, 0.0));    
+#ifdef START_NIGHT
+    glm::vec3 sunPos = glm::vec3(10.0, 0.0, 20000.0);
+    sunObject->GetComponent<Transform>()->SetWorldPosition(sunPos);
+#endif
 }
 
 void redAndGreen()
@@ -289,8 +295,8 @@ void redAndGreen()
     light1->GetComponent<Light>()->SetLightColor(vec4(1.0, 0.0, 0.0, 1.0));
     light1->GetComponent<Light>()->SetLightReach(30.0f);
 
-    SCEHandle<Container> light2 = createLight(vec3(-2, 15, -17), vec3(45, -45, 0), LightType::SPOT_LIGHT);
-    light2->GetComponent<Light>()->SetLightReach(40.0f);
+    SCEHandle<Container> light2 = createLight(vec3(8, 25, -27), vec3(45, -45, 0), LightType::SPOT_LIGHT);
+    light2->GetComponent<Light>()->SetLightReach(100.0f);
     light2->GetComponent<Light>()->SetLightMaxAngle(50.0f);
     light2->GetComponent<Light>()->SetLightColor(vec4(0.0, 1.0, 0.0, 1.0));
 
@@ -308,7 +314,7 @@ void streetLights()
                                                      vec3(90, 0, 0), LightType::SPOT_LIGHT);
             light->GetComponent<Light>()->SetLightReach(30.0f);
             light->GetComponent<Light>()->SetLightMaxAngle(75.0f);
-            light->GetComponent<Light>()->SetLightColor(vec4(0.5, 1.0, 0.0, 1.0));
+            light->GetComponent<Light>()->SetLightColor(vec4(0.75, 1.0, 0.0, 1.0));
         }
     }
 }
@@ -357,7 +363,8 @@ int main( void )
 #ifdef EAGLE
     distanceToTarget = glm::vec3(0.0f, 1.0f, -3.5f);
     eagle->AddComponent<Material>("Materials/Eagle");
-    eagle->AddComponent<MeshRenderer>("Meshes/eagle_low.obj");
+    SCEHandle<MeshRenderer> eagleRenderer = eagle->AddComponent<MeshRenderer>("Meshes/eagle_low.obj");
+    eagleRenderer->SetIsCastingShadow(false);
 #endif
 
 #ifdef PLANE

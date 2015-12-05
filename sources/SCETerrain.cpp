@@ -39,9 +39,9 @@
 #define HEIGHT_SCALE_UNIFORM "HeightScale"
 #define TESS_OVERRIDE_UNIFORM "TesselationOverride"
 
-//#define TERRAIN_TEXTURE_SIZE 4096
+#define TERRAIN_TEXTURE_SIZE 4096
 //#define TERRAIN_TEXTURE_SIZE 2048
-#define TERRAIN_TEXTURE_SIZE 512
+//#define TERRAIN_TEXTURE_SIZE 512
 #define TEX_TILE_SIZE 2.0f
 
 #define DISPLAY_TREES
@@ -559,6 +559,11 @@ namespace Terrain
                      const glm::mat4& viewMatrix,
                      bool isShadowPass)
     {
+        //TODO find a better way to not render when there is no terrain
+        if(!terrainData)
+        {
+            return;
+        }
 
 #ifdef DISPLAY_TREES
         terrainData->terrainTrees.RenderTrees(projectionMatrix, viewMatrix, isShadowPass);
@@ -569,6 +574,12 @@ namespace Terrain
     void RenderShadow(const mat4 &projectionMatrix, const mat4 &viewMatrix,
                       const glm::vec3 &sunPosition, SCE_GBuffer &gbuffer)
     {
+        //TODO find a better way to not render when there is no terrain
+        if(!terrainData)
+        {
+            return;
+        }
+
         //only a screen space quad, don't need depth testing
         glDepthMask(GL_FALSE);
         glDisable(GL_DEPTH_TEST);
