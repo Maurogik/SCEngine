@@ -116,6 +116,17 @@ namespace SCERender
     void Render(const SCEHandle<Camera>& camera,
                            vector<Container*> objectsToRender)
     {
+        vector<MeshRenderer*> shadowCasters;
+
+        for(Container* obj : objectsToRender)
+        {
+            SCEHandle<MeshRenderer> meshRenderer = obj->GetComponent<MeshRenderer>();
+            if(meshRenderer->IsCastingShadow())
+            {
+                shadowCasters.push_back(meshRenderer.getRaw());
+            }
+        }
+
         //extract data used for rendering
         CameraRenderData renderData = camera->GetRenderData();
 
@@ -129,7 +140,7 @@ namespace SCERender
         SCEHandle<Transform> camTransform = camera->GetContainer()->GetComponent<Transform>();
         glm::mat4 camToWorld = camTransform->GetWorldTransform();
         SCELighting::RenderCascadedShadowMap(renderData, camera->GetFrustrumData(),
-                                             camToWorld, objectsToRender);
+                                             camToWorld, shadowCasters);
 
         //render objects without lighting
         renderGeometryPass(renderData, objectsToRender);
