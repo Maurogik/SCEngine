@@ -100,7 +100,7 @@ _{
         float nbSamples = 16.0;
         float decay = 4.0;
         float density = 0.075;
-        float weight = 0.01;
+        float weight = 0.02;
 
         vec2 stepToFrag = (sunUV - uv);
         stepToFrag *= 1.0 / float(nbSamples) * density;
