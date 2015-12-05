@@ -48,8 +48,8 @@ _{
 
     uniform sampler2D MainTex;
     uniform sampler2D NormalMap;
-    uniform sampler2D SpecMap;
-    uniform float Specularity;
+    uniform sampler2D RoughnessMap;
+    uniform float Roughness;
     uniform float ScaleU;
     uniform float ScaleV;
 
@@ -68,7 +68,7 @@ _{
         normal = normalize(tangentToWorldspace * normal);
         oNormal.xyz = normal;
         //specularity
-        vec4 specularity = texture(SpecMap, uv);
-        oNormal.a = Specularity * length(specularity);
+        vec4 specularity = texture(RoughnessMap, uv);
+        oNormal.a = Roughness * length(specularity);
     }
 _}

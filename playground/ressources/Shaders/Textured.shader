@@ -40,7 +40,7 @@ _{
     uniform float ScaleU;
     uniform float ScaleV;
     uniform vec3 MainColor;
-    uniform float Specularity;
+    uniform float Roughness;
 
     void main()
     {
@@ -55,6 +55,6 @@ _{
         //compressed normal
         oNormal.xyz = normalize(Normal_worldspace);
         //specularity
-        oNormal.a = Specularity;
+        oNormal.a = Roughness;
     }
 _}

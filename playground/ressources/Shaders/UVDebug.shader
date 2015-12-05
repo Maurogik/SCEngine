@@ -42,7 +42,7 @@ _{
         oPosition = Position_worldspace;
         //compressed normal
         oNormal.xyz = normalize(Normal_worldspace);
-        //specularity
+        //Roughness
         oNormal.a = 1.0;
     }
 _}

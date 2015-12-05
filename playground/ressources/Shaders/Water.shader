@@ -49,7 +49,7 @@ _{
     uniform sampler2D MainTex;
     uniform sampler2D NormalMap;
     uniform vec3  MainColor;
-    uniform float Specularity;
+    uniform float Roughness;
     uniform float ScaleU;
     uniform float ScaleV;
     uniform float SCE_TimeInSeconds;
@@ -77,6 +77,6 @@ _{
         oPosition = Position_worldspace;
 
         oNormal.xyz = getNormal(uv);
-        oNormal.a = Specularity;
+        oNormal.a = Roughness;
     }
 _}

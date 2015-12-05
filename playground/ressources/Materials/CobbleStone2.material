@@ -1,8 +1,8 @@
 Shader: Shaders/TexturedNormalSpec
 Name: MainTex; Type: Texture2D; Value: Textures/CobbleStone2-color
 Name: NormalMap; Type: Texture2D; Value: Textures/CobbleStone2-normal
-Name: SpecMap; Type: Texture2D; Value: Textures/CobbleStone2-specular
+Name: RoughnessMap; Type: Texture2D; Value: Textures/CobbleStone2-specular
 Name: MainColor; Type: vec3; Value: (1.0, 1.0, 1.0)
 Name: ScaleU; Type: float; Value: 1.0
 Name: ScaleV; Type: float; Value: -1.0
-Name: Specularity; Type: float; Value: 0.1
+Name: Roughness; Type: float; Value: 0.1

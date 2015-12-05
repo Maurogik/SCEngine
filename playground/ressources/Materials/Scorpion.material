@@ -3,4 +3,4 @@ Name: MainTex; Type: Texture2D; Value: Textures/Scorpion
 Name: MainColor; Type: vec3; Value: (10.0, 10.0, 10.0)
 Name: ScaleU; Type: float; Value: 1.0
 Name: ScaleV; Type: float; Value: 1.0
-Name: Specularity; Type: float; Value: 0.3
+Name: Roughness; Type: float; Value: 0.1

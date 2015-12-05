@@ -35,11 +35,11 @@ _{
 
     void main()
     {
-        oColor = vec3(1.0);
+        oColor = vec3(0.5);
         oPosition = Position_worldspace;
         //compressed normal
         oNormal.xyz = normalize(Normal_worldspace);
-        //specularity
-        oNormal.a = 1.0;
+        //roughness
+        oNormal.a = 0.1;
     }
 _}

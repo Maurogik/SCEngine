@@ -1,6 +1,6 @@
 Shader: Shaders/Textured
 Name: MainTex; Type: Texture2D; Value: Textures/White
-Name: MainColor; Type: vec3; Value: (0.5, 0.5, 0.5)
+Name: MainColor; Type: vec3; Value: (0.05, 0.05, 0.05)
 Name: ScaleU; Type: float; Value: 1.0
 Name: ScaleV; Type: float; Value: 1.0
-Name: Specularity; Type: float; Value: 2.0
+Name: Roughness; Type: float; Value: 0.1

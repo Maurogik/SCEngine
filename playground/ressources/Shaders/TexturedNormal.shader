@@ -48,7 +48,7 @@ _{
 
     uniform sampler2D MainTex;
     uniform sampler2D NormalMap;
-    uniform float Specularity;
+    uniform float Roughness;
     uniform float ScaleU;
     uniform float ScaleV;
 
@@ -67,6 +67,6 @@ _{
         normal = normalize(tangentToWorldspace * normal);
         oNormal.xyz = normal;
         //specularity
-        oNormal.a = Specularity;
+        oNormal.a = Roughness;
     }
 _}

@@ -58,22 +58,21 @@ _{
     uniform float ScaleU;
     uniform float ScaleV;
     uniform vec3 MainColor;
-    uniform float Specularity;
+    uniform float Roughness;
 
     void main()
     {
         vec2 uv = vec2(fragUV.x, fragUV.y);
-        oColor = texture2D(MainTex, uv * vec2(ScaleU, ScaleV)).xyz;
+        oColor = pow(texture2D(MainTex, uv * vec2(ScaleU, ScaleV)).xyz, vec3(2.2));
         //gamma expansion of texture because it is store gamma corrected and we will do
         //our own gamma correction in the last shading pass
         oColor = oColor * MainColor;
 //        oColor = VertColor;
-        oColor = pow(oColor, vec3(2.2));
 
         oPosition = Position_worldspace;
         //compressed normal
         oNormal.xyz = normalize(Normal_worldspace);
         //specularity
-        oNormal.a = Specularity;
+        oNormal.a = Roughness;
     }
 _}
