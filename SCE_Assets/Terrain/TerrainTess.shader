@@ -261,9 +261,9 @@ _{
     {
         uv *= TextureTileScale;
 
-        vec4 topColor = vec4(1.0, 1.0, 1.0, 1.0);
-        vec4 middleColor = vec4(0.7, 0.4, 0.2, 0.02);
-        vec4 bottomColor = vec4(0.2, 0.7, 0.1, 0.01);
+        vec4 topColor = vec4(1.0, 1.0, 1.0, 0.2);
+        vec4 middleColor = vec4(0.7, 0.4, 0.2, 0.7);
+        vec4 bottomColor = vec4(0.2, 0.7, 0.1, 0.95);
 
         bottomColor.rgb = pow(texture(GrassTex, uv).rgb, vec3(2.2));
         middleColor.rgb = pow(texture(DirtTex, uv).rgb, vec3(2.2));
@@ -275,10 +275,10 @@ _{
         float slope = 1.0 - flatness;
 
         float bottomEnd = 0.3;
-        float middleEnd = 0.6;
+        float middleEnd = 0.7;
 
         float bottomToMiddleMix = 0.3;
-        float middleToTopMix = 0.2;
+        float middleToTopMix = 0.4;
 
 
         float BtoMStart = bottomEnd - bottomToMiddleMix*0.5;
