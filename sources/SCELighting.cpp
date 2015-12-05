@@ -29,9 +29,9 @@ using namespace std;
 
 #define CASCADE_COUNT 2
 #define MAX_SHADOW_DISTANCE 4500.0f
-//#define TERRAIN_SHADOW
+#define TERRAIN_SHADOW
 #define TERRAIN_TREES_SHADOW
-#define RAYMACHED_TERRAIN_SHADOW
+//#define RAYMACHED_TERRAIN_SHADOW
 
 SCELighting* SCELighting::s_instance = nullptr;
 
@@ -92,7 +92,7 @@ void SCELighting::CleanUp()
 void SCELighting::RenderCascadedShadowMap(const CameraRenderData &camRenderData,
                                          FrustrumData camFrustrumData,
                                          glm::mat4 camToWorldMat,
-                                         std::vector<Container*> objectsToRender)
+                                         std::vector<MeshRenderer*> &objectsToRender)
 {
     Debug::Assert(s_instance, "No Lighting system instance found, Init the system before using it");
 
@@ -374,7 +374,7 @@ void SCELighting::renderLightingPass(const CameraRenderData& renderData, SCEHand
 }
 
 void SCELighting::renderShadowmapPass(const CameraRenderData& lightRenderData,
-                                      std::vector<Container*> objectsToRender,
+                                      std::vector<MeshRenderer*> &objectsToRender,
                                       uint shadowmapId)
 {
     GLint viewportDims[4];
@@ -391,9 +391,9 @@ void SCELighting::renderShadowmapPass(const CameraRenderData& lightRenderData,
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
-    for(Container* container : objectsToRender)
+    for(MeshRenderer* renderer : objectsToRender)
     {
-        container->GetComponent<MeshRenderer>()->Render(lightRenderData);
+        renderer->Render(lightRenderData);
     }
 
 #ifdef TERRAIN_SHADOW

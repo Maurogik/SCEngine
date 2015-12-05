@@ -20,6 +20,7 @@ namespace SCE
     class Camera;
     class Light;
     class Container;
+    class MeshRenderer;
 
     class SCELighting
     {
@@ -31,7 +32,7 @@ namespace SCE
         static void         RenderCascadedShadowMap(const CameraRenderData& camRenderData,
                                                    FrustrumData camFrustrumData,
                                                    mat4 camToWorldMat,
-                                                   std::vector<SCE::Container*> objectsToRender);
+                                                   std::vector<SCE::MeshRenderer *> &objectsToRender);
 
         static void         RenderLightsToGBuffer(const CameraRenderData& renderData,
                                                   SCE::SCE_GBuffer& gBuffer);
@@ -82,7 +83,7 @@ namespace SCE
                                                    SCEHandle<Light> &light);
 
         void                renderShadowmapPass(const CameraRenderData& lightRenderData,
-                                                std::vector<SCE::Container*> objectsToRender,
+                                                std::vector<SCE::MeshRenderer *> &objectsToRender,
                                                 uint shadowmapId);
 
         std::vector<CameraRenderData> computeCascadedLightFrustrums(FrustrumData cameraFrustrum,
