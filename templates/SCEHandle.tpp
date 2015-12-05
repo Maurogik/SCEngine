@@ -118,3 +118,9 @@ void                    SCE::SCEHandle<T>::invalidateTarget()
     Internal::Log("Invalidating handle target");
     mTarget = nullptr;
 }
+
+template <class T>
+T*                      SCE::SCEHandle<T>::getRaw()
+{
+    return (T*)mTarget;
+}

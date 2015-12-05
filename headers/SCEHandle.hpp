@@ -36,6 +36,8 @@ namespace SCE {
 
         const T*                operator->() const;
 
+        T*                      getRaw();
+
         explicit operator bool() const;
 
         bool operator== (const SCEHandle<T>& rhs);
