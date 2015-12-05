@@ -47,7 +47,7 @@ _{
 
     vec3 LeavesColor = vec3(0.0, 0.02, 0.0);
     vec3 TruncColor = vec3(0.05, 0.012, 0.0);
-    float Specularity = 0.0;
+    float Roughness = 0.85;
 
     void main()
     {
@@ -57,6 +57,6 @@ _{
         oPosition = Position_worldspace;
 
         oNormal.xyz = normalize(Normal_worldspace);
-        oNormal.a = Specularity;
+        oNormal.a = Roughness;
     }
 _}

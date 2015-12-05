@@ -66,7 +66,7 @@ _{
 
             oColor = color.rgb;
             oPosition = Position_worldspace;
-            oNormal.a = 0.01;
+            oNormal.a = 0.95;
         }
         else
         {
