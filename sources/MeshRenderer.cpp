@@ -20,14 +20,14 @@ using namespace std;
 
 MeshRenderer::MeshRenderer(SCEHandle<Container> &container, ui16 meshId)
     : Component(container, "MeshRenderer::"),
-      mMeshId(meshId)
+      mMeshId(meshId), mIsShadowCaster(true)
 { 
     SCE::MeshRender::InitializeMeshRenderData(mMeshId);
 }
 
 MeshRenderer::MeshRenderer(SCEHandle<Container> &container, const string &filename)
     : Component(container, "MeshRenderer::"),
-      mMeshId(-1)
+      mMeshId(-1), mIsShadowCaster(true)
 {
     mMeshId = SCE::MeshLoader::CreateMeshFromFile(filename);
     SCE::MeshRender::InitializeMeshRenderData(mMeshId);
@@ -40,6 +40,16 @@ void MeshRenderer::UpdateRenderedMesh(ui16 meshId)
     {
         SCE::MeshRender::InitializeMeshRenderData(mMeshId);
     }
+}
+
+bool MeshRenderer::IsCastingShadow()
+{
+    return mIsShadowCaster;
+}
+
+void MeshRenderer::SetIsCastingShadow(bool isShadowCaster)
+{
+    mIsShadowCaster = isShadowCaster;
 }
 
 void MeshRenderer::Render(const CameraRenderData& renderData, bool renderFullScreenQuad)

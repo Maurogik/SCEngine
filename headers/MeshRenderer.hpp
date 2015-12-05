@@ -21,6 +21,8 @@ namespace SCE {
 
         void            Render(const CameraRenderData& renderData, bool renderFullScreenQuad = false);
         void            UpdateRenderedMesh(ui16 meshId);
+        bool            IsCastingShadow();
+        void            SetIsCastingShadow(bool isShadowCaster);
 
     protected :
 
@@ -30,6 +32,7 @@ namespace SCE {
     private :
 
         ui16            mMeshId;
+        bool            mIsShadowCaster;
 
     };
 
