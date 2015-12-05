@@ -19,6 +19,7 @@ _{
 
     #define CASCADE_COUNT 2
     #define SHADOW_MAP_SIZE 4096.0
+    #define M_PI 3.14159265359
 
     uniform vec2    SCE_ScreenSize;
     uniform vec3    SCE_EyePosition_worldspace;
@@ -50,7 +51,7 @@ _{
     in vec3 in_EyeToFrag_worldspace,\
     in vec3 in_LightToFrag_worldspace,\
     in float in_LightReach_worldspace,\
-    in float in_Surface_Specularity,\
+    in float in_Surface_Roughness,\
     in float in_Light_Intensity\
 
 
@@ -62,7 +63,89 @@ _{
         return mix(toMin, toMax, val);
     }
 
-    float getShadowDepth(vec3 pos_worldspace, vec3 normal_worldspace, vec3 lightDir_worldspace);
+    float getShadowDepth(vec3 pos_worldspace, vec3 normal_worldspace, vec3 lightDir_worldspace);      
+
+
+    ///// PBR ///////
+
+    //Fresnel effect using Schlick's approximation (assuming transport elem is air)
+    //f0 is the reflectance coef for incoming light paralel to normal
+    //f90 is the reflectance coef for incoming light at right angle (usually 1.0 or close)
+    float F_Schlick(float f0, float f90, float dot )
+    {
+        return f0 + ( f90 - f0 ) * pow (1.0 - dot , 5.0 ) ;
+    }
+
+    float Fr_DisneyDiffuse(float NdotV, float NdotL, float LdotH, float linearRoughness)
+    {
+        float energyBias = mix (0.0 , 0.5 , linearRoughness ) ;
+
+        float energyFactor = mix (1.0 , 1.0 / 1.51, linearRoughness);
+        float fd90 = energyBias + 2.0 * LdotH * LdotH * linearRoughness;
+        float f0 = 1.0;
+        float lightScatter = F_Schlick( f0 , fd90 , NdotL );
+        float viewScatter = F_Schlick( f0 , fd90 , NdotV );
+        return lightScatter * viewScatter * energyFactor ;
+    }
+
+    float Diffuse_Lambert_Normalized(float NdotH, float fresnel)
+    {
+        float energyConversationFactor = 1.0 - fresnel;
+        return NdotH * energyConversationFactor;
+    }
+
+    //Normal Distribution Function to approximate how many micro-facets should reflect
+    //Uses Trowbridge-Reitz (GGX)
+    float D_GGX( float NdotH , float a2 )
+    {
+        // Divide by PI is apply later
+        float f = ( NdotH * a2 - NdotH ) * NdotH + 1;
+        return a2 / ( f * f ) ;
+    }
+
+    float G_1_Schlick(float dot, float k)
+    {
+        return dot/(dot*(1 - k) + k);
+    }
+
+    float G_Schlick_GGX(float NdotV, float NdotL, float a2)
+    {
+        float k = a2*0.5;//Follow UE4 usage of k=a/2 to match Schlick approx to the Smith geom func
+        return G_1_Schlick(NdotV, k)*G_1_Schlick(NdotL, k);
+    }
+
+    vec2 PBR_Lighting(vec3 dirToLight, vec3 dirToEye, vec3 normal, float roughness)
+    {
+        float refl = 0.0;
+
+        float NdotL         = max(dot(normal, dirToLight), 0.0);
+        vec3 halfway        = normalize(dirToEye + dirToLight);
+        float HdotN         = max(dot(normal, halfway), 0.0);
+        float NdotV         = max(dot(normal, dirToEye), 0.1);//strongly enforce the dot is not
+        //too low to avoid artifacts on low poly meshes
+        float VdotH         = dot(dirToEye, halfway);
+        float LdotH         = max(dot(dirToLight, halfway), 0.0);
+
+        float f0    = 0.028;
+        float f90   = 0.85;
+        float F     = F_Schlick(f0, f90, LdotH);
+
+        if(NdotL > 0.0)
+        {
+            float a2    = roughness*roughness;
+            float Vis   = G_Schlick_GGX(NdotV, NdotL, a2);
+            float D     = D_GGX(HdotN, a2);
+            refl        = F * Vis * D / M_PI;
+        }
+
+        //Diffuse BRDF
+        float diff    = Diffuse_Lambert_Normalized(NdotL, F);
+                    //Fr_DisneyDiffuse( NdotV , NdotL , LdotH , pow(1.0 - roughness, 4));// / M_PI;
+
+        return vec2(diff, refl);
+    }
+
+    ///////////////////
 
     //define a subroutine signature
     subroutine vec3 SCE_ComputeLightType(LIGHT_SUBROUTINE_PARAMS);
@@ -70,14 +153,6 @@ _{
     //Directional light option
     subroutine (SCE_ComputeLightType) vec3 SCE_ComputeDirectionalLight(LIGHT_SUBROUTINE_PARAMS)
     {
-        //Diffuse component
-        vec3 dirToLight = normalize(-in_LightDirection_worldspace);
-        float NdotL     = dot(in_Normal_worldspace, dirToLight);
-        NdotL           = max(NdotL, 0.0);
-
-        vec3 dirToEye       = normalize(-in_EyeToFrag_worldspace);
-        vec3 halway         = normalize(dirToEye + dirToLight);
-        float HdotL         = max(dot(in_Normal_worldspace, halway), 0.0);
 
         float shadow = 0.0f;
         if(SCE_ShadowStrength > 0.0f)
@@ -87,10 +162,14 @@ _{
                                     SCE_LightDirection_worldspace)*SCE_ShadowStrength;
         }
 
+        vec2 diffAndSpec = PBR_Lighting(normalize(-in_LightDirection_worldspace),
+                                        normalize(-in_EyeToFrag_worldspace),
+                                        in_Normal_worldspace,
+                                        in_Surface_Roughness);
 
         vec3 light = vec3(
-                    in_Light_Intensity*NdotL, //diffuse lighting
-                    in_Light_Intensity*pow(HdotL, 16.0)*in_Surface_Specularity, //specular component
+                    in_Light_Intensity*diffAndSpec.x,
+                    in_Light_Intensity*diffAndSpec.y,
                     shadow);
 
         return light;
@@ -99,27 +178,22 @@ _{
     //Point light option
     subroutine (SCE_ComputeLightType) vec3 SCE_ComputePointLight(LIGHT_SUBROUTINE_PARAMS)
     {
-        //Diffuse component
-        vec3 dirToLight = normalize(-in_LightToFrag_worldspace);
-        float NdotL     = dot(in_Normal_worldspace, dirToLight);
-        NdotL           = clamp(NdotL, 0.0, 1.0);
+        vec2 diffAndSpec = PBR_Lighting(normalize(-in_LightToFrag_worldspace),
+                                        normalize(-in_EyeToFrag_worldspace),
+                                        in_Normal_worldspace,
+                                        in_Surface_Roughness);
 
-        vec3 dirToEye       = normalize(-in_EyeToFrag_worldspace);
-        vec3 halway         = normalize(dirToEye + dirToLight);
-        float HdotL         = clamp( dot(in_Normal_worldspace, halway), 0.0, 1.0);
+        vec3 light = vec3(
+                    in_Light_Intensity*diffAndSpec.x,
+                    in_Light_Intensity*diffAndSpec.y,
+                    0.0);
 
         float lightReach    = in_LightReach_worldspace;
-
         //hackish attenuation, but works well
         float squaredDist   = dot(in_LightToFrag_worldspace, in_LightToFrag_worldspace);
         float attenuation   = mix(lightReach*in_Light_Intensity/squaredDist,
                                   0,
                                   squaredDist/(lightReach*lightReach));
-
-        vec3 light  = vec3(
-                    NdotL, //diffuse lighting
-                    pow(HdotL, 16.0)*in_Surface_Specularity, //specular component
-                    0.0);
 
         light *= attenuation;
         return light;
@@ -128,18 +202,19 @@ _{
     //Spot light option
     subroutine (SCE_ComputeLightType) vec3 SCE_ComputeSpotLight(LIGHT_SUBROUTINE_PARAMS)
     {
-        //Diffuse component
-        vec3 dirToLight     = normalize(-in_LightToFrag_worldspace);
-        vec3 invLightDir    = normalize(-in_LightDirection_worldspace);
-        float NdotL         = dot(in_Normal_worldspace, dirToLight);
-        NdotL               = clamp(NdotL, 0.0, 1.0);
+        vec3 dirToLight = normalize(-in_LightToFrag_worldspace);
+        vec3 invLightDir = normalize(-in_LightDirection_worldspace);
+        vec2 diffAndSpec = PBR_Lighting(dirToLight,
+                                        normalize(-in_EyeToFrag_worldspace),
+                                        in_Normal_worldspace,
+                                        in_Surface_Roughness);
 
-        vec3 dirToEye       = normalize(-in_EyeToFrag_worldspace);
-        vec3 halway         = normalize(dirToEye + dirToLight);
-        float HdotL         = clamp( dot(in_Normal_worldspace, halway), 0.0, 1.0);
+        vec3 light = vec3(
+                    in_Light_Intensity*diffAndSpec.x,
+                    in_Light_Intensity*diffAndSpec.y,
+                    0.0);
 
         float lightReach    = in_LightReach_worldspace;
-
         //use very simple fallof approximation to fade spot light with distance
         float squaredDist   = dot(in_LightToFrag_worldspace, in_LightToFrag_worldspace);
         float attenuation   = mix(lightReach*in_Light_Intensity/squaredDist,
@@ -148,14 +223,8 @@ _{
 
         float fragDotL = dot(dirToLight, invLightDir);
         float surfDotL = SCE_LightMaxDotAngle;
-
         float spotAttenuation = mapToRange(surfDotL, 1.0, 0.0, 1.0, fragDotL);
         spotAttenuation = pow(spotAttenuation, 4.0);
-
-        vec3 light  = vec3(
-                    NdotL, //diffuse lighting
-                    pow(HdotL, 16.0) * in_Surface_Specularity, //specular component
-                    0.0);
 
         light *= attenuation * spotAttenuation;
         return light;
@@ -281,7 +350,7 @@ _{
 
     void main()
     {
-        vec3 ambiantColor = vec3(1.0, 1.0, 1.0) * 0.005;
+        vec3 ambiantColor = vec3(1.0, 1.0, 1.0) * 0.01;
 
         vec2 uv = gl_FragCoord.xy / SCE_ScreenSize;
         vec3 Position_worldspace    = texture2D(PositionTex, uv).xyz;
@@ -297,7 +366,7 @@ _{
         vec4 normSpec               = texture2D(NormalTex, uv);
         vec3 Normal_worldspace      = normSpec.rgb;
 
-        float Specularity           = normSpec.a;
+        float Roughness             = clamp(normSpec.a, 0.0, 1.0);
 
         color = vec4(MaterialDiffuseColor, 1.0);
 
@@ -311,7 +380,7 @@ _{
                     EyeToFrag_cameraspace,
                     LightToFrag_cameraspace,
                     SCE_LightReach_worldspace,
-                    Specularity,
+                    Roughness,
                     SCE_LightColor.a
                     );
 
@@ -320,14 +389,15 @@ _{
                 //Diffuse
                 (MaterialDiffuseColor * lightCol.x * SCE_LightColor.rgb)
                 //Specular
-                + (SCE_LightColor.rgb * lightCol.y * lightCol.x);
+                + (SCE_LightColor.rgb * lightCol.y);
         //shadow and ambiant
         color.rgb = color.rgb * (1.0 - lightCol.z)
                      + SCE_ShadowStrength * ambiantColor * MaterialDiffuseColor;
 
 #ifdef DEBUG
 //        color = vec4(MaterialDiffuseColor, 1.0);
-        color = vec4((Normal_worldspace * 0.5 + vec3(0.5)), 1.0);
+//        color = vec4((Normal_worldspace * 0.5 + vec3(0.5)), 1.0);
+        color = vec4(vec3(lightCol.y), 1.0);
 //        color = vec4(Specularity, Specularity, Specularity, 1.0);
 #endif
     }
