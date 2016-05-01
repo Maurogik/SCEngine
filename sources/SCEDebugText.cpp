@@ -10,7 +10,9 @@
 #include "../headers/SCECore.hpp"
 #include "../headers/SCEShaders.hpp"
 
-#define FONT_SIZE 30
+#define FONT_SIZE 20
+
+#ifdef SCE_DEBUG_ENGINE
 
 namespace SCE
 {
@@ -22,7 +24,7 @@ namespace DebugText
     {
         struct DebugTextData
         {
-            DebugTextData() : shaderProgram(-1) {}
+            DebugTextData() : shaderProgram(GL_INVALID_INDEX) {}
             GLuint  shaderProgram;
             GLuint  vertexAttribLoc;
             GLuint  uvAttribLoc;
@@ -31,14 +33,23 @@ namespace DebugText
             ui16    fontId;
         };
 
-        struct DebugTextEntry
+        struct DebugLogEntry
         {
             std::string message;
             glm::vec3   color;
         };
 
+        struct DebugStringEntry
+        {
+            std::string text;
+            glm::vec3   color;
+            glm::vec2   position;
+        };
+
+
         DebugTextData debugTextRenderData;
-        std::vector<DebugTextEntry> debugMessages;
+        std::vector<DebugLogEntry> debugMessages;
+        std::vector<DebugStringEntry> debugStrings;
         glm::vec3 defaultTextColor;
 
         void initializeDebugTextRenderData()
@@ -61,27 +72,24 @@ namespace DebugText
 
     }
 
-    void Print(const std::string &message)
+    void LogMessage(const std::string &message)
     {
-        Print(message, defaultTextColor);
+        LogMessage(message, defaultTextColor);
     }
 
-    void Print(const std::string &message, const vec3& color)
+    void LogMessage(const std::string &message, const vec3& color)
     {
-#ifdef SCE_DEBUG_ENGINE
-        DebugTextEntry entry;
+        DebugLogEntry entry;
         entry.color = color;
         entry.message = message;
 
         debugMessages.push_back(entry);
-#endif
     }
 
     void RenderMessages(const glm::mat4& viewMatrix,
                         const glm::mat4& projectionMatrix)
     {
-#ifdef SCE_DEBUG_ENGINE
-        if(debugTextRenderData.shaderProgram == GLuint(-1))
+        if(debugTextRenderData.shaderProgram == GL_INVALID_INDEX)
         {
             initializeDebugTextRenderData();
         }
@@ -98,26 +106,53 @@ namespace DebugText
         float fontWidth = float(FONT_SIZE) / float(width);
 
         glm::mat4 textModelMatrix = glm::inverse(projectionMatrix * viewMatrix);
-        textModelMatrix = glm::translate(textModelMatrix, glm::vec3(-1.0, 1.0, 0.0));
-        textModelMatrix = glm::scale(textModelMatrix, glm::vec3(fontWidth, fontHeight, 0.0));
-        textModelMatrix = glm::translate(textModelMatrix, glm::vec3(1.0, -1.0, 0.0));
-
+        glm::mat4 messagesModelMatrix = textModelMatrix;
+        //move to top left (else 0.0, 0.0 is screen center) and restore fullscreen scale
+        messagesModelMatrix = glm::translate(messagesModelMatrix, glm::vec3(-1.0, 1.0, 0.0));
+        messagesModelMatrix = glm::scale(messagesModelMatrix, glm::vec3(2.0));
+        //scale to font size so 1.0 is on character in size
+        messagesModelMatrix = glm::scale(messagesModelMatrix, glm::vec3(fontWidth, fontHeight, 0.0));
+        //leave on char of space with screen edges
+        messagesModelMatrix = glm::translate(messagesModelMatrix, glm::vec3(1.0, -1.0, 0.0));
 
         //Render messages
-        for(DebugTextEntry& entry : debugMessages)
+        for(DebugLogEntry& entry : debugMessages)
         {
             SCE::ShaderUtils::BindDefaultUniforms(debugTextRenderData.shaderProgram,
-                                                  textModelMatrix, viewMatrix, projectionMatrix);
+                                                  messagesModelMatrix, viewMatrix, projectionMatrix);
 
             //bind text colo uniform
             glUniform3fv(debugTextRenderData.textColorUniform, 1, &(entry.color[0]));
             SCE::TextRenderer::RenderText(debugTextRenderData.fontId, entry.message,
-                                          textModelMatrix, viewMatrix, projectionMatrix,
+                                          messagesModelMatrix, viewMatrix, projectionMatrix,
                                           debugTextRenderData.vertexAttribLoc,
                                           debugTextRenderData.uvAttribLoc,
                                           debugTextRenderData.fontAtlasUniform);
 
-            textModelMatrix = glm::translate(textModelMatrix, glm::vec3(0.0, -1.0, 0.0));
+            messagesModelMatrix = glm::translate(messagesModelMatrix, glm::vec3(0.0, -1.0, 0.0));
+        }
+
+        //move origin to bottom left corner
+        textModelMatrix = glm::translate(textModelMatrix, glm::vec3(-1.0, -1.0, 0.0));
+        textModelMatrix = glm::scale(textModelMatrix, glm::vec3(2.0));
+        //Render strings
+        for(DebugStringEntry& entry : debugStrings)
+        {
+            glm::vec3 pos = glm::vec3(entry.position.x, entry.position.y, 0.0f);
+            glm::mat4 stringModelMatrix = glm::translate(textModelMatrix, pos);
+            //set the font size by scaling the model matrix
+            stringModelMatrix = glm::scale(stringModelMatrix, glm::vec3(fontWidth, fontHeight, 0.0));
+
+            SCE::ShaderUtils::BindDefaultUniforms(debugTextRenderData.shaderProgram,
+                                                  stringModelMatrix, viewMatrix, projectionMatrix);
+
+            //bind text colo uniform
+            glUniform3fv(debugTextRenderData.textColorUniform, 1, &(entry.color[0]));
+            SCE::TextRenderer::RenderText(debugTextRenderData.fontId, entry.text,
+                                          stringModelMatrix, viewMatrix, projectionMatrix,
+                                          debugTextRenderData.vertexAttribLoc,
+                                          debugTextRenderData.uvAttribLoc,
+                                          debugTextRenderData.fontAtlasUniform);
         }
 
         glDisable(GL_BLEND);
@@ -128,16 +163,34 @@ namespace DebugText
         int nbEntries = debugMessages.size();
         debugMessages.clear();
         debugMessages.reserve(nbEntries);
-#endif
+
+        nbEntries = debugStrings.size();
+        debugStrings.clear();
+        debugStrings.reserve(nbEntries);
     }
 
     void SetDefaultPrintColor(const vec3 &color)
     {
-#ifdef SCE_DEBUG_ENGINE
         defaultTextColor = color;
-#endif
+    }
+
+    void RenderString(const vec2 &position, std::string const& text, const vec3 &color)
+    {
+        DebugStringEntry entry;
+        entry.color = color;
+        entry.text = text;
+        entry.position = position;
+
+        debugStrings.push_back(entry);
+    }
+
+    void RenderString(const vec2 &position, const std::string &text)
+    {
+        RenderString(position, text, defaultTextColor);
     }
 
 }
 
 }
+
+#endif
