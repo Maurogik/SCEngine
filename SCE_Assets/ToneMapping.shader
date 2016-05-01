@@ -32,6 +32,7 @@ _{
     uniform vec2        SCE_ScreenSize;
     uniform float       SCE_Exposure;
     uniform float       SCE_MaxBrightness;
+    uniform float       SCE_TonemapStrength;
     layout (location = 0) uniform sampler2D   FinalColorTex;
     layout (location = 1) uniform sampler2D   LuminanceTex;
 
@@ -69,6 +70,7 @@ _{
         color.rgb += Uncharted2Tonemap(hdrColor*exposure) / Uncharted2Tonemap(whitePoint) * step(uv.x, 0.5);
 #else
         color.rgb += Uncharted2Tonemap(hdrColor*exposure) / Uncharted2Tonemap(whitePoint);
+        color.rgb = mix(sceneColor.rgb, color.rgb, SCE_TonemapStrength);
 #endif
 
 #ifdef NO_TONEMAPPING

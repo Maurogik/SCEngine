@@ -98,9 +98,9 @@ _{
     float computeVolumetricLight(vec2 uv, vec2 sunUV)
     {
         float nbSamples = 16.0;
-        float decay = 4.0;
-        float density = 0.075;
-        float weight = 0.02;
+        float decay = 1.0;
+        float density = 0.15;
+        float weight = 0.005;
 
         vec2 stepToFrag = (sunUV - uv);
         stepToFrag *= 1.0 / float(nbSamples) * density;
