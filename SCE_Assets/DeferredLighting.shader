@@ -88,19 +88,12 @@ _{
         return lightScatter * viewScatter * energyFactor ;
     }
 
-    float Diffuse_Lambert_Normalized(float NdotH, float fresnel)
-    {
-        float energyConversationFactor = 1.0 - fresnel;
-        return NdotH * energyConversationFactor;
-    }
-
     //Normal Distribution Function to approximate how many micro-facets should reflect
     //Uses Trowbridge-Reitz (GGX)
     float D_GGX( float NdotH , float a2 )
     {
-        // Divide by PI is apply later
         float f = ( NdotH * a2 - NdotH ) * NdotH + 1;
-        return a2 / ( f * f ) ;
+        return a2 / ( M_PI * f * f ) ;
     }
 
     float G_1_Schlick(float dot, float k)
@@ -116,33 +109,41 @@ _{
 
     vec2 PBR_Lighting(vec3 dirToLight, vec3 dirToEye, vec3 normal, float roughness)
     {
-        float refl = 0.0;
-
         float NdotL         = max(dot(normal, dirToLight), 0.0);
         vec3 halfway        = normalize(dirToEye + dirToLight);
         float HdotN         = max(dot(normal, halfway), 0.0);
-        float NdotV         = max(dot(normal, dirToEye), 0.1);//strongly enforce the dot is not
+        float NdotV         = max(dot(normal, dirToEye), 0.1); //strongly enforce the dot is not
         //too low to avoid artifacts on low poly meshes
         float VdotH         = dot(dirToEye, halfway);
         float LdotH         = max(dot(dirToLight, halfway), 0.0);
 
-        float f0    = 0.028;
-        float f90   = 0.85;
-        float F     = F_Schlick(f0, f90, LdotH);
+        // Calculate color at normal incidence
+//        float ior = 1.5;//1.0 + roughness;
+//        float f0 = abs ((1.0 - ior) / (1.0 + ior));
+//        f0 = f0 * f0;
 
+        float f0    = 0.028;
+        float f90   = 1.0;//0.85;
+        float F     = F_Schlick(f0, f90, VdotH);
+
+        float a2    = roughness*roughness;
+
+        float refl = 0.0;
+
+        //avoid dividing by zero
         if(NdotL > 0.0)
         {
-            float a2    = roughness*roughness;
             float Vis   = G_Schlick_GGX(NdotV, NdotL, a2);
             float D     = D_GGX(HdotN, a2);
-            refl        = F * Vis * D / M_PI;
+            refl        = Vis * D / (4.0 * NdotL * NdotV);
         }
 
         //Diffuse BRDF
-        float diff    = Diffuse_Lambert_Normalized(NdotL, F);
-                    //Fr_DisneyDiffuse( NdotV , NdotL , LdotH , pow(1.0 - roughness, 4));// / M_PI;
+        float diff = 1.0 / M_PI;
 
-        return vec2(diff, refl);
+        //use fresnel as weights for diff/spec balance
+        vec2 light = vec2(diff * (1.0 - F), refl * F);
+        return light * NdotL;
     }
 
     ///////////////////
@@ -350,7 +351,7 @@ _{
 
     void main()
     {
-        vec3 ambiantColor = vec3(1.0, 1.0, 1.0) * 0.01;
+        vec3 ambiantColor = vec3(1.0, 1.0, 1.0) * 0.001;
 
         vec2 uv = gl_FragCoord.xy / SCE_ScreenSize;
         vec3 Position_worldspace    = texture2D(PositionTex, uv).xyz;
