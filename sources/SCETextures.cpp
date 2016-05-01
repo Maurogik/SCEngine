@@ -27,6 +27,8 @@
 
 using namespace std;
 
+#define DEBUG_TEXTURE_NAME "Textures/Color_Debug.jpg"
+
 #define FORMAT_STR "Format"
 #define DDS_STR "DDS"
 #define UNCOMPRESSED_STR "UNCOMPRESSED"
@@ -72,7 +74,8 @@ namespace TextureUtils
     };
 
 /*      File/Compilation Unit scope variable    */
-    TexturesData texturesData;
+    TexturesData    texturesData;
+    GLuint          debugTexture = GL_INVALID_INDEX;
 
 /*      Utiliatry loading/parsing funtions      */
     SCETextureFormat formatFromString(const string &formatString)
@@ -164,7 +167,7 @@ namespace TextureUtils
             Debug::RaiseError("Coul not load image at : " + fullTexturePath);
         }
 
-        GLuint textureID = -1;
+        GLuint textureID = GL_INVALID_INDEX;
         GLint internalGPUFormat;
         GLenum textureFormat, type;
         type = GL_UNSIGNED_BYTE;
@@ -211,7 +214,10 @@ namespace TextureUtils
 
 /*      Texture file loading and parsing    */
 
-    GLuint loadTextureFromMetadata(const string &filename)
+    GLuint loadTextureFromMetadata(const string &filename,
+                                   SCETextureFormat fallbackFormat,
+                                   SCETextureWrap fallbackWrapMode,
+                                   bool fallbackMipmaps)
     {
         string fullTexturePath = RESSOURCE_PATH + filename;
         string metadataFile = fullTexturePath + TEXTURE_METADATA_SUFIX;
@@ -262,8 +268,8 @@ namespace TextureUtils
         else
         {
             //try to open as a raw image directly
-            return loadTexture(filename, SCETextureFormat::DDS_FORMAT,
-                               SCETextureWrap::CLAMP_WRAP, true);
+            return loadTexture(filename, fallbackFormat,
+                               fallbackWrapMode, fallbackMipmaps);
         }
     }
 
@@ -297,7 +303,10 @@ namespace TextureUtils
         return texId;
     }
 
-    GLuint LoadTexture(const string& textureName)
+    GLuint LoadTexture(const string& textureName,
+                       SCETextureFormat fallbackFormat,
+                       SCETextureWrap fallbackWrapMode,
+                       bool fallbackMipmaps)
     {
         //texture has already been loaded
         if(texturesData.loadedTextures.count(textureName) > 0)
@@ -306,7 +315,7 @@ namespace TextureUtils
             return texturesData.loadedTextures[textureName];
         }
 
-        GLuint texId = loadTextureFromMetadata(textureName);
+        GLuint texId = loadTextureFromMetadata(textureName, fallbackFormat, fallbackWrapMode, fallbackMipmaps);
         texturesData.loadedTextures[textureName] = texId;
 
         return texId;
@@ -340,6 +349,24 @@ namespace TextureUtils
     }
 
     void BindTexture(GLuint textureId, GLuint textureUnit, GLuint samplerUniformId)
+    {        
+        // Bind the texture to a texture Unit
+        glActiveTexture(GL_TEXTURE0 + textureUnit);
+
+        if(debugTexture != GL_INVALID_INDEX)//use debug texture
+        {
+            glBindTexture(GL_TEXTURE_2D, debugTexture);
+        }
+        else
+        {
+            glBindTexture(GL_TEXTURE_2D, textureId);
+        }
+
+        // Set the sampler uniform to the texture unit
+        glUniform1i(samplerUniformId, textureUnit);
+    }
+
+    void BindSafeTexture(GLuint textureId, GLuint textureUnit, GLuint samplerUniformId)
     {
         // Bind the texture to a texture Unit
         glActiveTexture(GL_TEXTURE0 + textureUnit);
@@ -347,6 +374,32 @@ namespace TextureUtils
         // Set the sampler uniform to the texture unit
         glUniform1i(samplerUniformId, textureUnit);
     }
+
+#ifdef SCE_DEBUG_ENGINE
+    void EnableDebugTexture()
+    {
+        debugTexture = LoadTexture(DEBUG_TEXTURE_NAME);
+    }
+
+    void DisableDebugTexture()
+    {
+        debugTexture = GL_INVALID_INDEX;
+    }
+
+    bool ToggleDebugTexture()
+    {
+        if(debugTexture == GL_INVALID_INDEX)
+        {
+            EnableDebugTexture();
+            return true;
+        }
+        else
+        {
+            DisableDebugTexture();
+            return false;
+        }
+    }
+#endif
 
 }
 

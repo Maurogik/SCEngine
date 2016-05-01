@@ -8,7 +8,11 @@
 #include "../headers/SCE_GLDebug.hpp"
 #include "../headers/SCEInternal.hpp"
 #include "../headers/SCERender.hpp"
+#include "../headers/SCEDebug.hpp"
+#include "../headers/SCEInput.hpp"
+
 #include <time.h>
+#include <glfw3.h>
 
 using namespace SCE;
 using namespace std;
@@ -42,7 +46,7 @@ void SCECore::InitEngine(const std::string &windowName)
     glfwWindowHint(GLFW_DEPTH_BITS, 32);
     glfwWindowHint(GLFW_STENCIL_BITS, 8);
 
-    glfwWindowHint(GLFW_DECORATED, 0);
+    glfwWindowHint(GLFW_DECORATED, 0);//0 for full screen
     glfwWindowHint(GLFW_REFRESH_RATE, 60);
 
 #ifdef SCE_DEBUG
@@ -116,36 +120,37 @@ void SCECore::InitEngine(const std::string &windowName)
 
     time_t ctime = time(0);
     tm* calendarTime = localtime(&ctime);
+#ifdef SCE_DEBUG
+    SCE::Math::SeedRandomGenerator(0);
+#else
     SCE::Math::SeedRandomGenerator(calendarTime->tm_sec);
+#endif
+
     //Init Engine subcomponents in order
     SCE::Time::Init();
     //Rendering
-    SCERender::Init();
+    SCE::Render::Init();
 }
 
 void SCECore::RunEngine()
 {
     int escPressCount = 0;
-    bool pressed = false;
+
     do
-    {
+    {        
         SCE::Time::Update();
+        SCE::Input::UpdateKeyStates(s_window);
+        SCE::Debug::UpdateDebugMenu();
         SCEScene::Run();
 
         // Swap buffers
         glfwSwapBuffers(s_window);
         glfwPollEvents();
 
-        if(glfwGetKey(s_window, GLFW_KEY_ESCAPE ) == GLFW_PRESS)
-        {
-            pressed = true;
-        }
-        else if(glfwGetKey(s_window, GLFW_KEY_ESCAPE ) == GLFW_RELEASE && pressed)
+        if(SCE::Input::GetKeyAction( GLFW_KEY_ESCAPE ) == SCE::Input::KeyAction::Press)
         {
             ++escPressCount;
-            glfwSetInputMode(s_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-            pressed = false;
-        }
+        }        
 
     } while( escPressCount < 2);
 
@@ -157,7 +162,7 @@ void SCECore::CleanUpEngine()
     SCEScene::DestroyScene();
 
     //clean engine subcomponents
-    SCERender::CleanUp();
+    SCE::Render::CleanUp();
     // Close OpenGL window and terminate GLFW
     glfwTerminate();
 }

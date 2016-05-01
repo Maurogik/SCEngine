@@ -14,20 +14,20 @@ using namespace std;
 #define USE_PCF
 
 SCEShadowMap::SCEShadowMap()
-    : mFBOId(-1),
-      mDepthTexture(-1)
+    : mFBOId(GL_INVALID_INDEX),
+      mDepthTexture(GL_INVALID_INDEX)
 {
 
 }
 
 SCEShadowMap::~SCEShadowMap()
 {
-    if(mDepthTexture != GLuint(-1))
+    if(mDepthTexture != GL_INVALID_INDEX)
     {
         glDeleteTextures(1, &mDepthTexture);
     }
 
-    if(mFBOId != GLuint(-1))
+    if(mFBOId != GL_INVALID_INDEX)
     {
         glDeleteFramebuffers(1, &mFBOId);
     }

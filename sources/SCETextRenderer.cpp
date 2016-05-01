@@ -37,7 +37,7 @@ namespace TextRenderer
 
         struct FontRenderData
         {
-            FontRenderData() : texture(-1) {}
+            FontRenderData() : texture(GL_INVALID_INDEX) {}
             GLuint verticesBuffer;
             GLuint uvBuffer;
             GLuint texture;

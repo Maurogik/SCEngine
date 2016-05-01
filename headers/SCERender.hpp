@@ -17,7 +17,7 @@ namespace SCE
     class Camera;
     class Container;
 
-    namespace SCERender
+    namespace Render
     {       
 
         void         Init();
@@ -29,6 +29,9 @@ namespace SCE
         void         RenderFullScreenPass(GLuint shaderId,
                                                  const glm::mat4 &projectionMatrix,
                                                  const glm::mat4 &viewMatrix);
+#ifdef SCE_DEBUG_ENGINE
+        bool         ToggleTonemapOff();
+#endif
     }
 }
 

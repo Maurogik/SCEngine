@@ -50,5 +50,5 @@ void SCE::TerrainShadow::RenderShadow(const mat4 &projectionMatrix, const mat4 &
     glUniformMatrix4fv(mWorldToTerrainMatUniform, 1, GL_FALSE,
                        &(worldToTerrainspace[0][0]));
 
-    SCE::SCERender::RenderFullScreenPass(mShader, projectionMatrix, viewMatrix);
+    SCE::Render::RenderFullScreenPass(mShader, projectionMatrix, viewMatrix);
 }

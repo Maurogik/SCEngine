@@ -15,6 +15,10 @@
 #include "../headers/SCESkyRenderer.hpp"
 #include "../headers/SCETerrain.hpp"
 
+#ifdef SCE_DEBUG_ENGINE
+#include "../headers/SCEInput.hpp"
+#endif
+
 using namespace SCE;
 using namespace std;
 
@@ -36,13 +40,13 @@ using namespace std;
 SCELighting* SCELighting::s_instance = nullptr;
 
 SCELighting::SCELighting()
-    : mLightShader(-1),
-      mEmptyShader(-1),
+    : mLightShader(GL_INVALID_INDEX),
+      mEmptyShader(GL_INVALID_INDEX),
       mTexSamplerNames(),
       mTexSamplerUniforms(),
-      mShadowSamplerUnifom(-1),
-      mShadowDepthMatUnifom(-1),
-      mShadowFarSplitUnifom(-1),
+      mShadowSamplerUnifom(GL_INVALID_INDEX),
+      mShadowDepthMatUnifom(GL_INVALID_INDEX),
+      mShadowFarSplitUnifom(GL_INVALID_INDEX),
       mShadowMapFBO(),
       mMainLight(nullptr),
       mDepthConvertMatrices(CASCADE_COUNT),
@@ -262,14 +266,46 @@ void SCELighting::SetSunLight(SCEHandle<Light> light)
     s_instance->mMainLight = light;
 }
 
+#ifdef SCE_DEBUG_ENGINE
+void SCELighting::ReloadLightShaders()
+{
+    if(s_instance)
+    {
+        s_instance->initLightShader();
+
+        for(SCEHandle<Light> & light : s_instance->mDirectionalLights)
+        {
+            light->InitLightRenderData(s_instance->mLightShader);
+        }
+
+        for(SCEHandle<Light> & light : s_instance->mStenciledLights)
+        {
+            light->InitLightRenderData(s_instance->mLightShader);
+        }
+    }
+}
+#endif
+
 void SCELighting::initLightShader()
 {
-    if(mLightShader == (GLuint) -1)
+    if(mLightShader != GL_INVALID_INDEX)
+    {
+        SCE::ShaderUtils::DeleteShaderProgram(mLightShader);
+        mLightShader = GL_INVALID_INDEX;
+    }
+
+    if(mLightShader == GL_INVALID_INDEX)
     {
         mLightShader = SCE::ShaderUtils::CreateShaderProgram(LIGHT_SHADER_NAME);
     }
 
-    if(mEmptyShader == (GLuint) -1)
+    if(mEmptyShader != GL_INVALID_INDEX)
+    {
+        SCE::ShaderUtils::DeleteShaderProgram(mEmptyShader);
+        mEmptyShader = GL_INVALID_INDEX;
+    }
+
+    if(mEmptyShader == GL_INVALID_INDEX)
     {
         mEmptyShader = SCE::ShaderUtils::CreateShaderProgram(STENCYL_SHADER_NAME);
     }
@@ -496,7 +532,7 @@ std::vector<CameraRenderData> SCELighting::computeCascadedLightFrustrums(Frustru
                                        bottom, top,
                                        near, far);
 
-        projMat = SCERender::FixOpenGLProjectionMatrix(projMat);
+        projMat = SCE::Render::FixOpenGLProjectionMatrix(projMat);
         lightRenderData.viewMatrix = worldToLight;
         lightRenderData.projectionMatrix = projMat;
 

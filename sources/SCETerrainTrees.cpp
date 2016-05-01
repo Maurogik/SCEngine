@@ -19,8 +19,27 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/random.hpp>
 
-#define TREE_SHADER_NAME "Terrain/Tree"
-#define TREE_MODEL_NAME "Terrain/Meshes/tree_lod"
+#define USE_STB_PERLIN 1
+#if USE_STB_PERLIN
+//#include <stb_perlin.h>
+#else
+#include "../headers/SCEPerlin.hpp"
+#endif
+
+#define USE_PINE 1
+
+#if USE_PINE
+    #define TREE_SHADER_NAME "Terrain/PineTree"
+    #define TREE_ALPHA_TEXTURE_NAME "Terrain/Textures/pine_opa.png"
+    #define TREE_COLOR_TEXTURE_NAME "Terrain/Textures/pine"
+    #define TREE_MODEL_NAME "Terrain/Meshes/pine"
+#else
+    #define TREE_SHADER_NAME "Terrain/Tree"
+    #define TREE_MODEL_NAME "Terrain/Meshes/tree_lod"
+#endif
+
+#define TREE_ALPHA_TEX_UNIFORM "AlphaTex"
+#define TREE_COLOR_TEX_UNIFORM "ColorTex"
 
 #define IMPOSTOR_SHADER_NAME "Terrain/TreeImpostor"
 #define IMPOSTOR_TEXTURE_UNIFORM "ImpostorTex"
@@ -40,8 +59,12 @@ SCE::TerrainTrees::TerrainTrees()
 
     for(int lod = 0; lod < TREE_LOD_COUNT; ++lod)
     {
+        std::string lodStr = "";
+#if !USE_PINE
+        lodStr = std::to_string(lod+TREE_LOD_MIN);
+#endif
         ui16 meshId = SCE::MeshLoader::CreateMeshFromFile(TREE_MODEL_NAME +
-                                                          std::to_string(lod+TREE_LOD_MIN) +
+                                                          lodStr +
                                                           ".obj");
 
         SCE::MeshRender::InitializeMeshRenderData(meshId);
@@ -49,15 +72,25 @@ SCE::TerrainTrees::TerrainTrees()
         treeGlData.meshIds[lod] = meshId;
     }
 
+#if USE_PINE
+    //load tree textures
+    treeGlData.alphaTexture = SCE::TextureUtils::LoadTexture(TREE_ALPHA_TEXTURE_NAME);
+    treeGlData.colorTexture = SCE::TextureUtils::LoadTexture(TREE_COLOR_TEXTURE_NAME);
+
+    treeGlData.alphaTextureUniform =
+            glGetUniformLocation(treeGlData.shaderProgram, TREE_ALPHA_TEX_UNIFORM);
+    treeGlData.colorTextureUniform =
+            glGetUniformLocation(treeGlData.shaderProgram, TREE_COLOR_TEX_UNIFORM);
+#endif
+
     //Set up impostor render data
     treeGlData.impostorData.meshId = SCE::MeshLoader::CreateQuadMesh();
     SCE::MeshRender::InitializeMeshRenderData(treeGlData.impostorData.meshId);
     SCE::MeshRender::MakeMeshInstanced(treeGlData.impostorData.meshId);
-    treeGlData.impostorData.shaderProgram =
-            SCE::ShaderUtils::CreateShaderProgram(IMPOSTOR_SHADER_NAME);
+    treeGlData.impostorData.shaderProgram = SCE::ShaderUtils::CreateShaderProgram(IMPOSTOR_SHADER_NAME);
 
-    treeGlData.impostorData.texture = SCE::TextureUtils::LoadTexture(IMPOSTOR_TEXTURE_NAME);
-    treeGlData.impostorData.normalTexture = SCE::TextureUtils::LoadTexture(IMPOSTOR_NORMAL_NAME);
+    treeGlData.impostorData.texture         = SCE::TextureUtils::LoadTexture(IMPOSTOR_TEXTURE_NAME);
+    treeGlData.impostorData.normalTexture   = SCE::TextureUtils::LoadTexture(IMPOSTOR_NORMAL_NAME);
     glBindTexture(GL_TEXTURE_2D, treeGlData.impostorData.texture);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -67,18 +100,17 @@ SCE::TerrainTrees::TerrainTrees()
     treeGlData.impostorData.normalUniform =
             glGetUniformLocation(treeGlData.impostorData.shaderProgram, IMPOSTOR_NORMAL_UNIFORM);
     treeGlData.impostorData.scaleInvertMatUniform =
-        glGetUniformLocation(treeGlData.impostorData.shaderProgram, IMPOSTOR_SCALE_INVERT_UNIFORM);
-
+        glGetUniformLocation(treeGlData.impostorData.shaderProgram, IMPOSTOR_SCALE_INVERT_UNIFORM);    
 }
 
 SCE::TerrainTrees::~TerrainTrees()
 {
-    if(treeGlData.shaderProgram != GLuint(-1))
+    if(treeGlData.shaderProgram != GL_INVALID_INDEX)
     {
         SCE::ShaderUtils::DeleteShaderProgram(treeGlData.shaderProgram);
     }
 
-    if(treeGlData.impostorData.shaderProgram != GLuint(-1))
+    if(treeGlData.impostorData.shaderProgram != GL_INVALID_INDEX)
     {
         SCE::ShaderUtils::DeleteShaderProgram(treeGlData.impostorData.shaderProgram);
     }
@@ -90,12 +122,12 @@ SCE::TerrainTrees::~TerrainTrees()
         treeGlData.meshIds[lod] = ui16(-1);
     }
 
-    if(treeGlData.impostorData.texture != GLuint(-1))
+    if(treeGlData.impostorData.texture != GL_INVALID_INDEX)
     {
         SCE::TextureUtils::DeleteTexture(treeGlData.impostorData.texture);
     }
 
-    if(treeGlData.impostorData.normalTexture != GLuint(-1))
+    if(treeGlData.impostorData.normalTexture != GL_INVALID_INDEX)
     {
         SCE::TextureUtils::DeleteTexture(treeGlData.impostorData.normalTexture);
     }
@@ -107,13 +139,11 @@ void SCE::TerrainTrees::InitializeTreeLayout(glm::vec4* normAndHeightTex, int te
                                              float halfTerrainSize)
 {
     //number of time the map is divided to form tree groups
-    int treeGroupIter = 16;
+    int treeGroupIter = int(16.0f*halfTerrainSize/1500.0f);
     float scale = startScale;
-    float baseGroupRadius = 1.0f / float(treeGroupIter)*halfTerrainSize;
-    float maxRadiusScale = 3.0f;
+    float baseGroupRadius = (1.0f / float(treeGroupIter)) * halfTerrainSize;
+    float maxRadiusScale = 4.0f;
     float baseSpacing = 40.0f;
-
-    float y = 115.0f; //any value will do, just need to be something else than the terrain height
 
     for(int xCount = 0; xCount < treeGroupIter; ++xCount)
     {
@@ -125,15 +155,20 @@ void SCE::TerrainTrees::InitializeTreeLayout(glm::vec4* normAndHeightTex, int te
 
             vec4 normAndHeight = normAndHeightTex[int(x*textureSize) *
                     textureSize + int(z*textureSize)];
-
+#if USE_STB_PERLIN
+            float y = 115.0f; //any value will do, just need to be something else than the terrain height
             float noise = stb_perlin_noise3((x + xOffset)*scale, y*scale, (z + zOffset)*scale);
             noise = SCE::Math::MapToRange(-0.7f, 0.7f, 0.0f, maxRadiusScale, noise);
+#else
+            float noise = Perlin::GetPerlinAt((x + xOffset)*scale, (z + zOffset)*scale);
+            noise = SCE::Math::MapToRange(-0.5f, 0.5f, 0.0f, maxRadiusScale, noise);
+#endif
 
             float flatness = pow(dot(vec3(normAndHeight.x, normAndHeight.y, normAndHeight.z),
                                      vec3(0.0, 1.0, 0.0)), 8.0);
             float height = normAndHeight.a / heightScale;
             //Spawn tree at low height on flat terrain
-            if(height < 0.45f && flatness > 0.45f && noise > 0.6f)
+            if(height < 0.12f && flatness > 0.75f && noise > 0.4f * maxRadiusScale)
             {
                 TreeGroup group;
                 group.position = (glm::vec2(x, z)*2.0f - vec2(1.0, 1.0))
@@ -192,15 +227,23 @@ void SCE::TerrainTrees::SpawnTreeInstances(const glm::mat4& viewMatrix,
                 {
                     //compute tree position from group and non-random noise
                     glm::vec3 treePos(x + group.position.x, 0.0f, z + group.position.y);
+
+#if USE_STB_PERLIN
                     noiseX = stb_perlin_noise3(treePos.x*perlinScale, 25.0f,
                                                treePos.z*perlinScale);
                     noiseZ = stb_perlin_noise3(treePos.z*perlinScale, 25.0f,
                                                treePos.x*perlinScale);
                     //scale to apply to the tree
-                    float scale = SCE::Math::MapToRange(-0.6f, 0.6f, 0.8f, 1.4f, noiseZ);
+                    float scale = SCE::Math::MapToRange(-0.6f, 0.6f, 1.0f, 1.8f, noiseZ);
+#else
+                    noiseX = Perlin::GetPerlinAt(treePos.x*perlinScale, treePos.z*perlinScale);
+                    noiseZ = Perlin::GetPerlinAt(treePos.z*perlinScale, treePos.x*perlinScale);
+                    //scale to apply to the tree
+                    float scale = SCE::Math::MapToRange(-0.5f, 0.5f, 0.8f, 1.4f, noiseZ);
+#endif
 
-                    treePos.x += noiseX*group.spacing*2.0f;
-                    treePos.z += noiseZ*group.spacing*2.0f;
+                    treePos.x += noiseX*group.spacing*5.0f;
+                    treePos.z += noiseZ*group.spacing*5.0f;
 
                     //tree could have spawn outside of terrain, only keep if inside
                     if( abs(treePos.x) < maxDistFromCenter
@@ -246,18 +289,18 @@ void SCE::TerrainTrees::SpawnTreeInstances(const glm::mat4& viewMatrix,
         }
     }
 
-    SCE::DebugText::Print("Tree groups : " + std::to_string(treeGroups.size()));
-    SCE::DebugText::Print("Tree groups skipped: " + std::to_string(discardedGroups));
+    SCE::DebugText::LogMessage("Tree groups : " + std::to_string(treeGroups.size()));
+    SCE::DebugText::LogMessage("Tree groups skipped: " + std::to_string(discardedGroups));
 
     for(uint lod = 0; lod < TREE_LOD_COUNT; ++lod)
     {
         SCE::MeshRender::SetMeshInstances(treeGlData.meshIds[lod],
                                           treeMatrices[lod], GL_DYNAMIC_DRAW);
-        SCE::DebugText::Print("Trees lod " + std::to_string(lod) + " : " +
+        SCE::DebugText::LogMessage("Trees lod " + std::to_string(lod) + " : " +
                               std::to_string(treeMatrices[lod].size()));
     }
 
-    SCE::DebugText::Print("Trees impostors " +
+    SCE::DebugText::LogMessage("Trees impostors " +
                           std::to_string(treeImpostorMatrices.size()));
 
     SCE::MeshRender::SetMeshInstances(treeGlData.impostorData.meshId,
@@ -268,7 +311,12 @@ void SCE::TerrainTrees::RenderTrees(const mat4 &projectionMatrix, const mat4 &vi
                                     bool isShadowPass)
 {
     //render trees
-    glUseProgram(treeGlData.shaderProgram);
+    SCE::ShaderUtils::UseShader(treeGlData.shaderProgram);
+
+#if USE_PINE
+    SCE::TextureUtils::BindTexture(treeGlData.alphaTexture, 0, treeGlData.alphaTextureUniform);
+    SCE::TextureUtils::BindTexture(treeGlData.colorTexture, 1, treeGlData.colorTextureUniform);
+#endif
 
     for(uint lod = 0; lod < TREE_LOD_COUNT; ++lod)
     {
@@ -278,13 +326,11 @@ void SCE::TerrainTrees::RenderTrees(const mat4 &projectionMatrix, const mat4 &vi
     if(!isShadowPass)//impostors don't cast shadows
     {
         //render tree impostors
-        glUseProgram(treeGlData.impostorData.shaderProgram);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, treeGlData.impostorData.texture);
-        glUniform1i(treeGlData.impostorData.textureUniform, 0);
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, treeGlData.impostorData.normalTexture);
-        glUniform1i(treeGlData.impostorData.normalUniform, 1);
+        SCE::ShaderUtils::UseShader(treeGlData.impostorData.shaderProgram);
+        SCE::TextureUtils::BindTexture(treeGlData.impostorData.texture, 0,
+                                       treeGlData.impostorData.textureUniform);
+        SCE::TextureUtils::BindTexture(treeGlData.impostorData.normalTexture, 1,
+                                       treeGlData.impostorData.normalUniform);
 
         glm::mat4 scaleInvert = glm::inverse(treeGlData.impostorData.scaleMatrix);
         glUniformMatrix4fv(treeGlData.impostorData.scaleInvertMatUniform, 1, GL_FALSE,

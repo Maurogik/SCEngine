@@ -95,7 +95,7 @@ Camera::Camera(SCEHandle<Container> &container,
 
 void Camera::init()
 {
-    mProjectionMatrix = SCERender::FixOpenGLProjectionMatrix(mProjectionMatrix);
+    mProjectionMatrix = SCE::Render::FixOpenGLProjectionMatrix(mProjectionMatrix);
     mRenderedLayers.push_back(DEFAULT_LAYER);
 }
 

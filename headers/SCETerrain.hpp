@@ -15,7 +15,8 @@ namespace SCE
     class SCE_GBuffer;
     namespace Terrain
     {
-        void Init(float terrainSize, float patchSize, float terrainBaseHeight);
+        void Init(float terrainSize, float patchSize, float terrainBaseHeight,
+                  float maxTessDist = 3000.0f);
 
         void UpdateTerrain(const glm::mat4& projectionMatrix, const glm::mat4& viewMatrix);
 

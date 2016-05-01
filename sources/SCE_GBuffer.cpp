@@ -15,34 +15,37 @@ using namespace std;
 #define LUM_TEXT_ATTACHMENT (GBUFFER_NUM_TEXTURES + 1)
 
 SCE_GBuffer::SCE_GBuffer()
-    : mFBOId(-1), mDepthTexture(-1), mFinalTexture(-1), mLuminanceTexture(-1)
+    : mFBOId(GL_INVALID_INDEX),
+      mDepthTexture(GL_INVALID_INDEX),
+      mFinalTexture(GL_INVALID_INDEX),
+      mLuminanceTexture(GL_INVALID_INDEX)
 {
 
 }
 
 SCE_GBuffer::~SCE_GBuffer()
 {
-    if (mTextures[0] != GLuint(-1))
+    if (mTextures[0] != GL_INVALID_INDEX)
     {
         glDeleteTextures(GBUFFER_TEXTURE_COUNT, mTextures);
     }
 
-    if (mDepthTexture != GLuint(-1))
+    if (mDepthTexture != GL_INVALID_INDEX)
     {
         glDeleteTextures(1, &mDepthTexture);
     }
 
-    if (mFinalTexture != GLuint(-1))
+    if (mFinalTexture != GL_INVALID_INDEX)
     {
         glDeleteTextures(1, &mFinalTexture);
     }
 
-    if (mLuminanceTexture != GLuint(-1))
+    if (mLuminanceTexture != GL_INVALID_INDEX)
     {
         glDeleteTextures(1, &mLuminanceTexture);
     }
 
-    if (mFBOId != GLuint(-1))
+    if (mFBOId != GL_INVALID_INDEX)
     {
         glDeleteFramebuffers(1, &mFBOId);
     }

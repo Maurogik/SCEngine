@@ -20,30 +20,35 @@ using namespace std;
 
 #define TONEMAP_EXPOSURE_NAME "SCE_Exposure"
 #define TONEMAP_MAX_BRIGHTNESS_NAME "SCE_MaxBrightness"
+#define TONEMAP_STRENGTH_NAME "SCE_TonemapStrength"
 
 namespace SCE
 {
-namespace SCERender
+namespace Render
 {
     struct ToneMappingData
     {
         ToneMappingData()
-            : toneMapShader(-1), luminanceShader(-1),
-              exposureUniform(-1), maxBrightnessUniform(-1),
+            : toneMapShader(GL_INVALID_INDEX),
+              luminanceShader(GL_INVALID_INDEX),
+              exposureUniform(GL_INVALID_INDEX),
+              maxBrightnessUniform(GL_INVALID_INDEX),
               exposure(1.0f), maxBrightness(1.5f) {}
 
         GLuint  toneMapShader;
         GLuint  luminanceShader;
         GLint   exposureUniform;
         GLint   maxBrightnessUniform;
+        GLint   tonemapStrengthUniform;
         float   exposure;
         float   maxBrightness;
     };
 
-    static ToneMappingData     mToneMapData;
-    static SCE_GBuffer         mGBuffer;
-    static glm::vec4           mDefaultClearColor;
-    static ui16                mQuadMeshId;
+    static ToneMappingData      mToneMapData;
+    static SCE_GBuffer          mGBuffer;
+    static glm::vec4            mDefaultClearColor;
+    static ui16                 mQuadMeshId;
+    static bool                 mDebugTonemapOff = false;
 
     namespace //anonymous namespace to avoid name conflict in case of cpp inclusion (ie Unity build)
     {
@@ -104,6 +109,8 @@ namespace SCERender
                                                             TONEMAP_EXPOSURE_NAME);
         mToneMapData.maxBrightnessUniform = glGetUniformLocation(mToneMapData.toneMapShader,
                                                                  TONEMAP_MAX_BRIGHTNESS_NAME);
+        mToneMapData.tonemapStrengthUniform = glGetUniformLocation(mToneMapData.toneMapShader,
+                                                                 TONEMAP_STRENGTH_NAME);
     }
 
     void CleanUp()
@@ -165,6 +172,9 @@ namespace SCERender
 
         glUniform1f(tonemap.exposureUniform, tonemap.exposure);
         glUniform1f(tonemap.maxBrightnessUniform, tonemap.maxBrightness);
+
+        glUniform1f(tonemap.tonemapStrengthUniform, mDebugTonemapOff ? 0.0f : 1.0f);
+
         RenderFullScreenPass(tonemap.toneMapShader, renderData.projectionMatrix, renderData.viewMatrix);
 
         //reset to default framebufffer
@@ -197,6 +207,14 @@ namespace SCERender
         SCE::MeshRender::RenderMesh(mQuadMeshId, projectionMatrix, viewMatrix, modelMatrix);
         glCullFace(GL_BACK);
     }
+
+#ifdef SCE_DEBUG_ENGINE
+    bool ToggleTonemapOff()
+    {
+        mDebugTonemapOff = !mDebugTonemapOff;
+        return mDebugTonemapOff;
+    }
+#endif
 
 }
 }

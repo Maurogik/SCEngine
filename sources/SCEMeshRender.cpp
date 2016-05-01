@@ -48,11 +48,11 @@ namespace MeshRender
     {
         MeshRenderData()
             : shaderData(),
-              indiceBuffer(-1),
+              indiceBuffer(GL_INVALID_INDEX),
               indiceCount(0),
-              vaoID(-1),
+              vaoID(GL_INVALID_INDEX),
               attributes(),
-              instancesBuffer(-1),
+              instancesBuffer(GL_INVALID_INDEX),
               instancesCount(0)
         {}
         std::map<GLuint,ShaderData>     shaderData;
@@ -212,7 +212,7 @@ namespace MeshRender
             }
             glDeleteBuffers(1, &(renderData.indiceBuffer));
 
-            if(renderData.indiceBuffer != GLuint(-1) )
+            if(renderData.indiceBuffer != GL_INVALID_INDEX )
             {
                 glDeleteBuffers(1, &(renderData.instancesBuffer));
             }
@@ -246,7 +246,7 @@ namespace MeshRender
             {
                 GLuint attribLocation = shaderData.attribLocations[i];
 
-                if(attribLocation != GLuint(-1))
+                if(attribLocation != GL_INVALID_INDEX)
                 {
                     glEnableVertexAttribArray(attribLocation);
                     glBindBuffer(GL_ARRAY_BUFFER, attributes[i].dataBufferId);
@@ -269,7 +269,7 @@ namespace MeshRender
             for(size_t i = 0; i < meshRenderData.attributes.size(); ++i)
             {
                 GLuint attribLocation = shaderData.attribLocations[i];
-                if(attribLocation < (GLuint)-1)
+                if(attribLocation < GL_INVALID_INDEX)
                 {
                     glDisableVertexAttribArray(attribLocation);
                 }
@@ -341,7 +341,7 @@ namespace MeshRender
     void SetMeshInstances(ui16 meshId, const std::vector<mat4> &instanceMatrices, GLenum drawType)
     {
         MeshRenderData &renderData = getMeshRenderData(meshId);
-        SCE::Debug::Assert(renderData.instancesBuffer != GLuint(-1),
+        SCE::Debug::Assert(renderData.instancesBuffer != GL_INVALID_INDEX,
                            std::string("Mesh was not set as instances,") +
                            "use 'MakeMeshInstanced' to set mesh as instanced");
 
@@ -362,7 +362,7 @@ namespace MeshRender
 
         MeshRenderData& meshRenderData = getMeshRenderData(meshId);
 
-        SCE::Debug::Assert(meshRenderData.instancesBuffer != GLuint(-1),
+        SCE::Debug::Assert(meshRenderData.instancesBuffer != GL_INVALID_INDEX,
                            std::string("Mesh was not set as instances,") +
                            "use 'MakeMeshInstanced' to set mesh as instanced");
 

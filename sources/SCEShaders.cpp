@@ -20,87 +20,235 @@ using namespace std;
 #define SCREEN_SIZE_UNIFORM_NAME "SCE_ScreenSize"
 #define TIME_UNIFORM_NAME "SCE_TimeInSeconds"
 #define DELTA_TIME_UNIFORM_NAME "SCE_DeltaTime"
+#define DEBUG_SHADER_NAME "DebugShader"
 
 namespace SCE
 {
 
 namespace ShaderUtils
 {
-    enum ShaderType
+    namespace
     {
-        FRAGMENT_SHADER = 0,
-        VERTEX_SHADER,
-        TESSELATION_EVALUATION_SHADER,
-        TESSELATION_CONTROL_SHADER,
-        GEOMETRY_SHADER,
-        SHADER_TYPE_COUNT
-    };
-
-    //Only one for now, but there will probably be more default uniforms added later
-    struct DefaultUniforms
-    {
-        GLint screenSizeUniform;
-        GLint MVPMatrixUniform;
-        GLint ProjectionMatrixUniform;
-        GLint ViewMatrixUniform;
-        GLint ModelMatrixUniform;
-        GLint timeUniform;
-        GLint deltaTImeUniform;
-    };
-
-    //Only here to allow for automatic creation/destruction of data
-    struct ShadersData
-    {
-        ShadersData()
-            : compiledPrograms(),
-              defaultUniforms()
-        {}
-
-        ~ShadersData()
+        enum ShaderType
         {
-            Internal::Log("Cleaning up shader system, will delete compiled shader promgrams");
-            auto beginIt = begin(compiledPrograms);
-            auto endIt = end(compiledPrograms);
-            for(auto iterator = beginIt; iterator != endIt; iterator++) {
-                Internal::Log("Deleting shader : " + iterator->first);
-                glDeleteProgram(iterator->second);
+            FRAGMENT_SHADER = 0,
+            VERTEX_SHADER,
+            TESSELATION_EVALUATION_SHADER,
+            TESSELATION_CONTROL_SHADER,
+            GEOMETRY_SHADER,
+            SHADER_TYPE_COUNT
+        };
+
+        //Only one for now, but there will probably be more default uniforms added later
+        struct DefaultUniforms
+        {
+            GLint screenSizeUniform;
+            GLint MVPMatrixUniform;
+            GLint ProjectionMatrixUniform;
+            GLint ViewMatrixUniform;
+            GLint ModelMatrixUniform;
+            GLint timeUniform;
+            GLint deltaTImeUniform;
+        };
+
+        //Only here to allow for automatic creation/destruction of data
+        struct ShadersData
+        {
+            ShadersData()
+                : compiledPrograms(),
+                  defaultUniforms()
+            {}
+
+            ~ShadersData()
+            {
+                Internal::Log("Cleaning up shader system, will delete compiled shader promgrams");
+                auto beginIt = begin(compiledPrograms);
+                auto endIt = end(compiledPrograms);
+                for(auto iterator = beginIt; iterator != endIt; iterator++) {
+                    Internal::Log("Deleting shader : " + iterator->first);
+                    glDeleteProgram(iterator->second);
+                }
             }
+
+            std::map<std::string, GLuint>       compiledPrograms;
+            std::map<GLuint, DefaultUniforms>   defaultUniforms;
+        };
+
+        //Compilation unit scope variables
+        ShadersData shaderData;
+        bool shaderDebugEnabled = false;
+        GLuint debugShaderProgram = GL_INVALID_INDEX;
+
+        std::string shaderTypeToString(int shaderType)
+        {
+            using namespace SCE;
+            string str;
+
+            switch ((ShaderType)shaderType) {
+            case ShaderType::FRAGMENT_SHADER :
+                str = "Fragment Shader";
+                break;
+            case ShaderType::VERTEX_SHADER :
+                str = "Vertex Shader";
+                break;
+            case ShaderType::GEOMETRY_SHADER:
+                str = "Geometry Shader";
+                break;
+            case ShaderType::TESSELATION_CONTROL_SHADER:
+                str = "TCS Shader";
+                break;
+            case ShaderType::TESSELATION_EVALUATION_SHADER:
+                str = "TES Shader";
+                break;
+            default:
+                str = "Unknown Shader";
+                break;
+            }
+
+            return str;
         }
 
-        std::map<std::string, GLuint>       compiledPrograms;
-        std::map<GLuint, DefaultUniforms>   defaultUniforms;
-    };
+        bool attachShaderToProgram(GLuint programID, const string& shaderFileName)
+        {
+            // Read the Shader code from the text file
+            string shaderCodes[SHADER_TYPE_COUNT];
+            GLuint shaderIds[SHADER_TYPE_COUNT];
+            for(int i = 0; i < SHADER_TYPE_COUNT; ++i)
+            {   //init to max value
+                shaderIds[i] = GL_INVALID_INDEX;
+            }
+            int currentShaderType = -1;
 
-    //Compilation unit scope variable
-    ShadersData shaderData;
+            string fullPath = RESSOURCE_PATH + shaderFileName + SHADER_SUFIX;
+            if(!ifstream(fullPath.c_str()))
+            {
+                fullPath = ENGINE_RESSOURCE_PATH + shaderFileName + SHADER_SUFIX;
+            }
 
-    std::string shaderTypeToString(int shaderType)
-    {
-        using namespace SCE;
-        string str;
+            std::ifstream shaderStream(fullPath.c_str(), std::ios::in);
 
-        switch ((ShaderType)shaderType) {
-        case ShaderType::FRAGMENT_SHADER :
-            str = "Fragment Shader";
-            break;
-        case ShaderType::VERTEX_SHADER :
-            str = "Vertex Shader";
-            break;
-        case ShaderType::GEOMETRY_SHADER:
-            str = "Geometry Shader";
-            break;
-        case ShaderType::TESSELATION_CONTROL_SHADER:
-            str = "TCS Shader";
-            break;
-        case ShaderType::TESSELATION_EVALUATION_SHADER:
-            str = "TES Shader";
-            break;
-        default:
-            str = "Unknown Shader";
-            break;
+            if(shaderStream.is_open())
+            {
+                std::string line = "";
+
+                while(getline(shaderStream, line))
+                {
+                    if(line.find("[VertexShader]") != string::npos)
+                    {
+                        currentShaderType = VERTEX_SHADER;
+                        shaderIds[currentShaderType] = glCreateShader(GL_VERTEX_SHADER);
+                    }
+                    else if(line.find("[FragmentShader]") != string::npos)
+                    {
+                        currentShaderType = FRAGMENT_SHADER;
+                        shaderIds[currentShaderType] = glCreateShader(GL_FRAGMENT_SHADER);
+                    }
+                    else if(line.find("[TES]") != string::npos)
+                    {
+                        currentShaderType = TESSELATION_EVALUATION_SHADER;
+                        shaderIds[currentShaderType] = glCreateShader(GL_TESS_EVALUATION_SHADER);
+                    }
+                    else if(line.find("[TCS]") != string::npos)
+                    {
+                        currentShaderType = TESSELATION_CONTROL_SHADER;
+                        shaderIds[currentShaderType] = glCreateShader(GL_TESS_CONTROL_SHADER);
+                    }
+                    else if(line.find("[Geometry]") != string::npos)
+                    {
+                        currentShaderType = GEOMETRY_SHADER;
+                        shaderIds[currentShaderType] = glCreateShader(GL_GEOMETRY_SHADER);
+                    }
+                    else if(line.find("_{") == string::npos &&
+                            line.find("_}") == string::npos &&
+                            currentShaderType >= 0)
+                    {
+                        shaderCodes[currentShaderType] += "\n" + line;
+                    }
+                }
+                shaderStream.close();
+            }
+            else
+            {
+                Debug::RaiseError("Failled to open file " + fullPath);
+                return false;
+            }
+
+            GLint result = GL_FALSE;
+            int infoLogLength;
+
+            Internal::Log("Compiling shader at " + fullPath);
+
+            for(int i = 0; i < SHADER_TYPE_COUNT; ++i)
+            {
+                if(shaderIds[i] != GL_INVALID_INDEX)
+                {
+                    // Compile Shader
+                    const char* codePointer = shaderCodes[i].c_str();
+                    glShaderSource(shaderIds[i], 1, &codePointer , NULL);
+                    glCompileShader(shaderIds[i]);
+
+                    // Check Shader
+                    glGetShaderiv(shaderIds[i], GL_COMPILE_STATUS, &result);
+                    glGetShaderiv(shaderIds[i], GL_INFO_LOG_LENGTH, &infoLogLength);
+
+                    if (!result && infoLogLength > 0 ){
+                        std::vector<char> shaderErrorMessage(infoLogLength+1);
+                        glGetShaderInfoLog(shaderIds[i], infoLogLength, NULL, &shaderErrorMessage[0]);
+                        Internal::Log("Compilation Error on " + shaderTypeToString(i) + " !!!");
+                        Internal::Log(string(&shaderErrorMessage[0]) + "\n");
+                    }
+                }
+            }
+
+
+            // Link the program
+            Internal::Log("Linking shader program\n");
+
+            for(int i = 0; i < SHADER_TYPE_COUNT; ++i)
+            {
+                if(shaderIds[i] != GL_INVALID_INDEX)
+                {
+                    glAttachShader(programID, shaderIds[i]);
+                }
+            }
+
+            glLinkProgram(programID);
+
+            // Check the linked program
+            glGetProgramiv(programID, GL_LINK_STATUS, &result);
+            glGetProgramiv(programID, GL_INFO_LOG_LENGTH, &infoLogLength);
+
+            if (!result && infoLogLength > 0 ){
+                std::vector<char> ProgramErrorMessage(infoLogLength+1);
+                glGetProgramInfoLog(programID, infoLogLength, NULL, &ProgramErrorMessage[0]);
+                Internal::Log("Linking error !!!");
+                Internal::Log(string(&ProgramErrorMessage[0]) + "\n");
+            }
+
+            //Now that the program is linked, we can delete the individual shaders
+            for(int i = 0; i < SHADER_TYPE_COUNT; ++i)
+            {
+                if(shaderIds[i] != GL_INVALID_INDEX)
+                {
+                    glDeleteShader(shaderIds[i]);
+                }
+            }
+
+            shaderData.compiledPrograms[shaderFileName] = programID;
+
+            DefaultUniforms uniforms;
+            uniforms.screenSizeUniform          = glGetUniformLocation(programID, SCREEN_SIZE_UNIFORM_NAME);
+            uniforms.timeUniform                = glGetUniformLocation(programID, TIME_UNIFORM_NAME);
+            uniforms.deltaTImeUniform           = glGetUniformLocation(programID, DELTA_TIME_UNIFORM_NAME);
+            uniforms.MVPMatrixUniform           = glGetUniformLocation(programID, "MVP");
+            uniforms.ViewMatrixUniform          = glGetUniformLocation(programID, "V");
+            uniforms.ModelMatrixUniform         = glGetUniformLocation(programID, "M");
+            uniforms.ProjectionMatrixUniform    = glGetUniformLocation(programID, "P");
+
+            shaderData.defaultUniforms[programID] = uniforms;
+
+            return true;
         }
-
-        return str;
     }
 
     //Loads and parses shader file
@@ -113,141 +261,15 @@ namespace ShaderUtils
             return shaderData.compiledPrograms[shaderFileName];
         }
 
-        // Read the Shader code from the text file
-        string shaderCodes[SHADER_TYPE_COUNT];
-        GLuint shaderIds[SHADER_TYPE_COUNT];
-        for(int i = 0; i < SHADER_TYPE_COUNT; ++i)
-        {   //init to max value
-            shaderIds[i] = GLuint(-1);
-        }
-        int currentShaderType = -1;
-
-        string fullPath = RESSOURCE_PATH + shaderFileName + SHADER_SUFIX;
-        if(!ifstream(fullPath.c_str()))
-        {
-            fullPath = ENGINE_RESSOURCE_PATH + shaderFileName + SHADER_SUFIX;
-        }
-
-        std::ifstream shaderStream(fullPath.c_str(), std::ios::in);
-
-        if(shaderStream.is_open())
-        {
-            std::string line = "";
-
-            while(getline(shaderStream, line))
-            {
-                if(line.find("[VertexShader]") != string::npos)
-                {
-                    currentShaderType = VERTEX_SHADER;
-                    shaderIds[currentShaderType] = glCreateShader(GL_VERTEX_SHADER);
-                }
-                else if(line.find("[FragmentShader]") != string::npos)
-                {
-                    currentShaderType = FRAGMENT_SHADER;
-                    shaderIds[currentShaderType] = glCreateShader(GL_FRAGMENT_SHADER);
-                }
-                else if(line.find("[TES]") != string::npos)
-                {
-                    currentShaderType = TESSELATION_EVALUATION_SHADER;
-                    shaderIds[currentShaderType] = glCreateShader(GL_TESS_EVALUATION_SHADER);
-                }
-                else if(line.find("[TCS]") != string::npos)
-                {
-                    currentShaderType = TESSELATION_CONTROL_SHADER;
-                    shaderIds[currentShaderType] = glCreateShader(GL_TESS_CONTROL_SHADER);
-                }
-                else if(line.find("[Geometry]") != string::npos)
-                {
-                    currentShaderType = GEOMETRY_SHADER;
-                    shaderIds[currentShaderType] = glCreateShader(GL_GEOMETRY_SHADER);
-                }
-                else if(line.find("_{") == string::npos &&
-                        line.find("_}") == string::npos &&
-                        currentShaderType >= 0)
-                {
-                    shaderCodes[currentShaderType] += "\n" + line;
-                }
-            }
-            shaderStream.close();
-        }
-        else
-        {
-            Debug::RaiseError("Failled to open file " + fullPath);
-            return 0;
-        }
-
-        GLint result = GL_FALSE;
-        int infoLogLength;
-
-        Internal::Log("Compiling shader at " + fullPath);
-
-        for(int i = 0; i < SHADER_TYPE_COUNT; ++i)
-        {
-            if(shaderIds[i] != GLuint(-1))
-            {
-                // Compile Shader
-                const char* codePointer = shaderCodes[i].c_str();
-                glShaderSource(shaderIds[i], 1, &codePointer , NULL);
-                glCompileShader(shaderIds[i]);
-
-                // Check Shader
-                glGetShaderiv(shaderIds[i], GL_COMPILE_STATUS, &result);
-                glGetShaderiv(shaderIds[i], GL_INFO_LOG_LENGTH, &infoLogLength);
-                if (!result && infoLogLength > 0 ){
-                    std::vector<char> shaderErrorMessage(infoLogLength+1);
-                    glGetShaderInfoLog(shaderIds[i], infoLogLength, NULL, &shaderErrorMessage[0]);
-                    Internal::Log("Compilation Error on " + shaderTypeToString(i) + " !!!");
-                    Internal::Log(string(&shaderErrorMessage[0]) + "\n");
-                }
-            }
-        }
-
-
-        // Link the program
-        Internal::Log("Linking shader program\n");
         GLuint programID = glCreateProgram();
 
-        for(int i = 0; i < SHADER_TYPE_COUNT; ++i)
+        bool success = attachShaderToProgram(programID, shaderFileName);
+        //clean up and return if failed
+        if(!success)
         {
-            if(shaderIds[i] != GLuint(-1))
-            {
-                glAttachShader(programID, shaderIds[i]);
-            }
+            glDeleteProgram(programID);
+            return GL_INVALID_INDEX;
         }
-
-        glLinkProgram(programID);
-
-        // Check the linked program
-        glGetProgramiv(programID, GL_LINK_STATUS, &result);
-        glGetProgramiv(programID, GL_INFO_LOG_LENGTH, &infoLogLength);
-        if (!result && infoLogLength > 0 ){
-            std::vector<char> ProgramErrorMessage(infoLogLength+1);
-            glGetProgramInfoLog(programID, infoLogLength, NULL, &ProgramErrorMessage[0]);
-            Internal::Log("Linking error !!!");
-            Internal::Log(string(&ProgramErrorMessage[0]) + "\n");
-        }
-
-        //Now that the program is linked, we can delete the individual shaders
-        for(int i = 0; i < SHADER_TYPE_COUNT; ++i)
-        {
-            if(shaderIds[i] != GLuint(-1))
-            {
-                glDeleteShader(shaderIds[i]);
-            }
-        }
-
-        shaderData.compiledPrograms[shaderFileName] = programID;       
-
-        DefaultUniforms uniforms;
-        uniforms.screenSizeUniform          = glGetUniformLocation(programID, SCREEN_SIZE_UNIFORM_NAME);
-        uniforms.timeUniform                = glGetUniformLocation(programID, TIME_UNIFORM_NAME);
-        uniforms.deltaTImeUniform           = glGetUniformLocation(programID, DELTA_TIME_UNIFORM_NAME);
-        uniforms.MVPMatrixUniform           = glGetUniformLocation(programID, "MVP");
-        uniforms.ViewMatrixUniform          = glGetUniformLocation(programID, "V");
-        uniforms.ModelMatrixUniform         = glGetUniformLocation(programID, "M");
-        uniforms.ProjectionMatrixUniform    = glGetUniformLocation(programID, "P");
-
-        shaderData.defaultUniforms[programID] = uniforms;
 
         return programID;
     }
@@ -296,6 +318,51 @@ namespace ShaderUtils
         glUniformMatrix4fv(uniforms.ViewMatrixUniform, 1, GL_FALSE, &(viewMatrix[0][0]));
         glUniformMatrix4fv(uniforms.ProjectionMatrixUniform, 1, GL_FALSE, &(projectionMatrix[0][0]));
     }
+
+    void UseShader(GLuint shaderProgram)
+    {
+//        if(shaderDebugEnabled)
+//        {
+//            glUseProgram(debugShaderProgram);
+//        }
+//        else
+        {
+            glUseProgram(shaderProgram);
+        }
+    }
+
+#ifdef SCE_DEBUG_ENGINE
+
+    bool ToggleDebugShader()
+    {
+        shaderDebugEnabled = !shaderDebugEnabled;
+        if(shaderDebugEnabled && debugShaderProgram == GL_INVALID_INDEX)
+        {
+            debugShaderProgram = CreateShaderProgram(DEBUG_SHADER_NAME);
+        }
+        return shaderDebugEnabled;
+    }
+
+#define MAX_ATTACHED_SHADERS 6
+
+    void ReloadShaders()
+    {
+        GLuint shaders[MAX_ATTACHED_SHADERS];
+        GLsizei shaderCount = 0;
+
+        for(auto shaderPair : shaderData.compiledPrograms)
+        {
+            GLuint programID = shaderPair.second;
+            glGetAttachedShaders(programID, MAX_ATTACHED_SHADERS, &shaderCount, &shaders[0]);
+            for(GLsizei i = 0; i < shaderCount; ++i)
+            {
+                glDetachShader(programID, shaders[i]);
+            }
+            attachShaderToProgram(programID, shaderPair.first);
+        }
+    }
+
+#endif
 }
 
 }

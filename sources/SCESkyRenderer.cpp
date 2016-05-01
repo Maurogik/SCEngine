@@ -24,7 +24,7 @@ namespace SkyRenderer
         struct SunShaderData
         {
             SunShaderData()
-                : sunShaftTexture(-1), sunShaftProgram(-1)
+                : sunShaftTexture(GL_INVALID_INDEX), sunShaftProgram(GL_INVALID_INDEX)
             {}
 
             GLuint  sunShaftTexture;
@@ -37,7 +37,7 @@ namespace SkyRenderer
         struct SkyShaderData
         {
             SkyShaderData()
-                : skyProgram(-1), skyFadeFactor(7.0f),
+                : skyProgram(GL_INVALID_INDEX), skyFadeFactor(7.0f),
                   skyTopColor(0.06, 0.4, 0.85), skyBottomColor(0.65, 0.9, 1.0), fogColor(0.3, 0.6, 0.9)
             {}
 
@@ -57,7 +57,7 @@ namespace SkyRenderer
         struct SkyAndSunData
         {
             SkyAndSunData()
-                : fboId(-1)  {}
+                : fboId(GL_INVALID_INDEX)  {}
 
             //common data
             GLuint  fboId;
@@ -141,7 +141,7 @@ namespace SkyRenderer
         glUniform3fv(sunData.sunColorUniform, 1, &sunColor[0]);
 
         //Render sun pass to texture
-        SCERender::RenderFullScreenPass(sunData.sunShaftProgram, renderData.projectionMatrix,
+        SCE::Render::RenderFullScreenPass(sunData.sunShaftProgram, renderData.projectionMatrix,
                                         renderData.viewMatrix);
         //restore viewport
         glViewport(viewportDims[0], viewportDims[1], viewportDims[2], viewportDims[3]);
@@ -162,7 +162,7 @@ namespace SkyRenderer
         glUniform3fv(skyData.skyTopColorUniform, 1, &skyData.skyTopColor[0]);
         glUniform3fv(skyData.fogColorUniform, 1, &skyData.fogColor[0]);
 
-        SCERender::RenderFullScreenPass(skyData.skyProgram, renderData.projectionMatrix,
+        SCE::Render::RenderFullScreenPass(skyData.skyProgram, renderData.projectionMatrix,
                                         renderData.viewMatrix);
 
         glEnable(GL_DEPTH_TEST);
@@ -171,12 +171,12 @@ namespace SkyRenderer
 
     void Cleanup()
     {
-        if(sunData.sunShaftTexture != GLuint(-1))
+        if(sunData.sunShaftTexture != GL_INVALID_INDEX)
         {
             glDeleteTextures(1, &(sunData.sunShaftTexture));
         }
 
-        if(commonSkyData.fboId != GLuint(-1))
+        if(commonSkyData.fboId != GL_INVALID_INDEX)
         {
             glDeleteFramebuffers(1, &(commonSkyData.fboId));
         }

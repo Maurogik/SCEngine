@@ -20,13 +20,11 @@
 using namespace SCE;
 using namespace std;
 
-#define NO_SHADER_ID 999999
-
 
 Material::Material(SCEHandle<Container> &container, const string &filename, const string &typeName)
     : Component(container, "Material::" + typeName) ,
       mMaterialName("Material not loaded yet"),
-      mShaderProgramId(NO_SHADER_ID),
+      mShaderProgramId(GL_INVALID_INDEX),
       mUniforms()
 {
     LoadMaterial(filename);
@@ -91,7 +89,6 @@ void Material::LoadMaterial(const string &filename)
         Debug::Assert(lineData.count("Shader") > 0, "Could not find shader name in material file");
         mShaderProgramId = loadShaders(lineData["Shader"]);
 //        //start initializing the render data as soon as the shader is loaded
-//        glUseProgram(mShaderProgramId);
 
         //read the whole file
         while (getline(materialFileStream, currLine))
@@ -142,7 +139,7 @@ void Material::LoadMaterial(const string &filename)
 
 void Material::BindMaterialData()
 {
-    glUseProgram(mShaderProgramId);
+    SCE::ShaderUtils::UseShader(mShaderProgramId);
 
     GLuint textureUnit = 0;
 
@@ -182,7 +179,7 @@ void Material::BindMaterialData()
 
 void Material::ReloadMaterial()
 {
-    SCE::Debug::RaiseError("Not implemented yet");
+    LoadMaterial(mMaterialName);
 }
 
 void Material::CleanMaterial()

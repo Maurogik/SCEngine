@@ -13,8 +13,10 @@ using namespace SCE;
 using namespace std;
 
 #define MATERIAL "Materials/TestMaterial"
-#define GROUND_MATERIAL "Materials/GroundMaterial"
-#define WALL_MATERIAL "Materials/WallMaterial"
+//#define GROUND_MATERIAL "Materials/GroundMaterial"
+#define GROUND_MATERIAL "Materials/TestMaterial"
+#define WALL_MATERIAL "Materials/TestMaterial"
+//#define WALL_MATERIAL "Materials/WallMaterial"
 
 SCEHandle<Container> createSphere(const string& name, const float& tesselation, const vec3& pos){
     //cube model
@@ -166,10 +168,17 @@ void scene1()
     {
         for(float z = -nbSpheres; z < nbSpheres; ++z)
         {
-            createSphere("sphereObject", 2, vec3(2.0 + x * spreadDist, 0.0f, z * spreadDist));
+            SCEHandle<Container> sphere =
+                    createSphere("sphereObject", 3.0f, vec3(2.0 + x * spreadDist, 0.0f, z * spreadDist));
+            sphere->GetComponent<Material>()->SetUniformValue<float>("Roughness",
+                                                                     glm::max(x/(nbSpheres*2.0f), 0.02f));
 
-            SCEHandle<Container> cube = createCube("cubeObject", vec3(-2.0 - x * spreadDist, 0.0f, z * spreadDist),
+            SCEHandle<Container> cube =
+                    createCube("cubeObject", vec3(-2.0 - x * spreadDist, 0.0f, z * spreadDist),
                        MATERIAL);
+            cube->GetComponent<Material>()->SetUniformValue<float>("Roughness",
+                                                                     glm::max(x/(nbSpheres*2.0f), 0.02f));
+
             cube->GetComponent<Transform>()->RotateAroundAxis(vec3(0.0, 1.0, 0.0), 45.0f);
         }
     }
@@ -242,7 +251,6 @@ void scene2()
                                               "Meshes/SCORPION.OBJ",
                                               vec3(-15.0f, -1.87f, -5.0f));
     scorpion->GetComponent<Transform>()->RotateAroundAxis(vec3(0.0, 1.0, 0.0), -45.0f);
-
 }
 
 
@@ -276,6 +284,12 @@ void scene3()
                                               vec3(-5.0f, groundY, -10.0f));
     scorpion->GetComponent<Transform>()->RotateAroundAxis(vec3(0.0, 1.0, 0.0), -45.0f);
     scorpion->GetComponent<Transform>()->SetLocalScale(vec3(5.0));
+}
+
+void sceneTerrain()
+{
+//    SCEScene::AddTerrain(3000.0f, 150.0f, 0.0f);
+    SCEScene::AddTerrain(9000.0f, 600.0f, 0.0f);
 }
 
 //#define START_NIGHT
@@ -332,15 +346,14 @@ int main( void )
     SCECore engine;
     engine.InitEngine("Playground scene for SCE");
 
-    SCEScene::CreateEmptyScene();
-
-    SCEScene::AddTerrain(3000.0f, 150.0f, 0.0f);
+    SCEScene::CreateEmptyScene();  
 
     lightOutdoor();
 //    redAndGreen();
 //    streetLights();
 
 //    scene1();
+    sceneTerrain();
 //    scene2();
 //    scene3();
 

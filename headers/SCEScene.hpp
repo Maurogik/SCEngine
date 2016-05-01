@@ -46,6 +46,10 @@ namespace SCE {
 
         static void                                 RemoveTerrain();
 
+#ifdef SCE_DEBUG_ENGINE
+        static void                                 ReloadAllMaterials();
+#endif
+
     private :
 
         SCEScene();

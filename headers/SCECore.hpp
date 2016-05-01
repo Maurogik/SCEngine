@@ -9,9 +9,7 @@
 #include "SCEDefines.hpp"
 #include "SCE.hpp"
 
-// Include GLFW
-#include <glfw3.h>
-
+class GLFWwindow;
 
 namespace SCE {
 

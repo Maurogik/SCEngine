@@ -9,7 +9,14 @@
 #include "SCEDefines.hpp"
 #include <vector>
 
-#define TREE_LOD_COUNT 3
+
+#define USE_PINE 1
+
+#if USE_PINE
+#define TREE_LOD_COUNT 1
+#else
+#define TREE_LOD_COUNT 4
+#endif
 #define TREE_LOD_MIN 0
 
 namespace SCE
@@ -44,6 +51,12 @@ namespace SCE
         {
             ui16    meshIds[TREE_LOD_COUNT];
             GLuint  shaderProgram;
+
+            GLuint  alphaTexture;
+            GLuint  colorTexture;
+
+            GLuint  alphaTextureUniform;
+            GLuint  colorTextureUniform;
 
             ImpostorGLData impostorData;
         };

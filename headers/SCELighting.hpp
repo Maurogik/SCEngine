@@ -49,6 +49,10 @@ namespace SCE
         static void         UnregisterLight(SCEHandle<Light> light);
         static void         SetSunLight(SCEHandle<Light> light);
 
+#ifdef SCE_DEBUG_ENGINE
+        static void         ReloadLightShaders();
+#endif
+
     private :
 
         static SCELighting* s_instance;

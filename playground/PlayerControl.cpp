@@ -2,6 +2,7 @@
 #include "../headers/SCECore.hpp"
 #include "../headers/SCEDebugText.hpp"
 #include "../headers/SCETerrain.hpp"
+#include "../headers/SCEInput.hpp"
 
 using namespace SCE;
 using namespace std;
@@ -49,8 +50,8 @@ void PlayerControl::Update()
     float deltaTime = SCE::Time::DeltaTime();
     float deltaGoodness = SCE::Math::MapToRange(0.010, 0.033, 0.0, 1.0, deltaTime);
     glm::vec3 printColor = glm::vec3(deltaGoodness, 1.0 - deltaGoodness, 0.0);
-    SCE::DebugText::Print("FPS   : " + std::to_string(1.0f/deltaTime), printColor);
-    SCE::DebugText::Print("Frame : " + std::to_string(deltaTime*1000.0f) + " ms", printColor);
+    SCE::DebugText::LogMessage("FPS   : " + std::to_string(1.0f/deltaTime), printColor);
+    SCE::DebugText::LogMessage("Frame : " + std::to_string(deltaTime*1000.0f) + " ms", printColor);
 
 //    float xRotateSpeed = 0.015f;
 //    float yRotateSpeed = 0.015f;
@@ -64,46 +65,54 @@ void PlayerControl::Update()
     dX = 0.0f;
     dY = 0.0f;
 
-    if (glfwGetKey( window, GLFW_KEY_UP ) == GLFW_PRESS ||
-        glfwGetKey( window, GLFW_KEY_Z ) == GLFW_PRESS ||
-        glfwGetKey( window, GLFW_KEY_W ) == GLFW_PRESS)
+    using namespace SCE::Input;
+
+    if (GetKeyAction( GLFW_KEY_UP ) == KeyAction::Hold ||
+        GetKeyAction( GLFW_KEY_Z ) == KeyAction::Hold ||
+        GetKeyAction( GLFW_KEY_W ) == KeyAction::Hold)
     {
         dY = -1.0f;
     }
 
-    if (glfwGetKey( window, GLFW_KEY_DOWN ) == GLFW_PRESS ||
-        glfwGetKey( window, GLFW_KEY_S ) == GLFW_PRESS)
+    if (GetKeyAction( GLFW_KEY_DOWN ) == KeyAction::Hold ||
+        GetKeyAction( GLFW_KEY_S ) == KeyAction::Hold)
     {
         dY = 1.0f;
     }
 
-    if (glfwGetKey( window, GLFW_KEY_RIGHT ) == GLFW_PRESS ||
-        glfwGetKey( window, GLFW_KEY_D ) == GLFW_PRESS ||
-        glfwGetKey( window, GLFW_KEY_D ) == GLFW_PRESS)
+    if (GetKeyAction( GLFW_KEY_RIGHT ) == KeyAction::Hold ||
+        GetKeyAction( GLFW_KEY_D ) == KeyAction::Hold ||
+        GetKeyAction( GLFW_KEY_D ) == KeyAction::Hold)
     {
         dX = 1.0f;
     }
 
-    if (glfwGetKey( window, GLFW_KEY_LEFT ) == GLFW_PRESS ||
-        glfwGetKey( window, GLFW_KEY_Q ) == GLFW_PRESS ||
-        glfwGetKey( window, GLFW_KEY_A ) == GLFW_PRESS)
+    if (GetKeyAction( GLFW_KEY_LEFT ) == KeyAction::Hold ||
+        GetKeyAction( GLFW_KEY_Q ) == KeyAction::Hold ||
+        GetKeyAction( GLFW_KEY_A ) == KeyAction::Hold)
     {
        dX = -1.0f;
     }
 
-    if (glfwGetKey( window, GLFW_KEY_SPACE ) == GLFW_PRESS)
+    if (GetKeyAction( GLFW_KEY_LEFT_SHIFT ) == KeyAction::Hold)
     {
-#ifdef SCE_DEBUG
+#ifndef SCE_FINAL
        speed = 500.0f;
 #else
        speed = 80.0f;
 #endif
     }
-    else if (glfwGetKey( window, GLFW_KEY_LEFT_SHIFT ) == GLFW_PRESS)
+    else if (GetKeyAction( GLFW_KEY_LEFT_CONTROL ) == KeyAction::Hold)
     {
-#ifdef SCE_DEBUG
+        speed = 500.0f;
+    }
+    else if (GetKeyAction( GLFW_KEY_SPACE ) == KeyAction::Hold)
+    {
+#ifndef SCE_FINAL
        speed = 0.0f;
        lastSpeed = 0.0f;
+       diveSpeedIncrease = 0.0f;
+       climbSlowdown = 0.0f;
 #else
 //       speed = 5.0f;
         speed = 10.0f;
@@ -144,7 +153,8 @@ void PlayerControl::Update()
     }
     lastSpeed = speed;
 
-    SCE::DebugText::Print("Mvt speed : " + std::to_string(speed));
+
+    SCE::DebugText::LogMessage("Mvt speed : " + std::to_string(speed));
 
     float turnStrength = glm::clamp(40.0f/speed, 0.1f, 2.0f);
     target = mTransform->GetWorldPosition() + target * turnStrength;

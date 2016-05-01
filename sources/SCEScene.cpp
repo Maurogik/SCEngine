@@ -167,6 +167,19 @@ void SCEScene::RemoveTerrain()
     SCE::Terrain::Cleanup();
 }
 
+#ifdef SCE_DEBUG_ENGINE
+void SCEScene::ReloadAllMaterials()
+{
+    for(Container* container : s_scene->mContainers)
+    {
+        if(container->HasComponent<Material>())
+        {
+            container->GetComponent<Material>()->ReloadMaterial();
+        }
+    }
+}
+#endif
+
 void SCEScene::renderSceneWithCamera(const SCEHandle<Camera> &camera)
 {
     vector<Container*> objectsToRender;
@@ -178,7 +191,7 @@ void SCEScene::renderSceneWithCamera(const SCEHandle<Camera> &camera)
         }
     }
 
-    SCERender::Render(camera, objectsToRender);
+    SCE::Render::Render(camera, objectsToRender);
 }
 
 

@@ -20,8 +20,13 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/random.hpp>
 
+#define USE_STB_PERLIN 1
+#if USE_STB_PERLIN
 #define STB_PERLIN_IMPLEMENTATION
 #include <stb_perlin.h>
+#else
+#include "../headers/SCEPerlin.hpp"
+#endif
 
 
 #define GRASS_TEX_FILE "Terrain/Textures/terrainGrass"
@@ -34,12 +39,18 @@
 #define DIRT_TEXTURE_UNIFORM "DirtTex"
 #define SNOW_TEXTURE_UNIFORM "SnowTex"
 #define TEX_TILE_SIZE_UNIFORM "TextureTileScale"
-#define TERRAIN_MAX_DIST_UNIFORM "TerrainMaxDistance"
+#define MAX_TESS_DIST_UNIFORM "MaxTessDistance"
 #define WORLD_TO_TERRAIN_UNIFORM "WorldToTerrainSpace"
 #define HEIGHT_SCALE_UNIFORM "HeightScale"
 #define TESS_OVERRIDE_UNIFORM "TesselationOverride"
+#define PATCH_SIZE_UNIFORM "PatchSize"
 
-#define TERRAIN_TEXTURE_SIZE 4096
+#ifdef SCE_DEBUG
+#define TERRAIN_TEXTURE_SIZE 512
+#else
+#define TERRAIN_TEXTURE_SIZE 2048
+#endif
+
 //#define TERRAIN_TEXTURE_SIZE 2048
 //#define TERRAIN_TEXTURE_SIZE 512
 #define TEX_TILE_SIZE 2.0f
@@ -53,75 +64,80 @@ namespace SCE
 
 namespace Terrain
 {
-    struct TerrainGLData
-    {
-        GLuint  terrainProgram;
 
-        GLuint  terrainTexture;
-        GLuint  grassTexture;
-        GLuint  dirtTexture;
-        GLuint  snowTexture;
-
-        GLint   terrainTextureUniform;
-        GLint   terrainMaxDistanceUniform;
-        GLint   heightScaleUniform;
-        GLint   tesselationOverrideUniform;
-        GLint   grassTextureUniform;
-        GLint   dirtTextureUniform;
-        GLint   snowTextureUniform;
-        GLint   textureTileScaleUniform;
-        GLint   worldToTerrainMatUniform;
-    };
-
-    struct TerrainData
-    {
-        TerrainData()
-        {
-			quadPatchIndices[0] = 0;
-			quadPatchIndices[1] = 1;
-			quadPatchIndices[2] = 2;
-			quadPatchIndices[3] = 3;
-			quadVertices[0] = glm::vec3(0.0f, 0.0f, 0.0f);
-            quadVertices[1] = glm::vec3(1.0f, 0.0f, 0.0f);
-            quadVertices[2] = glm::vec3(1.0f, 0.0f, 1.0f);
-            quadVertices[3] = glm::vec3(0.0f, 0.0f, 1.0f);
-
-            heightmap = nullptr;
-		}
-
-        //Terrain quad render data
-        GLuint  quadVao;
-        GLuint  quadVerticesVbo;
-        GLuint  quadIndicesVbo;
-
-        float terrainSize;
-        float patchSize;
-        float baseHeight;
-        float heightScale;
-        glm::mat4 worldToTerrainspace;
-
-        ushort quadPatchIndices[4]; //indices for a quad, not 2 triangles
-        glm::vec3 quadVertices[4];
-
-        TerrainGLData   glData;        
-
-        float *heightmap;
-        std::vector<glm::mat4> patchModelMatrices;
-        std::vector<glm::vec4> patchBoundingBoxCenters;
-
-        TerrainShadow terrainShadow;
-        TerrainTrees terrainTrees;
-    };
-
-/*      File scope variables    */
-    static TerrainData* terrainData = nullptr;
 
 /*  Translation unit local functions, with hidden names to avoid name conflicts in case of unity build */
     namespace
     {
+
+        struct TerrainGLData
+        {
+            GLuint  terrainProgram;
+
+            GLuint  terrainTexture;
+            GLuint  grassTexture;
+            GLuint  dirtTexture;
+            GLuint  snowTexture;
+
+            GLint   terrainTextureUniform;
+            GLint   maxTesselationDistanceUniform;
+            GLint   heightScaleUniform;
+            GLint   tesselationOverrideUniform;
+            GLint   grassTextureUniform;
+            GLint   dirtTextureUniform;
+            GLint   snowTextureUniform;
+            GLint   textureTileScaleUniform;
+            GLint   worldToTerrainMatUniform;
+            GLint   patchSizeUniform;
+        };
+
+        struct TerrainData
+        {
+            TerrainData()
+            {
+                quadPatchIndices[0] = 0;
+                quadPatchIndices[1] = 1;
+                quadPatchIndices[2] = 2;
+                quadPatchIndices[3] = 3;
+                quadVertices[0] = glm::vec3(0.0f, 0.0f, 0.0f);
+                quadVertices[1] = glm::vec3(1.0f, 0.0f, 0.0f);
+                quadVertices[2] = glm::vec3(1.0f, 0.0f, 1.0f);
+                quadVertices[3] = glm::vec3(0.0f, 0.0f, 1.0f);
+
+                heightmap = nullptr;
+            }
+
+            //Terrain quad render data
+            GLuint  quadVao;
+            GLuint  quadVerticesVbo;
+            GLuint  quadIndicesVbo;
+
+            float terrainSize;
+            float maxTesselationDist;
+            float patchSize;
+            float baseHeight;
+            float heightScale;
+            glm::mat4 worldToTerrainspace;
+
+            ushort quadPatchIndices[4]; //indices for a quad, not 2 triangles
+            glm::vec3 quadVertices[4];
+
+            TerrainGLData   glData;
+
+            float *heightmap;
+            std::vector<glm::mat4> patchModelMatrices;
+            std::vector<glm::vec4> patchBoundingBoxCenters;
+
+            TerrainShadow terrainShadow;
+            TerrainTrees terrainTrees;
+        };
+
+ /*      File scope variables    */
+        static TerrainData* terrainData = nullptr;
+
         void cleanupGLData()
         {
-            if(terrainData->glData.terrainTexture != GLuint(-1))
+            if(terrainData->glData.terrainTexture != GL_INVALID_INDEX)
             {
                 glDeleteTextures(1, &(terrainData->glData.terrainTexture));
             }
@@ -130,22 +146,22 @@ namespace Terrain
             glDeleteBuffers(1, &(terrainData->quadVerticesVbo));
             glDeleteVertexArrays(1, &(terrainData->quadVao));
 
-            if(terrainData->glData.terrainProgram != GLuint(-1))
+            if(terrainData->glData.terrainProgram != GL_INVALID_INDEX)
             {
                 SCE::ShaderUtils::DeleteShaderProgram(terrainData->glData.terrainProgram);
             }
 
-            if(terrainData->glData.grassTexture != GLuint(-1))
+            if(terrainData->glData.grassTexture != GL_INVALID_INDEX)
             {
                 SCE::TextureUtils::DeleteTexture(terrainData->glData.grassTexture);
             }
 
-            if(terrainData->glData.dirtTexture != GLuint(-1))
+            if(terrainData->glData.dirtTexture != GL_INVALID_INDEX)
             {
                 SCE::TextureUtils::DeleteTexture(terrainData->glData.dirtTexture);
             }
 
-            if(terrainData->glData.snowTexture != GLuint(-1))
+            if(terrainData->glData.snowTexture != GL_INVALID_INDEX)
             {
                 SCE::TextureUtils::DeleteTexture(terrainData->glData.snowTexture);
             }
@@ -211,12 +227,12 @@ namespace Terrain
             float edgeChange = 1.0f;
 #ifdef ISLAND_MODE
             float xDist, zDist;
-#endif
+#endif            
 
             //Fill terrain heightmap
             for(int xCount = 0; xCount < TERRAIN_TEXTURE_SIZE; ++xCount)
             {
-                x = float(xCount) / float(TERRAIN_TEXTURE_SIZE);                
+                x = float(xCount) / float(TERRAIN_TEXTURE_SIZE);
                 x += xOffset;
 
                 for(int zCount = 0; zCount < TERRAIN_TEXTURE_SIZE; ++zCount)
@@ -239,8 +255,22 @@ namespace Terrain
                     for(int l = 0; l < nbLayers; ++l)
                     {
                         //stb_perlin returns values between -0.6 & 0.6
+#if USE_STB_PERLIN
                         float tmpNoise = stb_perlin_noise3(x*scale, y*scale, z*scale);
                         tmpNoise = SCE::Math::MapToRange(-0.7f, 0.7f, 0.0f, 1.0f, tmpNoise);
+#else
+                        float tmpNoise = Perlin::GetPerlinAt(x*scale, z*scale);
+                        tmpNoise = SCE::Math::MapToRange(-0.5f, 0.5f, 0.0f, 1.0f, tmpNoise);
+#endif
+                        if(l == 0)
+                        {
+                            tmpNoise = glm::pow(tmpNoise, 4.0f);
+                        }
+                        else if(l == 1)
+                        {
+                            tmpNoise = glm::pow(tmpNoise, 2.0f);
+                        }
+//                        tmpNoise = glm::pow(tmpNoise, 1.0f + 2.0f*(1.0f - float(l)/float(nbLayers)));
                         noise += tmpNoise*amplitude;
                         maxValue += amplitude;
                         amplitude *= persistence*(0.75f + tmpNoise);
@@ -342,14 +372,16 @@ namespace Terrain
             glData.dirtTextureUniform = glGetUniformLocation(terrainProgram, DIRT_TEXTURE_UNIFORM);
             glData.snowTextureUniform = glGetUniformLocation(terrainProgram, SNOW_TEXTURE_UNIFORM);
             glData.textureTileScaleUniform = glGetUniformLocation(terrainProgram, TEX_TILE_SIZE_UNIFORM);
-            glData.terrainMaxDistanceUniform =
-                    glGetUniformLocation(terrainProgram, TERRAIN_MAX_DIST_UNIFORM);
+            glData.maxTesselationDistanceUniform =
+                    glGetUniformLocation(terrainProgram, MAX_TESS_DIST_UNIFORM);
             glData.heightScaleUniform = glGetUniformLocation(terrainProgram, HEIGHT_SCALE_UNIFORM);
             glData.tesselationOverrideUniform =
                     glGetUniformLocation(terrainProgram, TESS_OVERRIDE_UNIFORM);
 
             glData.worldToTerrainMatUniform =
                     glGetUniformLocation(terrainProgram, WORLD_TO_TERRAIN_UNIFORM);
+            glData.patchSizeUniform =
+                    glGetUniformLocation(terrainProgram, PATCH_SIZE_UNIFORM);
 
             glData.grassTexture = SCE::TextureUtils::LoadTexture(GRASS_TEX_FILE);
             glData.dirtTexture = SCE::TextureUtils::LoadTexture(DIRT_TEX_FILE);
@@ -449,7 +481,7 @@ namespace Terrain
         }
 
         glm::vec3 cameraPosition = glm::vec3(glm::inverse(viewMatrix)*glm::vec4(0.0, 0.0, 0.0, 1.0));
-        SCE::DebugText::Print("Cam : " + std::to_string(cameraPosition.x)
+        SCE::DebugText::LogMessage("Cam : " + std::to_string(cameraPosition.x)
                               + ", " + std::to_string(cameraPosition.y)
                               + ", " + std::to_string(cameraPosition.z));
 
@@ -478,7 +510,7 @@ namespace Terrain
             return;
         }
 
-        if(isShadowPass > 0.0f)
+        if(isShadowPass)
         {
             SCE::DebugText::SetDefaultPrintColor(glm::vec3(0.0, 0.0, 0.5));
         }
@@ -493,27 +525,17 @@ namespace Terrain
         glUseProgram(glData.terrainProgram);
 
         //bind terrain textures
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, glData.terrainTexture);
+        SCE::TextureUtils::BindSafeTexture(glData.terrainTexture, 0, 0);//terrain height map is sampler 0
+        SCE::TextureUtils::BindTexture(glData.grassTexture, 1, glData.grassTextureUniform);
+        SCE::TextureUtils::BindTexture(glData.dirtTexture, 2, glData.dirtTextureUniform);
+        SCE::TextureUtils::BindTexture(glData.snowTexture, 3, glData.snowTextureUniform);
 
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, glData.grassTexture);
-        glUniform1i(glData.grassTextureUniform, 1);
-
-        glActiveTexture(GL_TEXTURE2);
-        glBindTexture(GL_TEXTURE_2D, glData.dirtTexture);
-        glUniform1i(glData.dirtTextureUniform, 2);
-
-        glActiveTexture(GL_TEXTURE3);
-        glBindTexture(GL_TEXTURE_2D, glData.snowTexture);
-        glUniform1i(glData.snowTextureUniform, 3);
-
-        //uniforms
-        glUniform1i(glData.terrainTextureUniform, 0);//terrain height map is sampler 0
-        glUniform1f(glData.terrainMaxDistanceUniform, terrainData->terrainSize);
+        //uniforms        
+        glUniform1f(glData.maxTesselationDistanceUniform, terrainData->terrainSize);
         glUniform1f(glData.heightScaleUniform, terrainData->heightScale);
         glUniform1f(glData.tesselationOverrideUniform, isShadowPass ? 8.0f : -1.0f);
         glUniform1f(glData.textureTileScaleUniform, terrainData->terrainSize / TEX_TILE_SIZE);
+        glUniform1f(glData.patchSizeUniform, terrainData->patchSize);
 
         glUniformMatrix4fv(glData.worldToTerrainMatUniform, 1, GL_FALSE,
                            &(terrainData->worldToTerrainspace[0][0]));
@@ -547,9 +569,9 @@ namespace Terrain
             ++patchCount;
         }
 
-        SCE::DebugText::Print("Rendering terrain");
-        SCE::DebugText::Print("Patches rendered : " + std::to_string(patchCount));
-        SCE::DebugText::Print("Patches offscreen : " + std::to_string(offscreenCount));
+        SCE::DebugText::LogMessage("Rendering terrain");
+        SCE::DebugText::LogMessage("Patches rendered : " + std::to_string(patchCount));
+        SCE::DebugText::LogMessage("Patches offscreen : " + std::to_string(offscreenCount));
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
@@ -593,10 +615,14 @@ namespace Terrain
         glDepthMask(GL_TRUE);
     }
 
-    void Init(float terrainSize, float patchSize, float terrainBaseHeight)
+    void Init(float terrainSize, float patchSize, float terrainBaseHeight, float maxTessDist)
     {
         if(!terrainData)
-        {                        
+        {
+#if !USE_STB_PERLIN
+            Perlin::MakePerlin(TERRAIN_TEXTURE_SIZE, TERRAIN_TEXTURE_SIZE);
+#endif
+
             //compute the actual terrain size we will cover with patches
             terrainSize = floor(terrainSize/patchSize)*patchSize;
             float halfTerrainSize = terrainSize / 2.0f;
@@ -605,7 +631,8 @@ namespace Terrain
             terrainData->terrainSize = terrainSize;
             terrainData->patchSize = patchSize;
             terrainData->baseHeight = terrainBaseHeight;
-            terrainData->heightScale = 1200.0f;            
+            terrainData->heightScale = 1400.0f;
+            terrainData->maxTesselationDist = maxTessDist;
 
             glm::vec3 terrainPosition_worldspace = vec3(0.0);
             terrainPosition_worldspace.y = terrainData->baseHeight;
@@ -616,7 +643,7 @@ namespace Terrain
             initializeRenderData();
             float xOffset = SCE::Math::RandRange(0.0f, 1.0f);
             float zOffset = SCE::Math::RandRange(0.0f, 1.0f);
-            initializeTerrain(xOffset, zOffset, 2.0f*terrainSize / 3000.0f,
+            initializeTerrain(xOffset, zOffset, 2.0f*terrainSize / 4000.0f,
                                       terrainData->heightScale);
             initializePatchMatrices();
         }
@@ -626,6 +653,9 @@ namespace Terrain
     {
         if(terrainData)
         {
+#if !USE_STB_PERLIN
+            Perlin::DestroyPerlin();
+#endif
             cleanupGLData();
             if(terrainData->heightmap != nullptr)
             {
