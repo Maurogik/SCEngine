@@ -29,8 +29,9 @@ _{
 #version 430 core
 
     uniform sampler2D TerrainHeightMap;
-    uniform float TerrainMaxDistance;
+    uniform float MaxTessDistance;
     uniform float TesselationOverride;
+    uniform float PatchSize;
     uniform mat4 M;
     uniform mat4 V;
     uniform mat4 MVP;
@@ -53,12 +54,10 @@ _{
             vec2 centerUv = (t0 - t1) * 0.5 + t1;
             float height = texture(TerrainHeightMap, centerUv).a;
 
-            float farDist = TerrainMaxDistance + 10.0;
+            float farDist = MaxTessDistance + 10.0;
             vec4 center_cameraspace = V * ( M * ((p0 - p1) * 0.5 + p1) + vec4(0.0, height, 0.0, 0.0));
             float dist = length(center_cameraspace);
-            //minimum tesselation if edge is behind camera
-            dist = farDist * step(center_cameraspace.z, -110.0) + dist;
-            float tess = 1.0 - clamp((dist - 150)/ farDist, 0.0, 1.0);//map to 0..64 range
+            float tess = 1.0 - clamp((dist - PatchSize)/ farDist, 0.0, 1.0);//map to 0..64 range
             tess = pow(tess, 12.0);
 
             return clamp(tess * 64.0, 4.0, 64.0);//between 0 and 64
@@ -271,14 +270,13 @@ _{
         topColor.rgb *= 2.0;
 
         float height = normAndHeight.a / HeightScale;
-        float flatness = pow(dot(normAndHeight.xyz, vec3(0.0, 1.0, 0.0)), 8.0);
-        float slope = 1.0 - flatness;
+        float flatness = dot(normAndHeight.xyz, vec3(0.0, 1.0, 0.0));
 
         float bottomEnd = 0.3;
-        float middleEnd = 0.7;
+        float middleEnd = 0.6;
 
         float bottomToMiddleMix = 0.3;
-        float middleToTopMix = 0.4;
+        float middleToTopMix = 0.3;
 
 
         float BtoMStart = bottomEnd - bottomToMiddleMix*0.5;
@@ -288,11 +286,12 @@ _{
         float MtoTEnd = middleEnd + middleToTopMix*0.5;
 
         float lerpLow = (height - BtoMStart) / (bottomToMiddleMix);
-        lerpLow = pow(lerpLow, 4.0) - flatness*(1.0 - lerpLow);
+//        lerpLow = pow(lerpLow, 4.0) - flatness*(1.0 - lerpLow);
+        lerpLow = pow(lerpLow, 1.0) + (1.0 - pow(flatness, 8.0))*pow(lerpLow, 1.0);
         lerpLow = clamp(lerpLow, 0.0, 1.0);
 
         float lerpHigh = (height - MtoTStart) / (middleToTopMix);
-        lerpHigh = pow(flatness, 4.0) * lerpHigh * 5.0 + pow(lerpHigh, 8.0);
+        lerpHigh = pow(flatness, 16.0) * lerpHigh * 5.0 + pow(lerpHigh, 8.0);
         lerpHigh = clamp(lerpHigh, 0.0, 1.0);
 
         vec4 resColor = vec4(0.0);//, slope, 0.0);
@@ -324,7 +323,7 @@ _{
 #ifdef WIREFRAME
         float d = min(gs_edgeDist.x, gs_edgeDist.y);
         d = min(d, gs_edgeDist.z);
-        float LineWidth = 0.75;
+        float LineWidth = 1.5;
         float mixVal = smoothstep(LineWidth - 1.0, LineWidth + 1.0, d);
         oColor = mix(vec3(0.0, 0.0, 0.0), oColor, mixVal);
 
