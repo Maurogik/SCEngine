@@ -93,7 +93,7 @@ _{
                     clamp(flare.g, 0.0, sunStrength));
     }
 
-#define LIGHT_SHAFTS
+//#define LIGHT_SHAFTS
 #ifdef LIGHT_SHAFTS
     float computeVolumetricLight(vec2 uv, vec2 sunUV)
     {
