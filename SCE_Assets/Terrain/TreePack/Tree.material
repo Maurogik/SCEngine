@@ -1,0 +1,6 @@
+Shader: Terrain/TreePack/Tree
+Name: BarkTex; Type: Texture2D; Value: Textures/White
+Name: BarkNormalMap; Type: Texture2D; Value: Textures/White
+Name: LeafTex; Type: Texture2D; Value: Textures/White
+Name: BarkRoughness; Type: float; Value: 0.9
+Name: LeafRoughness; Type: float; Value: 0.9
