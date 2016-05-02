@@ -76,6 +76,7 @@ namespace SCE {
          * @return the shader program ID.
          */
         static GLuint       loadShaders(const std::string& filename);
+        static void         deleteUniformData(uniform_data &data);
 
         //TODO add LOD/verions for shader ?
         std::string                             mMaterialName;

@@ -10,6 +10,10 @@ template<typename T>
 void SCE::Material::SetUniformValue(const std::string& uniformName, const T& value)
 {
     SCE::Debug::Assert(mUniforms.count(uniformName) > 0, "ERROR : This uniform does not exist");
+    if(mUniforms[uniformName].data != nullptr)
+    {
+        deleteUniformData(mUniforms[uniformName]);
+    }
     mUniforms[uniformName].data = new T(value);
 }
 

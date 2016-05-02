@@ -36,28 +36,7 @@ Material::~Material()
     //free each allocated structures
     for(auto it = begin(mUniforms); it != end(mUniforms); ++it)
     {
-        uniform_data data = it->second;
-        if(data.type == UNIFORM_FLOAT)
-        {
-            float* fData = (float*) data.data;
-            delete(fData);
-        }
-        else if (data.type == UNIFORM_VEC3)
-        {
-            glm::vec3* fData = (glm::vec3*) data.data;
-            delete(fData);
-        }
-        else if (data.type == UNIFORM_VEC4)
-        {
-            glm::vec4* fData = (glm::vec4*) data.data;
-            delete(fData);
-        }
-        else if (data.type == UNIFORM_TEXTURE2D)
-        {
-            GLuint* fData = (GLuint*) data.data;
-            SCE::TextureUtils::DeleteTexture(*fData);
-            delete(fData);
-        }
+        deleteUniformData(it->second);
     }
 
     //unload shader
@@ -195,6 +174,32 @@ const GLuint& Material::GetShaderProgram() const
 GLuint Material::loadShaders(const string &filename)
 {
     return SCE::ShaderUtils::CreateShaderProgram(filename);
+}
+
+void Material::deleteUniformData(uniform_data & data)
+{
+    if(data.type == UNIFORM_FLOAT)
+    {
+        float* fData = (float*) data.data;
+        delete(fData);
+    }
+    else if (data.type == UNIFORM_VEC3)
+    {
+        glm::vec3* fData = (glm::vec3*) data.data;
+        delete(fData);
+    }
+    else if (data.type == UNIFORM_VEC4)
+    {
+        glm::vec4* fData = (glm::vec4*) data.data;
+        delete(fData);
+    }
+    else if (data.type == UNIFORM_TEXTURE2D)
+    {
+        GLuint* fData = (GLuint*) data.data;
+        SCE::TextureUtils::DeleteTexture(*fData);
+        delete(fData);
+    }
+    data.data = nullptr;
 }
 
 
