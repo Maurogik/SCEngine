@@ -22,6 +22,7 @@
 #include "SCETime.hpp"
 #include "SCECore.hpp"
 #include "SCETools.hpp"
+#include "SCETextures.hpp"
 
 
 // Include standard headers
