@@ -13,10 +13,10 @@ using namespace SCE;
 using namespace std;
 
 #define MATERIAL "Materials/TestMaterial"
-//#define GROUND_MATERIAL "Materials/GroundMaterial"
-#define GROUND_MATERIAL "Materials/TestMaterial"
-#define WALL_MATERIAL "Materials/TestMaterial"
-//#define WALL_MATERIAL "Materials/WallMaterial"
+#define GROUND_MATERIAL "Materials/GroundMaterial"
+#define WALL_MATERIAL "Materials/WallMaterial"
+//#define GROUND_MATERIAL "Materials/TestMaterial"
+//#define WALL_MATERIAL "Materials/TestMaterial"
 
 SCEHandle<Container> createSphere(const string& name, const float& tesselation, const vec3& pos){
     //cube model
@@ -292,6 +292,71 @@ void sceneTerrain()
     SCEScene::AddTerrain(9000.0f, 600.0f, 0.0f);
 }
 
+void sceneTrees()
+{
+    SCEHandle<Container> plane = createPlane("plane", GROUND_MATERIAL, 500.0f, vec3(0.0f, -2.0f, 2.0f));
+    plane->GetComponent<Transform>()->SetWorldOrientation(vec3(-90.0f, 180.0f, 0.0f));
+
+    //Suzanne model
+    SCEHandle<Container> suz = createModel("suzanneObject", "Meshes/suzanne.obj", vec3(-20, 3, 0));
+    suz->GetComponent<Transform>()->RotateAroundAxis(vec3(0.0f, 1.0f, 0.0f), 180.0f);
+
+    float spreadDist = 10.0f;
+    float nbSpheres = 5;
+    for(float x = 0.0f; x < nbSpheres * 2.0f; ++x)
+    {
+        for(float z = -nbSpheres; z < nbSpheres; ++z)
+        {
+            SCEHandle<Container> sphere =
+                    createSphere("sphereObject", 3.0f, vec3(2.0 + x * spreadDist, 0.0f, z * spreadDist));
+            sphere->GetComponent<Material>()->SetUniformValue<float>("Roughness",
+                                                                     glm::max(x/(nbSpheres*2.0f), 0.02f));
+        }
+    }
+
+    std::string treeRoot = "Terrain/TreePack/";
+    std::string extension = ".obj";
+    std::vector<string> treeModelNames =
+    {
+        "tree_1/1/", "tree_1/2/",
+        "tree_2/1/", "tree_2/2/",
+        "tree_3/1/", "tree_3/2/",
+        "tree_4/1/", "tree_4/2/",
+    };
+
+
+
+    float treeSpacing = 15.0f;
+    glm::vec3 treePos = glm::vec3(-float(treeModelNames.size()) * 3.0f * 0.5f * treeSpacing, -2.2f, -80.0f);
+    for(uint i = 0; i < treeModelNames.size(); ++i)
+    {
+        for(int lod = 0; lod < 3; ++lod)
+        {
+            treePos.x += treeSpacing;
+            SCEHandle<Container> tree = createModel(treeModelNames[i],
+                                                    treeRoot + treeModelNames[i] +
+                                                    "lod" + std::to_string(lod) + extension,
+                                                    "Terrain/TreePack/Tree",
+                                                    treePos);
+
+            int treeInd = i / 2 + 1;
+            SCEHandle<Material> mat = tree->GetComponent<Material>();
+            std::string treeFolderPath = treeRoot + "tree_" + std::to_string(treeInd) + "/";
+
+            GLuint barkTex =
+                    SCE::TextureUtils::LoadTexture(treeFolderPath + "bark" + std::to_string(treeInd) + ".png");
+            GLuint barkNormal =
+                    SCE::TextureUtils::LoadTexture(treeFolderPath + "bark" + std::to_string(treeInd) + "_nmp"+ ".png");
+            GLuint leafTex =
+                    SCE::TextureUtils::LoadTexture(treeFolderPath + "leafs" + std::to_string(treeInd) + ".png");
+
+            mat->SetUniformValue<GLuint>("BarkTex", barkTex);
+            mat->SetUniformValue<GLuint>("BarkNormalMap", barkNormal);
+            mat->SetUniformValue<GLuint>("LeafTex", leafTex);
+        }
+    }
+}
+
 //#define START_NIGHT
 void lightOutdoor()
 {
@@ -354,6 +419,7 @@ int main( void )
 
 //    scene1();
     sceneTerrain();
+//    sceneTrees();
 //    scene2();
 //    scene3();
 

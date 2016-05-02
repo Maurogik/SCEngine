@@ -14,6 +14,7 @@
 #include "../headers/SCETools.hpp"
 #include "../headers/SCETerrain.hpp"
 #include "../headers/SCEFrustrumCulling.hpp"
+#include "../headers/SCEQuality.hpp"
 
 #include <stb_perlin.h>
 #include <glm/gtc/matrix_transform.hpp>
@@ -26,20 +27,16 @@
 #include "../headers/SCEPerlin.hpp"
 #endif
 
-#define USE_PINE 1
 
-#if USE_PINE
-    #define TREE_SHADER_NAME "Terrain/PineTree"
-    #define TREE_ALPHA_TEXTURE_NAME "Terrain/Textures/pine_opa.png"
-    #define TREE_COLOR_TEXTURE_NAME "Terrain/Textures/pine"
-    #define TREE_MODEL_NAME "Terrain/Meshes/pine"
-#else
-    #define TREE_SHADER_NAME "Terrain/Tree"
-    #define TREE_MODEL_NAME "Terrain/Meshes/tree_lod"
-#endif
+#define TREE_TRUNK_SHADER_NAME "Terrain/TreePack/TreeInstanced_trunk"
+#define TREE_LEAVES_SHADER_NAME "Terrain/TreePack/TreeInstanced_leaves"
+#define TREE_MODEL_NAME "Terrain/TreePack/tree_1/1/lod"
 
-#define TREE_ALPHA_TEX_UNIFORM "AlphaTex"
-#define TREE_COLOR_TEX_UNIFORM "ColorTex"
+#define TREE_MODEL_EXTENSION ".obj"
+
+#define TREE_BARK_TEX_UNIFORM "BarkTex"
+#define TREE_BARK_NORMAL_TEX_UNIFORM "BarkNormalMap"
+#define TREE_LEAVES_TEX_UNIFORM "LeafTex"
 
 #define IMPOSTOR_SHADER_NAME "Terrain/TreeImpostor"
 #define IMPOSTOR_TEXTURE_UNIFORM "ImpostorTex"
@@ -55,21 +52,26 @@ SCE::TerrainTrees::TerrainTrees()
     treeGlData.impostorData.scaleMatrix = glm::scale(mat4(1.0), glm::vec3(0.5, 1.0, 1.0));
 
     //Load tree models
-    treeGlData.shaderProgram = SCE::ShaderUtils::CreateShaderProgram(TREE_SHADER_NAME);
+    treeGlData.trunkShaderProgram = SCE::ShaderUtils::CreateShaderProgram(TREE_TRUNK_SHADER_NAME);
+    treeGlData.leavesShaderProgram = SCE::ShaderUtils::CreateShaderProgram(TREE_LEAVES_SHADER_NAME);
 
     for(int lod = 0; lod < TREE_LOD_COUNT; ++lod)
     {
-        std::string lodStr = "";
-#if !USE_PINE
-        lodStr = std::to_string(lod+TREE_LOD_MIN);
-#endif
-        ui16 meshId = SCE::MeshLoader::CreateMeshFromFile(TREE_MODEL_NAME +
-                                                          lodStr +
-                                                          ".obj");
+        std::string lodStr = std::to_string(lod + TREE_LOD_MIN);
+        ui16 trunkMeshId = SCE::MeshLoader::CreateMeshFromFile(TREE_MODEL_NAME +
+                                                          lodStr + "_trunk" +
+                                                          TREE_MODEL_EXTENSION);
+        SCE::MeshRender::InitializeMeshRenderData(trunkMeshId);
+        SCE::MeshRender::MakeMeshInstanced(trunkMeshId);
 
-        SCE::MeshRender::InitializeMeshRenderData(meshId);
-        SCE::MeshRender::MakeMeshInstanced(meshId);
-        treeGlData.meshIds[lod] = meshId;
+        ui16 leavesMeshId = SCE::MeshLoader::CreateMeshFromFile(TREE_MODEL_NAME +
+                                                          lodStr + "_leaves" +
+                                                          TREE_MODEL_EXTENSION);
+        SCE::MeshRender::InitializeMeshRenderData(leavesMeshId);
+        SCE::MeshRender::MakeMeshInstanced(leavesMeshId);
+
+        treeGlData.trunkMeshIds[lod] = trunkMeshId;
+        treeGlData.leavesMeshIds[lod] = leavesMeshId;
     }
 
 #if USE_PINE
@@ -105,9 +107,14 @@ SCE::TerrainTrees::TerrainTrees()
 
 SCE::TerrainTrees::~TerrainTrees()
 {
-    if(treeGlData.shaderProgram != GL_INVALID_INDEX)
+    if(treeGlData.trunkShaderProgram != GL_INVALID_INDEX)
     {
-        SCE::ShaderUtils::DeleteShaderProgram(treeGlData.shaderProgram);
+        SCE::ShaderUtils::DeleteShaderProgram(treeGlData.trunkShaderProgram);
+    }
+
+    if(treeGlData.leavesShaderProgram != GL_INVALID_INDEX)
+    {
+        SCE::ShaderUtils::DeleteShaderProgram(treeGlData.leavesShaderProgram);
     }
 
     if(treeGlData.impostorData.shaderProgram != GL_INVALID_INDEX)
@@ -117,9 +124,28 @@ SCE::TerrainTrees::~TerrainTrees()
 
     for(uint lod = 0; lod < TREE_LOD_COUNT; ++lod)
     {
-        SCE::MeshRender::DeleteMeshRenderData(treeGlData.meshIds[lod]);
-        SCE::MeshLoader::DeleteMesh(treeGlData.meshIds[lod]);
-        treeGlData.meshIds[lod] = ui16(-1);
+        SCE::MeshRender::DeleteMeshRenderData(treeGlData.trunkMeshIds[lod]);
+        SCE::MeshLoader::DeleteMesh(treeGlData.trunkMeshIds[lod]);
+        treeGlData.trunkMeshIds[lod] = ui16(-1);
+
+        SCE::MeshRender::DeleteMeshRenderData(treeGlData.leavesMeshIds[lod]);
+        SCE::MeshLoader::DeleteMesh(treeGlData.leavesMeshIds[lod]);
+        treeGlData.leavesMeshIds[lod] = ui16(-1);
+    }
+
+    if(treeGlData.barkNormalTexture != GL_INVALID_INDEX)
+    {
+        SCE::TextureUtils::DeleteTexture(treeGlData.barkNormalTexture);
+    }
+
+    if(treeGlData.barkTexture!= GL_INVALID_INDEX)
+    {
+        SCE::TextureUtils::DeleteTexture(treeGlData.barkTexture);
+    }
+
+    if(treeGlData.leafTexture != GL_INVALID_INDEX)
+    {
+        SCE::TextureUtils::DeleteTexture(treeGlData.leafTexture);
     }
 
     if(treeGlData.impostorData.texture != GL_INVALID_INDEX)
@@ -139,7 +165,7 @@ void SCE::TerrainTrees::InitializeTreeLayout(glm::vec4* normAndHeightTex, int te
                                              float halfTerrainSize)
 {
     //number of time the map is divided to form tree groups
-    int treeGroupIter = int(16.0f*halfTerrainSize/1500.0f);
+    int treeGroupIter = int(32.0f*halfTerrainSize/1500.0f);
     float scale = startScale;
     float baseGroupRadius = (1.0f / float(treeGroupIter)) * halfTerrainSize;
     float maxRadiusScale = 4.0f;
@@ -199,7 +225,7 @@ void SCE::TerrainTrees::SpawnTreeInstances(const glm::mat4& viewMatrix,
             glm::translate(mat4(1.0), glm::vec3(0.0, 1.0, 0.0));
 
     //apply a power to the distance to the tree to have the LOD group be exponentionally large
-    float power = 1.45f;
+    float power = 1.6f;
     float maxDistToCam = 4500;
 
     int discardedGroups = 0;
@@ -218,7 +244,7 @@ void SCE::TerrainTrees::SpawnTreeInstances(const glm::mat4& viewMatrix,
         if(SCE::FrustrumCulling::IsSphereInFrustrum(groupPos_cameraspace, totalRadius))
         {
             float distToCam = glm::max(0.0f, length(groupPos_cameraspace) - group.radius);
-            distToCam = pow(distToCam , power);
+            distToCam = pow(distToCam , power) * SCE::Quality::TreeLodMultiplier;
             lodGroup = int(floor(distToCam/maxDistToCam));
 
             for(float x = -group.radius; x < group.radius; x += group.spacing)
@@ -294,7 +320,9 @@ void SCE::TerrainTrees::SpawnTreeInstances(const glm::mat4& viewMatrix,
 
     for(uint lod = 0; lod < TREE_LOD_COUNT; ++lod)
     {
-        SCE::MeshRender::SetMeshInstances(treeGlData.meshIds[lod],
+        SCE::MeshRender::SetMeshInstances(treeGlData.trunkMeshIds[lod],
+                                          treeMatrices[lod], GL_DYNAMIC_DRAW);
+        SCE::MeshRender::SetMeshInstances(treeGlData.leavesMeshIds[lod],
                                           treeMatrices[lod], GL_DYNAMIC_DRAW);
         SCE::DebugText::LogMessage("Trees lod " + std::to_string(lod) + " : " +
                               std::to_string(treeMatrices[lod].size()));
@@ -310,17 +338,25 @@ void SCE::TerrainTrees::SpawnTreeInstances(const glm::mat4& viewMatrix,
 void SCE::TerrainTrees::RenderTrees(const mat4 &projectionMatrix, const mat4 &viewMatrix,
                                     bool isShadowPass)
 {
-    //render trees
-    SCE::ShaderUtils::UseShader(treeGlData.shaderProgram);
+    //render trees trunks
+    SCE::ShaderUtils::UseShader(treeGlData.trunkShaderProgram);
 
-#if USE_PINE
-    SCE::TextureUtils::BindTexture(treeGlData.alphaTexture, 0, treeGlData.alphaTextureUniform);
-    SCE::TextureUtils::BindTexture(treeGlData.colorTexture, 1, treeGlData.colorTextureUniform);
-#endif
+    //SCE::TextureUtils::BindTexture(treeGlData.barkTexture, 0, treeGlData.barkTexUniform);
+    //SCE::TextureUtils::BindTexture(treeGlData.barkNormalTexture, 1, treeGlData.barkNormalTexUniform);
 
     for(uint lod = 0; lod < TREE_LOD_COUNT; ++lod)
     {
-        SCE::MeshRender::DrawInstances(treeGlData.meshIds[lod], projectionMatrix, viewMatrix);
+        SCE::MeshRender::DrawInstances(treeGlData.trunkMeshIds[lod], projectionMatrix, viewMatrix);
+    }
+
+    //render trees leaves
+    SCE::ShaderUtils::UseShader(treeGlData.leavesShaderProgram);
+
+    //SCE::TextureUtils::BindTexture(treeGlData.leafTexture, 0, treeGlData.leafTexUniform);
+
+    for(uint lod = 0; lod < TREE_LOD_COUNT; ++lod)
+    {
+        SCE::MeshRender::DrawInstances(treeGlData.leavesMeshIds[lod], projectionMatrix, viewMatrix);
     }
 
     if(!isShadowPass)//impostors don't cast shadows

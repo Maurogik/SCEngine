@@ -59,7 +59,7 @@ namespace Render
             // The geometry pass updates the depth buffer
             glDepthMask(GL_TRUE);
             glEnable(GL_DEPTH_TEST);
-            glEnable(GL_CULL_FACE);
+            glDisable(GL_CULL_FACE);
             glCullFace(GL_BACK);
 
             SCE::Terrain::RenderTerrain(renderData.projectionMatrix, renderData.viewMatrix);

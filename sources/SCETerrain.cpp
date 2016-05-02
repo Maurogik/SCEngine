@@ -16,6 +16,7 @@
 #include "../headers/SCEFrustrumCulling.hpp"
 #include "../headers/SCETerrainShadow.hpp"
 #include "../headers/SCETerrainTrees.hpp"
+#include "../headers/SCEQuality.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/random.hpp>
@@ -42,7 +43,7 @@
 #define MAX_TESS_DIST_UNIFORM "MaxTessDistance"
 #define WORLD_TO_TERRAIN_UNIFORM "WorldToTerrainSpace"
 #define HEIGHT_SCALE_UNIFORM "HeightScale"
-#define TESS_OVERRIDE_UNIFORM "TesselationOverride"
+#define TESS_LOD_MULT_UNIFORM "TessLodMultiplier"
 #define PATCH_SIZE_UNIFORM "PatchSize"
 
 #ifdef SCE_DEBUG
@@ -82,7 +83,7 @@ namespace Terrain
             GLint   terrainTextureUniform;
             GLint   maxTesselationDistanceUniform;
             GLint   heightScaleUniform;
-            GLint   tesselationOverrideUniform;
+            GLint   tessLodMultUniform;
             GLint   grassTextureUniform;
             GLint   dirtTextureUniform;
             GLint   snowTextureUniform;
@@ -375,8 +376,8 @@ namespace Terrain
             glData.maxTesselationDistanceUniform =
                     glGetUniformLocation(terrainProgram, MAX_TESS_DIST_UNIFORM);
             glData.heightScaleUniform = glGetUniformLocation(terrainProgram, HEIGHT_SCALE_UNIFORM);
-            glData.tesselationOverrideUniform =
-                    glGetUniformLocation(terrainProgram, TESS_OVERRIDE_UNIFORM);
+            glData.tessLodMultUniform =
+                    glGetUniformLocation(terrainProgram, TESS_LOD_MULT_UNIFORM);
 
             glData.worldToTerrainMatUniform =
                     glGetUniformLocation(terrainProgram, WORLD_TO_TERRAIN_UNIFORM);
@@ -533,7 +534,7 @@ namespace Terrain
         //uniforms        
         glUniform1f(glData.maxTesselationDistanceUniform, terrainData->terrainSize);
         glUniform1f(glData.heightScaleUniform, terrainData->heightScale);
-        glUniform1f(glData.tesselationOverrideUniform, isShadowPass ? 8.0f : -1.0f);
+        glUniform1f(glData.tessLodMultUniform, isShadowPass ? 32.0f : SCE::Quality::TerrainLodMultiplier);
         glUniform1f(glData.textureTileScaleUniform, terrainData->terrainSize / TEX_TILE_SIZE);
         glUniform1f(glData.patchSizeUniform, terrainData->patchSize);
 

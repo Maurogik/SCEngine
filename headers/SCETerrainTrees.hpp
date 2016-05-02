@@ -9,14 +9,7 @@
 #include "SCEDefines.hpp"
 #include <vector>
 
-
-#define USE_PINE 1
-
-#if USE_PINE
-#define TREE_LOD_COUNT 1
-#else
-#define TREE_LOD_COUNT 4
-#endif
+#define TREE_LOD_COUNT 3
 #define TREE_LOD_MIN 0
 
 namespace SCE
@@ -48,15 +41,20 @@ namespace SCE
         };
 
         struct TreeGLData
-        {
-            ui16    meshIds[TREE_LOD_COUNT];
-            GLuint  shaderProgram;
+        {            
+            GLuint  trunkShaderProgram;
+            GLuint  leavesShaderProgram;
 
-            GLuint  alphaTexture;
-            GLuint  colorTexture;
+            GLuint  leafTexture;
+            GLuint  barkTexture;
+            GLuint  barkNormalTexture;
 
-            GLuint  alphaTextureUniform;
-            GLuint  colorTextureUniform;
+            GLuint  leafTexUniform;
+            GLuint  barkTexUniform;
+            GLuint  barkNormalTexUniform;
+
+            ui16    trunkMeshIds[TREE_LOD_COUNT];
+            ui16    leavesMeshIds[TREE_LOD_COUNT];
 
             ImpostorGLData impostorData;
         };
