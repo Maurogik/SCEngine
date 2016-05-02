@@ -30,7 +30,7 @@ _{
 
     uniform sampler2D TerrainHeightMap;
     uniform float MaxTessDistance;
-    uniform float TesselationOverride;
+    uniform float TessLodMultiplier;
     uniform float PatchSize;
     uniform mat4 M;
     uniform mat4 V;
@@ -49,23 +49,16 @@ _{
 
     float tesselationFromDist(vec4 p0, vec4 p1, vec2 t0, vec2 t1)
     {
-        if(TesselationOverride < 0.0f)
-        {
-            vec2 centerUv = (t0 - t1) * 0.5 + t1;
-            float height = texture(TerrainHeightMap, centerUv).a;
+        vec2 centerUv = (t0 - t1) * 0.5 + t1;
+        float height = texture(TerrainHeightMap, centerUv).a;
 
-            float farDist = MaxTessDistance + 10.0;
-            vec4 center_cameraspace = V * ( M * ((p0 - p1) * 0.5 + p1) + vec4(0.0, height, 0.0, 0.0));
-            float dist = length(center_cameraspace);
-            float tess = 1.0 - clamp((dist - PatchSize)/ farDist, 0.0, 1.0);//map to 0..64 range
-            tess = pow(tess, 12.0);
+        float farDist = MaxTessDistance + 10.0;
+        vec4 center_cameraspace = V * ( M * ((p0 - p1) * 0.5 + p1) + vec4(0.0, height, 0.0, 0.0));
+        float dist = length(center_cameraspace);
+        float tess = 1.0 - clamp((dist - PatchSize)/ farDist, 0.0, 1.0);//map to 0..64 range
+        tess = pow(tess, 12.0) / TessLodMultiplier;
 
-            return clamp(tess * 64.0, 4.0, 64.0);//between 0 and 64
-        }
-        else
-        {
-            return TesselationOverride;
-        }
+        return clamp(tess * 64.0, 4.0, 64.0);//between 0 and 64
     }
 
     void main(void)
@@ -156,7 +149,7 @@ _}
 _{
 #version 430 core
 
-//#define WIREFRAME
+#define WIREFRAME
 
     uniform vec2 SCE_ScreenSize;
 
@@ -231,7 +224,7 @@ _}
 _{
 #version 430 core
 
-//#define WIREFRAME
+#define WIREFRAME
 
     uniform sampler2D TerrainHeightMap;
     uniform sampler2D GrassTex;
