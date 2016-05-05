@@ -10,7 +10,9 @@ namespace SCE
 {
     namespace Quality
     {
-        extern float TreeLodMultiplier;
+        #define MAX_TREE_LOD_COUNT 5
+
+        extern float TreeLodDistances[MAX_TREE_LOD_COUNT];
         extern float TerrainLodMultiplier;
     }
 }

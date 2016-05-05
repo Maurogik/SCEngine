@@ -25,7 +25,6 @@ namespace SCE
             Count
         };
 
-        void        Initialize();
         void        UpdateKeyStates(GLFWwindow *window);
         KeyAction   GetKeyAction(int key);
     }

@@ -21,7 +21,7 @@ FILES="*/*/*.obj"
 for file in $FILES
 do
 	echo " -- Processing $file"
-    eval "$TOOL_PATH $PWD/$file 1.0 0 0"
+    eval "$TOOL_PATH $PWD/$file 1.5 0 0"
 done
 # IFS=, COMMAND_LIST=($COMMAND_ARGS)
 

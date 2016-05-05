@@ -5,7 +5,7 @@
 /**************************************/
 
 #include "../headers/SCEInput.hpp"
-#include <glfw3.h>
+//#include <glfw3.h>
 
 namespace SCE
 {

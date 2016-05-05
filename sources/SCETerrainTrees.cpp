@@ -165,11 +165,11 @@ void SCE::TerrainTrees::InitializeTreeLayout(glm::vec4* normAndHeightTex, int te
                                              float halfTerrainSize)
 {
     //number of time the map is divided to form tree groups
-    int treeGroupIter = int(32.0f*halfTerrainSize/1500.0f);
+    int treeGroupIter = int(24.0f*halfTerrainSize/1500.0f);
     float scale = startScale;
     float baseGroupRadius = (1.0f / float(treeGroupIter)) * halfTerrainSize;
     float maxRadiusScale = 4.0f;
-    float baseSpacing = 40.0f;
+    float baseSpacing = 75.0f;
 
     for(int xCount = 0; xCount < treeGroupIter; ++xCount)
     {
@@ -184,7 +184,7 @@ void SCE::TerrainTrees::InitializeTreeLayout(glm::vec4* normAndHeightTex, int te
 #if USE_STB_PERLIN
             float y = 115.0f; //any value will do, just need to be something else than the terrain height
             float noise = stb_perlin_noise3((x + xOffset)*scale, y*scale, (z + zOffset)*scale);
-            noise = SCE::Math::MapToRange(-0.7f, 0.7f, 0.0f, maxRadiusScale, noise);
+            noise = SCE::Math::MapToRange(-0.7f, 0.7f, 1.0f, maxRadiusScale, noise);
 #else
             float noise = Perlin::GetPerlinAt((x + xOffset)*scale, (z + zOffset)*scale);
             noise = SCE::Math::MapToRange(-0.5f, 0.5f, 0.0f, maxRadiusScale, noise);
@@ -213,7 +213,7 @@ void SCE::TerrainTrees::SpawnTreeInstances(const glm::mat4& viewMatrix,
                                            float maxDistFromCenter)
 {
     float perlinScale = 0.05f;
-
+    float positionNoiseScale = 5.0f;
     std::vector<glm::mat4> treeMatrices[TREE_LOD_COUNT];
     std::vector<glm::mat4> treeImpostorMatrices;
     float noiseX, noiseZ;
@@ -223,10 +223,6 @@ void SCE::TerrainTrees::SpawnTreeInstances(const glm::mat4& viewMatrix,
             treeGlData.impostorData.scaleMatrix*
             glm::scale(mat4(1.0), glm::vec3(IMPOSTOR_SIZE))*
             glm::translate(mat4(1.0), glm::vec3(0.0, 1.0, 0.0));
-
-    //apply a power to the distance to the tree to have the LOD group be exponentionally large
-    float power = 1.6f;
-    float maxDistToCam = 4500;
 
     int discardedGroups = 0;
     //Spawn trees from tree groups
@@ -239,14 +235,12 @@ void SCE::TerrainTrees::SpawnTreeInstances(const glm::mat4& viewMatrix,
         glm::vec3 groupPos = glm::vec3(group.position.x, 0.0f,
                                        group.position.y);
         groupPos.y = SCE::Terrain::GetTerrainHeight(groupPos);
+        glm::vec3 leveledCamPos = cameraPosition;
+        leveledCamPos.y = 0.0f;
         glm::vec4 groupPos_cameraspace = viewMatrix*glm::vec4(groupPos, 1.0);
 
         if(SCE::FrustrumCulling::IsSphereInFrustrum(groupPos_cameraspace, totalRadius))
         {
-            float distToCam = glm::max(0.0f, length(groupPos_cameraspace) - group.radius);
-            distToCam = pow(distToCam , power) * SCE::Quality::TreeLodMultiplier;
-            lodGroup = int(floor(distToCam/maxDistToCam));
-
             for(float x = -group.radius; x < group.radius; x += group.spacing)
             {
                 for(float z = -group.radius; z < group.radius; z += group.spacing)
@@ -268,8 +262,17 @@ void SCE::TerrainTrees::SpawnTreeInstances(const glm::mat4& viewMatrix,
                     float scale = SCE::Math::MapToRange(-0.5f, 0.5f, 0.8f, 1.4f, noiseZ);
 #endif
 
-                    treePos.x += noiseX*group.spacing*5.0f;
-                    treePos.z += noiseZ*group.spacing*5.0f;
+                    treePos.x += noiseX*group.spacing*positionNoiseScale;
+                    treePos.z += noiseZ*group.spacing*positionNoiseScale;
+
+                    float distToCam = glm::max(0.0f, length(treePos - leveledCamPos));
+                    for(lodGroup = TREE_LOD_MIN; lodGroup < TREE_LOD_COUNT; ++lodGroup)
+                    {
+                        if(distToCam < SCE::Quality::TreeLodDistances[lodGroup])
+                        {
+                            break;
+                        }
+                    }
 
                     //tree could have spawn outside of terrain, only keep if inside
                     if( abs(treePos.x) < maxDistFromCenter

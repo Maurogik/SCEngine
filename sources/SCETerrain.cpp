@@ -475,8 +475,10 @@ namespace Terrain
     void UpdateTerrain(const glm::mat4& projectionMatrix,
                        const glm::mat4& viewMatrix)
     {
+        static bool update = false;
+        update = !update;
         //TODO find a better way to not render when there is no terrain
-        if(!terrainData)
+        if(!terrainData || !update)
         {
             return;
         }
