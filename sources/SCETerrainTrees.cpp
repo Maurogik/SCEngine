@@ -15,6 +15,7 @@
 #include "../headers/SCETerrain.hpp"
 #include "../headers/SCEFrustrumCulling.hpp"
 #include "../headers/SCEQuality.hpp"
+#include "../headers/SCETime.hpp"
 
 #include <stb_perlin.h>
 #include <glm/gtc/matrix_transform.hpp>
@@ -27,6 +28,7 @@
 #include "../headers/SCEPerlin.hpp"
 #endif
 
+#define USE_IMPOSTORS 0
 
 #define TREE_TRUNK_SHADER_NAME "Terrain/TreePack/TreeInstanced_trunk"
 #define TREE_LEAVES_SHADER_NAME "Terrain/TreePack/TreeInstanced_leaves"
@@ -34,6 +36,9 @@
 
 #define TREE_MODEL_EXTENSION ".obj"
 
+#define TREE_BARK_TEX_NAME "Terrain/TreePack/tree_1/bark.png"
+#define TREE_BARK_NORMAL_NAME "Terrain/TreePack/tree_1/bark_normal.png"
+#define TREE_LEAVES_TEX_NAME "Terrain/TreePack/tree_1/leafs.png"
 #define TREE_BARK_TEX_UNIFORM "BarkTex"
 #define TREE_BARK_NORMAL_TEX_UNIFORM "BarkNormalMap"
 #define TREE_LEAVES_TEX_UNIFORM "LeafTex"
@@ -42,14 +47,15 @@
 #define IMPOSTOR_TEXTURE_UNIFORM "ImpostorTex"
 #define IMPOSTOR_NORMAL_UNIFORM "ImpostorNormalTex"
 #define IMPOSTOR_SCALE_INVERT_UNIFORM "ScaleInvertMat"
-#define IMPOSTOR_TEXTURE_NAME "Terrain/Textures/treeImpostor"
-#define IMPOSTOR_NORMAL_NAME "Terrain/Textures/treeImpostorNormal"
-#define IMPOSTOR_SIZE 12.0f
+#define IMPOSTOR_TEXTURE_NAME "Terrain/TreePack/tree_1/1/impostor/diffuse.png"
+#define IMPOSTOR_NORMAL_NAME "Terrain/TreePack/tree_1/1/impostor/normal.png"
+#define IMPOSTOR_SIZE 16.0f
 
 //Spread tree groups over the terrain
 SCE::TerrainTrees::TerrainTrees()
+    : m_TimeSinceLastUpdate(0.0f)
 {
-    treeGlData.impostorData.scaleMatrix = glm::scale(mat4(1.0), glm::vec3(0.5, 1.0, 1.0));
+    treeGlData.impostorData.scaleMatrix = glm::scale(mat4(1.0), glm::vec3(1.0, 1.0, 1.0));
 
     //Load tree models
     treeGlData.trunkShaderProgram = SCE::ShaderUtils::CreateShaderProgram(TREE_TRUNK_SHADER_NAME);
@@ -74,16 +80,17 @@ SCE::TerrainTrees::TerrainTrees()
         treeGlData.leavesMeshIds[lod] = leavesMeshId;
     }
 
-#if USE_PINE
-    //load tree textures
-    treeGlData.alphaTexture = SCE::TextureUtils::LoadTexture(TREE_ALPHA_TEXTURE_NAME);
-    treeGlData.colorTexture = SCE::TextureUtils::LoadTexture(TREE_COLOR_TEXTURE_NAME);
+    treeGlData.barkTexture = SCE::TextureUtils::LoadTexture(TREE_BARK_TEX_NAME);
+    treeGlData.barkTexUniform =
+            glGetUniformLocation(treeGlData.trunkShaderProgram, TREE_BARK_TEX_UNIFORM);
 
-    treeGlData.alphaTextureUniform =
-            glGetUniformLocation(treeGlData.shaderProgram, TREE_ALPHA_TEX_UNIFORM);
-    treeGlData.colorTextureUniform =
-            glGetUniformLocation(treeGlData.shaderProgram, TREE_COLOR_TEX_UNIFORM);
-#endif
+    treeGlData.barkNormalTexture = SCE::TextureUtils::LoadTexture(TREE_BARK_NORMAL_NAME);
+    treeGlData.barkNormalTexUniform =
+            glGetUniformLocation(treeGlData.trunkShaderProgram, TREE_BARK_NORMAL_TEX_UNIFORM);
+
+    treeGlData.leafTexture = SCE::TextureUtils::LoadTexture(TREE_LEAVES_TEX_NAME);
+    treeGlData.leafTexUniform =
+            glGetUniformLocation(treeGlData.leavesShaderProgram, TREE_LEAVES_TEX_UNIFORM);
 
     //Set up impostor render data
     treeGlData.impostorData.meshId = SCE::MeshLoader::CreateQuadMesh();
@@ -165,11 +172,12 @@ void SCE::TerrainTrees::InitializeTreeLayout(glm::vec4* normAndHeightTex, int te
                                              float halfTerrainSize)
 {
     //number of time the map is divided to form tree groups
-    int treeGroupIter = int(24.0f*halfTerrainSize/1500.0f);
+    float divPerKm = glm::mix(16.0f, 128.0f, SCE::Quality::Trees::PlacementAccuracy);
+    int treeGroupIter = int(divPerKm*halfTerrainSize/1000.0f);
     float scale = startScale;
     float baseGroupRadius = (1.0f / float(treeGroupIter)) * halfTerrainSize;
-    float maxRadiusScale = 4.0f;
-    float baseSpacing = 75.0f;
+    float maxRadiusScale = 2.0f;
+    float baseSpacing = SCE::Quality::Trees::BaseSpacing;
 
     for(int xCount = 0; xCount < treeGroupIter; ++xCount)
     {
@@ -182,7 +190,7 @@ void SCE::TerrainTrees::InitializeTreeLayout(glm::vec4* normAndHeightTex, int te
             vec4 normAndHeight = normAndHeightTex[int(x*textureSize) *
                     textureSize + int(z*textureSize)];
 #if USE_STB_PERLIN
-            float y = 115.0f; //any value will do, just need to be something else than the terrain height
+            float y = 115.0f; //any value will do, just need to be something other than the terrain height
             float noise = stb_perlin_noise3((x + xOffset)*scale, y*scale, (z + zOffset)*scale);
             noise = SCE::Math::MapToRange(-0.7f, 0.7f, 1.0f, maxRadiusScale, noise);
 #else
@@ -212,17 +220,26 @@ void SCE::TerrainTrees::SpawnTreeInstances(const glm::mat4& viewMatrix,
                                            const glm::vec3& cameraPosition,
                                            float maxDistFromCenter)
 {
+    m_TimeSinceLastUpdate += (float)SCE::Time::DeltaTime();
+    if(m_TimeSinceLastUpdate < SCE::Quality::Trees::VisibilityUpdateDelay)
+    {        
+        return;
+    }
+    m_TimeSinceLastUpdate = 0.0f;
+
     float perlinScale = 0.05f;
     float positionNoiseScale = 5.0f;
     std::vector<glm::mat4> treeMatrices[TREE_LOD_COUNT];
     std::vector<glm::mat4> treeImpostorMatrices;
     float noiseX, noiseZ;
 
+#if USE_IMPOSTORS
     //scale impostor quad so that it looks like a regular tree
     glm::mat4 impostorScaleMat =
             treeGlData.impostorData.scaleMatrix*
             glm::scale(mat4(1.0), glm::vec3(IMPOSTOR_SIZE))*
             glm::translate(mat4(1.0), glm::vec3(0.0, 1.0, 0.0));
+#endif
 
     int discardedGroups = 0;
     //Spawn trees from tree groups
@@ -231,7 +248,7 @@ void SCE::TerrainTrees::SpawnTreeInstances(const glm::mat4& viewMatrix,
     for(TreeGroup& group : treeGroups)
     {
         //make a bigger radius to account for possible displacement
-        float totalRadius = group.radius*2.0f;
+        float totalRadius = group.radius + group.spacing*positionNoiseScale;
         glm::vec3 groupPos = glm::vec3(group.position.x, 0.0f,
                                        group.position.y);
         groupPos.y = SCE::Terrain::GetTerrainHeight(groupPos);
@@ -268,7 +285,7 @@ void SCE::TerrainTrees::SpawnTreeInstances(const glm::mat4& viewMatrix,
                     float distToCam = glm::max(0.0f, length(treePos - leveledCamPos));
                     for(lodGroup = TREE_LOD_MIN; lodGroup < TREE_LOD_COUNT; ++lodGroup)
                     {
-                        if(distToCam < SCE::Quality::TreeLodDistances[lodGroup])
+                        if(distToCam < SCE::Quality::Trees::LodDistances[lodGroup])
                         {
                             break;
                         }
@@ -281,7 +298,7 @@ void SCE::TerrainTrees::SpawnTreeInstances(const glm::mat4& viewMatrix,
                         //put tree at the surface of terrain
                         float height = SCE::Terrain::GetTerrainHeight(treePos);
                         //go slightly down to avoid sticking out of the ground
-                        treePos.y += height - 1.5f*scale;
+                        treePos.y = height - 1.7f*scale;
 
                         glm::mat4 instanceMatrix;
 
@@ -294,6 +311,7 @@ void SCE::TerrainTrees::SpawnTreeInstances(const glm::mat4& viewMatrix,
                                     glm::scale(mat4(1.0), glm::vec3(scale));
                             treeMatrices[lodGroup].push_back(instanceMatrix);
                         }
+#if USE_IMPOSTORS
                         //make an impostor
                         else
                         {
@@ -308,6 +326,7 @@ void SCE::TerrainTrees::SpawnTreeInstances(const glm::mat4& viewMatrix,
                                     impostorScaleMat;
                             treeImpostorMatrices.push_back(instanceMatrix);
                         }
+#endif
                     }
                 }
             }
@@ -341,11 +360,12 @@ void SCE::TerrainTrees::SpawnTreeInstances(const glm::mat4& viewMatrix,
 void SCE::TerrainTrees::RenderTrees(const mat4 &projectionMatrix, const mat4 &viewMatrix,
                                     bool isShadowPass)
 {
+    glDisable(GL_CULL_FACE);
     //render trees trunks
     SCE::ShaderUtils::UseShader(treeGlData.trunkShaderProgram);
 
-    //SCE::TextureUtils::BindTexture(treeGlData.barkTexture, 0, treeGlData.barkTexUniform);
-    //SCE::TextureUtils::BindTexture(treeGlData.barkNormalTexture, 1, treeGlData.barkNormalTexUniform);
+    SCE::TextureUtils::BindTexture(treeGlData.barkTexture, 0, treeGlData.barkTexUniform);
+    SCE::TextureUtils::BindTexture(treeGlData.barkNormalTexture, 1, treeGlData.barkNormalTexUniform);
 
     for(uint lod = 0; lod < TREE_LOD_COUNT; ++lod)
     {
@@ -355,13 +375,14 @@ void SCE::TerrainTrees::RenderTrees(const mat4 &projectionMatrix, const mat4 &vi
     //render trees leaves
     SCE::ShaderUtils::UseShader(treeGlData.leavesShaderProgram);
 
-    //SCE::TextureUtils::BindTexture(treeGlData.leafTexture, 0, treeGlData.leafTexUniform);
+    SCE::TextureUtils::BindTexture(treeGlData.leafTexture, 0, treeGlData.leafTexUniform);
 
     for(uint lod = 0; lod < TREE_LOD_COUNT; ++lod)
     {
         SCE::MeshRender::DrawInstances(treeGlData.leavesMeshIds[lod], projectionMatrix, viewMatrix);
     }
 
+#if USE_IMPOSTORS
     if(!isShadowPass)//impostors don't cast shadows
     {
         //render tree impostors
@@ -377,4 +398,6 @@ void SCE::TerrainTrees::RenderTrees(const mat4 &projectionMatrix, const mat4 &vi
 
         SCE::MeshRender::DrawInstances(treeGlData.impostorData.meshId, projectionMatrix, viewMatrix);
     }
+#endif
+    glEnable(GL_CULL_FACE);
 }

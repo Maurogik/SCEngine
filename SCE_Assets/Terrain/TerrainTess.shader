@@ -149,7 +149,7 @@ _}
 _{
 #version 430 core
 
-#define WIREFRAME
+//#define WIREFRAME
 
     uniform vec2 SCE_ScreenSize;
 
@@ -224,7 +224,7 @@ _}
 _{
 #version 430 core
 
-#define WIREFRAME
+//#define WIREFRAME
 
     uniform sampler2D TerrainHeightMap;
     uniform sampler2D GrassTex;

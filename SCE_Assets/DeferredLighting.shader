@@ -29,6 +29,7 @@ _{
     uniform vec4    SCE_LightColor;
     uniform float   SCE_LightMaxDotAngle;
     uniform float   SCE_ShadowStrength;
+    uniform float   ShadowCrossFade;
 
     uniform mat4    DepthConvertMat[CASCADE_COUNT];
     uniform mat4    V;
@@ -52,7 +53,8 @@ _{
     in vec3 in_LightToFrag_worldspace,\
     in float in_LightReach_worldspace,\
     in float in_Surface_Roughness,\
-    in float in_Light_Intensity\
+    in float in_Light_Intensity,\
+    in float in_Translucency\
 
 
     float mapToRange(float fromMin, float fromMax, float toMin, float toMax, float val)
@@ -107,7 +109,7 @@ _{
         return G_1_Schlick(NdotV, k)*G_1_Schlick(NdotL, k);
     }
 
-    vec2 PBR_Lighting(vec3 dirToLight, vec3 dirToEye, vec3 normal, float roughness)
+    vec3 PBR_Lighting(vec3 dirToLight, vec3 dirToEye, vec3 normal, float roughness)
     {
         float NdotL         = max(dot(normal, dirToLight), 0.0);
         vec3 halfway        = normalize(dirToEye + dirToLight);
@@ -143,8 +145,92 @@ _{
 
         //use fresnel as weights for diff/spec balance
         vec2 light = vec2(diff * (1.0 - F), refl * F);
-        return light * NdotL;
+        return vec3(light * NdotL, 1.0 /*full shadow impact*/);
     }
+
+    ///// Vegetation Lighting //////
+
+    float PowWrappedDiffuse(vec3 normal, vec3 dirToLight, float w, float n)
+    {
+        // w is between 0 and 1
+        // n is not -1
+        float wrappedDiffuse = pow(clamp((dot(normal, dirToLight) + w)/(1.0f + w), 0.0, 1.0), n) * (n + 1) / (2 * (1 + w));
+        return wrappedDiffuse;
+    }
+
+    vec3 VegetationBackLighting(vec3 dirToLight, vec3 dirToEye, vec3 normal,
+                                float roughness, float translucency)
+    {
+        float shadowImpact = 1.0 - pow(translucency, 5.0);
+        float EdotL = clamp(dot(dirToEye, dirToLight), 0.0, 1.0);
+        float PowEdotL = EdotL * EdotL;
+        PowEdotL *= PowEdotL;
+        // Back diffuse shading, wrapped slightly
+//        float LdotNBack = clamp(dot(normal, dirToLight)*0.6+0.4, 0.0, 1.0);
+        float LdotNBack = PowWrappedDiffuse(normal, dirToLight, 0.5, 2.0);
+        // Allow artists to tweak view dependency.
+        float diff = mix(LdotNBack, PowEdotL, translucency);
+        // Apply material back diffuse color.
+        return vec3(diff, 0.0, shadowImpact);
+    }
+
+    vec3 VegetationFrontLighting(vec3 dirToLight, vec3 dirToEye, vec3 normal,
+                                 float roughness, float translucency)
+    {
+        float shadowImpact = 1.0 - pow(translucency, 5.0);
+
+        float NdotL = clamp(dot(normal, dirToLight), 0.0, 1.0);
+        vec3 H = normalize(dirToLight + dirToEye);
+        float HdotN = clamp(dot(H, normal), 0.0, 1.0);
+        float spec = pow(HdotN, 1.0);
+//        float diff = PowWrappedDiffuse(normal, dirToLight, 0.1, 1.0);
+        float diff = NdotL;
+        return vec3(diff, 0.0, shadowImpact);
+    }
+
+    vec3 PerformLighting(vec3 dirToLight, vec3 dirToEye, vec3 normal,
+                         float roughness, float translucency)
+    {
+        if(translucency > 0.01)
+        {
+            float NdotL = dot(normal, dirToLight);
+            float EdotL = dot(dirToEye, dirToLight);
+
+            //return vec3(NdotL*0.5+0.5, EdotL*0.5+0.5, 0.0);
+
+            vec3 backNormal = normal;
+            vec3 frontNormal = normal;
+
+            if(dot(normal, -dirToLight) < 0.0)
+            {
+                backNormal = -normal;
+            }
+
+            if(NdotL < 0.0)
+            {
+                frontNormal = -normal;
+            }
+
+            vec3 backLit = VegetationBackLighting(-dirToLight, dirToEye, backNormal,
+                                              roughness, translucency);
+
+            vec3 frontLit = VegetationFrontLighting(dirToLight, dirToEye, frontNormal,
+                                               roughness, translucency);
+
+//            frontLit = vec3(1.0, 0.0, 0.0);
+//            backLit = vec3(0.0, 1.0, 0.0);
+            EdotL = 1.0/(1.0 + exp(-EdotL*20));
+//            EdotL = clamp(EdotL, -1.0, 1.0);
+//            EdotL = EdotL*0.5 + 0.5;
+            return mix(backLit, frontLit, EdotL);
+        }
+        else
+        {
+            return PBR_Lighting(dirToLight, dirToEye, normal, roughness);
+        }
+    }
+
+//    #define DEBUG
 
     ///////////////////
 
@@ -163,15 +249,15 @@ _{
                                     SCE_LightDirection_worldspace)*SCE_ShadowStrength;
         }
 
-        vec2 diffAndSpec = PBR_Lighting(normalize(-in_LightDirection_worldspace),
+        vec3 diffSpecShadow = PerformLighting(normalize(-in_LightDirection_worldspace),
                                         normalize(-in_EyeToFrag_worldspace),
                                         in_Normal_worldspace,
-                                        in_Surface_Roughness);
+                                        in_Surface_Roughness, in_Translucency);
 
         vec3 light = vec3(
-                    in_Light_Intensity*diffAndSpec.x,
-                    in_Light_Intensity*diffAndSpec.y,
-                    shadow);
+                    in_Light_Intensity*diffSpecShadow.x,
+                    in_Light_Intensity*diffSpecShadow.y,
+                    shadow*diffSpecShadow.z);
 
         return light;
     }
@@ -179,14 +265,14 @@ _{
     //Point light option
     subroutine (SCE_ComputeLightType) vec3 SCE_ComputePointLight(LIGHT_SUBROUTINE_PARAMS)
     {
-        vec2 diffAndSpec = PBR_Lighting(normalize(-in_LightToFrag_worldspace),
+        vec3 diffSpecShadow = PerformLighting(normalize(-in_LightToFrag_worldspace),
                                         normalize(-in_EyeToFrag_worldspace),
                                         in_Normal_worldspace,
-                                        in_Surface_Roughness);
+                                        in_Surface_Roughness, in_Translucency);
 
         vec3 light = vec3(
-                    in_Light_Intensity*diffAndSpec.x,
-                    in_Light_Intensity*diffAndSpec.y,
+                    in_Light_Intensity*diffSpecShadow.x,
+                    in_Light_Intensity*diffSpecShadow.y,
                     0.0);
 
         float lightReach    = in_LightReach_worldspace;
@@ -205,14 +291,14 @@ _{
     {
         vec3 dirToLight = normalize(-in_LightToFrag_worldspace);
         vec3 invLightDir = normalize(-in_LightDirection_worldspace);
-        vec2 diffAndSpec = PBR_Lighting(dirToLight,
+        vec3 diffSpecShadow = PerformLighting(dirToLight,
                                         normalize(-in_EyeToFrag_worldspace),
                                         in_Normal_worldspace,
-                                        in_Surface_Roughness);
+                                        in_Surface_Roughness, in_Translucency);
 
         vec3 light = vec3(
-                    in_Light_Intensity*diffAndSpec.x,
-                    in_Light_Intensity*diffAndSpec.y,
+                    in_Light_Intensity*diffSpecShadow.x,
+                    in_Light_Intensity*diffSpecShadow.y,
                     0.0);
 
         float lightReach    = in_LightReach_worldspace;
@@ -321,7 +407,7 @@ _{
         float shadow = 0.0;
         vec4 position_depthspace = vec4(0.0);
         float shadowStrength = 1.0;
-        float fadeDist = 15.0;//cross fabe distance
+        float fadeDist = ShadowCrossFade;//cross fabe distance
 
         for(int i = 0; i < CASCADE_COUNT; ++i)
         {
@@ -363,7 +449,8 @@ _{
             return;
         }
 
-        vec3 MaterialDiffuseColor   = texture2D(DiffuseTex, uv).xyz;
+        vec4 ColorAndTrans          = texture2D(DiffuseTex, uv);
+        vec3 MaterialDiffuseColor   = ColorAndTrans.rgb;
         vec4 normSpec               = texture2D(NormalTex, uv);
         vec3 Normal_worldspace      = normSpec.rgb;
 
@@ -382,8 +469,8 @@ _{
                     LightToFrag_cameraspace,
                     SCE_LightReach_worldspace,
                     Roughness,
-                    SCE_LightColor.a
-                    );
+                    SCE_LightColor.a,
+                    ColorAndTrans.a);
 
 
         color.rgb =
@@ -395,10 +482,12 @@ _{
         color.rgb = color.rgb * (1.0 - lightCol.z)
                      + SCE_ShadowStrength * ambiantColor * MaterialDiffuseColor;
 
+
+
 #ifdef DEBUG
 //        color = vec4(MaterialDiffuseColor, 1.0);
 //        color = vec4((Normal_worldspace * 0.5 + vec3(0.5)), 1.0);
-        color = vec4(vec3(lightCol.y), 1.0);
+        color = vec4(lightCol, 1.0);
 //        color = vec4(Specularity, Specularity, Specularity, 1.0);
 #endif
     }

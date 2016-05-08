@@ -56,7 +56,7 @@
 //#define TERRAIN_TEXTURE_SIZE 512
 #define TEX_TILE_SIZE 2.0f
 
-#define DISPLAY_TREES
+#define DISPLAY_TREES 1
 
 //#define ISLAND_MODE
 
@@ -475,10 +475,8 @@ namespace Terrain
     void UpdateTerrain(const glm::mat4& projectionMatrix,
                        const glm::mat4& viewMatrix)
     {
-        static bool update = false;
-        update = !update;
         //TODO find a better way to not render when there is no terrain
-        if(!terrainData || !update)
+        if(!terrainData)
         {
             return;
         }
@@ -488,7 +486,7 @@ namespace Terrain
                               + ", " + std::to_string(cameraPosition.y)
                               + ", " + std::to_string(cameraPosition.z));
 
-#ifdef DISPLAY_TREES
+#if DISPLAY_TREES
 
         float patchSize = terrainData->patchSize;
         float terrainSize = terrainData->terrainSize;
@@ -590,7 +588,7 @@ namespace Terrain
             return;
         }
 
-#ifdef DISPLAY_TREES
+#if DISPLAY_TREES
         terrainData->terrainTrees.RenderTrees(projectionMatrix, viewMatrix, isShadowPass);
 #endif
 

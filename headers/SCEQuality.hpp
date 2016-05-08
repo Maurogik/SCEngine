@@ -12,8 +12,14 @@ namespace SCE
     {
         #define MAX_TREE_LOD_COUNT 5
 
-        extern float TreeLodDistances[MAX_TREE_LOD_COUNT];
         extern float TerrainLodMultiplier;
+        namespace Trees
+        {
+            extern float VisibilityUpdateDelay;
+            extern float LodDistances[MAX_TREE_LOD_COUNT];
+            extern float BaseSpacing;
+            extern float PlacementAccuracy;
+        }
     }
 }
 

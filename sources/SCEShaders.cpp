@@ -127,36 +127,46 @@ namespace ShaderUtils
 
             std::ifstream shaderStream(fullPath.c_str(), std::ios::in);
 
+            int shadersTypeStartLine[SHADER_TYPE_COUNT] = {0};
+
             if(shaderStream.is_open())
             {
                 std::string line = "";
+                int lineCount = 0;
 
                 while(getline(shaderStream, line))
                 {
+                    ++lineCount;
+
                     if(line.find("[VertexShader]") != string::npos)
                     {
                         currentShaderType = VERTEX_SHADER;
                         shaderIds[currentShaderType] = glCreateShader(GL_VERTEX_SHADER);
+                        shadersTypeStartLine[currentShaderType] = lineCount;
                     }
                     else if(line.find("[FragmentShader]") != string::npos)
                     {
                         currentShaderType = FRAGMENT_SHADER;
                         shaderIds[currentShaderType] = glCreateShader(GL_FRAGMENT_SHADER);
+                        shadersTypeStartLine[currentShaderType] = lineCount;
                     }
                     else if(line.find("[TES]") != string::npos)
                     {
                         currentShaderType = TESSELATION_EVALUATION_SHADER;
                         shaderIds[currentShaderType] = glCreateShader(GL_TESS_EVALUATION_SHADER);
+                        shadersTypeStartLine[currentShaderType] = lineCount;
                     }
                     else if(line.find("[TCS]") != string::npos)
                     {
                         currentShaderType = TESSELATION_CONTROL_SHADER;
                         shaderIds[currentShaderType] = glCreateShader(GL_TESS_CONTROL_SHADER);
+                        shadersTypeStartLine[currentShaderType] = lineCount;
                     }
                     else if(line.find("[Geometry]") != string::npos)
                     {
                         currentShaderType = GEOMETRY_SHADER;
                         shaderIds[currentShaderType] = glCreateShader(GL_GEOMETRY_SHADER);
+                        shadersTypeStartLine[currentShaderType] = lineCount;
                     }
                     else if(line.find("_{") == string::npos &&
                             line.find("_}") == string::npos &&
@@ -195,7 +205,8 @@ namespace ShaderUtils
                         std::vector<char> shaderErrorMessage(infoLogLength+1);
                         glGetShaderInfoLog(shaderIds[i], infoLogLength, NULL, &shaderErrorMessage[0]);
                         Internal::Log("Compilation Error on " + shaderTypeToString(i) + " !!!");
-                        Internal::Log(string(&shaderErrorMessage[0]) + "\n");
+                        Internal::Log(std::to_string(shadersTypeStartLine[i]) + "+ " +
+                                    string(&shaderErrorMessage[0]) + "\n");
                     }
                 }
             }

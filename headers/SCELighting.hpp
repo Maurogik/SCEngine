@@ -64,6 +64,7 @@ namespace SCE
         GLint               mShadowSamplerUnifom;
         GLint               mShadowDepthMatUnifom;
         GLint               mShadowFarSplitUnifom;   
+        GLint               mShadowCrossFadeUniform;
 
         SCEShadowMap        mShadowMapFBO;
 

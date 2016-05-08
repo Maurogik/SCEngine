@@ -59,7 +59,7 @@ namespace Render
             // The geometry pass updates the depth buffer
             glDepthMask(GL_TRUE);
             glEnable(GL_DEPTH_TEST);
-            glDisable(GL_CULL_FACE);
+            glEnable(GL_CULL_FACE);
             glCullFace(GL_BACK);
 
             SCE::Terrain::RenderTerrain(renderData.projectionMatrix, renderData.viewMatrix);
@@ -83,7 +83,7 @@ namespace Render
         SCELighting::Init();
 
         mQuadMeshId = -1;
-        mDefaultClearColor = glm::vec4(0.0, 0.0, 0.0, 1.0);
+        mDefaultClearColor = glm::vec4(0.0, 0.0, 0.0, 0.0);
 
         glClearColor(mDefaultClearColor.r,
                      mDefaultClearColor.g,

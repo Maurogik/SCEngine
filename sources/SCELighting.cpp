@@ -27,17 +27,22 @@ using namespace std;
 #define SHADOWMAP_UNIFORM_NAME "ShadowTex"
 #define DEPTH_MAT_UNIFORM_NAME "DepthConvertMat"
 #define FAR_SPLIT_UNIFORM_NAME "FarSplits_cameraspace"
+#define CROSS_FADE_UNIFORM_NAME "ShadowCrossFade"
 
 #define SHADOW_MAP_WIDTH (4096)
 #define SHADOW_MAP_HEIGHT (4096)
 
+//when updating the cascade count, remember to update the lighting shader too
 #define CASCADE_COUNT 2
-#define MAX_SHADOW_DISTANCE 4500.0f
-#define TERRAIN_SHADOW
-#define TERRAIN_TREES_SHADOW
-//#define RAYMACHED_TERRAIN_SHADOW
+//#define MAX_SHADOW_DISTANCE 4500.0f
+#define MAX_SHADOW_DISTANCE 1000.0f
+#define CSM_TERRAIN_SHADOW 0
+#define TERRAIN_TREES_SHADOW 1
+#define RAYMACHED_TERRAIN_SHADOW 0
 
 SCELighting* SCELighting::s_instance = nullptr;
+
+static const float c_shadowCrossFadeDist = 30.0f;
 
 SCELighting::SCELighting()
     : mLightShader(GL_INVALID_INDEX),
@@ -47,6 +52,7 @@ SCELighting::SCELighting()
       mShadowSamplerUnifom(GL_INVALID_INDEX),
       mShadowDepthMatUnifom(GL_INVALID_INDEX),
       mShadowFarSplitUnifom(GL_INVALID_INDEX),
+      mShadowCrossFadeUniform(GL_INVALID_INDEX),
       mShadowMapFBO(),
       mMainLight(nullptr),
       mDepthConvertMatrices(CASCADE_COUNT),
@@ -150,6 +156,7 @@ void SCELighting::RenderLightsToGBuffer(const CameraRenderData& renderData,
                            &(s_instance->mDepthConvertMatrices[0][0][0]));
         glUniform1fv(s_instance->mShadowFarSplitUnifom, CASCADE_COUNT,
                      &(s_instance->mFarSplit_cameraspace[0]));
+        glUniform1f(s_instance->mShadowCrossFadeUniform, c_shadowCrossFadeDist);
 
         s_instance->renderLightingPass(renderData, light);
     }
@@ -175,12 +182,14 @@ void SCELighting::RenderLightsToGBuffer(const CameraRenderData& renderData,
         glUniform1fv(s_instance->mShadowFarSplitUnifom, CASCADE_COUNT,
                      &(s_instance->mFarSplit_cameraspace[0]));
 
+        glUniform1f(s_instance->mShadowCrossFadeUniform, c_shadowCrossFadeDist);
+
         s_instance->renderLightingPass(renderData, light);
     }
 
     glDisable(GL_BLEND);
 
-#ifdef RAYMACHED_TERRAIN_SHADOW
+#if RAYMACHED_TERRAIN_SHADOW
     if(s_instance->mMainLight)
     {
         glm::vec3 sunPosition =
@@ -207,6 +216,9 @@ void SCELighting::RenderSkyToGBuffer(const CameraRenderData& renderData, SCE_GBu
     else
     {
         Debug::LogError("No sun light set, skipping sky rendering");
+        //Render sky and sun
+        SCE::SkyRenderer::Render(renderData, gBuffer, glm::vec3(0.0, 1000.0, 0.0),
+                                 glm::vec4(1.0));
     }
 }
 
@@ -260,8 +272,11 @@ void SCELighting::SetSunLight(SCEHandle<Light> light)
 {
     Debug::Assert(s_instance, "No Lighting system instance found, Init the system before using it");
     Debug::Assert(!s_instance->mMainLight, "A shadow caster has already been set");
-    Debug::Assert(light->GetLightType() == DIRECTIONAL_LIGHT,
-                  "Shadow casting is only supported for directional lights");
+    if(light)
+    {
+        Debug::Assert(light->GetLightType() == DIRECTIONAL_LIGHT,
+                      "Shadow casting is only supported for directional lights");
+    }
 
     s_instance->mMainLight = light;
 }
@@ -317,8 +332,7 @@ void SCELighting::initLightShader()
     mShadowDepthMatUnifom = glGetUniformLocation(mLightShader, DEPTH_MAT_UNIFORM_NAME);
     mShadowSamplerUnifom = glGetUniformLocation(mLightShader, SHADOWMAP_UNIFORM_NAME);
     mShadowFarSplitUnifom = glGetUniformLocation(mLightShader, FAR_SPLIT_UNIFORM_NAME);
-
-
+    mShadowCrossFadeUniform = glGetUniformLocation(mLightShader, CROSS_FADE_UNIFORM_NAME);
 }
 
 void SCELighting::registerLight(SCEHandle<Light> light)
@@ -432,10 +446,10 @@ void SCELighting::renderShadowmapPass(const CameraRenderData& lightRenderData,
         renderer->Render(lightRenderData);
     }
 
-#ifdef TERRAIN_SHADOW
+#if CSM_TERRAIN_SHADOW
     SCE::Terrain::RenderTerrain(lightRenderData.projectionMatrix, lightRenderData.viewMatrix, true);
 #endif
-#ifdef TERRAIN_TREES_SHADOW
+#if TERRAIN_TREES_SHADOW
     SCE::Terrain::RenderTrees(lightRenderData.projectionMatrix, lightRenderData.viewMatrix, true);
 #endif
 
@@ -461,6 +475,7 @@ std::vector<CameraRenderData> SCELighting::computeCascadedLightFrustrums(Frustru
 
     vector<CameraRenderData> lightFrustrums;
 
+    float splitOverlap = c_shadowCrossFadeDist;
     float lambda    = 0.75f;//split correction strength
     float near      = cameraFrustrum.near;
     // do computation of sub-frustrum as if the camera frustrum was shorter (MAX_SHADOW_DISTANCE)
@@ -481,12 +496,16 @@ std::vector<CameraRenderData> SCELighting::computeCascadedLightFrustrums(Frustru
 
         zSplits[i].x = lambda * (near * glm::pow(ratio, si))
                        + (1.0f - lambda) * (near + (far - near) * si);
-        zSplits[i - 1].y = zSplits[i].x * 1.005f;//slightly offset to fix holes ?
+        zSplits[i - 1].y = zSplits[i].x + splitOverlap;//slightly offset to fix holes ?
     }
     // here we set the last sub-frustrum (farthest for camera) to cover until the end of
     //the camera frustrum
+#if CSM_TERRAIN_SHADOW
     // that way, even very far objects have shadows
     zSplits[cascadeCount - 1].y = cameraFrustrum.far;
+#else
+    zSplits[cascadeCount - 1].y = far;
+#endif
 
     for(uint i = 0; i < cascadeCount; ++i)
     {

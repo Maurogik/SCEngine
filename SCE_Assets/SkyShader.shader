@@ -87,8 +87,8 @@ _{
 
         //compute fog strength
         float height = Position_worldspace.y;
-        float fogStr = 0.000000025;
-        float heightDensity = 0.00005;
+        float fogStr = 0.000000005;
+        float heightDensity = 0.0005;
         float dist = abs((V * vec4(Position_worldspace, 1.0)).z);
         dist *= dist;
         float fogAmount = (1.0 - exp( -dist * fogStr )) * exp(-height * heightDensity);

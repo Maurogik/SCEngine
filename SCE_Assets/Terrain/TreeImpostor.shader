@@ -48,15 +48,18 @@ _{
     uniform sampler2D ImpostorNormalTex;
 
     layout (location = 0) out vec3 oPosition;
-    layout (location = 1) out vec3 oColor;
+    layout (location = 1) out vec4 oColor;
     layout (location = 2) out vec4 oNormal;
+
+    float ImpostorTranslucency = 0.1;
+    float ImpostorRoughness = 0.95;
 
     void main()
     {
         vec4 color = texture(ImpostorTex, FragUV);
-        color.rgb = pow(color.rgb, vec3(2.2));
+        color.rgb = pow(color.rgb, vec3(2.2));        
 
-        if(color.a > 0.999)
+        if(color.a > 0.6)
         {
             vec3 normal = texture(ImpostorNormalTex, FragUV).xyz;
             normal = pow(normal, vec3(2.2));
@@ -64,9 +67,9 @@ _{
             normal = normalize(TangentToWorldspace*normal);
             oNormal.xyz = normal;
 
-            oColor = color.rgb;
+            oColor = vec4(color.rgb, ImpostorTranslucency);
             oPosition = Position_worldspace;
-            oNormal.a = 0.95;
+            oNormal.a = ImpostorRoughness;
         }
         else
         {

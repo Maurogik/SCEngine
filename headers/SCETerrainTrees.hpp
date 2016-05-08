@@ -69,6 +69,8 @@ namespace SCE
         TreeGLData              treeGlData;
         std::vector<TreeGroup>  treeGroups;
 
+        float m_TimeSinceLastUpdate;
+
     };
 }
 

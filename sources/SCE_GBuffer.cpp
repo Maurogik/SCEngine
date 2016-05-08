@@ -66,11 +66,11 @@ bool SCE_GBuffer::Init(uint windowWidth, uint windowHeight)
 
     for (uint i = 0 ; i < GBUFFER_TEXTURE_COUNT ; i++) {
         glBindTexture(GL_TEXTURE_2D, mTextures[i]);
-        if(i == GBUFFER_TEXTURE_TYPE_NORMAL_SPEC)
+        if(i == GBUFFER_TEXTURE_TYPE_NORMAL_SPEC || i == GBUFFER_TEXTURE_TYPE_DIFFUSE)
         {
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, windowWidth, windowHeight, 0, GL_RGBA, GL_FLOAT, NULL);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, windowWidth, windowHeight, 0, GL_RGBA, GL_FLOAT, NULL);
         }
-        else
+        else //use only 3 channels for position
         {
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, windowWidth, windowHeight, 0, GL_RGB, GL_FLOAT, NULL);
         }

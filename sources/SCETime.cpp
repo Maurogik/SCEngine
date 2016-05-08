@@ -33,6 +33,7 @@ namespace Time
         double currentTime = glfwGetTime();
         timeData->mDeltaTime = currentTime - timeData->mLastTime;
         timeData->mDeltaTime *= timeData->mTimeSpeed;
+        timeData->mDeltaTime = timeData->mDeltaTime > 1.0 ? 1.0 : timeData->mDeltaTime;
         timeData->mTimeInSeconds += timeData->mDeltaTime;
         timeData->mRealTimeInSeconds = currentTime - timeData->mStartTime;
         timeData->mLastTime = currentTime;

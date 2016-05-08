@@ -47,21 +47,20 @@ _{
     layout (location = 2) out vec4 oNormal;
 
     uniform mat4 V;
-//    uniform sampler2D BarkTex;
-//    uniform sampler2D BarkNormalMap;
-//    uniform sampler2D LeafTex;
+    uniform sampler2D BarkTex;
+    uniform sampler2D BarkNormalMap;
+
     float BarkRoughness = 0.9;
-    float LeafRoughness = 0.9;
 
     void main()
     {
         vec2 uv = vec2(fragUV);
-        vec3 normal = vec3(0.0, 0.0, 1.0);
-//        normal = texture(BarkNormalMap, uv).xyz;
-//        normal = normal * 2.0 - vec3(1.0);
-//        oColor = texture(BarkTex, uv).xyz;
-        oColor = vec3(0.12, 0.02, 0.0);
+        vec3 normal = texture(BarkNormalMap, uv).xyz;
+        normal = normal * 2.0 - vec3(1.0);
+        oColor = texture(BarkTex, uv).xyz;
+//        oColor = vec3(0.12, 0.02, 0.0);
 
+        normal = mix(normal, vec3(0.0, 0.0, 1.0), 0.8);
         normal = normalize(tangentToWorldspace * normal);
         oNormal.xyz = normal;
         oNormal.a = BarkRoughness;
