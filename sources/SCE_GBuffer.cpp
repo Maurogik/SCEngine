@@ -227,12 +227,12 @@ void SCE_GBuffer::SetupFinalTexture(uint uniform, uint sampler)
     glUniform1i(uniform, sampler);
 }
 
-void SCE_GBuffer::SetupTexture(SCE_GBuffer::GBUFFER_TEXTURE_TYPE type, uint uniform, uint sampler)
+void SCE_GBuffer::BindTexture(SCE_GBuffer::GBUFFER_TEXTURE_TYPE type, uint uniform, uint texUnit)
 {
-    glActiveTexture(GL_TEXTURE0 + sampler);
+    glActiveTexture(GL_TEXTURE0 + texUnit);
     glBindTexture(GL_TEXTURE_2D, mTextures[type]);
     // Set the sampler uniform to the texture unit
-    glUniform1i(uniform, sampler);
+    glUniform1i(uniform, texUnit);
 }
 
 void SCE_GBuffer::SetReadBuffer(GBUFFER_TEXTURE_TYPE TextureType)

@@ -63,7 +63,6 @@ namespace Render
             glCullFace(GL_BACK);
 
             SCE::Terrain::RenderTerrain(renderData.projectionMatrix, renderData.viewMatrix);
-            SCE::Terrain::RenderTrees(renderData.projectionMatrix, renderData.viewMatrix);
 
             for(Container* container : objectsToRender)
             {
@@ -74,6 +73,7 @@ namespace Render
                 SCEHandle<MeshRenderer> renderer = container->GetComponent<MeshRenderer>();
                 renderer->Render(renderData);
             }
+            SCE::Terrain::RenderTrees(renderData.projectionMatrix, renderData.viewMatrix);
         }
     }
 
@@ -206,6 +206,11 @@ namespace Render
         glm::mat4 modelMatrix = inverse(projectionMatrix * viewMatrix);
         SCE::MeshRender::RenderMesh(mQuadMeshId, projectionMatrix, viewMatrix, modelMatrix);
         glCullFace(GL_BACK);
+    }
+
+    void BindGBufferTexture(SCE_GBuffer::GBUFFER_TEXTURE_TYPE type, GLuint texUnit, GLuint uniform)
+    {
+        mGBuffer.BindTexture(type, uniform, texUnit);
     }
 
 #ifdef SCE_DEBUG_ENGINE

@@ -29,6 +29,8 @@ namespace SCE
         void         RenderFullScreenPass(GLuint shaderId,
                                                  const glm::mat4 &projectionMatrix,
                                                  const glm::mat4 &viewMatrix);
+        void BindGBufferTexture(SCE_GBuffer::GBUFFER_TEXTURE_TYPE type, GLuint texUnit, GLuint uniform);
+
 #ifdef SCE_DEBUG_ENGINE
         bool         ToggleTonemapOff();
 #endif

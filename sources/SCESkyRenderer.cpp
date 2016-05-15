@@ -135,7 +135,7 @@ namespace SkyRenderer
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, commonSkyData.fboId);
         glDrawBuffer(GL_COLOR_ATTACHMENT0);
         glClear(GL_COLOR_BUFFER_BIT);
-        gBuffer.SetupTexture(SCE_GBuffer::GBUFFER_TEXTURE_TYPE_POSITION, 0, 0);
+        gBuffer.BindTexture(SCE_GBuffer::GBUFFER_TEXTURE_TYPE_POSITION, 0, 0);
         glUniform1f(sunData.qualityUniform, SUN_TEXTURE_QUALITY);
         glUniform3f(sunData.sunPositionUniform, sunPosition.x, sunPosition.y, sunPosition.z);
         glUniform3fv(sunData.sunColorUniform, 1, &sunColor[0]);

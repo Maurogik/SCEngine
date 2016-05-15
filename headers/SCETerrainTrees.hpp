@@ -8,9 +8,10 @@
 
 #include "SCEDefines.hpp"
 #include <vector>
+#include <thread>
+#include <mutex>
 
 #define TREE_LOD_COUNT 3
-#define TREE_LOD_MIN 0
 
 namespace SCE
 {
@@ -27,6 +28,9 @@ namespace SCE
         void RenderTrees(const glm::mat4& projectionMatrix, const glm::mat4& viewMatrix, bool isShadowPass);
 
     private :
+
+        void UpdateVisibilityAndLOD(glm::mat4 viewMatrix, glm::mat4 worldToTerrainspaceMatrix,
+                                    glm::vec3 cameraPosition, float maxDistFromCenter, mat4 impostorScaleMat);
 
         struct ImpostorGLData
         {
@@ -68,9 +72,12 @@ namespace SCE
 
         TreeGLData              treeGlData;
         std::vector<TreeGroup>  treeGroups;
+        std::vector<glm::mat4>  treeMatrices[TREE_LOD_COUNT];
+        std::vector<glm::mat4>  treeImpostorMatrices;
 
-        float m_TimeSinceLastUpdate;
-
+        std::unique_ptr<std::thread> mUpdateThread;
+        std::mutex  mTreeInstanceLock;
+        bool        mInstancesUpToDate;
     };
 }
 

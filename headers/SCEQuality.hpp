@@ -15,10 +15,9 @@ namespace SCE
         extern float TerrainLodMultiplier;
         namespace Trees
         {
-            extern float VisibilityUpdateDelay;
             extern float LodDistances[MAX_TREE_LOD_COUNT];
             extern float BaseSpacing;
-            extern float PlacementAccuracy;
+            extern float NbGroupPerKm;
         }
     }
 }

@@ -288,8 +288,9 @@ void scene3()
 
 void sceneTerrain()
 {
-//    SCEScene::AddTerrain(3000.0f, 150.0f, 0.0f);
-    SCEScene::AddTerrain(9000.0f, 600.0f, 0.0f);
+//    SCEScene::AddTerrain(3000.0f, 300.0f, 0.0f);
+//    SCEScene::AddTerrain(9000.0f, 600.0f, 0.0f);
+    SCEScene::AddTerrain(16000.0f, 600.0f, 0.0f);
 }
 
 void sceneTrees()
@@ -325,36 +326,42 @@ void sceneTrees()
     };
 
 
-
     float treeSpacing = 15.0f;
-    glm::vec3 treePos = glm::vec3(-float(treeModelNames.size()) * 3.0f * 0.5f * treeSpacing, -2.2f, -80.0f);
-    for(uint i = 0; i < treeModelNames.size(); ++i)
+    float zIter = 30.0f;
+
+    for(float z = -zIter*0.5f; z < zIter*0.5f; ++z)
     {
-        for(int lod = 0; lod < 3; ++lod)
+        glm::vec3 treePos = glm::vec3(-float(treeModelNames.size()) * 3.0f * 0.5f * treeSpacing, -2.2f, -80.0f);
+        treePos.z += z*treeSpacing;
+        for(uint i = 0; i < treeModelNames.size(); ++i)
         {
-            treePos.x += treeSpacing;
-            SCEHandle<Container> tree = createModel(treeModelNames[i],
-                                                    treeRoot + treeModelNames[i] +
-                                                    "lod" + std::to_string(lod) + extension,
-                                                    "Terrain/TreePack/Tree",
-                                                    treePos);
+            for(int lod = 0; lod < 3; ++lod)
+            {
+                treePos.x += treeSpacing;
+                SCEHandle<Container> tree = createModel(treeModelNames[i],
+                                                        treeRoot + treeModelNames[i] +
+                                                        "lod" + std::to_string(lod) + extension,
+                                                        "Terrain/TreePack/Tree",
+                                                        treePos);
 
-            int treeInd = i / 2 + 1;
-            SCEHandle<Material> mat = tree->GetComponent<Material>();
-            std::string treeFolderPath = treeRoot + "tree_" + std::to_string(treeInd) + "/";
+                int treeInd = i / 2 + 1;
+                SCEHandle<Material> mat = tree->GetComponent<Material>();
+                std::string treeFolderPath = treeRoot + "tree_" + std::to_string(treeInd) + "/";
 
-            GLuint barkTex =
-                    SCE::TextureUtils::LoadTexture(treeFolderPath + "bark" + std::to_string(treeInd) + ".png");
-            GLuint barkNormal =
-                    SCE::TextureUtils::LoadTexture(treeFolderPath + "bark" + std::to_string(treeInd) + "_nmp"+ ".png");
-            GLuint leafTex =
-                    SCE::TextureUtils::LoadTexture(treeFolderPath + "leafs" + std::to_string(treeInd) + ".png");
+                GLuint barkTex =
+                        SCE::TextureUtils::LoadTexture(treeFolderPath + "bark" + std::to_string(treeInd) + ".png");
+                GLuint barkNormal =
+                        SCE::TextureUtils::LoadTexture(treeFolderPath + "bark" + std::to_string(treeInd) + "_nmp"+ ".png");
+                GLuint leafTex =
+                        SCE::TextureUtils::LoadTexture(treeFolderPath + "leafs" + std::to_string(treeInd) + ".png");
 
-            mat->SetUniformValue<GLuint>("BarkTex", barkTex);
-            mat->SetUniformValue<GLuint>("BarkNormalMap", barkNormal);
-            mat->SetUniformValue<GLuint>("LeafTex", leafTex);
+                mat->SetUniformValue<GLuint>("BarkTex", barkTex);
+                mat->SetUniformValue<GLuint>("BarkNormalMap", barkNormal);
+                mat->SetUniformValue<GLuint>("LeafTex", leafTex);
+            }
         }
     }
+
 }
 
 //#define START_NIGHT
@@ -429,7 +436,7 @@ int main( void )
     //Camera
     SCEHandle<Container> cameraObject = SCEScene::CreateContainer("cameraObject");
     SCEHandle<Transform> cameraTransform = cameraObject->AddComponent<Transform>();
-    cameraObject->AddComponent<Camera>(40.0f, 16.0f/9.0f, 1.0f, 8000.0f);
+    cameraObject->AddComponent<Camera>(40.0f, 16.0f/9.0f, 1.0f, 20000.0f);
 
 
     SCEHandle<Container> eagle = SCEScene::CreateContainer("eagle");

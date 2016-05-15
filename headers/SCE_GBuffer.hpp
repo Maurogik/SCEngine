@@ -38,7 +38,7 @@ namespace SCE {
         void    GenerateLuminanceMimap();
         void    BindForToneMapPass();
         void    SetupTexturesForLighting();
-        void    SetupTexture(GBUFFER_TEXTURE_TYPE type, uint uniform, uint sampler);
+        void    BindTexture(GBUFFER_TEXTURE_TYPE type, uint uniform, uint texUnit);
         void    SetupFinalTexture(uint uniform, uint sampler);
         void    SetReadBuffer(GBUFFER_TEXTURE_TYPE TextureType);        
 
