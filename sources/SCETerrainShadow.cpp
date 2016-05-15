@@ -34,7 +34,7 @@ void SCE::TerrainShadow::RenderShadow(const mat4 &projectionMatrix, const mat4 &
 {
     glUseProgram(mShader);
 
-    gbuffer.SetupTexture(SCE_GBuffer::GBUFFER_TEXTURE_TYPE_POSITION,
+    gbuffer.BindTexture(SCE_GBuffer::GBUFFER_TEXTURE_TYPE_POSITION,
                          mPositionTexUniform, 0);
     gbuffer.SetupFinalTexture(mFinalTexUniform, 1);
 

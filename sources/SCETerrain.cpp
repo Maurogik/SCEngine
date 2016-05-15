@@ -265,7 +265,7 @@ namespace Terrain
 #endif
                         if(l == 0)
                         {
-                            tmpNoise = glm::pow(tmpNoise, 4.0f);
+                            tmpNoise = glm::pow(tmpNoise, 3.0f);
                         }
                         else if(l == 1)
                         {
@@ -632,7 +632,7 @@ namespace Terrain
             terrainData->terrainSize = terrainSize;
             terrainData->patchSize = patchSize;
             terrainData->baseHeight = terrainBaseHeight;
-            terrainData->heightScale = 1400.0f;
+            terrainData->heightScale = 5000.0f;//max height in meter
             terrainData->maxTesselationDist = maxTessDist;
 
             glm::vec3 terrainPosition_worldspace = vec3(0.0);
@@ -644,7 +644,7 @@ namespace Terrain
             initializeRenderData();
             float xOffset = SCE::Math::RandRange(0.0f, 1.0f);
             float zOffset = SCE::Math::RandRange(0.0f, 1.0f);
-            initializeTerrain(xOffset, zOffset, 2.0f*terrainSize / 4000.0f,
+            initializeTerrain(xOffset, zOffset, 2.0f*terrainSize / 9000.0f,
                                       terrainData->heightScale);
             initializePatchMatrices();
         }
