@@ -47,6 +47,12 @@ _{
     uniform sampler2D ImpostorTex;
     uniform sampler2D ImpostorNormalTex;
 
+//    uniform vec2 SCE_ScreenSize;
+
+//    uniform sampler2D iDiffuseTex;
+//    uniform sampler2D iPositionTex;
+//    uniform sampler2D iNormalTex;
+
     layout (location = 0) out vec3 oPosition;
     layout (location = 1) out vec4 oColor;
     layout (location = 2) out vec4 oNormal;
@@ -58,6 +64,8 @@ _{
     {
         vec4 color = texture(ImpostorTex, FragUV);
         color.rgb = pow(color.rgb, vec3(2.2));        
+
+        //vec2 screenUV = gl_FragCoord.xy / SCE_ScreenSize;
 
         if(color.a > 0.6)
         {
@@ -73,6 +81,9 @@ _{
         }
         else
         {
+//            oColor = texture(iDiffuseTex, screenUV);
+//            oNormal = texture(iNormalTex, screenUV);
+//            oPosition = texture(iPositionTex, screenUV).xyz;
             discard;
         }
     }

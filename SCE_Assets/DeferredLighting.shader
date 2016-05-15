@@ -198,18 +198,20 @@ _{
 
             //return vec3(NdotL*0.5+0.5, EdotL*0.5+0.5, 0.0);
 
-            vec3 backNormal = normal;
-            vec3 frontNormal = normal;
 
-            if(dot(normal, -dirToLight) < 0.0)
-            {
-                backNormal = -normal;
-            }
+
+//            if(NdotL > 0.0)
+//            {
+//                backNormal = -normal;
+//            }
 
             if(NdotL < 0.0)
             {
-                frontNormal = -normal;
+                normal = -normal;
             }
+
+            vec3 backNormal = normal;
+            vec3 frontNormal = normal;
 
             vec3 backLit = VegetationBackLighting(-dirToLight, dirToEye, backNormal,
                                               roughness, translucency);

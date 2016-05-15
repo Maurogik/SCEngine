@@ -253,51 +253,31 @@ _{
     {
         uv *= TextureTileScale;
 
-        vec4 topColor = vec4(1.0, 1.0, 1.0, 0.2);
-        vec4 middleColor = vec4(0.7, 0.4, 0.2, 0.7);
-        vec4 bottomColor = vec4(0.2, 0.7, 0.1, 0.95);
+        vec4 snowColor = vec4(1.0, 1.0, 1.0, 0.2);
+        vec4 dirtColor = vec4(0.7, 0.4, 0.2, 0.7);
+        vec4 grassColor = vec4(0.2, 0.7, 0.1, 0.95);
 
-        bottomColor.rgb = pow(texture(GrassTex, uv).rgb, vec3(2.2));
-        middleColor.rgb = pow(texture(DirtTex, uv).rgb, vec3(2.2));
-        topColor.rgb += pow(texture(SnowTex, uv).rgb, vec3(2.2));
-        topColor.rgb *= 2.0;
+        grassColor.rgb = pow(texture(GrassTex, uv).rgb, vec3(2.2));
+        dirtColor.rgb = pow(texture(DirtTex, uv).rgb, vec3(2.2));
+        snowColor.rgb += pow(texture(SnowTex, uv).rgb, vec3(2.2));
 
         float height = normAndHeight.a / HeightScale;
         float flatness = dot(normAndHeight.xyz, vec3(0.0, 1.0, 0.0));
 
-        float bottomEnd = 0.3;
-        float middleEnd = 0.6;
+        float grassStr = smoothstep(0.25, 0.0, height);
+        grassStr += smoothstep(0.4, 0.1, height) * pow(flatness, 1.5);
+        grassStr = clamp(grassStr, 0.0, 1.0);
 
-        float bottomToMiddleMix = 0.3;
-        float middleToTopMix = 0.3;
+        float snowStr = smoothstep(0.4, 0.6, height);
+        snowStr += smoothstep(0.35, 0.4, height) * pow(flatness, 8.0) * 2.0;
+        snowStr = clamp(snowStr, 0.0, 1.0);
 
+        vec4 resColor = dirtColor;
 
-        float BtoMStart = bottomEnd - bottomToMiddleMix*0.5;
-        float BtoMEnd = bottomEnd + bottomToMiddleMix*0.5;
+        resColor = mix(resColor, grassColor, grassStr);
+        resColor = mix(resColor, snowColor, snowStr);
 
-        float MtoTStart = middleEnd - middleToTopMix*0.5;
-        float MtoTEnd = middleEnd + middleToTopMix*0.5;
-
-        float lerpLow = (height - BtoMStart) / (bottomToMiddleMix);
-//        lerpLow = pow(lerpLow, 4.0) - flatness*(1.0 - lerpLow);
-        lerpLow = pow(lerpLow, 1.0) + (1.0 - pow(flatness, 8.0))*pow(lerpLow, 1.0);
-        lerpLow = clamp(lerpLow, 0.0, 1.0);
-
-        float lerpHigh = (height - MtoTStart) / (middleToTopMix);
-        lerpHigh = pow(flatness, 16.0) * lerpHigh * 5.0 + pow(lerpHigh, 8.0);
-        lerpHigh = clamp(lerpHigh, 0.0, 1.0);
-
-        vec4 resColor = vec4(0.0);//, slope, 0.0);
-
-        resColor += bottomColor * step(height, BtoMStart);
-        resColor += mix(bottomColor, middleColor, lerpLow) * step(BtoMStart, height)
-                * step(height, BtoMEnd);
-        resColor += middleColor * step(BtoMEnd, height) * step(height, MtoTStart);
-        resColor += mix(middleColor, topColor, lerpHigh) * step(MtoTStart, height)
-                * step(height, MtoTEnd);
-        resColor += topColor * step(MtoTEnd, height);
-
-        return vec4(resColor);
+        return resColor;
     }
 
     void main()
