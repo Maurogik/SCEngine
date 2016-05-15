@@ -12,7 +12,7 @@ _{
     out vec3 Position_worldspace;
 
     uniform mat4 V;
-    uniform mat4 P;
+    uniform mat4 P;    
 
     void main()
     {
@@ -38,25 +38,41 @@ _{
 
     uniform mat4 V;
     uniform sampler2D LeafTex;
+
+//    uniform vec2 SCE_ScreenSize;
+
+//    uniform sampler2D iDiffuseTex;
+//    uniform sampler2D iPositionTex;
+//    uniform sampler2D iNormalTex;
+
     float LeafRoughness = 0.9;
     float LeafTranslucency = 0.5;
 
     void main()
     {
         vec2 uv = vec2(fragUV);
+//        vec2 screenUV = gl_FragCoord.xy / SCE_ScreenSize;
         vec4 texColor = texture(LeafTex, uv);
-        if(texColor.a < 0.6)
+        if(texColor.a > 0.6)
         {
+            //discard;
+            vec3 color = texColor.rgb;
+
+            oNormal.xyz = normalize(Normal_worldspace);
+            oNormal.a = LeafRoughness;
+            //convert color to linear space
+            //will do gamma correction in the last shading pass
+            color = pow(color, vec3(2.2));
+            oColor = vec4(color, LeafTranslucency);
+            oPosition = Position_worldspace;
+        }
+        else
+        {
+//            oColor = texture(iDiffuseTex, screenUV);
+//            oNormal = texture(iNormalTex, screenUV);
+//            oPosition = texture(iPositionTex, screenUV).xyz;
             discard;
         }
-        vec3 color = texColor.rgb;
 
-        oNormal.xyz = normalize(Normal_worldspace);
-        oNormal.a = LeafRoughness;
-        //convert color to linear space
-        //will do gamma correction in the last shading pass
-        color = pow(color, vec3(2.2));
-        oColor = vec4(color, LeafTranslucency);
-        oPosition = Position_worldspace;
     }
 _}

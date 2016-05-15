@@ -60,7 +60,6 @@ _{
         oColor = texture(BarkTex, uv).xyz;
 //        oColor = vec3(0.12, 0.02, 0.0);
 
-        normal = mix(normal, vec3(0.0, 0.0, 1.0), 0.8);
         normal = normalize(tangentToWorldspace * normal);
         oNormal.xyz = normal;
         oNormal.a = BarkRoughness;
