@@ -4,12 +4,12 @@
 using namespace SCE;
 using namespace std;
 
-#define SKY_LIGHT
-//#define AMBIANT_LIGHT
-
 SunCycle::SunCycle(SCE::SCEHandle<Container> container, float speed, vec3 axis)
     : GameObject(container, "SunCycle"), mSpeed(speed),
-      mAmbiantStrength(0.05f), mRotationAxis(axis),
+#ifdef AMBIANT_LIGHT
+      mAmbiantStrength(0.05f),
+#endif
+      mRotationAxis(axis),
       mNoonSunColor(1.0, 1.0, 0.8, 0.7), mSunsetColor(0.35, 0.2, 0.0, 0.4),
       mMidnightSunColor(0.3, 0.3, 1.0, 0.001), mBaseFogColor(0.3, 0.6, 0.9),
       mBaseSkyTopColor(0.06, 0.4, 0.85), mBaseSkyBottomColor(0.65, 0.9, 1.0),

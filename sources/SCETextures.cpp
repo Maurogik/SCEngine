@@ -153,7 +153,7 @@ namespace TextureUtils
             fullTexturePath = ENGINE_RESSOURCE_PATH + filename;
         }
 
-        Internal::Log("TODO : Compression format not yet used : " + compressionFormat);
+        Internal::Log(std::string("TODO : Compression format not yet used : ") + std::to_string(compressionFormat));
 
         int width, height, nbComponent;
         unsigned char* textureData = stbi_load(fullTexturePath.c_str(),
@@ -175,7 +175,7 @@ namespace TextureUtils
         switch(nbComponent)
         {
         case 0 :
-            Debug::RaiseError("texture contains no component !" + nbComponent);
+            Debug::RaiseError(std::string("texture contains no component !") + std::to_string(nbComponent));
             break;
         case 1 :
             internalGPUFormat = GL_R8;
@@ -194,7 +194,7 @@ namespace TextureUtils
             textureFormat = GL_RGBA;
             break;
         default :
-            Debug::RaiseError("Unexpected number of texture component : " + nbComponent);
+            Debug::RaiseError(std::string("Unexpected number of texture component : ") + std::to_string(nbComponent));
             break;
         }
 
@@ -280,7 +280,7 @@ namespace TextureUtils
                                       SCETextureFormat compressionFormat, SCETextureWrap wrapMode,
                                       bool mipmapsOn)
     {
-        Internal::Log("TODO : Compression format not yet used : " + compressionFormat);
+        Internal::Log(std::string("TODO : Compression format not yet used : ") + std::to_string(compressionFormat));
 
         uint channelCount = 4;
         unsigned char *textureData = new unsigned char [width * height * channelCount];

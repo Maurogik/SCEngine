@@ -110,7 +110,7 @@ void Light::InitLightRenderData(GLuint lightShaderProgram)
         lightSubroutineName = COMPUTE_DIRECTIONAL_LIGHT_NAME;
         break;
     default :
-        Debug::RaiseError("Unknown Light type : " + mLightType);
+        Debug::RaiseError(std::string("Unknown Light type : ") + std::to_string(mLightType));
         break;
     }
 
@@ -163,7 +163,7 @@ void Light::bindRenderDataForShader(const vec3& cameraPosition)
             glUniform1f(unifId, maxDot);
             break;
         default :
-            SCE::Debug::LogError("Unknown ligth uniform type : " + type);
+            SCE::Debug::LogError(std::string("Unknown ligth uniform type : ") + std::to_string(type));
         }
     }
 }

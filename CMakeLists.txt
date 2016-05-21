@@ -128,17 +128,18 @@ target_link_libraries(${TARGET}
 
 message(${ALL_LIBS})
 
+
 if(UNIX)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -Wall -Wno-long-long -Wno-variadic-macros -pedantic")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -Wall -pedantic")
 else()
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -Wall -Wno-long-long -Wno-variadic-macros -pedantic")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
 endif(UNIX)
-set(QMAKE_CXXFLAGS "${QMAKE_CXXFLAGS} -std=c++11")
-set(QMAKE_LFLAGS "${QMAKE_LFLAGS} -std=c++11")
+set(QMAKE_CXXFLAGS "${QMAKE_CXXFLAGS} -std=c++11 -Wall -pedantic")
+set(QMAKE_LFLAGS "${QMAKE_LFLAGS} -std=c++11 -Wall -pedantic")
 
 #debug and release flag for in-engine use
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DSCE_DEBUG -DSCE_DEBUG_ENGINE")
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DSCE_DEBUG_ENGINE -O3")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DSCE_DEBUG_ENGINE ")
 SET(CMAKE_CXX_FLAGS_FINAL "${CMAKE_CXX_FLAGS_RELEASE} -DSCE_FINAL -O3")
 
 

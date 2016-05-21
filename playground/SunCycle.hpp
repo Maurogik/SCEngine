@@ -3,6 +3,9 @@
 
 #include "../headers/SCE.hpp"
 
+//#define SKY_LIGHT
+//#define AMBIANT_LIGHT
+
 class SunCycle : public SCE::GameObject {
 
 public :
@@ -16,7 +19,9 @@ protected :
 private :
 
     float mSpeed;
+#ifdef AMBIANT_LIGHT
     float mAmbiantStrength;
+#endif
     glm::vec3 mRotationAxis;
     glm::vec4 mNoonSunColor;
     glm::vec4 mSunsetColor;

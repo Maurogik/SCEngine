@@ -118,11 +118,11 @@ void SCECore::InitEngine(const std::string &windowName)
         Debug::Log("Warning : OpenGL error found : " + std::to_string(errorCode));
     }
 
-    time_t ctime = time(0);
-    tm* calendarTime = localtime(&ctime);
 #ifdef SCE_DEBUG
     SCE::Math::SeedRandomGenerator(0);
 #else
+    time_t ctime = time(0);
+    tm* calendarTime = localtime(&ctime);
     SCE::Math::SeedRandomGenerator(calendarTime->tm_sec);
 #endif
 
