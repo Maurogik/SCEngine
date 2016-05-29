@@ -28,19 +28,33 @@ namespace MeshRender
         VERTEX_ATTRIB_COUNT
     };
 
+    enum INSTANCE_ATTRIB_TYPE
+    {
+        INSTANCE_MODEL_MATRIX = 0,
+        INSTANCE_CUSTOM_DATA,
+        INSTANCE_ATTRIB_COUNT
+    };
+
     struct AttributeData
     {
-        GLuint                      dataBufferId;
-        void*                       buffer;
-        size_t                      nbValues;
+        AttributeData()
+            : glBuffer(GL_INVALID_INDEX)
+        {}
+        GLuint                      glBuffer;
+        uint                        nbComponents;
         GLenum                      type;
     };
 
     //store attributes locations per shader
     struct ShaderData
     {
+        ShaderData()
+            : instanceMatrixLocation(GL_INVALID_INDEX),
+              instanceCustomDataLocation(GL_INVALID_INDEX)
+        {}
         GLint attribLocations[VERTEX_ATTRIB_COUNT];
-        GLint instanceMatrixAttrib;
+        GLint instanceMatrixLocation;
+        GLint instanceCustomDataLocation;
     };
 
     //Per mesh data
@@ -52,7 +66,7 @@ namespace MeshRender
               indiceCount(0),
               vaoID(GL_INVALID_INDEX),
               attributes(),
-              instancesBuffer(GL_INVALID_INDEX),
+              instanceMatricesBuffer(GL_INVALID_INDEX),
               instancesCount(0)
         {}
         std::map<GLuint,ShaderData>     shaderData;
@@ -60,8 +74,9 @@ namespace MeshRender
         GLuint                          indiceCount;
         GLuint                          vaoID;
         std::vector<AttributeData>      attributes;
-        GLuint                          instancesBuffer;
+        GLuint                          instanceMatricesBuffer;
         uint                            instancesCount;
+        AttributeData                   instanceCustomData;
     };
 
 
@@ -70,7 +85,7 @@ namespace MeshRender
     {
         void cleanupGLRenderData(MeshRenderData& renderData);
 
-        std::string attribNames[5] =
+        std::string attribNames[VERTEX_ATTRIB_COUNT] =
         {
             "vertexPosition_modelspace",
             "vertexUV",
@@ -107,15 +122,14 @@ namespace MeshRender
         {
             AttributeData attribData;
 
-            glGenBuffers(1, &attribData.dataBufferId);
-            glBindBuffer(GL_ARRAY_BUFFER, attribData.dataBufferId);
+            glGenBuffers(1, &attribData.glBuffer);
+            glBindBuffer(GL_ARRAY_BUFFER, attribData.glBuffer);
             glBufferData(GL_ARRAY_BUFFER
                          , size
                          , buffer, GL_STATIC_DRAW);
 
             attribData.type = type;
-            attribData.nbValues = nbValues;
-            attribData.buffer = buffer;
+            attribData.nbComponents = nbValues;
             renderData.attributes.push_back(attribData);
         }
 
@@ -202,20 +216,28 @@ namespace MeshRender
                 data.attribLocations[i] = id;
             }
 
-            data.instanceMatrixAttrib = glGetAttribLocation(programID, "instanceMatrix");
+            //preload instance data locations
+            data.instanceMatrixLocation = glGetAttribLocation(programID, "instanceMatrix");
+            data.instanceCustomDataLocation = glGetAttribLocation(programID, "instanceCustomData");
         }
 
         void cleanupGLRenderData(MeshRenderData& renderData)
         {
             for(size_t i = 0; i < renderData.attributes.size(); ++i){
-                glDeleteBuffers(1, &(renderData.attributes[i].dataBufferId));
+                glDeleteBuffers(1, &(renderData.attributes[i].glBuffer));
             }
             glDeleteBuffers(1, &(renderData.indiceBuffer));
 
-            if(renderData.indiceBuffer != GL_INVALID_INDEX )
+            if(renderData.instanceMatricesBuffer != GL_INVALID_INDEX )
             {
-                glDeleteBuffers(1, &(renderData.instancesBuffer));
+                glDeleteBuffers(1, &(renderData.instanceMatricesBuffer));
             }
+
+            if(renderData.instanceCustomData.glBuffer != GL_INVALID_INDEX )
+            {
+                glDeleteBuffers(1, &(renderData.instanceCustomData.glBuffer));
+            }
+
             glDeleteVertexArrays(1, &(renderData.vaoID));
         }
 
@@ -249,10 +271,10 @@ namespace MeshRender
                 if(attribLocation != GL_INVALID_INDEX)
                 {
                     glEnableVertexAttribArray(attribLocation);
-                    glBindBuffer(GL_ARRAY_BUFFER, attributes[i].dataBufferId);
+                    glBindBuffer(GL_ARRAY_BUFFER, attributes[i].glBuffer);
                     glVertexAttribPointer(
                                 attribLocation,             // The attribute we want to configure
-                                attributes[i].nbValues,     // size
+                                attributes[i].nbComponents,     // size
                                 attributes[i].type,         // typeC
                                 GL_FALSE,                   // normalized?
                                 0,                          // stride
@@ -268,11 +290,21 @@ namespace MeshRender
             //clean the attributes
             for(size_t i = 0; i < meshRenderData.attributes.size(); ++i)
             {
-                GLuint attribLocation = shaderData.attribLocations[i];
-                if(attribLocation < GL_INVALID_INDEX)
+                GLint attribLocation = shaderData.attribLocations[i];
+                if(attribLocation != (GLint)GL_INVALID_INDEX)
                 {
                     glDisableVertexAttribArray(attribLocation);
                 }
+            }
+
+            if(shaderData.instanceMatrixLocation != (GLint)GL_INVALID_INDEX)
+            {
+                glDisableVertexAttribArray(shaderData.instanceMatrixLocation);
+            }
+
+            if(shaderData.instanceCustomDataLocation != (GLint)GL_INVALID_INDEX)
+            {
+                glDisableVertexAttribArray(shaderData.instanceCustomDataLocation);
             }
         }
     }
@@ -335,21 +367,42 @@ namespace MeshRender
     void MakeMeshInstanced(ui16 meshId)
     {
         MeshRenderData &renderData = getMeshRenderData(meshId);
-        glGenBuffers(1, &(renderData.instancesBuffer));
+        glGenBuffers(1, &(renderData.instanceMatricesBuffer));
     }
 
-    void SetMeshInstances(ui16 meshId, const std::vector<mat4> &instanceMatrices, GLenum drawType)
+    void SetMeshInstanceMatrices(ui16 meshId, const std::vector<mat4> &instanceMatrices, GLenum drawType)
     {
         MeshRenderData &renderData = getMeshRenderData(meshId);
-        SCE::Debug::Assert(renderData.instancesBuffer != GL_INVALID_INDEX,
+        SCE::Debug::Assert(renderData.instanceMatricesBuffer != GL_INVALID_INDEX,
                            std::string("Mesh was not set as instances,") +
                            "use 'MakeMeshInstanced' to set mesh as instanced");
 
-        glBindBuffer(GL_ARRAY_BUFFER, renderData.instancesBuffer);
+        glBindBuffer(GL_ARRAY_BUFFER, renderData.instanceMatricesBuffer);
         int size = sizeof(mat4) * instanceMatrices.size();
         glBufferData(GL_ARRAY_BUFFER, size, &(instanceMatrices[0]), drawType);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         renderData.instancesCount = instanceMatrices.size();
+    }
+
+    void SetInstanceCustomData(ui16 meshId, void* data, uint size, GLenum drawType,
+                               uint nbComponents, GLenum componentType)
+    {
+        MeshRenderData &renderData = getMeshRenderData(meshId);
+        SCE::Debug::Assert(renderData.instanceMatricesBuffer != GL_INVALID_INDEX,
+                           std::string("Mesh was not set as instances,") +
+                           "use 'MakeMeshInstanced' to set mesh as instanced");
+
+        if(renderData.instanceCustomData.glBuffer == GL_INVALID_INDEX)
+        {
+            glGenBuffers(1, &(renderData.instanceCustomData.glBuffer));
+        }
+
+        renderData.instanceCustomData.nbComponents = nbComponents;
+        renderData.instanceCustomData.type = componentType;
+
+        glBindBuffer(GL_ARRAY_BUFFER, renderData.instanceCustomData.glBuffer);
+        glBufferData(GL_ARRAY_BUFFER, size, data, drawType);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
 
     void DrawInstances(ui16 meshId, const glm::mat4& projectionMatrix,
@@ -362,7 +415,7 @@ namespace MeshRender
 
         MeshRenderData& meshRenderData = getMeshRenderData(meshId);
 
-        SCE::Debug::Assert(meshRenderData.instancesBuffer != GL_INVALID_INDEX,
+        SCE::Debug::Assert(meshRenderData.instanceMatricesBuffer != GL_INVALID_INDEX,
                            std::string("Mesh was not set as instances,") +
                            "use 'MakeMeshInstanced' to set mesh as instanced");
 
@@ -371,9 +424,10 @@ namespace MeshRender
         const ShaderData &shaderData = meshRenderData.shaderData[shaderProgram];
 
         //bind buffer attribute for instanced rendering
-        glBindBuffer(GL_ARRAY_BUFFER, meshRenderData.instancesBuffer);
-        GLint instanceAttribLoc = shaderData.instanceMatrixAttrib;
+        glBindBuffer(GL_ARRAY_BUFFER, meshRenderData.instanceMatricesBuffer);
+        GLint instanceAttribLoc = shaderData.instanceMatrixLocation;
 
+        //we can't use a Matrix here, so mark it as 4 consecutive vectors instead
         for (int i = 0; i < 4; i++)
         {
             // Set up the vertex attribute
@@ -385,6 +439,26 @@ namespace MeshRender
             glEnableVertexAttribArray(instanceAttribLoc + i);
             // Make it instanced
             glVertexAttribDivisor(instanceAttribLoc + i, 1);
+        }
+
+        //bind custom data
+        GLint dataAttribLoc = shaderData.instanceCustomDataLocation;
+        AttributeData const& customData = meshRenderData.instanceCustomData;
+        if(dataAttribLoc != (GLint)GL_INVALID_INDEX && customData.glBuffer != GL_INVALID_INDEX)
+        {
+            glBindBuffer(GL_ARRAY_BUFFER, customData.glBuffer);
+
+            glVertexAttribPointer(
+                        dataAttribLoc,              // The attribute we want to configure
+                        customData.nbComponents,    // size
+                        customData.type,            // typeC
+                        GL_FALSE,                   // normalized?
+                        0,                          // stride
+                        (void*)0                    // array buffer offset
+                        );
+            glEnableVertexAttribArray(dataAttribLoc);
+            // Make it instanced
+            glVertexAttribDivisor(dataAttribLoc, 1);
         }
 
         GLuint indiceCount = meshRenderData.indiceCount;
@@ -403,6 +477,10 @@ namespace MeshRender
 
         cleanMeshAttributes(meshRenderData, shaderProgram);
         glDisableVertexAttribArray(instanceAttribLoc);
+        if(dataAttribLoc != (GLint)GL_INVALID_INDEX)
+        {
+            glDisableVertexAttribArray(dataAttribLoc);
+        }
 
         glBindVertexArray(0);
     }

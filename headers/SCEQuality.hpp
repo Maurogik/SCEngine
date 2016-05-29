@@ -18,6 +18,7 @@ namespace SCE
             extern float LodDistances[MAX_TREE_LOD_COUNT];
             extern float BaseSpacing;
             extern float NbGroupPerKm;
+            extern float VisibilityUpdateDuration;
         }
     }
 }

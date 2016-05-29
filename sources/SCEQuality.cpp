@@ -17,16 +17,18 @@
         };
         float SCE::Quality::Trees::BaseSpacing = 75.0f;
         float SCE::Quality::Trees::NbGroupPerKm = 4.0f;
+        float SCE::Quality::Trees::VisibilityUpdateDuration = 2.0f;
 
 #elif RENDER_QUALITY == 1
 
         float SCE::Quality::TerrainLodMultiplier = 1.0f;
 
         float SCE::Quality::Trees::LodDistances[MAX_TREE_LOD_COUNT] = {
-            100.0f, 200.0f, 400.0f, 600.0f, 1000.0f
+            -1.0f, -1.0f, -1.0f, 600.0f, 1000.0f
         };
         float SCE::Quality::Trees::BaseSpacing = 50.0f;
         float SCE::Quality::Trees::NbGroupPerKm = 8.0f;
+        float SCE::Quality::Trees::VisibilityUpdateDuration = 1.0f;
 
 #elif RENDER_QUALITY == 2
 
@@ -37,5 +39,6 @@
         };
         float SCE::Quality::Trees::BaseSpacing = 30.0f;
         float SCE::Quality::Trees::NbGroupPerKm = 16.0f;
+        float SCE::Quality::Trees::VisibilityUpdateDuration = 0.2f;
 
 #endif

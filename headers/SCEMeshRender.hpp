@@ -19,8 +19,10 @@ namespace SCE
         void                InitializeMeshRenderData(ui16 meshId);
         void                DeleteMeshRenderData(ui16 meshId);
         void                MakeMeshInstanced(ui16 meshId);
-        void                SetMeshInstances(ui16 meshId, const std::vector<mat4> &instanceMatrices,
+        void                SetMeshInstanceMatrices(ui16 meshId, const std::vector<mat4> &instanceMatrices,
                                              GLenum drawType);
+        void                SetInstanceCustomData(ui16 meshId, void* data, uint size, GLenum drawType,
+                                       uint nbComponents, GLenum componentType);
         void                DrawInstances(ui16 meshId,  const mat4& projectionMatrix,
                                           const mat4& viewMatrix);
         void                RenderMesh( ui16 meshId, const mat4& projectionMatrix,

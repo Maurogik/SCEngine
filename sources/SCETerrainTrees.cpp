@@ -17,6 +17,7 @@
 #include "../headers/SCEQuality.hpp"
 #include "../headers/SCETime.hpp"
 #include "../headers/SCERender.hpp"
+#include "../headers/SCEBillboardRender.hpp"
 
 #include <stb_perlin.h>
 #include <glm/gtc/matrix_transform.hpp>
@@ -31,6 +32,7 @@
 
 #define USE_IMPOSTORS 1
 #define DOUBLE_SIDED_TREES 1
+#define NB_IMPOSTOR_ANGLES 16
 
 #define TREE_TRUNK_SHADER_NAME "Terrain/TreePack/TreeInstanced_trunk"
 #define TREE_LEAVES_SHADER_NAME "Terrain/TreePack/TreeInstanced_leaves"
@@ -45,14 +47,14 @@
 #define TREE_BARK_NORMAL_TEX_UNIFORM "BarkNormalMap"
 #define TREE_LEAVES_TEX_UNIFORM "LeafTex"
 
+#define BILLBOARD_GEN_SHADER_NAME "BillboardCapture"
+#define BILLBOARD_GEN_MAIN_TEX "MainTex"
+#define BILLBOARD_GEN_NORMAL_TEX "NormalMap"
+
 #define IMPOSTOR_SHADER_NAME "Terrain/TreeImpostor"
 #define IMPOSTOR_TEXTURE_UNIFORM "ImpostorTex"
 #define IMPOSTOR_NORMAL_UNIFORM "ImpostorNormalTex"
 #define IMPOSTOR_SCALE_INVERT_UNIFORM "ScaleInvertMat"
-#define IMPOSTOR_TEXTURE_NAME "Terrain/TreePack/tree_1/1/impostor/diffuse.png"
-#define IMPOSTOR_NORMAL_NAME "Terrain/TreePack/tree_1/1/impostor/normal.png"
-#define IMPOSTOR_SIZE 20.0f
-
 
 
 void SCE::TerrainTrees::UpdateVisibilityAndLOD(mat4 viewMatrix,
@@ -61,7 +63,17 @@ void SCE::TerrainTrees::UpdateVisibilityAndLOD(mat4 viewMatrix,
                                                float maxDistFromCenter,
                                                glm::mat4 impostorScaleMat)
 {
-    std::chrono::milliseconds interval(8);
+#define DO_SLEEP 0
+#define DO_DURATION 1
+
+#if DO_SLEEP
+    std::chrono::milliseconds waitInterval(8);
+#endif
+
+#if DO_DURATION
+    double startTime = SCE::Time::RealTimeInSeconds();
+#endif
+
     float perlinScale = 0.05f;
     float positionNoiseScale = 5.0f;
     float noiseX, noiseZ;
@@ -71,18 +83,20 @@ void SCE::TerrainTrees::UpdateVisibilityAndLOD(mat4 viewMatrix,
 
     for(int i = 0; i < TREE_LOD_COUNT; ++i)
     {
-        prevSize = treeMatrices[i].size();
-        treeMatrices[i].clear();
-        treeMatrices[i].reserve(prevSize);
+        prevSize = mTreeMatrices[i].size();
+        mTreeMatrices[i].clear();
+        mTreeMatrices[i].reserve(prevSize);
     }
 
-    prevSize = treeImpostorMatrices.size();
-    treeImpostorMatrices.clear();
-    treeImpostorMatrices.reserve(prevSize);
+    prevSize = mTreeImpostorMatrices.size();
+    mTreeImpostorMatrices.clear();
+    mTreeImpostorMatrices.reserve(prevSize);
+    mTreeImpostorTexIndices.clear();
+    mTreeImpostorTexIndices.reserve(prevSize);
 
     //perform frustum culling on the tree groups
     std::vector<TreeGroup*> activeGroups;
-    for(TreeGroup& group : treeGroups)
+    for(TreeGroup& group : mTreeGroups)
     {
         //make a bigger radius to account for possible displacement
         float totalRadius = group.radius + group.spacing*positionNoiseScale;
@@ -99,10 +113,12 @@ void SCE::TerrainTrees::UpdateVisibilityAndLOD(mat4 viewMatrix,
         else
         {
             ++discardedGroups;
-        }
+        }       
     }
 
-    std::this_thread::sleep_for(interval);
+#if DO_SLEEP
+    std::this_thread::sleep_for(waitInterval);
+#endif
 
     glm::vec2 camPos2 = glm::vec2(cameraPosition.x, cameraPosition.z);
 
@@ -113,7 +129,9 @@ void SCE::TerrainTrees::UpdateVisibilityAndLOD(mat4 viewMatrix,
         return glm::length(camPos2 - a->position) < glm::length(camPos2 - b->position);
     });
 
-    std::this_thread::sleep_for(interval);
+#if DO_SLEEP
+    std::this_thread::sleep_for(waitInterval);
+#endif
 
     glm::vec3 leveledCamPos = cameraPosition;
     leveledCamPos.y = 0.0f;
@@ -173,7 +191,7 @@ void SCE::TerrainTrees::UpdateVisibilityAndLOD(mat4 viewMatrix,
                         instanceMatrix = glm::translate(mat4(1.0f), treePos)*
                                 glm::rotate(mat4(1.0), noiseX*10.0f, glm::vec3(0, 1, 0))*
                                 glm::scale(mat4(1.0), glm::vec3(scale));
-                        treeMatrices[lodGroup].push_back(instanceMatrix);
+                        mTreeMatrices[lodGroup].push_back(instanceMatrix);
                     }
 #if USE_IMPOSTORS
                     //make an impostor
@@ -188,7 +206,10 @@ void SCE::TerrainTrees::UpdateVisibilityAndLOD(mat4 viewMatrix,
                                 glm::rotate(mat4(1.0), angleYAxis, glm::vec3(0.0, 1.0, 0.0))*
                                 glm::scale(mat4(1.0), glm::vec3(scale))*
                                 impostorScaleMat;
-                        treeImpostorMatrices.push_back(instanceMatrix);
+                        mTreeImpostorMatrices.push_back(instanceMatrix);
+
+                        mTreeImpostorTexIndices.push_back(
+                                    SCE::BillboardRender::GetIdFromAngle(angleYAxis, NB_IMPOSTOR_ANGLES));
                     }
 #endif
                 }
@@ -196,12 +217,24 @@ void SCE::TerrainTrees::UpdateVisibilityAndLOD(mat4 viewMatrix,
         }
     }
 
-    std::this_thread::sleep_for(interval);
+#if DO_SLEEP
+    std::this_thread::sleep_for(waitInterval);
+#endif
+
+#if DO_DURATION
+    double ellapsedTime = SCE::Time::RealTimeInSeconds() - startTime;
+    double remainingTime = SCE::Quality::Trees::VisibilityUpdateDuration - ellapsedTime;
+    if(remainingTime > 0)
+    {
+        std::this_thread::sleep_for(std::chrono::milliseconds(int(remainingTime*1000.0f)));
+    }
+#endif
+
     //sort non-impostors trees individually
     for(int i = 0; i < TREE_LOD_COUNT; ++i)
     {
         //sort the visible trees
-        std::sort(begin(treeMatrices[i]), end(treeMatrices[i]),
+        std::sort(begin(mTreeMatrices[i]), end(mTreeMatrices[i]),
                   [&leveledCamPos](glm::mat4 const& a, glm::mat4 const& b) -> bool
         {
             glm::vec3 aPos(a[3].x, 0.0f, a[3].z);
@@ -222,11 +255,11 @@ void SCE::TerrainTrees::UpdateVisibilityAndLOD(mat4 viewMatrix,
 SCE::TerrainTrees::TerrainTrees()
     : mInstancesUpToDate(false)
 {
-    treeGlData.impostorData.scaleMatrix = glm::scale(mat4(1.0), glm::vec3(1.0, 1.0, 1.0));
+    mTreeGlData.impostorData.scaleMatrix = glm::scale(mat4(1.0), glm::vec3(1.0, 1.0, 1.0));
 
     //Load tree models
-    treeGlData.trunkShaderProgram = SCE::ShaderUtils::CreateShaderProgram(TREE_TRUNK_SHADER_NAME);
-    treeGlData.leavesShaderProgram = SCE::ShaderUtils::CreateShaderProgram(TREE_LEAVES_SHADER_NAME);
+    mTreeGlData.trunkShaderProgram = SCE::ShaderUtils::CreateShaderProgram(TREE_TRUNK_SHADER_NAME);
+    mTreeGlData.leavesShaderProgram = SCE::ShaderUtils::CreateShaderProgram(TREE_LEAVES_SHADER_NAME);
 
     for(int lod = 0; lod < TREE_LOD_COUNT; ++lod)
     {
@@ -243,43 +276,94 @@ SCE::TerrainTrees::TerrainTrees()
         SCE::MeshRender::InitializeMeshRenderData(leavesMeshId);
         SCE::MeshRender::MakeMeshInstanced(leavesMeshId);
 
-        treeGlData.trunkMeshIds[lod] = trunkMeshId;
-        treeGlData.leavesMeshIds[lod] = leavesMeshId;
+        mTreeGlData.trunkMeshIds[lod] = trunkMeshId;
+        mTreeGlData.leavesMeshIds[lod] = leavesMeshId;
     }
 
-    treeGlData.barkTexture = SCE::TextureUtils::LoadTexture(TREE_BARK_TEX_NAME);
-    treeGlData.barkTexUniform =
-            glGetUniformLocation(treeGlData.trunkShaderProgram, TREE_BARK_TEX_UNIFORM);
+    mTreeGlData.barkTexture = SCE::TextureUtils::LoadTexture(TREE_BARK_TEX_NAME);
+    mTreeGlData.barkTexUniform =
+            glGetUniformLocation(mTreeGlData.trunkShaderProgram, TREE_BARK_TEX_UNIFORM);
 
-    treeGlData.barkNormalTexture = SCE::TextureUtils::LoadTexture(TREE_BARK_NORMAL_NAME);
-    treeGlData.barkNormalTexUniform =
-            glGetUniformLocation(treeGlData.trunkShaderProgram, TREE_BARK_NORMAL_TEX_UNIFORM);
+    mTreeGlData.barkNormalTexture = SCE::TextureUtils::LoadTexture(TREE_BARK_NORMAL_NAME);
+    mTreeGlData.barkNormalTexUniform =
+            glGetUniformLocation(mTreeGlData.trunkShaderProgram, TREE_BARK_NORMAL_TEX_UNIFORM);
 
-    treeGlData.leafTexture = SCE::TextureUtils::LoadTexture(TREE_LEAVES_TEX_NAME);
-    treeGlData.leafTexUniform =
-            glGetUniformLocation(treeGlData.leavesShaderProgram, TREE_LEAVES_TEX_UNIFORM);
+    mTreeGlData.leafTexture = SCE::TextureUtils::LoadTexture(TREE_LEAVES_TEX_NAME);
+    mTreeGlData.leafTexUniform =
+            glGetUniformLocation(mTreeGlData.leavesShaderProgram, TREE_LEAVES_TEX_UNIFORM);
 
+
+#if USE_IMPOSTORS
+
+    //generate textures for different angles
+//    ui16 impostorSrcLeavesMesh = mTreeGlData.leavesMeshIds[TREE_LOD_COUNT - 1];
+//    ui16 impostorSrcTrunkMesh = mTreeGlData.trunkMeshIds[TREE_LOD_COUNT - 1];
+    ui16 impostorSrcLeavesMesh = mTreeGlData.leavesMeshIds[0];
+    ui16 impostorSrcTrunkMesh = mTreeGlData.trunkMeshIds[0];
+
+    GLuint billboardCaptureShader = SCE::ShaderUtils::CreateShaderProgram(BILLBOARD_GEN_SHADER_NAME);
+    GLuint defaultNormalTex = SCE::TextureUtils::CreateTexture(64, 64, glm::vec4(0.0, 0.0, 1.0, 0.0));
+
+    GLuint billboardDiffuseUniform = glGetUniformLocation(billboardCaptureShader, "MainTex");
+    GLuint billboardNormalUniform = glGetUniformLocation(billboardCaptureShader, "NormalMap");
+
+    //callback that will be call to render each angle
+    SCE::BillboardRender::RenderCallback renderCallback = [&](glm::mat4 const& modelMatrix,
+            glm::mat4 const& viewMatrix, glm::mat4 const& projectionMatrix)
+    {
+        //render trees trunks
+        SCE::ShaderUtils::UseShader(billboardCaptureShader);
+        SCE::TextureUtils::BindTexture(mTreeGlData.barkTexture, 0, billboardDiffuseUniform);
+        SCE::TextureUtils::BindTexture(mTreeGlData.barkNormalTexture, 1, billboardNormalUniform);
+        SCE::MeshRender::RenderMesh(impostorSrcTrunkMesh, projectionMatrix, viewMatrix, modelMatrix);
+
+        //render trees leaves
+        SCE::ShaderUtils::UseShader(billboardCaptureShader);
+        SCE::TextureUtils::BindTexture(mTreeGlData.leafTexture, 0, billboardDiffuseUniform);
+        SCE::TextureUtils::BindTexture(defaultNormalTex, 1, billboardNormalUniform);
+        SCE::MeshRender::RenderMesh(impostorSrcLeavesMesh, projectionMatrix, viewMatrix, modelMatrix);
+    };
+
+    glm::vec3 leavesDim = SCE::MeshLoader::GetMeshData(impostorSrcLeavesMesh).dimensions;
+    glm::vec3 trunkDim = SCE::MeshLoader::GetMeshData(impostorSrcTrunkMesh).dimensions;
+    glm::vec3 leavesCenter = SCE::MeshLoader::GetMeshData(impostorSrcLeavesMesh).center;
+    glm::vec3 trunkCenter = SCE::MeshLoader::GetMeshData(impostorSrcTrunkMesh).center;
+
+
+    glm::vec3 treeDimensions, treeCenter;
+    SCE::Math::CombineAABB(leavesCenter, leavesDim, trunkCenter, trunkDim, treeCenter, treeDimensions);
+
+    //Start generating the billboards
+    SCE::BillboardRender::GenerateTexturesFromMesh(16, 512,
+                                                   treeCenter, treeDimensions,
+                                                   &mTreeGlData.impostorData.texture,
+                                                   &mTreeGlData.impostorData.normalTexture,
+                                                   renderCallback);
+    //we're done with this shader so delete it
+    SCE::ShaderUtils::DeleteShaderProgram(billboardCaptureShader);
+    billboardCaptureShader = GL_INVALID_INDEX;
 
     //Set up impostor render data
-    treeGlData.impostorData.meshId = SCE::MeshLoader::CreateQuadMesh();
-    SCE::MeshRender::InitializeMeshRenderData(treeGlData.impostorData.meshId);
-    SCE::MeshRender::MakeMeshInstanced(treeGlData.impostorData.meshId);
-    treeGlData.impostorData.shaderProgram = SCE::ShaderUtils::CreateShaderProgram(IMPOSTOR_SHADER_NAME);
+    mTreeGlData.impostorData.meshId = SCE::MeshLoader::CreateQuadMesh();
+    SCE::MeshRender::InitializeMeshRenderData(mTreeGlData.impostorData.meshId);
+    SCE::MeshRender::MakeMeshInstanced(mTreeGlData.impostorData.meshId);
+    mTreeGlData.impostorData.shaderProgram = SCE::ShaderUtils::CreateShaderProgram(IMPOSTOR_SHADER_NAME);
 
-    treeGlData.impostorData.texture         = SCE::TextureUtils::LoadTexture(IMPOSTOR_TEXTURE_NAME);
-    treeGlData.impostorData.normalTexture   = SCE::TextureUtils::LoadTexture(IMPOSTOR_NORMAL_NAME);
-    glBindTexture(GL_TEXTURE_2D, treeGlData.impostorData.texture);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    treeGlData.impostorData.textureUniform =
-            glGetUniformLocation(treeGlData.impostorData.shaderProgram, IMPOSTOR_TEXTURE_UNIFORM);
-    treeGlData.impostorData.normalUniform =
-            glGetUniformLocation(treeGlData.impostorData.shaderProgram, IMPOSTOR_NORMAL_UNIFORM);
-    treeGlData.impostorData.scaleInvertMatUniform =
-        glGetUniformLocation(treeGlData.impostorData.shaderProgram, IMPOSTOR_SCALE_INVERT_UNIFORM);
+    mTreeGlData.impostorData.textureUniform =
+            glGetUniformLocation(mTreeGlData.impostorData.shaderProgram, IMPOSTOR_TEXTURE_UNIFORM);
+    mTreeGlData.impostorData.normalUniform =
+            glGetUniformLocation(mTreeGlData.impostorData.shaderProgram, IMPOSTOR_NORMAL_UNIFORM);
+    mTreeGlData.impostorData.scaleInvertMatUniform =
+        glGetUniformLocation(mTreeGlData.impostorData.shaderProgram, IMPOSTOR_SCALE_INVERT_UNIFORM);
 
 
+    //scale impostor quad so that it looks like a regular tree
+    mImpostorScaleMat =
+            mTreeGlData.impostorData.scaleMatrix*
+            glm::scale(mat4(1.0), glm::vec3(glm::length(treeDimensions)))*
+            glm::translate(mat4(1.0), glm::vec3(0.0, 1.0, 0.0));
+
+#endif
 
 }
 
@@ -291,55 +375,55 @@ SCE::TerrainTrees::~TerrainTrees()
         mUpdateThread.release();
     }
 
-    if(treeGlData.trunkShaderProgram != GL_INVALID_INDEX)
+    if(mTreeGlData.trunkShaderProgram != GL_INVALID_INDEX)
     {
-        SCE::ShaderUtils::DeleteShaderProgram(treeGlData.trunkShaderProgram);
+        SCE::ShaderUtils::DeleteShaderProgram(mTreeGlData.trunkShaderProgram);
     }
 
-    if(treeGlData.leavesShaderProgram != GL_INVALID_INDEX)
+    if(mTreeGlData.leavesShaderProgram != GL_INVALID_INDEX)
     {
-        SCE::ShaderUtils::DeleteShaderProgram(treeGlData.leavesShaderProgram);
+        SCE::ShaderUtils::DeleteShaderProgram(mTreeGlData.leavesShaderProgram);
     }
 
-    if(treeGlData.impostorData.shaderProgram != GL_INVALID_INDEX)
+    if(mTreeGlData.impostorData.shaderProgram != GL_INVALID_INDEX)
     {
-        SCE::ShaderUtils::DeleteShaderProgram(treeGlData.impostorData.shaderProgram);
+        SCE::ShaderUtils::DeleteShaderProgram(mTreeGlData.impostorData.shaderProgram);
     }
 
     for(uint lod = 0; lod < TREE_LOD_COUNT; ++lod)
     {
-        SCE::MeshRender::DeleteMeshRenderData(treeGlData.trunkMeshIds[lod]);
-        SCE::MeshLoader::DeleteMesh(treeGlData.trunkMeshIds[lod]);
-        treeGlData.trunkMeshIds[lod] = ui16(-1);
+        SCE::MeshRender::DeleteMeshRenderData(mTreeGlData.trunkMeshIds[lod]);
+        SCE::MeshLoader::DeleteMesh(mTreeGlData.trunkMeshIds[lod]);
+        mTreeGlData.trunkMeshIds[lod] = ui16(-1);
 
-        SCE::MeshRender::DeleteMeshRenderData(treeGlData.leavesMeshIds[lod]);
-        SCE::MeshLoader::DeleteMesh(treeGlData.leavesMeshIds[lod]);
-        treeGlData.leavesMeshIds[lod] = ui16(-1);
+        SCE::MeshRender::DeleteMeshRenderData(mTreeGlData.leavesMeshIds[lod]);
+        SCE::MeshLoader::DeleteMesh(mTreeGlData.leavesMeshIds[lod]);
+        mTreeGlData.leavesMeshIds[lod] = ui16(-1);
     }
 
-    if(treeGlData.barkNormalTexture != GL_INVALID_INDEX)
+    if(mTreeGlData.barkNormalTexture != GL_INVALID_INDEX)
     {
-        SCE::TextureUtils::DeleteTexture(treeGlData.barkNormalTexture);
+        SCE::TextureUtils::DeleteTexture(mTreeGlData.barkNormalTexture);
     }
 
-    if(treeGlData.barkTexture!= GL_INVALID_INDEX)
+    if(mTreeGlData.barkTexture!= GL_INVALID_INDEX)
     {
-        SCE::TextureUtils::DeleteTexture(treeGlData.barkTexture);
+        SCE::TextureUtils::DeleteTexture(mTreeGlData.barkTexture);
     }
 
-    if(treeGlData.leafTexture != GL_INVALID_INDEX)
+    if(mTreeGlData.leafTexture != GL_INVALID_INDEX)
     {
-        SCE::TextureUtils::DeleteTexture(treeGlData.leafTexture);
+        SCE::TextureUtils::DeleteTexture(mTreeGlData.leafTexture);
     }
 
-    if(treeGlData.impostorData.texture != GL_INVALID_INDEX)
+    if(mTreeGlData.impostorData.texture != GL_INVALID_INDEX)
     {
-        SCE::TextureUtils::DeleteTexture(treeGlData.impostorData.texture);
+        SCE::TextureUtils::DeleteTexture(mTreeGlData.impostorData.texture);
     }
 
-    if(treeGlData.impostorData.normalTexture != GL_INVALID_INDEX)
+    if(mTreeGlData.impostorData.normalTexture != GL_INVALID_INDEX)
     {
-        SCE::TextureUtils::DeleteTexture(treeGlData.impostorData.normalTexture);
+        SCE::TextureUtils::DeleteTexture(mTreeGlData.impostorData.normalTexture);
     }
 }
 
@@ -387,7 +471,7 @@ void SCE::TerrainTrees::InitializeTreeLayout(glm::vec4* normAndHeightTex, int te
                        *halfTerrainSize;
                 group.radius = noise*baseGroupRadius;
                 group.spacing = baseSpacing;
-                treeGroups.push_back(group);
+                mTreeGroups.push_back(group);
             }
         }
     }
@@ -412,31 +496,35 @@ void SCE::TerrainTrees::SpawnTreeInstances(const glm::mat4& viewMatrix,
     if(!isUpToDate)
     {
         mTreeInstanceLock.lock();
-        SCE::DebugText::LogMessage("Tree groups : " + std::to_string(treeGroups.size()));
+        SCE::DebugText::LogMessage("Tree groups : " + std::to_string(mTreeGroups.size()));
 
         for(uint lod = 0; lod < TREE_LOD_COUNT; ++lod)
         {
-            SCE::MeshRender::SetMeshInstances(treeGlData.trunkMeshIds[lod],
-                                              treeMatrices[lod], GL_DYNAMIC_DRAW);
-            SCE::MeshRender::SetMeshInstances(treeGlData.leavesMeshIds[lod],
-                                              treeMatrices[lod], GL_DYNAMIC_DRAW);
+            SCE::MeshRender::SetMeshInstanceMatrices(mTreeGlData.trunkMeshIds[lod],
+                                              mTreeMatrices[lod], GL_DYNAMIC_DRAW);
+            SCE::MeshRender::SetMeshInstanceMatrices(mTreeGlData.leavesMeshIds[lod],
+                                              mTreeMatrices[lod], GL_DYNAMIC_DRAW);
             SCE::DebugText::LogMessage("Trees lod " + std::to_string(lod) + " : " +
-                                  std::to_string(treeMatrices[lod].size()));
+                                  std::to_string(mTreeMatrices[lod].size()));
         }
 
+#if USE_IMPOSTORS
         SCE::DebugText::LogMessage("Trees impostors " +
-                              std::to_string(treeImpostorMatrices.size()));
+                              std::to_string(mTreeImpostorMatrices.size()));
 
-        SCE::MeshRender::SetMeshInstances(treeGlData.impostorData.meshId,
-                                          treeImpostorMatrices, GL_DYNAMIC_DRAW);
-
+        SCE::MeshRender::SetMeshInstanceMatrices(mTreeGlData.impostorData.meshId,
+                                          mTreeImpostorMatrices, GL_DYNAMIC_DRAW);
+        SCE::MeshRender::SetInstanceCustomData(
+                    mTreeGlData.impostorData.meshId,
+                    mTreeImpostorTexIndices.data(),
+                    mTreeImpostorTexIndices.size()*sizeof(mTreeImpostorTexIndices[0]),
+                    GL_DYNAMIC_DRAW,
+                    1,
+                    GL_UNSIGNED_INT);
+#endif
         mInstancesUpToDate = true;
 
-        //scale impostor quad so that it looks like a regular tree
-        glm::mat4 impostorScaleMat =
-                treeGlData.impostorData.scaleMatrix*
-                glm::scale(mat4(1.0), glm::vec3(IMPOSTOR_SIZE))*
-                glm::translate(mat4(1.0), glm::vec3(0.0, 1.0, 0.0));
+        mTreeInstanceLock.unlock();
 
         mUpdateThread.reset(new std::thread(&SCE::TerrainTrees::UpdateVisibilityAndLOD,
                                             this,
@@ -444,9 +532,8 @@ void SCE::TerrainTrees::SpawnTreeInstances(const glm::mat4& viewMatrix,
                                             worldToTerrainspaceMatrix,
                                             cameraPosition,
                                             maxDistFromCenter,
-                                            impostorScaleMat));
+                                            mImpostorScaleMat));
     }
-    mTreeInstanceLock.unlock();
 }
 
 void SCE::TerrainTrees::RenderTrees(const mat4 &projectionMatrix, const mat4 &viewMatrix,
@@ -459,41 +546,41 @@ void SCE::TerrainTrees::RenderTrees(const mat4 &projectionMatrix, const mat4 &vi
         glDisable(GL_CULL_FACE);
     #endif
         //render trees trunks
-        SCE::ShaderUtils::UseShader(treeGlData.trunkShaderProgram);
+        SCE::ShaderUtils::UseShader(mTreeGlData.trunkShaderProgram);
 
-        SCE::TextureUtils::BindTexture(treeGlData.barkTexture, 0, treeGlData.barkTexUniform);
-        SCE::TextureUtils::BindTexture(treeGlData.barkNormalTexture, 1, treeGlData.barkNormalTexUniform);
+        SCE::TextureUtils::BindTexture(mTreeGlData.barkTexture, 0, mTreeGlData.barkTexUniform);
+        SCE::TextureUtils::BindTexture(mTreeGlData.barkNormalTexture, 1, mTreeGlData.barkNormalTexUniform);
 
         for(uint lod = 0; lod < TREE_LOD_COUNT; ++lod)
         {
-            SCE::MeshRender::DrawInstances(treeGlData.trunkMeshIds[lod], projectionMatrix, viewMatrix);
+            SCE::MeshRender::DrawInstances(mTreeGlData.trunkMeshIds[lod], projectionMatrix, viewMatrix);
         }
 
         //render trees leaves
-        SCE::ShaderUtils::UseShader(treeGlData.leavesShaderProgram);
+        SCE::ShaderUtils::UseShader(mTreeGlData.leavesShaderProgram);
 
-        SCE::TextureUtils::BindTexture(treeGlData.leafTexture, 0, treeGlData.leafTexUniform);
+        SCE::TextureUtils::BindTexture(mTreeGlData.leafTexture, 0, mTreeGlData.leafTexUniform);
 
         for(uint lod = 0; lod < TREE_LOD_COUNT; ++lod)
         {
-            SCE::MeshRender::DrawInstances(treeGlData.leavesMeshIds[lod], projectionMatrix, viewMatrix);
+            SCE::MeshRender::DrawInstances(mTreeGlData.leavesMeshIds[lod], projectionMatrix, viewMatrix);
         }
 
     #if USE_IMPOSTORS
         if(!isShadowPass)//impostors don't cast shadows
         {
             //render tree impostors
-            SCE::ShaderUtils::UseShader(treeGlData.impostorData.shaderProgram);
-            SCE::TextureUtils::BindTexture(treeGlData.impostorData.texture, 0,
-                                           treeGlData.impostorData.textureUniform);
-            SCE::TextureUtils::BindTexture(treeGlData.impostorData.normalTexture, 1,
-                                           treeGlData.impostorData.normalUniform);
+            SCE::ShaderUtils::UseShader(mTreeGlData.impostorData.shaderProgram);
+            SCE::TextureUtils::BindTexture(mTreeGlData.impostorData.texture, 0,
+                                           mTreeGlData.impostorData.textureUniform);
+            SCE::TextureUtils::BindTexture(mTreeGlData.impostorData.normalTexture, 1,
+                                           mTreeGlData.impostorData.normalUniform);
 
-            glm::mat4 scaleInvert = glm::inverse(treeGlData.impostorData.scaleMatrix);
-            glUniformMatrix4fv(treeGlData.impostorData.scaleInvertMatUniform, 1, GL_FALSE,
+            glm::mat4 scaleInvert = glm::inverse(mTreeGlData.impostorData.scaleMatrix);
+            glUniformMatrix4fv(mTreeGlData.impostorData.scaleInvertMatUniform, 1, GL_FALSE,
                                &(scaleInvert[0][0]));
 
-            SCE::MeshRender::DrawInstances(treeGlData.impostorData.meshId, projectionMatrix, viewMatrix);
+            SCE::MeshRender::DrawInstances(mTreeGlData.impostorData.meshId, projectionMatrix, viewMatrix);
         }
     #endif
 

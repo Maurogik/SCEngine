@@ -36,6 +36,12 @@ namespace Math
     glm::vec3   GetRayPlaneIntersection(const glm::vec3& rayStart, const glm::vec3& rayDir,
                                         const vec3 &planeNormal, float planeDistToOrigin);
     glm::vec3   GetBarycentricCoord(const glm::vec3& point, const vec3 triangleVectices[]);
+    void        CombineAABB(glm::vec3 const& centerA, glm::vec3 const& dimA,
+                            glm::vec3 const& centerB, glm::vec3 const& dimB,
+                            glm::vec3 & centerRes, glm::vec3 & dimRes);
+
+    void        GetAABBForPoints(std::vector<glm::vec3> const& positions,
+                                 glm::vec3 & center, glm::vec3 & dimentions);
 }
 
 }

@@ -281,6 +281,9 @@ namespace MeshLoader
         loaderData.meshData[id].tangents = tangents;
         loaderData.meshData[id].bitangents = bitangents;
 
+        SCE::Math::GetAABBForPoints(loaderData.meshData[id].vertices, loaderData.meshData[id].center,
+                                    loaderData.meshData[id].dimensions);
+
         return id;
     }
 

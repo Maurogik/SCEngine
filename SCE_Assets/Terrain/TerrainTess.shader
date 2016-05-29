@@ -108,6 +108,7 @@ _{
 
     //in
     layout(quads, fractional_odd_spacing, ccw) in;
+//    layout(quads, equal_spacing, ccw) in;
 
     patch in float gl_TessLevelOuter[4];
     patch in float gl_TessLevelInner[2];

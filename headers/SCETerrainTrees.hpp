@@ -11,7 +11,7 @@
 #include <thread>
 #include <mutex>
 
-#define TREE_LOD_COUNT 3
+#define TREE_LOD_COUNT 1
 
 namespace SCE
 {
@@ -70,14 +70,16 @@ namespace SCE
             float spacing;
         };
 
-        TreeGLData              treeGlData;
-        std::vector<TreeGroup>  treeGroups;
-        std::vector<glm::mat4>  treeMatrices[TREE_LOD_COUNT];
-        std::vector<glm::mat4>  treeImpostorMatrices;
+        TreeGLData              mTreeGlData;
+        std::vector<TreeGroup>  mTreeGroups;
+        std::vector<glm::mat4>  mTreeMatrices[TREE_LOD_COUNT];
+        std::vector<glm::mat4>  mTreeImpostorMatrices;
+        std::vector<uint>       mTreeImpostorTexIndices;
 
         std::unique_ptr<std::thread> mUpdateThread;
         std::mutex  mTreeInstanceLock;
         bool        mInstancesUpToDate;
+        glm::mat4   mImpostorScaleMat;
     };
 }
 

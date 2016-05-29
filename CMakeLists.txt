@@ -41,7 +41,7 @@ endif(INCLUDE_DISTRIB)
 
 
 include_directories(SYSTEM
-    external/glfw-3.0.3/include/GLFW/
+    external/glfw-3.1.2/include/GLFW/
     external/glm-0.9.4.0/
     external/glew-1.9.0/include/
     external/rapidjson/
@@ -51,7 +51,7 @@ include_directories(SYSTEM
 
 set(ALL_LIBS
     ${OPENGL_LIBRARY}
-    GLFW_303
+    glfw
     GLEW_190    
 )
 

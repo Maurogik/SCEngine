@@ -16,12 +16,11 @@ namespace Time
     struct TimeData
     {
         TimeData()
-            : mTimeSpeed(1.0f), mTimeInSeconds(0.0f), mDeltaTime(0.0), mRealTimeInSeconds(0.0f)
+            : mTimeSpeed(1.0f), mTimeInSeconds(0.0f), mDeltaTime(0.0)
         {}
         float       mTimeSpeed;
         double      mTimeInSeconds;
         double      mDeltaTime;
-        double      mRealTimeInSeconds;
         double      mStartTime;
         double      mLastTime;
     };
@@ -35,7 +34,6 @@ namespace Time
         timeData->mDeltaTime *= timeData->mTimeSpeed;
         timeData->mDeltaTime = timeData->mDeltaTime > 1.0 ? 1.0 : timeData->mDeltaTime;
         timeData->mTimeInSeconds += timeData->mDeltaTime;
-        timeData->mRealTimeInSeconds = currentTime - timeData->mStartTime;
         timeData->mLastTime = currentTime;
     }
 
@@ -62,7 +60,7 @@ namespace Time
 
     double RealTimeInSeconds()
     {
-        return globalTimeData.mRealTimeInSeconds;
+        return glfwGetTime() - globalTimeData.mStartTime;
     }
 
     float GetTimeSpeed()

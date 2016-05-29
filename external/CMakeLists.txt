@@ -13,11 +13,13 @@ add_definitions(
 
 ### GLFW ###
 
-add_subdirectory (glfw-3.0.3)
+add_subdirectory (glfw-3.1.2)
+#add_subdirectory (glfw-3.0.3)
 
 include_directories(
-	glfw-3.0.3/include/GLFW/
-    glew-1.9.0/include/
+        #glfw-3.0.3/include/GLFW/
+        glfw-3.1.2/include/GLFW/
+        glew-1.9.0/include/
 )
 #Set define for high precision timer
 add_definitions( -DCLOCK_MONOTONIC)
@@ -25,7 +27,9 @@ message(${OPENGL_LIBRARY})
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 set(OPENGL_LIBRARY
 	${OPENGL_LIBRARY}
-	-lGL -lGLU -lXrandr -lXext -lX11 -lrt
+        -lGL -lGLU -lXrandr -lXext -lX11 -lrt -lXinerama -lXcursor
+        # might need any of thoses
+        #lGLEW -lglfw3 -lGL -lX11 -lXi -lXrandr -lXxf86vm -lXinerama  -lrt -lm -pthread
 	${CMAKE_DL_LIBS}
 	${GLFW_LIBRARIES}
 )
@@ -37,7 +41,9 @@ set(OPENGL_LIBRARY
 )
 endif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
+message("GLFW libs    : ")
 message(${OPENGL_LIBRARY})
+message("end")
 
 ### GLEW ###
 

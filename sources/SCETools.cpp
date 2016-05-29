@@ -126,6 +126,62 @@ namespace Math
         return vec3(1.0f - w1w2.x - w1w2.y, w1w2.x, w1w2.y);
     }
 
+    void CombineAABB(const vec3 &centerA, const vec3 &dimA,
+                     const vec3 &centerB, const vec3 &dimB,
+                     vec3 &centerRes, vec3 &dimRes)
+    {
+        std::vector<glm::vec3> points;
+        points.reserve(4);
+        points.push_back(centerA + dimA);
+        points.push_back(centerA - dimA);
+        points.push_back(centerB + dimB);
+        points.push_back(centerB - dimB);
+
+        GetAABBForPoints(points, centerRes, dimRes);
+    }
+
+    void GetAABBForPoints(const std::vector<vec3> &positions, vec3 &center, vec3 &dimentions)
+    {
+        glm::vec3 minValues = glm::vec3(0.0f);
+        glm::vec3 maxValues = glm::vec3(0.0f);
+
+        for(uint i = 0; i < positions.size(); ++i)
+        {
+            if(minValues.x > positions[i].x)
+            {
+                minValues.x = positions[i].x;
+            }
+
+            if(minValues.y > positions[i].y)
+            {
+                minValues.y = positions[i].y;
+            }
+
+            if(minValues.z > positions[i].z)
+            {
+                minValues.z = positions[i].z;
+            }
+
+            if(maxValues.x < positions[i].x)
+            {
+                maxValues.x = positions[i].x;
+            }
+
+            if(maxValues.y < positions[i].y)
+            {
+                maxValues.y = positions[i].y;
+            }
+
+            if(maxValues.z < positions[i].z)
+            {
+                maxValues.z = positions[i].z;
+            }
+        }
+
+        center = (maxValues + minValues)*0.5f;
+        dimentions = (maxValues - minValues)*0.5f;
+    }
+
 }
 
 }

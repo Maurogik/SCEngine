@@ -20,6 +20,8 @@ namespace SCE
         std::vector<vec2>       uvs;
         std::vector<vec3>       tangents;
         std::vector<vec3>       bitangents;
+        glm::vec3               dimensions;
+        glm::vec3               center;
     };
 
     namespace MeshLoader

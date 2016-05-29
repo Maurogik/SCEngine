@@ -56,7 +56,7 @@ namespace MetadataParser
 
     map<string, string> GetLineData(const string& line)
     {
-        return std::move(GetLineData(line, PAIR_SEP, VALUE_SEP));
+        return GetLineData(line, PAIR_SEP, VALUE_SEP);
     }
 
     map<string, string> GetLineData(const string& line, char pairSeparator, char valueSeparator)
@@ -95,7 +95,7 @@ namespace MetadataParser
             lineData[key] = value;
         }
 
-        return std::move(lineData);
+        return lineData;
     }
 }
 
