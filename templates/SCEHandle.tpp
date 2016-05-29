@@ -18,16 +18,6 @@ SCE::SCEHandle<T>::SCEHandle (SCE::SCEHandleTarget* target)
         mDestroyedDelegate.connect(this, &SCE::SCEHandle<T>::invalidateTarget, mTarget->mInvalidateHandleEvent);
     }
 }
-
-template <class T>
-SCE::SCEHandle<T>::SCEHandle (SCE::SCEHandle<T>& SCEHandle)
-    : mTarget(SCEHandle.mTarget)
-{
-    if(mTarget != nullptr){
-        mDestroyedDelegate.connect(this, &SCE::SCEHandle<T>::invalidateTarget, mTarget->mInvalidateHandleEvent);
-    }
-}
-
 template <class T>
 SCE::SCEHandle<T>::SCEHandle (const SCE::SCEHandle<T>& SCEHandle)
     : mTarget(SCEHandle.mTarget)

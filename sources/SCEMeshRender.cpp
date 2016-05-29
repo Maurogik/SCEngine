@@ -154,21 +154,21 @@ namespace MeshRender
 
             //vertex positions
             addAttribute(   renderData,
-                            (void*)(&(meshData.vertices[0])),
+                            (void*)(meshData.vertices.data()),
                             meshData.vertices.size() * sizeof(glm::vec3),
                             GL_FLOAT,
                             3);
 
             //vertex uvs
             addAttribute( renderData,
-                          (void*)(&(meshData.uvs[0]))
+                          (void*)(meshData.uvs.data())
                         , meshData.uvs.size() * sizeof(glm::vec2)
                         , GL_FLOAT
                         , 2);
 
             //vertex normals
             addAttribute( renderData,
-                          (void*)(&(meshData.normals[0]))
+                          (void*)(meshData.normals.data())
                         , meshData.normals.size() * sizeof(glm::vec3)
                         , GL_FLOAT
                         , 3);
@@ -176,7 +176,7 @@ namespace MeshRender
             //vertex tangents
             if(meshData.tangents.size() > 0){
                 addAttribute( renderData,
-                              (void*)(&(meshData.tangents[0]))
+                              (void*)(meshData.tangents.data())
                             , meshData.tangents.size() * sizeof(glm::vec3)
                             , GL_FLOAT
                             , 3);
@@ -185,7 +185,7 @@ namespace MeshRender
             //vertex bitangents
             if(meshData.bitangents.size() > 0){
                 addAttribute( renderData,
-                              (void*)(&(meshData.bitangents[0]))
+                              (void*)(meshData.bitangents.data())
                             , meshData.bitangents.size() * sizeof(glm::vec3)
                             , GL_FLOAT
                             , 3);
@@ -196,7 +196,7 @@ namespace MeshRender
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indiceBuffer);
             glBufferData(GL_ELEMENT_ARRAY_BUFFER
                          , meshData.indices.size() * sizeof(unsigned short)
-                         , &(meshData.indices[0]), GL_STATIC_DRAW);
+                         , meshData.indices.data(), GL_STATIC_DRAW);
 
             renderData.indiceBuffer = indiceBuffer;
 
@@ -379,7 +379,7 @@ namespace MeshRender
 
         glBindBuffer(GL_ARRAY_BUFFER, renderData.instanceMatricesBuffer);
         int size = sizeof(mat4) * instanceMatrices.size();
-        glBufferData(GL_ARRAY_BUFFER, size, &(instanceMatrices[0]), drawType);
+        glBufferData(GL_ARRAY_BUFFER, size, instanceMatrices.data(), drawType);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         renderData.instancesCount = instanceMatrices.size();
     }

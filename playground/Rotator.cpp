@@ -12,5 +12,5 @@ void Rotator::Update()
 {
     SCEHandle<Transform> transform = GetContainer()->GetComponent<Transform>();
 
-    transform->RotateAroundAxis(mRotationAxis, mSpeed * SCE::Time::DeltaTime());
+    transform->RotateAroundAxis(mRotationAxis, mSpeed * float(SCE::Time::DeltaTime()));
 }

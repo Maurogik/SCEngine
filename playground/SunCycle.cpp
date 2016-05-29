@@ -44,7 +44,7 @@ SunCycle::SunCycle(SCE::SCEHandle<Container> container, float speed, vec3 axis)
 
 void SunCycle::Update()
 {
-    float angle = SCE::Time::DeltaTime() * mSpeed;
+    float angle = float(SCE::Time::DeltaTime()) * mSpeed;
     glm::quat rot = glm::angleAxis(glm::radians(angle), mRotationAxis);
     glm::vec3 worldPos = mTransform->GetWorldPosition();
     worldPos = rot * worldPos;

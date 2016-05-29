@@ -494,7 +494,7 @@ namespace Terrain
         terrainSize = floor(terrainSize/patchSize)*patchSize;
         float halfTerrainSize = terrainSize / 2.0f;
 
-        float maxDistFromCenter = halfTerrainSize - patchSize * 0.5;
+        float maxDistFromCenter = halfTerrainSize - patchSize * 0.5f;
 
         terrainData->terrainTrees.SpawnTreeInstances(viewMatrix, terrainData->worldToTerrainspace,
                                                      cameraPosition, maxDistFromCenter);

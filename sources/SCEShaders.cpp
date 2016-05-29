@@ -309,9 +309,9 @@ namespace ShaderUtils
     void BindDefaultUniforms(GLuint shaderId, const glm::mat4& modelMatrix,
                              const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix)
     {
-        float width = SCECore::GetWindowWidth();
-        float height = SCECore::GetWindowHeight();
-        float timeInSecond = SCE::Time::TimeInSeconds();
+        float width = (float)SCECore::GetWindowWidth();
+        float height = (float)SCECore::GetWindowHeight();
+        float timeInSecond = (float)SCE::Time::TimeInSeconds();
         float deltaTime = (float)SCE::Time::DeltaTime();
 
         DefaultUniforms& uniforms = shaderData.defaultUniforms[shaderId];

@@ -75,8 +75,8 @@ namespace SkyRenderer
     {
         float quality = SUN_TEXTURE_QUALITY;
 
-        commonSkyData.renderWidth = float(windowWidth) * quality;
-        commonSkyData.renderHeight = float(windowHeight) * quality;
+        commonSkyData.renderWidth = uint(float(windowWidth) * quality);
+        commonSkyData.renderHeight = uint(float(windowHeight) * quality);
 
         // Create the FBO
         glGenFramebuffers(1, &(commonSkyData.fboId));

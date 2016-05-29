@@ -340,7 +340,7 @@ namespace MeshLoader
         float radius    = 1.0f;
         float fTess     = (float)tesselation;
         float angleStep = glm::pi<float>() * 0.5f / glm::pow(2.0f, fTess);
-        int nbSteps     = glm::ceil(glm::pi<float>() * 2.0f / angleStep);
+        int nbSteps     = int(glm::ceil(glm::pi<float>() * 2.0f / angleStep));
 
         //indicies of vertices, normal and uvs stored by angle over x, angle over y;
         std::vector<short> angleIndices(nbSteps * nbSteps);
@@ -406,7 +406,7 @@ namespace MeshLoader
                             vertices.push_back(dir);
                             normals.push_back(normalizedDir);
                             uvs.push_back(vec2(u[stepAddX], v[stepAddY]));
-                            angleIndices[index] = vertices.size() - 1;
+                            angleIndices[index] = short(vertices.size() - 1);
                         }
                         vertIndices[indCount] = angleIndices[index];
                         ++indCount;
@@ -444,8 +444,8 @@ namespace MeshLoader
         //atefacts appear if angleStep is to low so clamp to min value
         float angleStep     = glm::max(glm::pi<float>() * 0.5f / glm::pow(2.0f, fTess), radians(5.0f));
         float lengthStep    = glm::max(length / glm::pow(2.0f, fTess), 0.2f);
-        int nbAngleSteps    = glm::ceil(glm::pi<float>() * 2.0f / angleStep) + 1;
-        int nbLengthSteps   = length / lengthStep + 1;
+        int nbAngleSteps    = int(glm::ceil(glm::pi<float>() * 2.0f / angleStep)) + 1;
+        int nbLengthSteps   = int(length / lengthStep) + 1;
 
         //indicies of vertices, normal and uvs stored by [angle over x, distance over z]
         std::vector<short> viewedVertices(nbAngleSteps * nbLengthSteps);
@@ -523,7 +523,7 @@ namespace MeshLoader
                             vec3 normal = normalize(pos - vec3(0.0f, 0.0f, zPos[subStepZPos] + 0.001f));
                             normals.push_back(normal);
                             uvs.push_back(vec2(u[subStepZAngle], v[subStepZPos]));
-                            viewedVertices[index] = vertices.size() - 1;
+                            viewedVertices[index] = short(vertices.size() - 1);
                         }
                         vertIndices[indCount] = viewedVertices[index];
                         ++indCount;

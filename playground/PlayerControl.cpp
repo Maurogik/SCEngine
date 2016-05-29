@@ -44,11 +44,11 @@ void PlayerControl::Update()
     xMouse /= SCECore::GetWindowWidth();
     yMouse /= SCECore::GetWindowHeight();
 
-    float dX = xMouse - 0.5f;
-    float dY = yMouse - 0.5f;
+    float dX = float(xMouse) - 0.5f;
+    float dY = float(yMouse) - 0.5f;
 
-    float deltaTime = SCE::Time::DeltaTime();
-    float deltaGoodness = SCE::Math::MapToRange(0.010, 0.033, 0.0, 1.0, deltaTime);
+    float deltaTime = float(SCE::Time::DeltaTime());
+    float deltaGoodness = SCE::Math::MapToRange(0.010f, 0.033f, 0.0f, 1.0f, deltaTime);
     glm::vec3 printColor = glm::vec3(deltaGoodness, 1.0 - deltaGoodness, 0.0);
     SCE::DebugText::LogMessage("FPS   : " + std::to_string(1.0f/deltaTime), printColor);
     SCE::DebugText::LogMessage("Frame : " + std::to_string(deltaTime*1000.0f) + " ms", printColor);

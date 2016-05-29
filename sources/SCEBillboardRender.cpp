@@ -21,7 +21,7 @@ void GenerateTexturesFromMesh(ui16 nbAngles, ui16 texSize,
                               GLuint* diffuseTex, GLuint* normalTex,
                               RenderCallback renderCallback)
 {
-    ui16 root = glm::sqrt(nbAngles);
+    ui16 root = ui16(glm::sqrt(nbAngles));
     nbAngles = root*root;
     ui16 fullSize = root*texSize;
 
@@ -93,7 +93,7 @@ void GenerateTexturesFromMesh(ui16 nbAngles, ui16 texSize,
         {
             glViewport(i*texSize, j*texSize, texSize, texSize);
 
-            float angle = float(i*root+j)/float(nbAngles) * 2.0f * M_PI;
+            float angle = float(i*root+j)/float(nbAngles) * 2.0f * glm::pi<float>();
             //compute camera matrix for this angle
             rotationMatrix = glm::rotate(rotationMatrix, angle, up);
             eyePos = vec3(rotationMatrix*vec4(eyeStart, 1.0f));
@@ -235,12 +235,12 @@ void GenerateTexturesFromMesh(ui16 nbAngles, ui16 texSize, glm::vec3 dimensions,
 
 ui16 GetIdFromAngle(float angleInRad, ui16 nbAngles)
 {
-    ui16 root = glm::sqrt(nbAngles);
+    ui16 root = (ui16)glm::sqrt(nbAngles);
     nbAngles = root*root;
 
-    float PI2 = 2.0f*M_PI;
+    float PI2 = 2.0f*glm::pi<float>();
     angleInRad = glm::mod(angleInRad + PI2, PI2);
-    ui16 prevAng = angleInRad/PI2*float(nbAngles);
+    ui16 prevAng = ui16(angleInRad/PI2*float(nbAngles));
 
     return 1;
     return prevAng;

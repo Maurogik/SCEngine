@@ -269,7 +269,7 @@ glm::quat rotateBetweenVector(const glm::highp_dvec3& start, const glm::highp_dv
         //other way without the acos
         double halfCos = glm::sqrt((dot + 1.0)*0.5);
         double halfSin = glm::sqrt(1.0 - halfCos*halfCos);
-        rotation = quat(halfCos, halfSin * rotationAxis.x, halfSin * rotationAxis.y, halfSin * rotationAxis.z);
+        rotation = quat((float)halfCos, (float)halfSin * (float)rotationAxis.x, (float)halfSin *(float)rotationAxis.y, (float)halfSin * (float)rotationAxis.z);
     }
 
     return rotation;

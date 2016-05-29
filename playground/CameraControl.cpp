@@ -24,7 +24,7 @@ void CameraControl::Update()
     glm::vec3 lookAtTarget = mTarget->Forward()*mLookAheadTarget.z + mTarget->Up()*mLookAheadTarget.y;
 
     float avgDuration = 0.1f;
-    float deltaTime = SCE::Time::DeltaTime();
+    float deltaTime = float(SCE::Time::DeltaTime());
     mAverageOffset = (lookAtTarget*deltaTime + mAverageOffset*avgDuration)
             / (avgDuration + deltaTime);
 

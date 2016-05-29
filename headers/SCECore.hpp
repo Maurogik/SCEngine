@@ -9,7 +9,7 @@
 #include "SCEDefines.hpp"
 #include "SCE.hpp"
 
-class GLFWwindow;
+struct GLFWwindow;
 
 namespace SCE {
 

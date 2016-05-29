@@ -461,7 +461,7 @@ void SCE::TerrainTrees::InitializeTreeLayout(glm::vec4* normAndHeightTex, int te
 #endif
 
             float flatness = pow(dot(vec3(normAndHeight.x, normAndHeight.y, normAndHeight.z),
-                                     vec3(0.0, 1.0, 0.0)), 8.0);
+                                     vec3(0.0f, 1.0f, 0.0f)), 8.0f);
             float height = normAndHeight.a / heightScale;
             //Spawn tree at low height on flat terrain
             if(height < 0.12f && flatness > 0.75f && noise > 0.4f * maxRadiusScale)

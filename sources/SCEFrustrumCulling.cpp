@@ -68,32 +68,32 @@ namespace FrustrumCulling
         float radiusProjLeft =
                 (glm::abs(glm::dot(cullingData.leftPlane, xVec)) +
                 glm::abs(glm::dot(cullingData.leftPlane, yVec)) +
-                glm::abs(glm::dot(cullingData.leftPlane, zVec)))*0.5;
+                glm::abs(glm::dot(cullingData.leftPlane, zVec)))*0.5f;
 
         float radiusProjRight =
                 (glm::abs(glm::dot(cullingData.rightPlane, xVec)) +
                 glm::abs(glm::dot(cullingData.rightPlane, yVec)) +
-                glm::abs(glm::dot(cullingData.rightPlane, zVec)))*0.5;
+                glm::abs(glm::dot(cullingData.rightPlane, zVec)))*0.5f;
 
         float radiusProjTop =
                 (glm::abs(glm::dot(cullingData.topPlane, xVec)) +
                 glm::abs(glm::dot(cullingData.topPlane, yVec)) +
-                glm::abs(glm::dot(cullingData.topPlane, zVec)))*0.5;
+                glm::abs(glm::dot(cullingData.topPlane, zVec)))*0.5f;
 
         float radiusProjBottom =
                 (glm::abs(glm::dot(cullingData.bottomPlane, xVec)) +
                 glm::abs(glm::dot(cullingData.bottomPlane, yVec)) +
-                glm::abs(glm::dot(cullingData.bottomPlane, zVec)))*0.5;
+                glm::abs(glm::dot(cullingData.bottomPlane, zVec)))*0.5f;
 
         float radiusProjNear =
                 (glm::abs(glm::dot(cullingData.nearPlane, xVec)) +
                 glm::abs(glm::dot(cullingData.nearPlane, yVec)) +
-                glm::abs(glm::dot(cullingData.nearPlane, zVec)))*0.5;
+                glm::abs(glm::dot(cullingData.nearPlane, zVec)))*0.5f;
 
         float radiusProjFar =
                 (glm::abs(glm::dot(cullingData.farPlane, xVec)) +
                 glm::abs(glm::dot(cullingData.farPlane, yVec)) +
-                glm::abs(glm::dot(cullingData.farPlane, zVec)))*0.5;
+                glm::abs(glm::dot(cullingData.farPlane, zVec)))*0.5f;
 
         //for each plane, compare the distance from the (center, plane) to the effective radius
         //in this frustrum direction

@@ -160,7 +160,7 @@ namespace TextRenderer
             glGenVertexArrays(1, &loadedRenderData.vaoId);
 
             fontsRenderData.push_back(loadedRenderData);
-            return fonts.size() - 1;
+            return ui16(fonts.size()) - 1;
         }
         else
         {

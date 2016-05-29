@@ -22,8 +22,6 @@ namespace SCE {
 
         SCEHandle (SCEHandleTarget* target);
 
-        SCEHandle (SCEHandle<T>& handle);
-
         SCEHandle (const SCEHandle<T>& handle);
 
         SCEHandle (SCEHandle<T>&& handle);
