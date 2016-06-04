@@ -18,6 +18,7 @@
 #include "../headers/SCETime.hpp"
 #include "../headers/SCERender.hpp"
 #include "../headers/SCEBillboardRender.hpp"
+#include "../headers/SCEPostProcess.hpp"
 
 #include <stb_perlin.h>
 #include <glm/gtc/matrix_transform.hpp>
@@ -32,7 +33,10 @@
 
 #define USE_IMPOSTORS 1
 #define DOUBLE_SIDED_TREES 1
-#define NB_IMPOSTOR_ANGLES 16
+#define NB_IMPOSTOR_ANGLES (6*6)
+
+#define IMPOSTOR_FLIP_X 0
+#define IMPOSTOR_FACE_Z 0
 
 #define TREE_TRUNK_SHADER_NAME "Terrain/TreePack/TreeInstanced_trunk"
 #define TREE_LEAVES_SHADER_NAME "Terrain/TreePack/TreeInstanced_leaves"
@@ -46,16 +50,17 @@
 #define TREE_BARK_TEX_UNIFORM "BarkTex"
 #define TREE_BARK_NORMAL_TEX_UNIFORM "BarkNormalMap"
 #define TREE_LEAVES_TEX_UNIFORM "LeafTex"
+#define TREE_LEAVES_TRANSLUCENCY_UNIFORM "Translucency"
+#define TREE_LEAVES_TRANSLUCENCY 0.5f
 
 #define BILLBOARD_GEN_SHADER_NAME "BillboardCapture"
 #define BILLBOARD_GEN_MAIN_TEX "MainTex"
 #define BILLBOARD_GEN_NORMAL_TEX "NormalMap"
+#define BILLBOARD_GEN_TRANSLUCENCY "Translucency"
 
 #define IMPOSTOR_SHADER_NAME "Terrain/TreeImpostor"
 #define IMPOSTOR_TEXTURE_UNIFORM "ImpostorTex"
 #define IMPOSTOR_NORMAL_UNIFORM "ImpostorNormalTex"
-#define IMPOSTOR_SCALE_INVERT_UNIFORM "ScaleInvertMat"
-
 
 void SCE::TerrainTrees::UpdateVisibilityAndLOD(mat4 viewMatrix,
                                                mat4 worldToTerrainspaceMatrix,
@@ -91,8 +96,8 @@ void SCE::TerrainTrees::UpdateVisibilityAndLOD(mat4 viewMatrix,
     prevSize = mTreeImpostorMatrices.size();
     mTreeImpostorMatrices.clear();
     mTreeImpostorMatrices.reserve(prevSize);
-    mTreeImpostorTexIndices.clear();
-    mTreeImpostorTexIndices.reserve(prevSize);
+    mTreeImpostorTexMapping.clear();
+    mTreeImpostorTexMapping.reserve(prevSize);
 
     //perform frustum culling on the tree groups
     std::vector<TreeGroup*> activeGroups;
@@ -180,7 +185,7 @@ void SCE::TerrainTrees::UpdateVisibilityAndLOD(mat4 viewMatrix,
                     //put tree at the surface of terrain
                     float height = SCE::Terrain::GetTerrainHeight(treePos);
                     //go slightly down to avoid sticking out of the ground
-                    treePos.y = height - 1.7f*scale;
+                    treePos.y = height - 2.0f*scale;
 
                     glm::mat4 instanceMatrix;
 
@@ -199,6 +204,7 @@ void SCE::TerrainTrees::UpdateVisibilityAndLOD(mat4 viewMatrix,
                     {
                         //rotate plane to face camera
                         glm::vec3 dirToCam = glm::normalize(cameraPosition - treePos);
+#if IMPOSTOR_FACE_Z
                         float angleYAxis = glm::atan(1.0f, 0.0f) -
                                 glm::atan(dirToCam.z, dirToCam.x);
 
@@ -208,8 +214,25 @@ void SCE::TerrainTrees::UpdateVisibilityAndLOD(mat4 viewMatrix,
                                 impostorScaleMat;
                         mTreeImpostorMatrices.push_back(instanceMatrix);
 
-                        mTreeImpostorTexIndices.push_back(
-                                    SCE::BillboardRender::GetIdFromAngle(angleYAxis, NB_IMPOSTOR_ANGLES));
+                        mTreeImpostorTexMapping.push_back(
+                                    SCE::BillboardRender::GetMappingForAgnle(noiseX*10.0f-angleYAxis,
+                                                                             NB_IMPOSTOR_ANGLES,
+                                                                             IMPOSTOR_FLIP_X));
+#else
+                        float angleYAxis = glm::atan(-1.0f, 0.0f) -
+                                glm::atan(dirToCam.z, dirToCam.x);
+
+                        instanceMatrix = glm::translate(mat4(1.0f), treePos)*
+                                glm::rotate(mat4(1.0), angleYAxis, glm::vec3(0.0, 1.0, 0.0))*
+                                glm::scale(mat4(1.0), glm::vec3(scale))*
+                                impostorScaleMat;
+                        mTreeImpostorMatrices.push_back(instanceMatrix);
+
+                        mTreeImpostorTexMapping.push_back(
+                                    SCE::BillboardRender::GetMappingForAgnle(noiseX*-10.0f+angleYAxis,
+                                                                             NB_IMPOSTOR_ANGLES,
+                                                                             IMPOSTOR_FLIP_X));
+#endif
                     }
 #endif
                 }
@@ -255,8 +278,6 @@ void SCE::TerrainTrees::UpdateVisibilityAndLOD(mat4 viewMatrix,
 SCE::TerrainTrees::TerrainTrees()
     : mInstancesUpToDate(false)
 {
-    mTreeGlData.impostorData.scaleMatrix = glm::scale(mat4(1.0), glm::vec3(1.0, 1.0, 1.0));
-
     //Load tree models
     mTreeGlData.trunkShaderProgram = SCE::ShaderUtils::CreateShaderProgram(TREE_TRUNK_SHADER_NAME);
     mTreeGlData.leavesShaderProgram = SCE::ShaderUtils::CreateShaderProgram(TREE_LEAVES_SHADER_NAME);
@@ -291,6 +312,8 @@ SCE::TerrainTrees::TerrainTrees()
     mTreeGlData.leafTexture = SCE::TextureUtils::LoadTexture(TREE_LEAVES_TEX_NAME);
     mTreeGlData.leafTexUniform =
             glGetUniformLocation(mTreeGlData.leavesShaderProgram, TREE_LEAVES_TEX_UNIFORM);
+    mTreeGlData.leavesTranslucencyUniform =
+            glGetUniformLocation(mTreeGlData.leavesShaderProgram, TREE_LEAVES_TRANSLUCENCY_UNIFORM);
 
 
 #if USE_IMPOSTORS
@@ -304,8 +327,11 @@ SCE::TerrainTrees::TerrainTrees()
     GLuint billboardCaptureShader = SCE::ShaderUtils::CreateShaderProgram(BILLBOARD_GEN_SHADER_NAME);
     GLuint defaultNormalTex = SCE::TextureUtils::CreateTexture(64, 64, glm::vec4(0.0, 0.0, 1.0, 0.0));
 
-    GLuint billboardDiffuseUniform = glGetUniformLocation(billboardCaptureShader, "MainTex");
-    GLuint billboardNormalUniform = glGetUniformLocation(billboardCaptureShader, "NormalMap");
+    GLint billboardDiffuseUniform = glGetUniformLocation(billboardCaptureShader, BILLBOARD_GEN_MAIN_TEX);
+    GLint billboardNormalUniform = glGetUniformLocation(billboardCaptureShader, BILLBOARD_GEN_NORMAL_TEX);
+    GLint billboardTranslucencyUniform = glGetUniformLocation(billboardCaptureShader, BILLBOARD_GEN_TRANSLUCENCY);
+
+    float trunkTransluceny = 0.0f;//put some translu on the trunk to avoid it going to dark
 
     //callback that will be call to render each angle
     SCE::BillboardRender::RenderCallback renderCallback = [&](glm::mat4 const& modelMatrix,
@@ -315,12 +341,14 @@ SCE::TerrainTrees::TerrainTrees()
         SCE::ShaderUtils::UseShader(billboardCaptureShader);
         SCE::TextureUtils::BindTexture(mTreeGlData.barkTexture, 0, billboardDiffuseUniform);
         SCE::TextureUtils::BindTexture(mTreeGlData.barkNormalTexture, 1, billboardNormalUniform);
+        glUniform1f(billboardTranslucencyUniform, trunkTransluceny);
         SCE::MeshRender::RenderMesh(impostorSrcTrunkMesh, projectionMatrix, viewMatrix, modelMatrix);
 
         //render trees leaves
         SCE::ShaderUtils::UseShader(billboardCaptureShader);
         SCE::TextureUtils::BindTexture(mTreeGlData.leafTexture, 0, billboardDiffuseUniform);
         SCE::TextureUtils::BindTexture(defaultNormalTex, 1, billboardNormalUniform);
+        glUniform1f(billboardTranslucencyUniform, TREE_LEAVES_TRANSLUCENCY);
         SCE::MeshRender::RenderMesh(impostorSrcLeavesMesh, projectionMatrix, viewMatrix, modelMatrix);
     };
 
@@ -333,8 +361,10 @@ SCE::TerrainTrees::TerrainTrees()
     glm::vec3 treeDimensions, treeCenter;
     SCE::Math::CombineAABB(leavesCenter, leavesDim, trunkCenter, trunkDim, treeCenter, treeDimensions);
 
+    float billboardBorder = 0.05f;
     //Start generating the billboards
-    SCE::BillboardRender::GenerateTexturesFromMesh(16, 512,
+    glm::vec3 billboardSize = SCE::BillboardRender::GenerateTexturesFromMesh(
+                                                   NB_IMPOSTOR_ANGLES, 256, billboardBorder,
                                                    treeCenter, treeDimensions,
                                                    &mTreeGlData.impostorData.texture,
                                                    &mTreeGlData.impostorData.normalTexture,
@@ -343,8 +373,10 @@ SCE::TerrainTrees::TerrainTrees()
     SCE::ShaderUtils::DeleteShaderProgram(billboardCaptureShader);
     billboardCaptureShader = GL_INVALID_INDEX;
 
+    SCE::PostProcess::BlurTexture2D(mTreeGlData.impostorData.texture, 512, 512, 32);
+
     //Set up impostor render data
-    mTreeGlData.impostorData.meshId = SCE::MeshLoader::CreateQuadMesh();
+    mTreeGlData.impostorData.meshId = SCE::MeshLoader::CreateQuadMesh("BillboardQuad", IMPOSTOR_FACE_Z);
     SCE::MeshRender::InitializeMeshRenderData(mTreeGlData.impostorData.meshId);
     SCE::MeshRender::MakeMeshInstanced(mTreeGlData.impostorData.meshId);
     mTreeGlData.impostorData.shaderProgram = SCE::ShaderUtils::CreateShaderProgram(IMPOSTOR_SHADER_NAME);
@@ -353,15 +385,12 @@ SCE::TerrainTrees::TerrainTrees()
             glGetUniformLocation(mTreeGlData.impostorData.shaderProgram, IMPOSTOR_TEXTURE_UNIFORM);
     mTreeGlData.impostorData.normalUniform =
             glGetUniformLocation(mTreeGlData.impostorData.shaderProgram, IMPOSTOR_NORMAL_UNIFORM);
-    mTreeGlData.impostorData.scaleInvertMatUniform =
-        glGetUniformLocation(mTreeGlData.impostorData.shaderProgram, IMPOSTOR_SCALE_INVERT_UNIFORM);
 
 
     //scale impostor quad so that it looks like a regular tree
     mImpostorScaleMat =
-            mTreeGlData.impostorData.scaleMatrix*
-            glm::scale(mat4(1.0), glm::vec3(glm::length(treeDimensions)))*
-            glm::translate(mat4(1.0), glm::vec3(0.0, 1.0, 0.0));
+            glm::scale(mat4(1.0), billboardSize)*
+            glm::translate(mat4(1.0), glm::vec3(0.0, 1.0 - billboardBorder*2.0f, 0.0));
 
 #endif
 
@@ -464,7 +493,7 @@ void SCE::TerrainTrees::InitializeTreeLayout(glm::vec4* normAndHeightTex, int te
                                      vec3(0.0f, 1.0f, 0.0f)), 8.0f);
             float height = normAndHeight.a / heightScale;
             //Spawn tree at low height on flat terrain
-            if(height < 0.12f && flatness > 0.75f && noise > 0.4f * maxRadiusScale)
+            if(height < 0.2f && flatness > 0.70f && noise > 0.2f * maxRadiusScale)
             {
                 TreeGroup group;
                 group.position = (glm::vec2(x, z)*2.0f - vec2(1.0, 1.0))
@@ -516,11 +545,11 @@ void SCE::TerrainTrees::SpawnTreeInstances(const glm::mat4& viewMatrix,
                                           mTreeImpostorMatrices, GL_DYNAMIC_DRAW);
         SCE::MeshRender::SetInstanceCustomData(
                     mTreeGlData.impostorData.meshId,
-                    mTreeImpostorTexIndices.data(),
-                    mTreeImpostorTexIndices.size()*sizeof(mTreeImpostorTexIndices[0]),
+                    mTreeImpostorTexMapping.data(),
+                    mTreeImpostorTexMapping.size()*sizeof(mTreeImpostorTexMapping[0]),
                     GL_DYNAMIC_DRAW,
-                    1,
-                    GL_UNSIGNED_INT);
+                    4,
+                    GL_FLOAT);
 #endif
         mInstancesUpToDate = true;
 
@@ -560,6 +589,7 @@ void SCE::TerrainTrees::RenderTrees(const mat4 &projectionMatrix, const mat4 &vi
         SCE::ShaderUtils::UseShader(mTreeGlData.leavesShaderProgram);
 
         SCE::TextureUtils::BindTexture(mTreeGlData.leafTexture, 0, mTreeGlData.leafTexUniform);
+        glUniform1f(mTreeGlData.leavesTranslucencyUniform, TREE_LEAVES_TRANSLUCENCY);
 
         for(uint lod = 0; lod < TREE_LOD_COUNT; ++lod)
         {
@@ -567,8 +597,10 @@ void SCE::TerrainTrees::RenderTrees(const mat4 &projectionMatrix, const mat4 &vi
         }
 
     #if USE_IMPOSTORS
-        if(!isShadowPass)//impostors don't cast shadows
+
         {
+            //disable cull for impostors to have shadows
+            glDisable(GL_CULL_FACE);
             //render tree impostors
             SCE::ShaderUtils::UseShader(mTreeGlData.impostorData.shaderProgram);
             SCE::TextureUtils::BindTexture(mTreeGlData.impostorData.texture, 0,
@@ -576,11 +608,8 @@ void SCE::TerrainTrees::RenderTrees(const mat4 &projectionMatrix, const mat4 &vi
             SCE::TextureUtils::BindTexture(mTreeGlData.impostorData.normalTexture, 1,
                                            mTreeGlData.impostorData.normalUniform);
 
-            glm::mat4 scaleInvert = glm::inverse(mTreeGlData.impostorData.scaleMatrix);
-            glUniformMatrix4fv(mTreeGlData.impostorData.scaleInvertMatUniform, 1, GL_FALSE,
-                               &(scaleInvert[0][0]));
-
             SCE::MeshRender::DrawInstances(mTreeGlData.impostorData.meshId, projectionMatrix, viewMatrix);
+            glEnable(GL_CULL_FACE);
         }
     #endif
 

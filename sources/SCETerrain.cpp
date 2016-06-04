@@ -57,6 +57,7 @@
 #define TEX_TILE_SIZE 2.0f
 
 #define DISPLAY_TREES 1
+#define TERRAIN_FOLLOW_CAMERA 0
 
 //#define ISLAND_MODE
 
@@ -118,7 +119,8 @@ namespace Terrain
             float patchSize;
             float baseHeight;
             float heightScale;
-            glm::mat4 worldToTerrainspace;
+            glm::mat4 worldToTerrainCoord;
+            glm::mat4 terrainToWorldSpace;
 
             ushort quadPatchIndices[4]; //indices for a quad, not 2 triangles
             glm::vec3 quadVertices[4];
@@ -431,6 +433,24 @@ namespace Terrain
                            0);
         }
 
+        void computeTerrainMatrices(glm::vec3 const& cameraPosition)
+        {
+            SCE::DebugText::LogMessage("Cam : " + std::to_string(cameraPosition.x)
+                                  + ", " + std::to_string(cameraPosition.y)
+                                  + ", " + std::to_string(cameraPosition.z));
+
+            glm::vec3 terrainPosition_worldspace(0.0f, 0.0f, 0.0f);
+            terrainPosition_worldspace.y = terrainData->baseHeight;
+    #if TERRAIN_FOLLOW_CAMERA
+            terrainPosition_worldspace = cameraPosition;
+            terrainPosition_worldspace.y = terrainData->baseHeight;
+            terrainData->terrainToWorldSpace = glm::translate(mat4(1.0f), terrainPosition_worldspace);
+    #endif
+            //create matrix to convert from woldspace to terrain space coord
+            terrainData->worldToTerrainCoord = glm::scale(mat4(1.0f), glm::vec3(2.0f / terrainData->terrainSize));
+            //                * glm::translate(mat4(1.0f), -terrainPosition_worldspace);
+        }
+
         //pre-compute model matrices for all patches
         void initializePatchMatrices()
         {
@@ -438,10 +458,6 @@ namespace Terrain
             float patchSize = terrainData->patchSize;
 
             terrainData->patchModelMatrices.reserve(int(terrainData->terrainSize/terrainData->patchSize));
-
-            glm::vec3 terrainPosition_worldspace = vec3(0.0);
-            terrainPosition_worldspace.y = terrainData->baseHeight;
-            glm::mat4 terrainToWorldspace = glm::translate(glm::mat4(1.0f), terrainPosition_worldspace);
 
             for(float x = -halfTerrainSize + terrainData->patchSize*0.5f;
                 x < halfTerrainSize - terrainData->patchSize;
@@ -451,11 +467,10 @@ namespace Terrain
                     z < halfTerrainSize - terrainData->patchSize;
                     z += terrainData->patchSize)
                 {
-                    glm::vec3 pos_worldspace(x, 0.0f, z);
+                    glm::vec3 pos_worldspace(x, terrainData->baseHeight, z);
 
                     //Model to world matrix is concatenation of quad and terrain matrices
-                    glm::mat4 modelMatrix = terrainToWorldspace *
-                                            glm::translate(mat4(1.0f), pos_worldspace) *
+                    glm::mat4 modelMatrix = glm::translate(mat4(1.0f), pos_worldspace) *
                                             glm::scale(mat4(1.0f), glm::vec3(terrainData->patchSize));
 
                     pos_worldspace += glm::vec3(patchSize, patchSize, patchSize)*0.5f;
@@ -481,22 +496,20 @@ namespace Terrain
             return;
         }
 
-        glm::vec3 cameraPosition = glm::vec3(glm::inverse(viewMatrix)*glm::vec4(0.0, 0.0, 0.0, 1.0));
-        SCE::DebugText::LogMessage("Cam : " + std::to_string(cameraPosition.x)
-                              + ", " + std::to_string(cameraPosition.y)
-                              + ", " + std::to_string(cameraPosition.z));
-
-#if DISPLAY_TREES
-
         float patchSize = terrainData->patchSize;
         float terrainSize = terrainData->terrainSize;
         //compute the actual terrain size we will cover with patches
         terrainSize = floor(terrainSize/patchSize)*patchSize;
         float halfTerrainSize = terrainSize / 2.0f;
 
-        float maxDistFromCenter = halfTerrainSize - patchSize * 0.5f;
+        glm::vec3 cameraPosition = glm::vec3(glm::inverse(viewMatrix)*glm::vec4(0.0, 0.0, 0.0, 1.0));
 
-        terrainData->terrainTrees.SpawnTreeInstances(viewMatrix, terrainData->worldToTerrainspace,
+        computeTerrainMatrices(cameraPosition);
+
+#if DISPLAY_TREES
+
+        float maxDistFromCenter = halfTerrainSize - patchSize * 0.5f;
+        terrainData->terrainTrees.SpawnTreeInstances(viewMatrix, terrainData->worldToTerrainCoord,
                                                      cameraPosition, maxDistFromCenter);
 #endif
     }
@@ -539,7 +552,7 @@ namespace Terrain
         glUniform1f(glData.patchSizeUniform, terrainData->patchSize);
 
         glUniformMatrix4fv(glData.worldToTerrainMatUniform, 1, GL_FALSE,
-                           &(terrainData->worldToTerrainspace[0][0]));
+                           &(terrainData->worldToTerrainCoord[0][0]));
 
         glBindVertexArray(terrainData->quadVao);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, terrainData->quadIndicesVbo);
@@ -552,18 +565,31 @@ namespace Terrain
 
         uint patchCount = 0;
         uint offscreenCount = 0;
+        glm::vec4 center_cameraspace;
+
         for(uint i = 0; i < terrainData->patchModelMatrices.size(); ++i)
         {
-            glm::vec4 center_cameraspace = viewMatrix*terrainData->patchBoundingBoxCenters[i];
-
+            center_cameraspace = viewMatrix*
+#if TERRAIN_FOLLOW_CAMERA
+                    terrainData->terrainToWorldSpace*
+#endif
+                    terrainData->patchBoundingBoxCenters[i];
+#if !TERRAIN_FOLLOW_CAMERA
+            // this can't work because the BB are initialize with a specific height
             if(SCE::FrustrumCulling::IsBoxInFrustrum(center_cameraspace,
                                                      R_cameraspace, S_cameraspace, T_cameraspace))
+#endif
             {
                 renderPatch(projectionMatrix,
                             viewMatrix,
+#if TERRAIN_FOLLOW_CAMERA
+                            terrainData->terrainToWorldSpace *
+#endif
                             terrainData->patchModelMatrices[i]);
             }
+#if !TERRAIN_FOLLOW_CAMERA
             else
+#endif
             {
                 ++offscreenCount;
             }
@@ -594,6 +620,7 @@ namespace Terrain
 
     }
 
+    //This is to render the shadow using the scrren space raymarched shadow
     void RenderShadow(const mat4 &projectionMatrix, const mat4 &viewMatrix,
                       const glm::vec3 &sunPosition, SCE_GBuffer &gbuffer)
     {
@@ -608,7 +635,7 @@ namespace Terrain
         glDisable(GL_DEPTH_TEST);
 
         terrainData->terrainShadow.RenderShadow(projectionMatrix, viewMatrix,
-                                                sunPosition, gbuffer, terrainData->worldToTerrainspace,
+                                                sunPosition, gbuffer, terrainData->worldToTerrainCoord,
                                                 terrainData->glData.terrainTexture,
                                                 terrainData->heightScale);
 
@@ -626,7 +653,6 @@ namespace Terrain
 
             //compute the actual terrain size we will cover with patches
             terrainSize = floor(terrainSize/patchSize)*patchSize;
-            float halfTerrainSize = terrainSize / 2.0f;
 
             terrainData = new TerrainData();
             terrainData->terrainSize = terrainSize;
@@ -635,17 +661,14 @@ namespace Terrain
             terrainData->heightScale = 5000.0f;//max height in meter
             terrainData->maxTesselationDist = maxTessDist;
 
-            glm::vec3 terrainPosition_worldspace = vec3(0.0);
-            terrainPosition_worldspace.y = terrainData->baseHeight;
-            //create matrix to convert from woldspace to terrain space coord
-            terrainData->worldToTerrainspace = glm::scale(mat4(1.0f), glm::vec3(1.0f / (halfTerrainSize)))
-                    * glm::translate(mat4(1.0f), -terrainPosition_worldspace);
-
             initializeRenderData();
             float xOffset = SCE::Math::RandRange(0.0f, 1.0f);
             float zOffset = SCE::Math::RandRange(0.0f, 1.0f);
             initializeTerrain(xOffset, zOffset, 2.0f*terrainSize / 9000.0f,
                                       terrainData->heightScale);
+
+            computeTerrainMatrices(vec3(0.0f));
+
             initializePatchMatrices();
         }
     }
@@ -671,7 +694,7 @@ namespace Terrain
     {
         if(terrainData)
         {
-            glm::vec4 pos_terrainSpace = terrainData->worldToTerrainspace*glm::vec4(pos_worldspace, 1.0);
+            glm::vec4 pos_terrainSpace = terrainData->worldToTerrainCoord*glm::vec4(pos_worldspace, 1.0);
             int x = int((pos_terrainSpace.x*0.5f + 0.5f)*TERRAIN_TEXTURE_SIZE);
             int z = int((pos_terrainSpace.z*0.5f + 0.5f)*TERRAIN_TEXTURE_SIZE);
             if(x >= 0 && x < TERRAIN_TEXTURE_SIZE && z >= 0 && z < TERRAIN_TEXTURE_SIZE)

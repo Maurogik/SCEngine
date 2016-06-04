@@ -7,6 +7,7 @@
 #include "../headers/SCE_GBuffer.hpp"
 #include "../headers/SCETools.hpp"
 #include "../headers/SCELighting.hpp"
+#include "../headers/SCEPostProcess.hpp"
 
 using namespace SCE;
 using namespace std;
@@ -188,6 +189,12 @@ void SCE_GBuffer::BindForLuminancePass()
 
     glDrawBuffer(GL_COLOR_ATTACHMENT0 + LUM_TEXT_ATTACHMENT);
 }
+
+void SCE_GBuffer::BlurFinal()
+{
+    SCE::PostProcess::BlurTexture2D(mFinalTexture, 1920, 1080, 32);
+}
+
 
 void SCE_GBuffer::GenerateLuminanceMimap()
 {

@@ -18,10 +18,11 @@ namespace SCE
                                    const mat4 & viewMatrix,
                                    const mat4 & projectionMatrix)> RenderCallback;
 
-        void GenerateTexturesFromMesh(ui16 nbAngles, ui16 texWidth, const vec3 &center, const vec3 &dimensions,
+        glm::vec3 GenerateTexturesFromMesh(ui16 nbAngles, ui16 texWidth, float billboardBorder,
+                                           const vec3 &center, const vec3 &dimensions,
                                       GLuint* diffuseTex, GLuint* normalTex,
                                       RenderCallback renderCallback);
-        ui16 GetIdFromAngle(float angleInRad, ui16 nbAngles);
+        glm::vec4 GetMappingForAgnle(float angleRad, ui16 nbAngles, bool flipX = false);
     }
 }
 

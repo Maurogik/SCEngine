@@ -13,7 +13,7 @@
         float SCE::Quality::TerrainLodMultiplier = 2.0f;
 
         float SCE::Quality::Trees::LodDistances[MAX_TREE_LOD_COUNT] = {
-            50.0f, 100.0f, 250.0f, 500.0f, 800.0f
+            -1.0f, -1.0f, -1.0f, 500.0f, 800.0f
         };
         float SCE::Quality::Trees::BaseSpacing = 75.0f;
         float SCE::Quality::Trees::NbGroupPerKm = 4.0f;
@@ -24,11 +24,12 @@
         float SCE::Quality::TerrainLodMultiplier = 1.0f;
 
         float SCE::Quality::Trees::LodDistances[MAX_TREE_LOD_COUNT] = {
-            -1.0f, -1.0f, -1.0f, 600.0f, 1000.0f
+//            100.0f, 300.0f, 600.0f, 600.0f, 1000.0f
+            100.0f, -1.0f, -1.0f, 600.0f, 1000.0f
         };
-        float SCE::Quality::Trees::BaseSpacing = 50.0f;
+        float SCE::Quality::Trees::BaseSpacing = 80.0f;
         float SCE::Quality::Trees::NbGroupPerKm = 8.0f;
-        float SCE::Quality::Trees::VisibilityUpdateDuration = 1.0f;
+        float SCE::Quality::Trees::VisibilityUpdateDuration = 0.3f;
 
 #elif RENDER_QUALITY == 2
 
@@ -39,6 +40,6 @@
         };
         float SCE::Quality::Trees::BaseSpacing = 30.0f;
         float SCE::Quality::Trees::NbGroupPerKm = 16.0f;
-        float SCE::Quality::Trees::VisibilityUpdateDuration = 0.2f;
+        float SCE::Quality::Trees::VisibilityUpdateDuration = 0.1f;
 
 #endif

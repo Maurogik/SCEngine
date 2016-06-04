@@ -461,6 +461,7 @@ namespace MeshRender
             glVertexAttribDivisor(dataAttribLoc, 1);
         }
 
+
         GLuint indiceCount = meshRenderData.indiceCount;
         GLuint indiceBuffer = meshRenderData.indiceBuffer;
 

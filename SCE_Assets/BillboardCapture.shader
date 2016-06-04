@@ -47,6 +47,7 @@ _{
 
     uniform sampler2D MainTex;
     uniform sampler2D NormalMap;
+    uniform float Translucency;
 
     void main()
     {
@@ -66,6 +67,6 @@ _{
         vec3 normal = texture(NormalMap, uv).xyz;
         normal = normal * 2.0 - vec3(1.0);
         normal = normalize(tangentToCameraspace * normal);
-        oNormal = vec4(normal, 1.0);
+        oNormal = vec4(normal*0.5 + vec3(0.5), Translucency);
     }
 _}

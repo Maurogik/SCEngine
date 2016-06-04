@@ -326,9 +326,9 @@ namespace MeshLoader
                                        out_tangents, out_bitangents);;
     }
 
-    ui16 CreateSphereMesh(float tesselation)
+    ui16 CreateSphereMesh(float tesselation, std::string meshName)
     {
-        string meshName = "Sphere" + std::to_string(tesselation);
+        meshName += std::to_string(tesselation);
         if(loaderData.meshIds.count(meshName) > 0)
         {
             return loaderData.meshIds[meshName];
@@ -431,9 +431,9 @@ namespace MeshLoader
         return addMeshData(meshName, indices, vertices, normals, uvs, tangents, bitangents);
     }
 
-    ui16 CreateConeMesh(float angle, float tesselation)
+    ui16 CreateConeMesh(float angle, float tesselation, std::string meshName)
     {
-        string meshName = "Cone" + std::to_string(angle) + "_" + std::to_string(tesselation);
+        meshName += std::to_string(angle) + "_" + std::to_string(tesselation);
         if(loaderData.meshIds.count(meshName) > 0)
         {
             return loaderData.meshIds[meshName];
@@ -557,11 +557,12 @@ namespace MeshLoader
         return addMeshData(meshName, indices, vertices, normals, uvs, tangents, bitangents);
     }
 
-    ui16 CreateQuadMesh()
+    ui16 CreateQuadMesh(std::string meshName, bool zFacing)
     {
+        meshName += zFacing ? ":zFacing" : ":NotzFacing";
+
         float width = 2.0f;
         float height = 2.0f;
-        string meshName = "Quad";
         if(loaderData.meshIds.count(meshName) > 0)
         {
             return loaderData.meshIds[meshName];
@@ -584,28 +585,57 @@ namespace MeshLoader
         };
 
         vector<vec3> normals;
-        normals.push_back(vec3(0.0f, 0.0f, 1.0f));
-        normals.push_back(vec3(0.0f, 0.0f, 1.0f));
-        normals.push_back(vec3(0.0f, 0.0f, 1.0f));
-        normals.push_back(vec3(0.0f, 0.0f, 1.0f));
-
-
-        vector<ushort> indices = vector<ushort>
+        vector<ushort> indices;
+        if(zFacing)
         {
-            2,  1,  0,      2,  0,  3
-        };
+            indices.push_back(2);
+            indices.push_back(1);
+            indices.push_back(0);
+            indices.push_back(2);
+            indices.push_back(0);
+            indices.push_back(3);
 
+            normals.push_back(vec3(0.0f, 0.0f, 1.0f));
+            normals.push_back(vec3(0.0f, 0.0f, 1.0f));
+            normals.push_back(vec3(0.0f, 0.0f, 1.0f));
+            normals.push_back(vec3(0.0f, 0.0f, 1.0f));
+        }
+        else
+        {
+            indices.push_back(2);
+            indices.push_back(0);
+            indices.push_back(1);
+            indices.push_back(2);
+            indices.push_back(3);
+            indices.push_back(0);
+
+//            normals.push_back(vec3(0.0f, 0.0f, -1.0f));
+//            normals.push_back(vec3(0.0f, 0.0f, -1.0f));
+//            normals.push_back(vec3(0.0f, 0.0f, -1.0f));
+//            normals.push_back(vec3(0.0f, 0.0f, -1.0f));
+
+            normals.push_back(vec3(0.0f, 0.0f, 1.0f));
+            normals.push_back(vec3(0.0f, 0.0f, 1.0f));
+            normals.push_back(vec3(0.0f, 0.0f, 1.0f));
+            normals.push_back(vec3(0.0f, 0.0f, 1.0f));
+        }
         vector<vec3> tangents;
+        tangents.push_back(glm::vec3(1.0f, 0.0f, 0.0f));
+        tangents.push_back(glm::vec3(1.0f, 0.0f, 0.0f));
+        tangents.push_back(glm::vec3(1.0f, 0.0f, 0.0f));
+        tangents.push_back(glm::vec3(1.0f, 0.0f, 0.0f));
+
         vector<vec3> bitangents;
-        computeTangentBasisIndexed(indices, vertices, uvs, normals,
-                                   tangents, bitangents);
+        bitangents.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
+        bitangents.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
+        bitangents.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
+
 
         return addMeshData(meshName, indices, vertices, normals, uvs, tangents, bitangents);
     }
 
-    ui16 CreateCubeMesh()
+    ui16 CreateCubeMesh(std::string meshName)
     {
-        string meshName = "Cube";
         if(loaderData.meshIds.count(meshName) > 0)
         {
             return loaderData.meshIds[meshName];

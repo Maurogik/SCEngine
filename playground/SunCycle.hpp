@@ -3,8 +3,8 @@
 
 #include "../headers/SCE.hpp"
 
-//#define SKY_LIGHT
-//#define AMBIANT_LIGHT
+#define SKY_LIGHT
+#define AMBIANT_LIGHT
 
 class SunCycle : public SCE::GameObject {
 

@@ -267,7 +267,7 @@ void Light::generateLightMesh()
 
 ui16 Light::generateDirectionalLightMesh()
 {
-    return SCE::MeshLoader::CreateQuadMesh();
+    return SCE::MeshLoader::CreateQuadMesh("Quad");
 }
 
 ui16 Light::generateSpotLightMesh()

@@ -255,8 +255,8 @@ _{
         uv *= TextureTileScale;
 
         vec4 snowColor = vec4(1.0, 1.0, 1.0, 0.2);
-        vec4 dirtColor = vec4(0.7, 0.4, 0.2, 0.7);
-        vec4 grassColor = vec4(0.2, 0.7, 0.1, 0.95);
+        vec4 dirtColor = vec4(0.7, 0.4, 0.2, 0.55);
+        vec4 grassColor = vec4(0.2, 0.7, 0.1, 0.65);
 
         grassColor.rgb = pow(texture(GrassTex, uv).rgb, vec3(2.2));
         dirtColor.rgb = pow(texture(DirtTex, uv).rgb, vec3(2.2));
@@ -286,12 +286,11 @@ _{
         vec2 uv = gl_FragCoord.xy / SCE_ScreenSize;
         vec4 normAndHeight = texture(TerrainHeightMap, GS_terrainTexCoord);
 
-        vec4 colorAndSpec = TerrainColor(normAndHeight, GS_terrainTexCoord);
+        vec4 colorAndRough = TerrainColor(normAndHeight, GS_terrainTexCoord);
 
         vec3 norm = normAndHeight.xyz;
-//        norm = normalize(norm + vec3(0.0, -0.5, 0.0));
-        oNormal = vec4(norm, colorAndSpec.a);
-        oColor = colorAndSpec.rgb;
+        oNormal = vec4(norm, colorAndRough.a);
+        oColor = colorAndRough.rgb;
         oPosition = Position_worldspace;
 
 #ifdef WIREFRAME

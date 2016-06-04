@@ -11,7 +11,7 @@
 #include <thread>
 #include <mutex>
 
-#define TREE_LOD_COUNT 1
+#define TREE_LOD_COUNT 3
 
 namespace SCE
 {
@@ -37,11 +37,9 @@ namespace SCE
             ui16        meshId;
             GLuint      texture;
             GLint       textureUniform;
-            GLint       scaleInvertMatUniform;
             GLuint      normalTexture;
             GLint       normalUniform;
             GLuint      shaderProgram;
-            glm::mat4   scaleMatrix;
         };
 
         struct TreeGLData
@@ -53,9 +51,11 @@ namespace SCE
             GLuint  barkTexture;
             GLuint  barkNormalTexture;
 
-            GLuint  leafTexUniform;
-            GLuint  barkTexUniform;
-            GLuint  barkNormalTexUniform;
+            GLint   leafTexUniform;
+            GLint   barkTexUniform;
+            GLint   barkNormalTexUniform;
+
+            GLint   leavesTranslucencyUniform;
 
             ui16    trunkMeshIds[TREE_LOD_COUNT];
             ui16    leavesMeshIds[TREE_LOD_COUNT];
@@ -74,7 +74,7 @@ namespace SCE
         std::vector<TreeGroup>  mTreeGroups;
         std::vector<glm::mat4>  mTreeMatrices[TREE_LOD_COUNT];
         std::vector<glm::mat4>  mTreeImpostorMatrices;
-        std::vector<uint>       mTreeImpostorTexIndices;
+        std::vector<glm::vec4>  mTreeImpostorTexMapping;
 
         std::unique_ptr<std::thread> mUpdateThread;
         std::mutex  mTreeInstanceLock;

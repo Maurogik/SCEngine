@@ -45,8 +45,8 @@ _{
 //    uniform sampler2D iPositionTex;
 //    uniform sampler2D iNormalTex;
 
-    float LeafRoughness = 0.9;
-    float LeafTranslucency = 0.5;
+    float Roughness = 0.9;
+    uniform float Translucency;// = 0.5;
 
     void main()
     {
@@ -59,11 +59,11 @@ _{
             vec3 color = texColor.rgb;
 
             oNormal.xyz = normalize(Normal_worldspace);
-            oNormal.a = LeafRoughness;
+            oNormal.a = Roughness;
             //convert color to linear space
             //will do gamma correction in the last shading pass
             color = pow(color, vec3(2.2));
-            oColor = vec4(color, LeafTranslucency);
+            oColor = vec4(color, Translucency);
             oPosition = Position_worldspace;
         }
         else

@@ -14,6 +14,7 @@
 #include "../headers/SCETerrain.hpp"
 #include "../headers/SCEDebugText.hpp"
 #include "../headers/SCEFrustrumCulling.hpp"
+#include "../headers/SCEPostProcess.hpp"
 
 
 using namespace std;
@@ -47,7 +48,7 @@ namespace Render
     static ToneMappingData      mToneMapData;
     static SCE_GBuffer          mGBuffer;
     static glm::vec4            mDefaultClearColor;
-    static ui16                 mQuadMeshId;
+    static ui16                 mFullScreenQuadMeshId;
     static bool                 mDebugTonemapOff = false;
 
     namespace //anonymous namespace to avoid name conflict in case of cpp inclusion (ie Unity build)
@@ -82,7 +83,7 @@ namespace Render
     {
         SCELighting::Init();
 
-        mQuadMeshId = -1;
+        mFullScreenQuadMeshId = -1;
         mDefaultClearColor = glm::vec4(0.0, 0.0, 0.0, 0.0);
 
         glClearColor(mDefaultClearColor.r,
@@ -101,7 +102,8 @@ namespace Render
         //initialize the Gbuffer used to deferred lighting
         mGBuffer.Init(SCECore::GetWindowWidth(), SCECore::GetWindowHeight());
 
-        mQuadMeshId = SCE::MeshLoader::CreateQuadMesh();
+        mFullScreenQuadMeshId = SCE::MeshLoader::CreateQuadMesh("Quad", false);
+        SCE::MeshRender::InitializeMeshRenderData(mFullScreenQuadMeshId);
 
         mToneMapData.toneMapShader = SCE::ShaderUtils::CreateShaderProgram("ToneMapping");
         mToneMapData.luminanceShader = SCE::ShaderUtils::CreateShaderProgram("LuminanceShader");
@@ -166,6 +168,8 @@ namespace Render
         RenderFullScreenPass(tonemap.luminanceShader, renderData.projectionMatrix, renderData.viewMatrix);
         mGBuffer.GenerateLuminanceMimap();
 
+        mGBuffer.BlurFinal();
+
         //Tonemapping & render to back buffer
         glUseProgram(tonemap.toneMapShader);
         mGBuffer.BindForToneMapPass();
@@ -202,10 +206,8 @@ namespace Render
 
     void RenderFullScreenPass(GLuint shaderId, const mat4& projectionMatrix, const mat4& viewMatrix)
     {
-        glCullFace(GL_FRONT);
         glm::mat4 modelMatrix = inverse(projectionMatrix * viewMatrix);
-        SCE::MeshRender::RenderMesh(mQuadMeshId, projectionMatrix, viewMatrix, modelMatrix);
-        glCullFace(GL_BACK);
+        SCE::MeshRender::RenderMesh(mFullScreenQuadMeshId, projectionMatrix, viewMatrix, modelMatrix);
     }
 
     void BindGBufferTexture(SCE_GBuffer::GBUFFER_TEXTURE_TYPE type, GLuint texUnit, GLuint uniform)

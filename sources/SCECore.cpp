@@ -55,9 +55,9 @@ void SCECore::InitEngine(const std::string &windowName)
 #endif
 
     // Open a window and create its OpenGL context
-//    s_window = glfwCreateWindow( 1920, 1080, windowName.c_str(), glfwGetPrimaryMonitor(), NULL);
+    s_window = glfwCreateWindow( 1920, 1080, windowName.c_str(), glfwGetPrimaryMonitor(), NULL);
 
-    s_window = glfwCreateWindow( 1920, 1080, windowName.c_str(), NULL, NULL);
+//    s_window = glfwCreateWindow( 1920, 1080, windowName.c_str(), NULL, NULL);
 
     Internal::Log("Window created");
 
@@ -73,9 +73,9 @@ void SCECore::InitEngine(const std::string &windowName)
        glfwSwapInterval(0);
 #else
     //enable v-sync
-//    glfwSwapInterval(1);
+    glfwSwapInterval(1);
     //adaptative v-sync
-    glfwSwapInterval(-1);
+//    glfwSwapInterval(-1);
 //    glfwSwapInterval(0);
 #endif
 

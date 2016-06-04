@@ -36,6 +36,7 @@ namespace ShaderUtils
             TESSELATION_EVALUATION_SHADER,
             TESSELATION_CONTROL_SHADER,
             GEOMETRY_SHADER,
+            COMPUTE_SHADER,
             SHADER_TYPE_COUNT
         };
 
@@ -99,6 +100,9 @@ namespace ShaderUtils
                 break;
             case ShaderType::TESSELATION_EVALUATION_SHADER:
                 str = "TES Shader";
+                break;
+            case ShaderType::COMPUTE_SHADER:
+                str = "Compute Shader";
                 break;
             default:
                 str = "Unknown Shader";
@@ -166,6 +170,12 @@ namespace ShaderUtils
                     {
                         currentShaderType = GEOMETRY_SHADER;
                         shaderIds[currentShaderType] = glCreateShader(GL_GEOMETRY_SHADER);
+                        shadersTypeStartLine[currentShaderType] = lineCount;
+                    }
+                    else if(line.find("[ComputeShader]") != string::npos)
+                    {
+                        currentShaderType = COMPUTE_SHADER;
+                        shaderIds[currentShaderType] = glCreateShader(GL_COMPUTE_SHADER);
                         shadersTypeStartLine[currentShaderType] = lineCount;
                     }
                     else if(line.find("_{") == string::npos &&

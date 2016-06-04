@@ -34,11 +34,16 @@ using namespace std;
 
 //when updating the cascade count, remember to update the lighting shader too
 #define CASCADE_COUNT 2
-//#define MAX_SHADOW_DISTANCE 4500.0f
-#define MAX_SHADOW_DISTANCE 1000.0f
-#define CSM_TERRAIN_SHADOW 0
+
+#define CSM_TERRAIN_SHADOW 1
 #define TERRAIN_TREES_SHADOW 1
 #define RAYMACHED_TERRAIN_SHADOW 0
+
+#if CSM_TERRAIN_SHADOW
+    #define MAX_SHADOW_DISTANCE 4500.0f
+#else
+    #define MAX_SHADOW_DISTANCE 1000.0f
+#endif
 
 SCELighting* SCELighting::s_instance = nullptr;
 
@@ -493,6 +498,9 @@ std::vector<CameraRenderData> SCELighting::computeCascadedLightFrustrums(Frustru
     for(uint i = 1; i < cascadeCount; ++i)
     {
         float si = i / (float)cascadeCount;
+#if CSM_TERRAIN_SHADOW
+        si *= 1.5f;//cheat a lil bit
+#endif
 
         zSplits[i].x = lambda * (near * glm::pow(ratio, si))
                        + (1.0f - lambda) * (near + (far - near) * si);

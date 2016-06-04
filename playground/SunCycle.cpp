@@ -7,7 +7,7 @@ using namespace std;
 SunCycle::SunCycle(SCE::SCEHandle<Container> container, float speed, vec3 axis)
     : GameObject(container, "SunCycle"), mSpeed(speed),
 #ifdef AMBIANT_LIGHT
-      mAmbiantStrength(0.05f),
+      mAmbiantStrength(0.08f),
 #endif
       mRotationAxis(axis),
       mNoonSunColor(1.0, 1.0, 0.8, 0.7), mSunsetColor(0.35, 0.2, 0.0, 0.4),
@@ -87,6 +87,6 @@ void SunCycle::Update()
     //Sky light hase the same color than the sky
     glm::vec3 skyAvgColor = glm::mix(skyTopColor, skyBottomColor, 0.7f);
     mSkyLight->SetLightColor(glm::vec4(skyAvgColor,
-                                       glm::max(0.1f * dot(skyAvgColor, skyAvgColor), 0.005f)));
+                                       glm::max(0.1f * dot(skyAvgColor, skyAvgColor), 0.008f)));
 #endif
 }

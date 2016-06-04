@@ -32,13 +32,13 @@ namespace SCE
 
         ui16         CreateMeshFromFile  (const std::string &meshFileName);
 
-        ui16         CreateSphereMesh    ( float tesselation);
+        ui16         CreateSphereMesh    ( float tesselation, std::string meshName = "Sphere");
 
-        ui16         CreateConeMesh      ( float angle, float tesselation);
+        ui16         CreateConeMesh      ( float angle, float tesselation, std::string meshName = "Cone");
 
-        ui16         CreateQuadMesh      ();
+        ui16         CreateQuadMesh      (std::string meshName = "Quad", bool zFacing = true);
 
-        ui16         CreateCubeMesh      ();
+        ui16         CreateCubeMesh      (std::string meshName = "Cube");
 
         ui16         CreateCustomMesh    ( const std::vector<ushort> &indices,
                                                   const std::vector<vec3>   &vertices,

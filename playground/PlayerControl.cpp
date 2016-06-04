@@ -48,7 +48,7 @@ void PlayerControl::Update()
     float dY = float(yMouse) - 0.5f;
 
     float deltaTime = float(SCE::Time::DeltaTime());
-    float deltaGoodness = SCE::Math::MapToRange(0.010f, 0.033f, 0.0f, 1.0f, deltaTime);
+    float deltaGoodness = SCE::Math::MapToRange(0.010f, 0.050f, 0.0f, 1.0f, deltaTime);
     glm::vec3 printColor = glm::vec3(deltaGoodness, 1.0 - deltaGoodness, 0.0);
     SCE::DebugText::LogMessage("FPS   : " + std::to_string(1.0f/deltaTime), printColor);
     SCE::DebugText::LogMessage("Frame : " + std::to_string(deltaTime*1000.0f) + " ms", printColor);
