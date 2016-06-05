@@ -35,10 +35,10 @@ namespace SCE {
          * @brief Computes and returns the object's position relative to the world origin
          * @return a vector3 representing the world position
          */
-        glm::vec3               GetWorldPosition() const;
+        glm::vec3               GetScenePosition() const;
 
         void                    SetLocalPosition(const glm::vec3& position);
-        void                    SetWorldPosition(const glm::vec3& position);
+        void                    SetScenePosition(const glm::vec3& position);
 
         //--------------------- Scale
         /**
@@ -51,7 +51,7 @@ namespace SCE {
          * @brief Computes and returns the object's scale in world space
          * @return a vector3 representing the world scale
          */
-        glm::vec3               GetWorldScale() const;
+        glm::vec3               GetSceneScale() const;
 
         void                    SetLocalScale(const glm::vec3& scale);
 
@@ -66,7 +66,7 @@ namespace SCE {
          * @brief Computes and returns the object's orientation in world space
          * @return a vector3 representing the rotation expressed as euler angles
          */
-        glm::vec3               GetWorldOrientation() const;
+        glm::vec3               GetSceneOrientation() const;
 
         /**
          * @brief Sets the orientation of the object relative to it's parent
@@ -78,7 +78,7 @@ namespace SCE {
          * @brief Sets the world space orientation of the object
          * @param orientation : a vector3 representing the euler angles orientation of the object
          */
-        void                    SetWorldOrientation(const glm::vec3& orientation);
+        void                    SetSceneOrientation(const glm::vec3& orientation);
 
         /**
          * @brief Returns the object's orientation relative to it's parent
@@ -90,7 +90,7 @@ namespace SCE {
          * @brief Computes and returns the object's orientation in world space
          * @return a quaternion representing the orientation
          */
-        glm::quat               GetWorldQuaternion() const;
+        glm::quat               GetSceneQuaternion() const;
 
         /**
          * @brief Sets the orientation of the object relative to it's parent
@@ -102,7 +102,7 @@ namespace SCE {
          * @brief Sets the orientation of the object relative to it's parent
          * @param quaternion : a quaternion representing the orientation of the object
          */
-        void                    SetWorldQuaternion(const glm::quat& quaternion);
+        void                    SetSceneQuaternion(const glm::quat& quaternion);
 
         /**
          * @brief Rotates the object around the given axis for the requested angle, in world space
@@ -158,7 +158,7 @@ namespace SCE {
          * @brief Computes and returns the object's transformation matrix relative to the world's origin
          * @return a 4x4 matrix representing the object transformation
          */
-        mat4                    GetWorldTransform() const;
+        mat4                    GetSceneTransform() const;
 
         //-------------------- Space to space convertion
         /**
@@ -166,28 +166,28 @@ namespace SCE {
          * @param pos : a vector3 of the position to transform
          * @return a vector3 representing the transformed position
          */
-        glm::vec3               LocalToWorldPos(const glm::vec3& pos) const;
+        glm::vec3               LocalToScenePos(const glm::vec3& pos) const;
 
         /**
          * @brief Transforms a direction from local (parent's) space to wolrd space
          * @param dir : a vector3 of the direction to transform
          * @return a vector3 representing the transformed direction
          */
-        glm::vec3               LocalToWorldDir(const glm::vec3& dir) const;
+        glm::vec3               LocalToSceneDir(const glm::vec3& dir) const;
 
         /**
          * @brief Transforms a position from wolrd space to local (parent's) space
          * @param pos : a vector3 of the position to transform
          * @return a vector3 representing the transformed position
          */
-        glm::vec3               WorldToLocalPos(const glm::vec3& pos) const;
+        glm::vec3               SceneToLocalPos(const glm::vec3& pos) const;
 
         /**
          * @brief Transforms a direction from world space to local (parent's) space
          * @param dir : a vector3 of the position to transform
          * @return a vector3 representing the transformed direction
          */
-        glm::vec3               WorldToLocalDir(const glm::vec3& dir) const;
+        glm::vec3               SceneToLocalDir(const glm::vec3& dir) const;
 
         //-------------------- Local space constants
         /**
@@ -240,6 +240,12 @@ namespace SCE {
          * @param child the transform object to unparent
          */
         void                    RemoveChild(SCEHandle<Transform>  child);
+
+        /**
+         * @brief HasParent
+         * @return Returns true if the transform is a root one (no parent) and false if it is a child transform
+         */
+        bool                    HasParent();
 
     protected :
 

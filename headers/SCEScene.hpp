@@ -45,6 +45,8 @@ namespace SCE {
                                                                float baseHeight);
 
         static void                                 RemoveTerrain();
+        static void                                 SetRootWorldspacePosition(glm::vec3 const& pos_worldspace);
+        static glm::vec3                            GetFrameRootPosition();
 
 #ifdef SCE_DEBUG_ENGINE
         static void                                 ReloadAllMaterials();
@@ -62,6 +64,8 @@ namespace SCE {
         std::vector<Container*>             mContainers;
         std::vector<SCEHandle<GameObject>>  mGameObjects;
         int                                 mLastId;
+        glm::vec3                           mScenePosition;
+        glm::vec3                           mPrevScenePosition;
 
 
         /*****Static*****/

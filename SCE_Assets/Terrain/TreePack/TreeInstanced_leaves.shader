@@ -13,12 +13,16 @@ _{
 
     uniform mat4 V;
     uniform mat4 P;    
+    uniform vec3 SCE_RootPosition;
 
     void main()
     {
         fragUV = vertexUV;
-        Position_worldspace = ( instanceMatrix * vec4(vertexPosition_modelspace, 1.0) ).xyz;
-        Normal_worldspace = ( instanceMatrix * vec4(vertexNormal_modelspace, 0.0) ).xyz;
+        mat4 modelMatrix = instanceMatrix;
+        modelMatrix[3] -= vec4(SCE_RootPosition, 0.0);
+
+        Position_worldspace = ( modelMatrix * vec4(vertexPosition_modelspace, 1.0) ).xyz;
+        Normal_worldspace = ( modelMatrix * vec4(vertexNormal_modelspace, 0.0) ).xyz;
 
         gl_Position = P * V * vec4(Position_worldspace, 1.0);
     }

@@ -15,11 +15,12 @@ namespace SCE
         GLuint      CreateShaderProgram(const std::string &shaderFileName);
         void        DeleteShaderProgram(GLuint shaderId);
         void        BindDefaultUniforms(GLuint shaderId, const glm::mat4& modelMatrix,
-                                         const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix);
+                                        const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix);
+        void        BindRootPosition(GLuint shaderId, glm::vec3 const& rootPosition);
         void        UseShader(GLuint shaderProgram);
 #ifdef SCE_DEBUG_ENGINE
         bool        ToggleDebugShader();
-        void ReloadShaders();
+        void        ReloadShaders();
 #endif
     }
 }

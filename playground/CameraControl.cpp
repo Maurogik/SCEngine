@@ -18,8 +18,8 @@ void CameraControl::Update()
     //move camera
     SCEHandle<Transform> transform = GetContainer()->GetComponent<Transform>();
     glm::vec3 targetPos = mTarget->Forward()*mDistanceFromTarget.z + mTarget->Up()*mDistanceFromTarget.y;
-    targetPos += mTarget->GetWorldPosition();
-    transform->SetWorldPosition(targetPos);
+    targetPos += mTarget->GetScenePosition();
+    transform->SetScenePosition(targetPos);
 
     glm::vec3 lookAtTarget = mTarget->Forward()*mLookAheadTarget.z + mTarget->Up()*mLookAheadTarget.y;
 
@@ -29,9 +29,9 @@ void CameraControl::Update()
             / (avgDuration + deltaTime);
 
 //    mAverageOffset = lookAtTarget;
-    glm::vec3 dirToTarget = mTarget->GetWorldPosition() + mAverageOffset - targetPos;
+    glm::vec3 dirToTarget = mTarget->GetScenePosition() + mAverageOffset - targetPos;
     dirToTarget = normalize(dirToTarget);
     float smoothStrength = (1.0f - (dot(dirToTarget, transform->Forward())));
-    transform->SmoothLookAt(mAverageOffset + mTarget->GetWorldPosition(), 0.9f + smoothStrength*0.1f);
+    transform->SmoothLookAt(mAverageOffset + mTarget->GetScenePosition(), 0.9f + smoothStrength*0.1f);
 }
 

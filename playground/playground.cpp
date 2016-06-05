@@ -25,7 +25,7 @@ SCEHandle<Container> createSphere(const string& name, const float& tesselation, 
     object->AddComponent<Material>(MATERIAL);
 
     SCEHandle<Transform> transform = object->AddComponent<Transform>();
-    transform->SetWorldPosition(pos);
+    transform->SetScenePosition(pos);
 
     ui16 meshId = SCE::MeshLoader::CreateSphereMesh(tesselation);
     object->AddComponent<MeshRenderer>(meshId);
@@ -41,7 +41,7 @@ SCEHandle<Container> createCone(const string& name, const float& tesselation,
     object->AddComponent<Material>(MATERIAL);
 
     SCEHandle<Transform> transform = object->AddComponent<Transform>();
-    transform->SetWorldPosition(pos);
+    transform->SetScenePosition(pos);
     transform->SetLocalScale(vec3(length));
 
     ui16 meshId = SCE::MeshLoader::CreateConeMesh(angle, tesselation);
@@ -58,7 +58,7 @@ SCEHandle<Container> createCube(const string& name, const vec3& pos,
     object->AddComponent<Material>(material);
 
     SCEHandle<Transform> transform = object->AddComponent<Transform>();
-    transform->SetWorldPosition(pos);
+    transform->SetScenePosition(pos);
 
     ui16 meshId = SCE::MeshLoader::CreateCubeMesh();
     object->AddComponent<MeshRenderer>(meshId);
@@ -73,7 +73,7 @@ SCEHandle<Container> createPlane(const string& name, const string& mat, float si
     object->AddComponent<Material>(mat);
 
     SCEHandle<Transform> transform = object->AddComponent<Transform>();
-    transform->SetWorldPosition(pos);
+    transform->SetScenePosition(pos);
     transform->SetLocalScale(vec3(size, size, size));
 
     ui16 meshId = SCE::MeshLoader::CreateQuadMesh();
@@ -89,7 +89,7 @@ SCEHandle<Container> createModel(const string& objectName, const string& filenam
     object->AddComponent<Material>(mat);
 
     SCEHandle<Transform> transform = object->AddComponent<Transform>();
-    transform->SetWorldPosition(pos);
+    transform->SetScenePosition(pos);
     object->AddComponent<MeshRenderer>(filename);
 
     return object;
@@ -106,8 +106,8 @@ SCEHandle<Container> createLight(vec3 pos, vec3 orientation, LightType type){
     SCEHandle<Transform> lightTransform = lightObject->AddComponent<Transform>();
     SCEHandle<Light> light = lightObject->AddComponent<Light>(type);
 
-    lightTransform->SetWorldOrientation(orientation);
-    lightTransform->SetWorldPosition(pos);
+    lightTransform->SetSceneOrientation(orientation);
+    lightTransform->SetScenePosition(pos);
 
     return lightObject;
 }
@@ -115,7 +115,7 @@ SCEHandle<Container> createLight(vec3 pos, vec3 orientation, LightType type){
 float simpleGround()
 {
     SCEHandle<Container> plane = createPlane("plane", GROUND_MATERIAL, 500.0f, vec3(0.0f, -2.0f, 0.0f));
-    plane->GetComponent<Transform>()->SetWorldOrientation(vec3(-90.0f, 180.0f, 0.0f));
+    plane->GetComponent<Transform>()->SetSceneOrientation(vec3(-90.0f, 180.0f, 0.0f));
     return -2.0f;
 }
 
@@ -143,7 +143,7 @@ float complexGround()
 float waterGround(float height)
 {
     SCEHandle<Container> plane = createPlane("plane", "Materials/Water", 4000.0f, vec3(0.0f, height, 0.0f));
-    plane->GetComponent<Transform>()->SetWorldOrientation(vec3(-90.0f, 180.0f, 0.0f));
+    plane->GetComponent<Transform>()->SetSceneOrientation(vec3(-90.0f, 180.0f, 0.0f));
     return height;
 }
 
@@ -156,7 +156,7 @@ void scene1()
 
 
     SCEHandle<Container> plane = createPlane("plane", GROUND_MATERIAL, 500.0f, vec3(0.0f, -2.0f, 2.0f));
-    plane->GetComponent<Transform>()->SetWorldOrientation(vec3(-90.0f, 180.0f, 0.0f));
+    plane->GetComponent<Transform>()->SetSceneOrientation(vec3(-90.0f, 180.0f, 0.0f));
 
     //Suzanne model
     SCEHandle<Container> suz = createModel("suzanneObject", "Meshes/suzanne.obj", vec3(0, 3, 0));
@@ -197,7 +197,7 @@ void scene2()
 
 
     SCEHandle<Container> plane = createPlane("plane", GROUND_MATERIAL, 500.0f, vec3(0.0f, -2.0f, 2.0f));
-    plane->GetComponent<Transform>()->SetWorldOrientation(vec3(-90.0f, 180.0f, 0.0f));
+    plane->GetComponent<Transform>()->SetSceneOrientation(vec3(-90.0f, 180.0f, 0.0f));
 
     float tileScale = 0.5;
     float tileSize = 9.192f * tileScale;
@@ -296,7 +296,7 @@ void sceneTerrain()
 void sceneTrees()
 {
     SCEHandle<Container> plane = createPlane("plane", GROUND_MATERIAL, 500.0f, vec3(0.0f, -2.0f, 2.0f));
-    plane->GetComponent<Transform>()->SetWorldOrientation(vec3(-90.0f, 180.0f, 0.0f));
+    plane->GetComponent<Transform>()->SetSceneOrientation(vec3(-90.0f, 180.0f, 0.0f));
 
     //Suzanne model
     SCEHandle<Container> suz = createModel("suzanneObject", "Meshes/suzanne.obj", vec3(-20, 3, 0));
@@ -442,7 +442,7 @@ int main( void )
     SCEHandle<Container> eagle = SCEScene::CreateContainer("eagle");
 
     SCEHandle<Transform> eagleTransform = eagle->AddComponent<Transform>();
-    eagleTransform->SetWorldPosition(startPos);
+    eagleTransform->SetScenePosition(startPos);
 
     glm::vec3 distanceToTarget;
 
@@ -468,7 +468,7 @@ int main( void )
 #endif
 
     eagle->AddComponent<PlayerControl>();
-    cameraTransform->SetWorldPosition(startPos + vec3(0.0, 1.0, -5.0));
+    cameraTransform->SetScenePosition(startPos + vec3(0.0, 1.0, -5.0));
     cameraObject->AddComponent<CameraControl>(eagleTransform, distanceToTarget);
 
     //load scene here

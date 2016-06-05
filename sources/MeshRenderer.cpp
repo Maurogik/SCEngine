@@ -66,7 +66,7 @@ void MeshRenderer::Render(const CameraRenderData& renderData, bool renderFullScr
         }
         else
         {
-             modelMatrix = transform->GetWorldTransform();
+             modelMatrix = transform->GetSceneTransform();
         }
         SCE::MeshRender::RenderMesh(mMeshId, renderData.projectionMatrix, renderData.viewMatrix, modelMatrix);
     }

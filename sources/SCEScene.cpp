@@ -29,7 +29,7 @@ SCE::SCEScene::~SCEScene()
     SCE::Terrain::Cleanup();
     Internal::Log("Delete scene");
     Internal::Log("Clear stuff");
-    for(auto cont : mContainers)
+    for(Container* cont : mContainers)
     {
         delete(cont);
     }
@@ -64,8 +64,10 @@ void SCE::SCEScene::RenderScene()
 {   
     //Parse cameras and render them
     //TODO order cameras by depth first
-    for(size_t i = 0; i < mContainers.size(); ++i){
-        if(mContainers[i]->HasComponent<Camera>()){
+    for(size_t i = 0; i < mContainers.size(); ++i)
+    {
+        if(mContainers[i]->HasComponent<Camera>())
+        {
             SCEHandle<Camera> cam = mContainers[i]->GetComponent<Camera>();
             renderSceneWithCamera(cam);
         }
@@ -76,11 +78,32 @@ void SCEScene::UpdateScene()
 {
     //TODO handle case where an object is waiting to be destroyed
 
+    //the transform that need to be aplied to each object to compuensate for the root moving
+    glm::vec3 rootAdjustment = mPrevScenePosition - mScenePosition;
+    glm::vec3 transformPos;
+
+    for(size_t i = 0; i < mContainers.size(); ++i)
+    {
+        if(mContainers[i]->HasComponent<Transform>())
+        {
+            SCEHandle<Transform> transform = mContainers[i]->GetComponent<Transform>();
+            //ony adjust root transforms (not child ones)
+            if(!transform->HasParent())
+            {
+                transformPos = transform->GetScenePosition() + rootAdjustment;
+                transform->SetScenePosition(transformPos);
+            }
+        }
+    }
+
+    mPrevScenePosition = mScenePosition;
+
     vector<SCEHandle<GameObject> > tmpGameObjects = s_scene->mGameObjects;
 
-    for(size_t i = 0; i < tmpGameObjects.size(); ++i){
+    for(size_t i = 0; i < tmpGameObjects.size(); ++i)
+    {
         tmpGameObjects[i]->Update();
-    }
+    }       
 }
 
 void SCE::SCEScene::DestroyScene()
@@ -90,7 +113,8 @@ void SCE::SCEScene::DestroyScene()
 
 SCEHandle<Container> SCEScene::CreateContainer(const string &name)
 {
-    if(!s_scene){
+    if(!s_scene)
+    {
         Debug::LogError("No scene to add the container to, create a scene first");
     }
     Container* cont = new Container(name, ++s_scene->mLastId);
@@ -113,8 +137,9 @@ void SCEScene::RemoveContainer(int objId)
                      , end(s_scene->mContainers)
                      , [&objId](Container* cont) {
                  return cont->GetContainerId() == objId;
-});
-    if(objIt != end(s_scene->mContainers)) {
+    });
+    if(objIt != end(s_scene->mContainers))
+    {
         delete(*objIt);
         s_scene->mContainers.erase(objIt);
     }
@@ -123,8 +148,10 @@ void SCEScene::RemoveContainer(int objId)
 std::vector<SCEHandle<Container> > SCEScene::FindContainersWithTag(const string &tag)
 {
     vector<SCEHandle<Container> > tagged;
-    for(size_t i = 0; i < s_scene->mContainers.size(); ++i){
-        if(s_scene->mContainers[i]->GetTag() == tag){
+    for(size_t i = 0; i < s_scene->mContainers.size(); ++i)
+    {
+        if(s_scene->mContainers[i]->GetTag() == tag)
+        {
             tagged.push_back(SCEHandle<Container>(s_scene->mContainers[i]));
         }
     }
@@ -134,8 +161,10 @@ std::vector<SCEHandle<Container> > SCEScene::FindContainersWithTag(const string 
 std::vector<SCEHandle<Container> > SCEScene::FindContainersWithLayer(const string &layer)
 {
     vector<SCEHandle<Container> >  layered;
-    for(size_t i = 0; i < s_scene->mContainers.size(); ++i){
-        if(s_scene->mContainers[i]->GetLayer() == layer){
+    for(size_t i = 0; i < s_scene->mContainers.size(); ++i)
+    {
+        if(s_scene->mContainers[i]->GetLayer() == layer)
+        {
             layered.push_back(SCEHandle<Container>(s_scene->mContainers[i]));
         }
     }
@@ -144,16 +173,18 @@ std::vector<SCEHandle<Container> > SCEScene::FindContainersWithLayer(const strin
 
 void SCEScene::RegisterGameObject(SCEHandle<GameObject> gameObject)
 {
-    if(find(begin(s_scene->mGameObjects), end(s_scene->mGameObjects), gameObject) == end(s_scene->mGameObjects)){
-        s_scene-> mGameObjects.push_back(gameObject);
+    if(find(begin(s_scene->mGameObjects), end(s_scene->mGameObjects), gameObject) == end(s_scene->mGameObjects))
+    {
+        s_scene->mGameObjects.push_back(gameObject);
     }
 }
 
 void SCEScene::UnregisterGameObject(SCEHandle<GameObject> gameObject)
 {
     auto it = find(begin(s_scene->mGameObjects), end(s_scene->mGameObjects), gameObject);
-    if(it != end(s_scene->mGameObjects)){
-        s_scene-> mGameObjects.erase(it);
+    if(it != end(s_scene->mGameObjects))
+    {
+        s_scene->mGameObjects.erase(it);
     }
 }
 
@@ -165,6 +196,18 @@ void SCEScene::AddTerrain(float terrainSize, float patchSize, float baseHeight)
 void SCEScene::RemoveTerrain()
 {
     SCE::Terrain::Cleanup();
+}
+
+void SCEScene::SetRootWorldspacePosition(const vec3 &pos_worldspace)
+{
+    s_scene->mScenePosition = pos_worldspace;
+}
+
+vec3 SCEScene::GetFrameRootPosition()
+{
+    //return the prev position because the current one might have been updated
+    //and thus not matching this frame anymore
+    return s_scene->mPrevScenePosition;
 }
 
 #ifdef SCE_DEBUG_ENGINE

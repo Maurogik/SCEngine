@@ -25,9 +25,9 @@ PlayerControl::PlayerControl(SCE::SCEHandle<Container> container)
     averageHeight = 0.0f;
 
     mTransform = GetContainer()->GetComponent<Transform>();
-    glm::vec3 pos = mTransform->GetWorldPosition();
+    glm::vec3 pos = mTransform->GetScenePosition();
     pos.y = SCE::Terrain::GetTerrainHeight(pos) + 20.0f;
-    mTransform->SetWorldPosition(pos);
+    mTransform->SetScenePosition(pos);
 }
 
 void PlayerControl::Update()
@@ -121,7 +121,7 @@ void PlayerControl::Update()
     }
 
     vec3 yAxis(0.0, 1.0, 0.0);
-    vec3 xAxis(mTransform->LocalToWorldDir(vec3(1.0, 0.0, 0.0)));
+    vec3 xAxis(mTransform->LocalToSceneDir(vec3(1.0, 0.0, 0.0)));
     xAxis.y = 0.0f;
     xAxis = normalize(xAxis);
 
@@ -157,20 +157,26 @@ void PlayerControl::Update()
     SCE::DebugText::LogMessage("Mvt speed : " + std::to_string(speed));
 
     float turnStrength = glm::clamp(40.0f/speed, 0.1f, 2.0f);
-    target = mTransform->GetWorldPosition() + target * turnStrength;
+    target = mTransform->GetScenePosition() + target * turnStrength;
 
+    glm::vec3 rootPosition = SCEScene::GetFrameRootPosition();
+
+    //how far above the ground we want to be
     float heightOffset = 4.0f;
     mTransform->LookAt(target, upVector);
     //constant mouvement
-    vec3 position = mTransform->GetWorldPosition();
+    vec3 position = mTransform->GetScenePosition();
     position += mTransform->Forward()*deltaTime*speed;
-    float height = SCE::Terrain::GetTerrainHeight(position);
+    //this height is worldspace, not scene space
+    float height = SCE::Terrain::GetTerrainHeight(position + rootPosition);
     float heightAvgDur = 0.1f;
+    //need to offset for scene root
     averageHeight = (averageHeight*heightAvgDur + height*deltaTime)/(heightAvgDur + deltaTime);
-    if(position.y < averageHeight + heightOffset)
+    if(position.y + rootPosition.y < averageHeight + heightOffset)
     {
-        position.y = averageHeight + heightOffset;
+        position.y = averageHeight + heightOffset - rootPosition.y;
     }
-    mTransform->SetWorldPosition(position);
+    mTransform->SetScenePosition(position);
 
+    SCEScene::SetRootWorldspacePosition(position + rootPosition);
 }

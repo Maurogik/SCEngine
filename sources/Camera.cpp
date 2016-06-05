@@ -158,7 +158,7 @@ ProjectionType Camera::GetProjectionType() const
 mat4 Camera::GetViewMatrix() const
 {
     const SCEHandle<Transform> transform = GetContainer()->GetComponent<Transform>();
-    return inverse(transform->GetWorldTransform());
+    return inverse(transform->GetSceneTransform());
 }
 
 const mat4& Camera::GetProjectionMatrix() const

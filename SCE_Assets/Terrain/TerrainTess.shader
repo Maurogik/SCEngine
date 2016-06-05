@@ -10,7 +10,7 @@ _{
 #version 430 core
 
     uniform mat4 WorldToTerrainSpace;
-    uniform mat4 M;
+    uniform mat4 M;    
 
     in vec3 vertexPosition_modelspace;
 
@@ -35,6 +35,7 @@ _{
     uniform mat4 M;
     uniform mat4 V;
     uniform mat4 MVP;
+    uniform vec3 SCE_RootPosition;
 
     //in
     in vec2 VS_terrainTexCoord[];
@@ -52,8 +53,11 @@ _{
         vec2 centerUv = (t0 - t1) * 0.5 + t1;
         float height = texture(TerrainHeightMap, centerUv).a;
 
+        mat4 modelMatrix = M;
+        modelMatrix[3] -= vec4(SCE_RootPosition, 0.0);
+
         float farDist = MaxTessDistance + 10.0;
-        vec4 center_cameraspace = V * ( M * ((p0 - p1) * 0.5 + p1) + vec4(0.0, height, 0.0, 0.0));
+        vec4 center_cameraspace = V * ( modelMatrix * ((p0 - p1) * 0.5 + p1) + vec4(0.0, height, 0.0, 0.0));
         float dist = length(center_cameraspace);
         float tess = 1.0 - clamp((dist - PatchSize)/ farDist, 0.0, 1.0);//map to 0..64 range
         tess = pow(tess, 12.0) / TessLodMultiplier;
@@ -104,7 +108,8 @@ _{
     uniform mat4 M;
     uniform mat4 V;
     uniform mat4 P;
-    uniform sampler2D TerrainHeightMap;    
+    uniform sampler2D TerrainHeightMap;
+    uniform vec3 SCE_RootPosition;
 
     //in
     layout(quads, fractional_odd_spacing, ccw) in;
@@ -137,8 +142,11 @@ _{
 
         float height = normAndHeight.a;
 
+        mat4 modelMatrix = M;
+        modelMatrix[3] -= vec4(SCE_RootPosition, 0.0);
+
         TES_tessLevel = gl_TessLevelOuter[0];
-        TES_Position_worldspace = (M * position).xyz;
+        TES_Position_worldspace = (modelMatrix * position).xyz;
         TES_Position_worldspace.y += height;
         TES_terrainTexCoord = terrainTexCoord;
 

@@ -30,7 +30,7 @@ namespace SCE
     private :
 
         void UpdateVisibilityAndLOD(glm::mat4 viewMatrix, glm::mat4 worldToTerrainspaceMatrix,
-                                    glm::vec3 cameraPosition, float maxDistFromCenter, mat4 impostorScaleMat);
+                                    glm::vec3 cameraPosition_scenespace, float maxDistFromCenter, mat4 impostorScaleMat);
 
         struct ImpostorGLData
         {

@@ -53,8 +53,8 @@ namespace Render
 
     namespace //anonymous namespace to avoid name conflict in case of cpp inclusion (ie Unity build)
     {
-        void renderGeometryPass(const CameraRenderData& renderData,
-                                           std::vector<Container*> objectsToRender)
+        void renderGeometryPass(const CameraRenderData& camRenderData,
+                                std::vector<Container*> objectsToRender)
         {
             mGBuffer.BindForGeometryPass();
             // The geometry pass updates the depth buffer
@@ -63,7 +63,7 @@ namespace Render
             glEnable(GL_CULL_FACE);
             glCullFace(GL_BACK);
 
-            SCE::Terrain::RenderTerrain(renderData.projectionMatrix, renderData.viewMatrix);
+            SCE::Terrain::RenderTerrain(camRenderData.projectionMatrix, camRenderData.viewMatrix);
 
             for(Container* container : objectsToRender)
             {
@@ -72,9 +72,9 @@ namespace Render
                 mat->BindMaterialData();
 
                 SCEHandle<MeshRenderer> renderer = container->GetComponent<MeshRenderer>();
-                renderer->Render(renderData);
+                renderer->Render(camRenderData);
             }
-            SCE::Terrain::RenderTrees(renderData.projectionMatrix, renderData.viewMatrix);
+            SCE::Terrain::RenderTrees(camRenderData.projectionMatrix, camRenderData.viewMatrix);
         }
     }
 
@@ -147,7 +147,7 @@ namespace Render
 
         //render shadows to shadowmap
         SCEHandle<Transform> camTransform = camera->GetContainer()->GetComponent<Transform>();
-        glm::mat4 camToWorld = camTransform->GetWorldTransform();
+        glm::mat4 camToWorld = camTransform->GetSceneTransform();
         SCELighting::RenderCascadedShadowMap(renderData, camera->GetFrustrumData(),
                                              camToWorld, shadowCasters);
 

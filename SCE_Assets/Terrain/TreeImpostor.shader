@@ -17,6 +17,7 @@ _{
 
     uniform mat4 V;
     uniform mat4 P;
+    uniform vec3 SCE_RootPosition;
 
     float map(float f, vec2 m)
     {
@@ -32,12 +33,13 @@ _{
 
             FragUV = vec2(map(FragUV.x, mapping.xz), map(FragUV.y, mapping.yw));
         }
+        mat4 modelMatrix = instanceMatrix;
+        modelMatrix[3] -= vec4(SCE_RootPosition, 0.0);
 
-        Position_worldspace = (instanceMatrix*vec4(vertexPosition_modelspace, 1.0)).xyz;
-        mat4 normalModelMatrix = instanceMatrix;
-        vec3 Normal_worldspace = ( normalModelMatrix*vec4(vertexNormal_modelspace, 0.0) ).xyz;
-        vec3 Tangent_worldspace = ( normalModelMatrix*vec4(vertexTangent, 0.0) ).xyz;
-        vec3 Bitangent_worldspace = ( normalModelMatrix*vec4(vertexBitangent, 0.0) ).xyz;
+        Position_worldspace = (modelMatrix*vec4(vertexPosition_modelspace, 1.0)).xyz;
+        vec3 Normal_worldspace = ( modelMatrix*vec4(vertexNormal_modelspace, 0.0) ).xyz;
+        vec3 Tangent_worldspace = ( modelMatrix*vec4(vertexTangent, 0.0) ).xyz;
+        vec3 Bitangent_worldspace = ( modelMatrix*vec4(vertexBitangent, 0.0) ).xyz;
 
         TangentToWorldspace = (mat3(
             Tangent_worldspace,

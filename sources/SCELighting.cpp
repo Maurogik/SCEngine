@@ -213,7 +213,7 @@ void SCELighting::RenderSkyToGBuffer(const CameraRenderData& renderData, SCE_GBu
 {
     if(s_instance->mMainLight)
     {
-        vec3 sunPos = s_instance->mMainLight->GetContainer()->GetComponent<Transform>()->GetWorldPosition();
+        vec3 sunPos = s_instance->mMainLight->GetContainer()->GetComponent<Transform>()->GetScenePosition();
         //Render sky and sun
         SCE::SkyRenderer::Render(renderData, gBuffer, sunPos,
                                  s_instance->mMainLight->GetLightColor());
@@ -475,7 +475,7 @@ void SCELighting::renderShadowmapPass(const CameraRenderData& lightRenderData,
 std::vector<CameraRenderData> SCELighting::computeCascadedLightFrustrums(FrustrumData cameraFrustrum,
                                                                          glm::mat4 camToWorldMat)
 {
-    glm::mat4 lightToWorld = mMainLight->GetContainer()->GetComponent<Transform>()->GetWorldTransform();
+    glm::mat4 lightToWorld = mMainLight->GetContainer()->GetComponent<Transform>()->GetSceneTransform();
     glm::mat4 worldToLight = glm::inverse(lightToWorld);
 
     vector<CameraRenderData> lightFrustrums;

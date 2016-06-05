@@ -19,7 +19,7 @@ SunCycle::SunCycle(SCE::SCEHandle<Container> container, float speed, vec3 axis)
     mLight = container->AddComponent<Light>(LightType::DIRECTIONAL_LIGHT);
 
     glm::vec3 sunPos = glm::vec3(10.0, 0.0, -20000.0);
-    mTransform->SetWorldPosition(sunPos);
+    mTransform->SetScenePosition(sunPos);
     mTransform->LookAt(glm::vec3(0.0));
 
     mLight->SetLightColor(glm::vec4(1.0, 1.0, 0.8, 0.7));
@@ -30,8 +30,8 @@ SunCycle::SunCycle(SCE::SCEHandle<Container> container, float speed, vec3 axis)
     SCEHandle<Container> skyLightCont = SCE::SCEScene::CreateContainer("SkyLightContainer");
     SCEHandle<Transform> skyLightTransform = skyLightCont->AddComponent<Transform>();
     mSkyLight = skyLightCont->AddComponent<Light>(LightType::DIRECTIONAL_LIGHT);
-    skyLightTransform->SetWorldPosition(glm::vec3(0.0, 2000.0, 0.0));
-    skyLightTransform->SetWorldOrientation(glm::vec3(90.0, 0.0, 0.0));
+    skyLightTransform->SetScenePosition(glm::vec3(0.0, 2000.0, 0.0));
+    skyLightTransform->SetSceneOrientation(glm::vec3(90.0, 0.0, 0.0));
 #endif
 
 #ifdef AMBIANT_LIGHT
@@ -46,9 +46,9 @@ void SunCycle::Update()
 {
     float angle = float(SCE::Time::DeltaTime()) * mSpeed;
     glm::quat rot = glm::angleAxis(glm::radians(angle), mRotationAxis);
-    glm::vec3 worldPos = mTransform->GetWorldPosition();
+    glm::vec3 worldPos = mTransform->GetScenePosition();
     worldPos = rot * worldPos;
-    mTransform->SetWorldPosition(worldPos);
+    mTransform->SetScenePosition(worldPos);
     mTransform->LookAt(glm::vec3(0.0));
 
     glm::vec3 sunDir = normalize(-worldPos);
@@ -67,7 +67,7 @@ void SunCycle::Update()
 #ifdef AMBIANT_LIGHT
     glm::vec3 ambWorldPos = -1.0f*worldPos;
     ambWorldPos.y = -10.0f;
-    mAmbiantLightTransform->SetWorldPosition(ambWorldPos);
+    mAmbiantLightTransform->SetScenePosition(ambWorldPos);
     mAmbiantLightTransform->LookAt(glm::vec3(0.0));
     mAmbiantLight->SetLightColor(color*mAmbiantStrength*(1.0f - midnightStr));
 #endif

@@ -20,6 +20,7 @@ using namespace std;
 #define SCREEN_SIZE_UNIFORM_NAME "SCE_ScreenSize"
 #define TIME_UNIFORM_NAME "SCE_TimeInSeconds"
 #define DELTA_TIME_UNIFORM_NAME "SCE_DeltaTime"
+#define ROOT_POS_UNIFORM_NAME "SCE_RootPosition"
 #define DEBUG_SHADER_NAME "DebugShader"
 
 namespace SCE
@@ -49,7 +50,8 @@ namespace ShaderUtils
             GLint ViewMatrixUniform;
             GLint ModelMatrixUniform;
             GLint timeUniform;
-            GLint deltaTImeUniform;
+            GLint deltaTimeUniform;
+            GLint rootPositionUniform;
         };
 
         //Only here to allow for automatic creation/destruction of data
@@ -260,7 +262,8 @@ namespace ShaderUtils
             DefaultUniforms uniforms;
             uniforms.screenSizeUniform          = glGetUniformLocation(programID, SCREEN_SIZE_UNIFORM_NAME);
             uniforms.timeUniform                = glGetUniformLocation(programID, TIME_UNIFORM_NAME);
-            uniforms.deltaTImeUniform           = glGetUniformLocation(programID, DELTA_TIME_UNIFORM_NAME);
+            uniforms.deltaTimeUniform           = glGetUniformLocation(programID, DELTA_TIME_UNIFORM_NAME);
+            uniforms.rootPositionUniform        = glGetUniformLocation(programID, ROOT_POS_UNIFORM_NAME);
             uniforms.MVPMatrixUniform           = glGetUniformLocation(programID, "MVP");
             uniforms.ViewMatrixUniform          = glGetUniformLocation(programID, "V");
             uniforms.ModelMatrixUniform         = glGetUniformLocation(programID, "M");
@@ -328,7 +331,8 @@ namespace ShaderUtils
 
         glUniform2f(uniforms.screenSizeUniform, width, height);
         glUniform1f(uniforms.timeUniform, timeInSecond);
-        glUniform1f(uniforms.deltaTImeUniform, deltaTime);
+        glUniform1f(uniforms.deltaTimeUniform, deltaTime);
+        glUniform1f(uniforms.deltaTimeUniform, deltaTime);
 
         glm::mat4 MVP = projectionMatrix * viewMatrix * modelMatrix;
 
@@ -338,6 +342,12 @@ namespace ShaderUtils
         glUniformMatrix4fv(uniforms.ModelMatrixUniform, 1, GL_FALSE, &(modelMatrix[0][0]));
         glUniformMatrix4fv(uniforms.ViewMatrixUniform, 1, GL_FALSE, &(viewMatrix[0][0]));
         glUniformMatrix4fv(uniforms.ProjectionMatrixUniform, 1, GL_FALSE, &(projectionMatrix[0][0]));
+    }
+
+    void BindRootPosition(GLuint shaderId, glm::vec3 const& rootPosition)
+    {
+        DefaultUniforms& uniforms = shaderData.defaultUniforms[shaderId];
+        glUniform3f(uniforms.rootPositionUniform, rootPosition.x, rootPosition.y, rootPosition.z);
     }
 
     void UseShader(GLuint shaderProgram)

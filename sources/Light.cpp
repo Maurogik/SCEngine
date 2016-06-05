@@ -125,7 +125,7 @@ void Light::bindRenderDataForShader(const vec3& cameraPosition)
 {
     SCEHandle<Transform> transform = GetContainer()->GetComponent<Transform>();
 
-    vec3 lightPos = transform->GetWorldPosition();
+    vec3 lightPos = transform->GetScenePosition();
     vec3 lightDir = transform->Forward();
     lightDir = glm::normalize(lightDir);
 

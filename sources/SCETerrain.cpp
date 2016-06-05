@@ -17,6 +17,7 @@
 #include "../headers/SCETerrainShadow.hpp"
 #include "../headers/SCETerrainTrees.hpp"
 #include "../headers/SCEQuality.hpp"
+#include "../headers/SCEScene.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/random.hpp>
@@ -544,6 +545,8 @@ namespace Terrain
         SCE::TextureUtils::BindTexture(glData.dirtTexture, 2, glData.dirtTextureUniform);
         SCE::TextureUtils::BindTexture(glData.snowTexture, 3, glData.snowTextureUniform);
 
+        SCE::ShaderUtils::BindRootPosition(glData.terrainProgram, SCEScene::GetFrameRootPosition());
+
         //uniforms        
         glUniform1f(glData.maxTesselationDistanceUniform, terrainData->terrainSize);
         glUniform1f(glData.heightScaleUniform, terrainData->heightScale);
@@ -566,6 +569,7 @@ namespace Terrain
         uint patchCount = 0;
         uint offscreenCount = 0;
         glm::vec4 center_cameraspace;
+        glm::vec4 root_worldspace = glm::vec4(SCEScene::GetFrameRootPosition(), 0.0f);
 
         for(uint i = 0; i < terrainData->patchModelMatrices.size(); ++i)
         {
@@ -573,7 +577,7 @@ namespace Terrain
 #if TERRAIN_FOLLOW_CAMERA
                     terrainData->terrainToWorldSpace*
 #endif
-                    terrainData->patchBoundingBoxCenters[i];
+                    (terrainData->patchBoundingBoxCenters[i] - root_worldspace);
 #if !TERRAIN_FOLLOW_CAMERA
             // this can't work because the BB are initialize with a specific height
             if(SCE::FrustrumCulling::IsBoxInFrustrum(center_cameraspace,

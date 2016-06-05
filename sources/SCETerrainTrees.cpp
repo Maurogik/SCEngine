@@ -19,6 +19,7 @@
 #include "../headers/SCERender.hpp"
 #include "../headers/SCEBillboardRender.hpp"
 #include "../headers/SCEPostProcess.hpp"
+#include "../headers/SCEScene.hpp"
 
 #include <stb_perlin.h>
 #include <glm/gtc/matrix_transform.hpp>
@@ -64,7 +65,7 @@
 
 void SCE::TerrainTrees::UpdateVisibilityAndLOD(mat4 viewMatrix,
                                                mat4 worldToTerrainspaceMatrix,
-                                               vec3 cameraPosition,
+                                               vec3 cameraPosition_scenespace,
                                                float maxDistFromCenter,
                                                glm::mat4 impostorScaleMat)
 {
@@ -106,8 +107,10 @@ void SCE::TerrainTrees::UpdateVisibilityAndLOD(mat4 viewMatrix,
         //make a bigger radius to account for possible displacement
         float totalRadius = group.radius + group.spacing*positionNoiseScale;
         glm::vec3 groupPos = glm::vec3(group.position.x, 0.0f,
-                                       group.position.y);
+                                       group.position.y);        
         groupPos.y = SCE::Terrain::GetTerrainHeight(groupPos);
+        //convert to scenespace
+        groupPos -= SCEScene::GetFrameRootPosition();
 
         glm::vec4 groupPos_cameraspace = viewMatrix*glm::vec4(groupPos, 1.0);
 
@@ -125,7 +128,8 @@ void SCE::TerrainTrees::UpdateVisibilityAndLOD(mat4 viewMatrix,
     std::this_thread::sleep_for(waitInterval);
 #endif
 
-    glm::vec2 camPos2 = glm::vec2(cameraPosition.x, cameraPosition.z);
+    glm::vec3 camPosition_worldspace = SCEScene::GetFrameRootPosition() + cameraPosition_scenespace;
+    glm::vec2 camPos2 = glm::vec2(camPosition_worldspace.x, camPosition_worldspace.z);
 
     //sort the visible tree groups
     std::sort(begin(activeGroups), end(activeGroups),
@@ -138,7 +142,7 @@ void SCE::TerrainTrees::UpdateVisibilityAndLOD(mat4 viewMatrix,
     std::this_thread::sleep_for(waitInterval);
 #endif
 
-    glm::vec3 leveledCamPos = cameraPosition;
+    glm::vec3 leveledCamPos = camPosition_worldspace;
     leveledCamPos.y = 0.0f;
     //Spawn trees from tree groups
     int lodGroup = 0;
@@ -203,7 +207,7 @@ void SCE::TerrainTrees::UpdateVisibilityAndLOD(mat4 viewMatrix,
                     else
                     {
                         //rotate plane to face camera
-                        glm::vec3 dirToCam = glm::normalize(cameraPosition - treePos);
+                        glm::vec3 dirToCam = glm::normalize(camPosition_worldspace - treePos);
 #if IMPOSTOR_FACE_Z
                         float angleYAxis = glm::atan(1.0f, 0.0f) -
                                 glm::atan(dirToCam.z, dirToCam.x);
@@ -576,6 +580,7 @@ void SCE::TerrainTrees::RenderTrees(const mat4 &projectionMatrix, const mat4 &vi
     #endif
         //render trees trunks
         SCE::ShaderUtils::UseShader(mTreeGlData.trunkShaderProgram);
+        SCE::ShaderUtils::BindRootPosition(mTreeGlData.trunkShaderProgram, SCEScene::GetFrameRootPosition());
 
         SCE::TextureUtils::BindTexture(mTreeGlData.barkTexture, 0, mTreeGlData.barkTexUniform);
         SCE::TextureUtils::BindTexture(mTreeGlData.barkNormalTexture, 1, mTreeGlData.barkNormalTexUniform);
@@ -587,6 +592,7 @@ void SCE::TerrainTrees::RenderTrees(const mat4 &projectionMatrix, const mat4 &vi
 
         //render trees leaves
         SCE::ShaderUtils::UseShader(mTreeGlData.leavesShaderProgram);
+        SCE::ShaderUtils::BindRootPosition(mTreeGlData.leavesShaderProgram, SCEScene::GetFrameRootPosition());
 
         SCE::TextureUtils::BindTexture(mTreeGlData.leafTexture, 0, mTreeGlData.leafTexUniform);
         glUniform1f(mTreeGlData.leavesTranslucencyUniform, TREE_LEAVES_TRANSLUCENCY);
@@ -603,6 +609,8 @@ void SCE::TerrainTrees::RenderTrees(const mat4 &projectionMatrix, const mat4 &vi
             glDisable(GL_CULL_FACE);
             //render tree impostors
             SCE::ShaderUtils::UseShader(mTreeGlData.impostorData.shaderProgram);
+            SCE::ShaderUtils::BindRootPosition(mTreeGlData.trunkShaderProgram, SCEScene::GetFrameRootPosition());
+
             SCE::TextureUtils::BindTexture(mTreeGlData.impostorData.texture, 0,
                                            mTreeGlData.impostorData.textureUniform);
             SCE::TextureUtils::BindTexture(mTreeGlData.impostorData.normalTexture, 1,
