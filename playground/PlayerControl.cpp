@@ -97,7 +97,7 @@ void PlayerControl::Update()
     if (GetKeyAction( GLFW_KEY_LEFT_SHIFT ) == KeyAction::Hold)
     {
 #ifndef SCE_FINAL
-       speed = 500.0f;
+       speed = 1500.0f;
 #else
        speed = 80.0f;
 #endif

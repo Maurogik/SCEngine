@@ -290,7 +290,7 @@ void sceneTerrain()
 {
 //    SCEScene::AddTerrain(3000.0f, 300.0f, 0.0f);
 //    SCEScene::AddTerrain(9000.0f, 600.0f, 0.0f);
-    SCEScene::AddTerrain(16000.0f, 600.0f, 0.0f);
+    SCEScene::AddTerrain(16000.0f, 600.0f, 0.0f, 2);
 }
 
 void sceneTrees()
