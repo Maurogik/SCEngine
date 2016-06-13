@@ -22,7 +22,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/random.hpp>
 
-#define USE_STB_PERLIN 1
+#define USE_STB_PERLIN 0
 #if USE_STB_PERLIN
 #define STB_PERLIN_IMPLEMENTATION
 #include <stb_perlin.h>
@@ -49,6 +49,8 @@
 
 #ifdef SCE_DEBUG
 #define TERRAIN_TEXTURE_SIZE 512
+#elif SCE_FINAL
+#define TERRAIN_TEXTURE_SIZE 4096
 #else
 #define TERRAIN_TEXTURE_SIZE 2048
 #endif
@@ -107,7 +109,7 @@ namespace Terrain
                 quadVertices[2] = glm::vec3(1.0f, 0.0f, 1.0f);
                 quadVertices[3] = glm::vec3(0.0f, 0.0f, 1.0f);
 
-                heightmap = nullptr;
+                normalAndHeight = nullptr;
             }
 
             //Terrain quad render data
@@ -122,13 +124,14 @@ namespace Terrain
             float heightScale;
             glm::mat4 worldToTerrainCoord;
             glm::mat4 terrainToWorldSpace;
+            int nbRepeat;
 
             ushort quadPatchIndices[4]; //indices for a quad, not 2 triangles
             glm::vec3 quadVertices[4];
 
             TerrainGLData   glData;
 
-            float *heightmap;
+            glm::vec4 *normalAndHeight;
             std::vector<glm::mat4> patchModelMatrices;
             std::vector<glm::vec4> patchBoundingBoxCenters;
 
@@ -181,13 +184,15 @@ namespace Terrain
             x = float(xCount)*stepSize;
             z = float(zCount)*stepSize;
 
-            int xOff = xCount < TERRAIN_TEXTURE_SIZE - 1 ? 1 : 0;
-            int zOff = zCount < TERRAIN_TEXTURE_SIZE - 1 ? 1 : 0;
+            int x0 = xCount;
+            int x1 = (xCount + 1)%TERRAIN_TEXTURE_SIZE;
+            int z0 = zCount;
+            int z1 = (zCount + 1)%TERRAIN_TEXTURE_SIZE;
 
-            y1 = heightmap[xCount*TERRAIN_TEXTURE_SIZE + zCount];
-            y2 = heightmap[(xCount + xOff)*TERRAIN_TEXTURE_SIZE + zCount];
-            y3 = heightmap[xCount*TERRAIN_TEXTURE_SIZE + (zCount + zOff)];
-            y4 = heightmap[(xCount + xOff)*TERRAIN_TEXTURE_SIZE + (zCount + zOff)];
+            y1 = heightmap[x0*TERRAIN_TEXTURE_SIZE + z0];
+            y2 = heightmap[x1*TERRAIN_TEXTURE_SIZE + z0];
+            y3 = heightmap[x0*TERRAIN_TEXTURE_SIZE + z1];
+            y4 = heightmap[x1*TERRAIN_TEXTURE_SIZE + z1];
 
             glm::vec3 p1(x           , y1, z);
             glm::vec3 p2(x + stepSize, y2, z);
@@ -211,7 +216,7 @@ namespace Terrain
 
 
         //generate perlin noise texture
-        void initializeTerrain(float xOffset, float zOffset, float startScale, float heightScale)
+        void initializeTerrain(float yPos, float startScale, float heightScale, int nbRepeat)
         {
             //8MB array, does not fit on stack so heap allocate it
             float *heightmap = new float[TERRAIN_TEXTURE_SIZE*TERRAIN_TEXTURE_SIZE];
@@ -229,6 +234,7 @@ namespace Terrain
             float y = 0.0f;
 
             float edgeChange = 1.0f;
+            float exponent = 1.0f;
 #ifdef ISLAND_MODE
             float xDist, zDist;
 #endif            
@@ -237,12 +243,12 @@ namespace Terrain
             for(int xCount = 0; xCount < TERRAIN_TEXTURE_SIZE; ++xCount)
             {
                 x = float(xCount) / float(TERRAIN_TEXTURE_SIZE);
-                x += xOffset;
+                x += yPos;
 
                 for(int zCount = 0; zCount < TERRAIN_TEXTURE_SIZE; ++zCount)
                 {
                      z = float(zCount) / float(TERRAIN_TEXTURE_SIZE);
-                     z += zOffset;
+                     z += yPos;
 #ifdef ISLAND_MODE
                     xDist = (0.5f - x);
                     zDist = (0.5f - z);
@@ -263,17 +269,27 @@ namespace Terrain
                         float tmpNoise = stb_perlin_noise3(x*scale, y*scale, z*scale);
                         tmpNoise = SCE::Math::MapToRange(-0.7f, 0.7f, 0.0f, 1.0f, tmpNoise);
 #else
-                        float tmpNoise = Perlin::GetPerlinAt(x*scale, z*scale);
+                        float tmpNoise = Perlin::GetPerlinAt(x*scale, z*scale,
+                                                             (scale));
                         tmpNoise = SCE::Math::MapToRange(-0.5f, 0.5f, 0.0f, 1.0f, tmpNoise);
+
+                        exponent = Perlin::GetPerlinAt((x + 0.5f)*scale, (z + 0.5f)*scale,
+                                                       int(scale));
+                        exponent = SCE::Math::MapToRange(-0.5f, 0.5f, 0.0f, 1.0f, exponent);
 #endif
-                        if(l == 0)
-                        {
-                            tmpNoise = glm::pow(tmpNoise, 3.0f);
-                        }
-                        else if(l == 1)
-                        {
-                            tmpNoise = glm::pow(tmpNoise, 2.0f);
-                        }
+                        exponent = SCE::Math::MapToRange(0.6f, 0.9f, 0.0f, 1.0f, exponent);
+                        float k = 1.0f;
+                        exponent = glm::exp(k*exponent - k);
+                        exponent = glm::mix(exponent, 1.0f, 1.0f - pow(1.0f - (float)l/(float)nbLayers, 8.0f));
+                        tmpNoise *= exponent;
+//                        if(l == 0)
+//                        {
+//                            tmpNoise = glm::pow(tmpNoise, 5.0f);
+//                        }
+//                        else if(l == 1)
+//                        {
+//                            tmpNoise = glm::pow(tmpNoise, 3.5f);
+//                        }
 //                        tmpNoise = glm::pow(tmpNoise, 1.0f + 2.0f*(1.0f - float(l)/float(nbLayers)));
                         noise += tmpNoise*amplitude;
                         maxValue += amplitude;
@@ -340,11 +356,6 @@ namespace Terrain
                 }
             }
 
-            terrainData->terrainTrees.InitializeTreeLayout(packedNormalAndHeight, TERRAIN_TEXTURE_SIZE,
-                                                           xOffset, zOffset,
-                                                           startScale, heightScale,
-                                                           terrainData->terrainSize*0.5f);
-
             glGenTextures(1, &(terrainData->glData.terrainTexture));
             glBindTexture(GL_TEXTURE_2D, terrainData->glData.terrainTexture);
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, TERRAIN_TEXTURE_SIZE, TERRAIN_TEXTURE_SIZE, 0,
@@ -353,14 +364,14 @@ namespace Terrain
             glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
             glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-            glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP);
-            glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
             //delete textures, except for the heightmap which is used at runtime
             //and will be deleted in the cleanup function
             delete[] normals;
-            delete[] packedNormalAndHeight;
-            terrainData->heightmap = heightmap;
+            delete[] heightmap;
+            terrainData->normalAndHeight = packedNormalAndHeight;
         }
 
         void initializeRenderData()
@@ -453,18 +464,18 @@ namespace Terrain
         }
 
         //pre-compute model matrices for all patches
-        void initializePatchMatrices()
+        void initializePatchMatrices(int nbRepeat)
         {
-            float halfTerrainSize = terrainData->terrainSize*0.5f;
+            float halfTerrainSize = terrainData->terrainSize*0.5f*float(nbRepeat);
             float patchSize = terrainData->patchSize;
 
             terrainData->patchModelMatrices.reserve(int(terrainData->terrainSize/terrainData->patchSize));
 
-            for(float x = -halfTerrainSize + terrainData->patchSize*0.5f;
+            for(float x = -halfTerrainSize;
                 x < halfTerrainSize - terrainData->patchSize;
                 x += terrainData->patchSize)
             {
-                for(float z = -halfTerrainSize + terrainData->patchSize*0.5f;
+                for(float z = -halfTerrainSize;
                     z < halfTerrainSize - terrainData->patchSize;
                     z += terrainData->patchSize)
                 {
@@ -509,7 +520,7 @@ namespace Terrain
 
 #if DISPLAY_TREES
 
-        float maxDistFromCenter = halfTerrainSize - patchSize * 0.5f;
+        float maxDistFromCenter = halfTerrainSize*(float)terrainData->nbRepeat - patchSize * 0.5f;
         terrainData->terrainTrees.SpawnTreeInstances(viewMatrix, terrainData->worldToTerrainCoord,
                                                      cameraPosition, maxDistFromCenter);
 #endif
@@ -647,12 +658,12 @@ namespace Terrain
         glDepthMask(GL_TRUE);
     }
 
-    void Init(float terrainSize, float patchSize, float terrainBaseHeight, float maxTessDist)
+    void Init(float terrainSize, float patchSize, float terrainBaseHeight, int nbRepeat, float maxTessDist)
     {
         if(!terrainData)
         {
 #if !USE_STB_PERLIN
-            Perlin::MakePerlin(TERRAIN_TEXTURE_SIZE, TERRAIN_TEXTURE_SIZE);
+            Perlin::MakePerlin(TERRAIN_TEXTURE_SIZE);
 #endif
 
             //compute the actual terrain size we will cover with patches
@@ -662,18 +673,25 @@ namespace Terrain
             terrainData->terrainSize = terrainSize;
             terrainData->patchSize = patchSize;
             terrainData->baseHeight = terrainBaseHeight;
-            terrainData->heightScale = 5000.0f;//max height in meter
+            terrainData->heightScale = 10000.0f;//max height in meter
             terrainData->maxTesselationDist = maxTessDist;
+            terrainData->nbRepeat = nbRepeat;
 
             initializeRenderData();
-            float xOffset = SCE::Math::RandRange(0.0f, 1.0f);
-            float zOffset = SCE::Math::RandRange(0.0f, 1.0f);
-            initializeTerrain(xOffset, zOffset, 2.0f*terrainSize / 9000.0f,
-                                      terrainData->heightScale);
+            float yPos = 0.0;//SCE::Math::RandRange(0.0f, 1.0f);
+            float scale = 1.0f*(terrainSize/9000.0f);
+            scale = glm::pow(2.0f, glm::ceil(glm::log2(scale)));
+            initializeTerrain(yPos, scale, terrainData->heightScale, nbRepeat);
 
             computeTerrainMatrices(vec3(0.0f));
 
-            initializePatchMatrices();
+            initializePatchMatrices(nbRepeat);
+
+#if DISPLAY_TREES
+            terrainData->terrainTrees.InitializeTreeLayout(yPos, yPos,
+                                                           scale, terrainData->heightScale,
+                                                           terrainData->terrainSize*0.5f*nbRepeat);
+#endif
         }
     }
 
@@ -685,9 +703,9 @@ namespace Terrain
             Perlin::DestroyPerlin();
 #endif
             cleanupGLData();
-            if(terrainData->heightmap != nullptr)
+            if(terrainData->normalAndHeight != nullptr)
             {
-                delete[] terrainData->heightmap;
+                delete[] terrainData->normalAndHeight;
             }
             delete terrainData;
             terrainData = nullptr;
@@ -701,15 +719,30 @@ namespace Terrain
             glm::vec4 pos_terrainSpace = terrainData->worldToTerrainCoord*glm::vec4(pos_worldspace, 1.0);
             int x = int((pos_terrainSpace.x*0.5f + 0.5f)*TERRAIN_TEXTURE_SIZE);
             int z = int((pos_terrainSpace.z*0.5f + 0.5f)*TERRAIN_TEXTURE_SIZE);
-            if(x >= 0 && x < TERRAIN_TEXTURE_SIZE && z >= 0 && z < TERRAIN_TEXTURE_SIZE)
-            {
-                return terrainData->heightmap[x*TERRAIN_TEXTURE_SIZE + z] + terrainData->baseHeight;
-            }
+            while(x < 0) { x += TERRAIN_TEXTURE_SIZE; }
+            while(z < 0) { z += TERRAIN_TEXTURE_SIZE; }
+            x = x%TERRAIN_TEXTURE_SIZE;
+            z = z%TERRAIN_TEXTURE_SIZE;
+            return terrainData->normalAndHeight[x*TERRAIN_TEXTURE_SIZE + z].a + terrainData->baseHeight;
         }
         return 0.0f;
     }
 
-
+    glm::vec3 GetTerrainNormal(const vec3& pos_worldspace)
+    {
+        if(terrainData)
+        {
+            glm::vec4 pos_terrainSpace = terrainData->worldToTerrainCoord*glm::vec4(pos_worldspace, 1.0);
+            int x = int((pos_terrainSpace.x*0.5f + 0.5f)*TERRAIN_TEXTURE_SIZE);
+            int z = int((pos_terrainSpace.z*0.5f + 0.5f)*TERRAIN_TEXTURE_SIZE);
+            while(x < 0) { x += TERRAIN_TEXTURE_SIZE; }
+            while(z < 0) { z += TERRAIN_TEXTURE_SIZE; }
+            x = x%TERRAIN_TEXTURE_SIZE;
+            z = z%TERRAIN_TEXTURE_SIZE;
+            return glm::vec3( terrainData->normalAndHeight[x*TERRAIN_TEXTURE_SIZE + z] );
+        }
+        return glm::vec3(0.0f, 1.0f, 0.0f);
+    }
 }
 
 }

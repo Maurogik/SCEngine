@@ -12,9 +12,13 @@ namespace SCE
 {
 namespace Perlin
 {
-static int mWidth = -1;
-static int mHeight = -1;
-static vec2* cornersGradient = NULL; //order of corners : x0y0, x0y1, x1y0, x1y1
+
+#define EXP_ARRAY_SIZE 256
+
+static int mSize = -1;
+static vec2* gradients;
+static int* permutations;
+static float* exponents;
 
 void randomizeNormalizedVectors(vec2* vectors, int count)
 {
@@ -26,68 +30,91 @@ void randomizeNormalizedVectors(vec2* vectors, int count)
     }
 }
 
-void MakePerlin(ui16 gridWidth, ui16 gridHeight)
+void MakePerlin(ui16 gridSize)
 {
     //initalize gradient grid
-    mWidth = gridWidth;
-    mHeight = gridHeight;
-    int length = mWidth * mHeight;
-    vec2* gradients = (vec2*)malloc(sizeof(glm::vec2)*length);
+    mSize = gridSize;
+    int length = mSize*mSize;
+    gradients = (vec2*)malloc(sizeof(glm::vec2)*length);
     randomizeNormalizedVectors(gradients, length);
 
-    //store each 'square' of gradients to increase access speed (load all needed corner at once)
-    cornersGradient = (vec2*)malloc(sizeof(vec2) * length * 4);
-    int x1, y1;
-    int pos;
-    for(int x = 0; x < mWidth; ++x)
+    permutations = (int*) malloc(sizeof(int)*EXP_ARRAY_SIZE);
+
+    for(int i = 0; i < EXP_ARRAY_SIZE; ++i)
     {
-        x1 = (x + 1) % mWidth;
-        for(int y = 0; y < mHeight; ++y)
-        {
-            y1 = (y + 1) % mHeight;
-            pos = x * mHeight * 4 + y * 4;
-            cornersGradient[pos] 	 = gradients[x  * mHeight + y ];
-            cornersGradient[pos + 1] = gradients[x  * mHeight + y1];
-            cornersGradient[pos + 2] = gradients[x1 * mHeight + y ];
-            cornersGradient[pos + 3] = gradients[x1 * mHeight + y1];
-        }
+        permutations[i] = i;
     }
 
-    free(gradients);
-    gradients = nullptr;
+    for(int i = EXP_ARRAY_SIZE - 1; i > 0; i--)
+    {
+        std::swap(permutations[i], permutations[rand()%(i + 1)]);
+    }
+
+    float mExpSrc = glm::pow(2.0f, -126.0f/float(EXP_ARRAY_SIZE - 1));
+    mExpSrc = glm::mix(mExpSrc, 1.0f, 0.5f);
+
+    exponents = (float*)malloc(sizeof(float)*EXP_ARRAY_SIZE);
+    float s = 1.0; //current magnitude
+    for(int i = 0; i < EXP_ARRAY_SIZE; i++)
+    {
+        exponents[i] = s;
+        s /= mExpSrc;
+    }
 }
 
 void DestroyPerlin()
 {
-    free(cornersGradient);
-    cornersGradient = NULL;
+    free(gradients);
+    gradients = NULL;
+
+    free(permutations);
+    permutations = NULL;
+
+    free(exponents);
+    exponents = NULL;
+}
+
+float GetPerlinAt(float x, float y)
+{
+    return GetPerlinAt(x, y, mSize);
+}
+
+int hash(int x, int y, int size)
+{
+    return permutations[(permutations[x] + y)%size];
 }
 
 //result in -0.5 .. 0.5
-float GetPerlinAt(float x, float y)
+float GetPerlinAt(float x, float y, float period)
 {
-    x = glm::mod(x, (float)mWidth);
-    y = glm::mod(y, (float)mHeight);
     //the four corners of this grid cell
     float x0, y0, x1, y1;
     x0 = glm::floor(x);
     y0 = glm::floor(y);
-    x1 = glm::ceil(x);
-    y1 = glm::ceil(y);
+    x1 = x0 + 1;
+    y1 = y0 + 1;
 
     vec2 point (x, y);
     vec2 corners[4] = { vec2(x0, y0),
                         vec2(x0, y1),
                         vec2(x1, y0),
                         vec2(x1, y1) };
+
+    float expL = 1.0;
+
     //compute vectorsToPoint from corners to wanted point
     float gradientDotVector[4];
-    int cornerPos = ((int)x0 % mWidth) * mHeight * 4 + ((int)y0 % mHeight) * 4;
     for(int i = 0; i < 4; ++i)
     {
         vec2 vectorToPoint 	 = point - corners[i];
-        float expL = 1.0;//0.2 + glm::pow(glm::length(vectorToPoint), 2.0);
-        gradientDotVector[i] = expL * glm::dot(cornersGradient[cornerPos + i], vectorToPoint);
+
+        int xg = int(glm::mod(corners[i].x, period))%mSize;
+        int yg = int(glm::mod(corners[i].y, period))%mSize;
+
+        vec2 gradient = gradients[ xg  * mSize + yg ];
+//        vec2 gradient = gradients[hash(xg, yg, mSize)];
+        //expL = exponents[hash(xg%EXP_ARRAY_SIZE, yg%EXP_ARRAY_SIZE, EXP_ARRAY_SIZE)];
+        gradientDotVector[i] = expL * glm::dot(gradient, vectorToPoint);
     }
 
     //compute average of the 4 dot products
@@ -111,13 +138,14 @@ float GetLayeredPerlinAt(float x, float y, int layers, float persistence)
     float maxValue = 0.0;
     for(int l = 0; l < layers; ++l)
     {
-        perlinSum += GetPerlinAt(x * frequency, y * frequency) * amplitude;
+        perlinSum += GetPerlinAt(x * frequency, y * frequency, mSize) * amplitude;
         frequency *= 2;
         maxValue += amplitude;
         amplitude /= persistence;
     }
     return perlinSum / maxValue;
 }
+
 }
 
 }

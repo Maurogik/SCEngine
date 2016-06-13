@@ -13,7 +13,8 @@ namespace SCE
     namespace Perlin
     {
 
-        void    MakePerlin(ui16 width, ui16 height);
+        void    MakePerlin(ui16 gridSize);
+        float   GetPerlinAt(float x, float y, float period);
         float   GetPerlinAt(float x, float y);
         float   GetLayeredPerlinAt(float x, float y, int layers, float persistence);
         void    DestroyPerlin();

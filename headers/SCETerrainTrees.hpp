@@ -21,7 +21,7 @@ namespace SCE
 
         TerrainTrees();
         ~TerrainTrees();
-        void InitializeTreeLayout(glm::vec4 *normAndHeightTex, int textureSize, float xOffset, float zOffset,
+        void InitializeTreeLayout(float xOffset, float zOffset,
                                   float startScale, float heightScale, float halfTerrainSize);
         void SpawnTreeInstances(const glm::mat4 &viewMatrix, const glm::mat4 &worldToTerrainspaceMatrix,
                                 const glm::vec3 &cameraPosition, float maxDistFromCenter);

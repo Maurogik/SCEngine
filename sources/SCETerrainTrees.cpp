@@ -18,16 +18,17 @@
 #include "../headers/SCETime.hpp"
 #include "../headers/SCERender.hpp"
 #include "../headers/SCEBillboardRender.hpp"
-#include "../headers/SCEPostProcess.hpp"
 #include "../headers/SCEScene.hpp"
 
-#include <stb_perlin.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/random.hpp>
 
 #define USE_STB_PERLIN 1
 #if USE_STB_PERLIN
-//#include <stb_perlin.h>
+    #ifndef STB_PERLIN_IMPLEMENTATION
+    #define STB_PERLIN_IMPLEMENTATION
+    #include <stb_perlin.h>
+    #endif
 #else
 #include "../headers/SCEPerlin.hpp"
 #endif
@@ -58,6 +59,7 @@
 #define BILLBOARD_GEN_MAIN_TEX "MainTex"
 #define BILLBOARD_GEN_NORMAL_TEX "NormalMap"
 #define BILLBOARD_GEN_TRANSLUCENCY "Translucency"
+#define BILLBOARD_BORDER 0.05f
 
 #define IMPOSTOR_SHADER_NAME "Terrain/TreeImpostor"
 #define IMPOSTOR_TEXTURE_UNIFORM "ImpostorTex"
@@ -164,7 +166,7 @@ void SCE::TerrainTrees::UpdateVisibilityAndLOD(mat4 viewMatrix,
                 //scale to apply to the tree
                 float scale = SCE::Math::MapToRange(-0.6f, 0.6f, 1.0f, 1.8f, noiseZ);
 #else
-                noiseX = Perlin::G etPerlinAt(treePos.x*perlinScale, treePos.z*perlinScale);
+                noiseX = Perlin::GetPerlinAt(treePos.x*perlinScale, treePos.z*perlinScale);
                 noiseZ = Perlin::GetPerlinAt(treePos.z*perlinScale, treePos.x*perlinScale);
                 //scale to apply to the tree
                 float scale = SCE::Math::MapToRange(-0.5f, 0.5f, 0.8f, 1.4f, noiseZ);
@@ -184,7 +186,8 @@ void SCE::TerrainTrees::UpdateVisibilityAndLOD(mat4 viewMatrix,
 
                 //tree could have spawn outside of terrain, only keep if inside
                 if( abs(treePos.x) < maxDistFromCenter
-                    && abs(treePos.z) < maxDistFromCenter)
+                    && abs(treePos.z) < maxDistFromCenter
+                    && distToCam < SCE::Quality::Trees::MaxDrawDistance)
                 {
                     //put tree at the surface of terrain
                     float height = SCE::Terrain::GetTerrainHeight(treePos);
@@ -235,7 +238,7 @@ void SCE::TerrainTrees::UpdateVisibilityAndLOD(mat4 viewMatrix,
                         mTreeImpostorTexMapping.push_back(
                                     SCE::BillboardRender::GetMappingForAgnle(noiseX*-10.0f+angleYAxis,
                                                                              NB_IMPOSTOR_ANGLES,
-                                                                             IMPOSTOR_FLIP_X));
+                                                                             IMPOSTOR_FLIP_X, BILLBOARD_BORDER));
 #endif
                     }
 #endif
@@ -365,19 +368,16 @@ SCE::TerrainTrees::TerrainTrees()
     glm::vec3 treeDimensions, treeCenter;
     SCE::Math::CombineAABB(leavesCenter, leavesDim, trunkCenter, trunkDim, treeCenter, treeDimensions);
 
-    float billboardBorder = 0.05f;
     //Start generating the billboards
     glm::vec3 billboardSize = SCE::BillboardRender::GenerateTexturesFromMesh(
-                                                   NB_IMPOSTOR_ANGLES, 256, billboardBorder,
+                                                   NB_IMPOSTOR_ANGLES, 512, BILLBOARD_BORDER,
                                                    treeCenter, treeDimensions,
                                                    &mTreeGlData.impostorData.texture,
                                                    &mTreeGlData.impostorData.normalTexture,
                                                    renderCallback);
     //we're done with this shader so delete it
     SCE::ShaderUtils::DeleteShaderProgram(billboardCaptureShader);
-    billboardCaptureShader = GL_INVALID_INDEX;
-
-    SCE::PostProcess::BlurTexture2D(mTreeGlData.impostorData.texture, 512, 512, 32);
+    billboardCaptureShader = GL_INVALID_INDEX;  
 
     //Set up impostor render data
     mTreeGlData.impostorData.meshId = SCE::MeshLoader::CreateQuadMesh("BillboardQuad", IMPOSTOR_FACE_Z);
@@ -393,8 +393,8 @@ SCE::TerrainTrees::TerrainTrees()
 
     //scale impostor quad so that it looks like a regular tree
     mImpostorScaleMat =
-            glm::scale(mat4(1.0), billboardSize)*
-            glm::translate(mat4(1.0), glm::vec3(0.0, 1.0 - billboardBorder*2.0f, 0.0));
+            glm::scale(mat4(1.0), billboardSize + BILLBOARD_BORDER)*
+            glm::translate(mat4(1.0), glm::vec3(0.0, 1.0, 0.0));
 
 #endif
 
@@ -460,8 +460,7 @@ SCE::TerrainTrees::~TerrainTrees()
     }
 }
 
-void SCE::TerrainTrees::InitializeTreeLayout(glm::vec4* normAndHeightTex, int textureSize,
-                                             float xOffset, float zOffset,
+void SCE::TerrainTrees::InitializeTreeLayout(float xOffset, float zOffset,
                                              float startScale, float heightScale,
                                              float halfTerrainSize)
 {
@@ -469,7 +468,7 @@ void SCE::TerrainTrees::InitializeTreeLayout(glm::vec4* normAndHeightTex, int te
     float divPerKm = SCE::Quality::Trees::NbGroupPerKm;
     int treeGroupIter = int(divPerKm*halfTerrainSize/1000.0f);
     float scale = startScale;
-    float baseGroupRadius = (1.0f / float(treeGroupIter)) * halfTerrainSize;
+    float baseGroupRadius = (1000.0f/divPerKm);
     float maxRadiusScale = 1.3f;
     float minRadiusScale = 0.7f;
     float baseSpacing = SCE::Quality::Trees::BaseSpacing;
@@ -482,26 +481,26 @@ void SCE::TerrainTrees::InitializeTreeLayout(glm::vec4* normAndHeightTex, int te
         {
             float z = float(zCount) / float(treeGroupIter);
 
-            vec4 normAndHeight = normAndHeightTex[int(x*textureSize) *
-                    textureSize + int(z*textureSize)];
 #if USE_STB_PERLIN
             float y = 115.0f; //any value will do, just need to be something other than the terrain height
             float noise = stb_perlin_noise3((x + xOffset)*scale, y*scale, (z + zOffset)*scale);
             noise = SCE::Math::MapToRange(-0.7f, 0.7f, minRadiusScale, maxRadiusScale, noise);
 #else
             float noise = Perlin::GetPerlinAt((x + xOffset)*scale, (z + zOffset)*scale);
-            noise = SCE::Math::MapToRange(-0.5f, 0.5f, 0.0f, maxRadiusScale, noise);
+            noise = SCE::Math::MapToRange(-0.5f, 0.5f, minRadiusScale, maxRadiusScale, noise);
 #endif
+            glm::vec2 pos = (glm::vec2(x, z)*2.0f - vec2(1.0, 1.0))*halfTerrainSize;
 
-            float flatness = pow(dot(vec3(normAndHeight.x, normAndHeight.y, normAndHeight.z),
-                                     vec3(0.0f, 1.0f, 0.0f)), 8.0f);
-            float height = normAndHeight.a / heightScale;
+            glm::vec3 normal = SCE::Terrain::GetTerrainNormal(glm::vec3(pos.x, 0.0f, pos.y));
+            float height = SCE::Terrain::GetTerrainHeight(glm::vec3(pos.x, 0.0f, pos.y))/heightScale;
+
+            float flatness = pow(dot(normal, vec3(0.0f, 1.0f, 0.0f)), 8.0f);
             //Spawn tree at low height on flat terrain
-            if(height < 0.2f && flatness > 0.70f && noise > 0.2f * maxRadiusScale)
+            if(height < 0.3f && flatness > 0.6f
+               && (noise - minRadiusScale) > (0.2f*(maxRadiusScale-minRadiusScale)))
             {
                 TreeGroup group;
-                group.position = (glm::vec2(x, z)*2.0f - vec2(1.0, 1.0))
-                       *halfTerrainSize;
+                group.position = pos;
                 group.radius = noise*baseGroupRadius;
                 group.spacing = baseSpacing;
                 mTreeGroups.push_back(group);
@@ -604,6 +603,7 @@ void SCE::TerrainTrees::RenderTrees(const mat4 &projectionMatrix, const mat4 &vi
 
     #if USE_IMPOSTORS
 
+        if(SCE::Quality::Trees::ImpostorShadowEnabled || !isShadowPass)
         {
             //disable cull for impostors to have shadows
             glDisable(GL_CULL_FACE);

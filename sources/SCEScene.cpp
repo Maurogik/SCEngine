@@ -188,9 +188,9 @@ void SCEScene::UnregisterGameObject(SCEHandle<GameObject> gameObject)
     }
 }
 
-void SCEScene::AddTerrain(float terrainSize, float patchSize, float baseHeight)
+void SCEScene::AddTerrain(float terrainSize, float patchSize, float baseHeight, int nbRepeat)
 {
-    SCE::Terrain::Init(terrainSize, patchSize, baseHeight);
+    SCE::Terrain::Init(terrainSize, patchSize, baseHeight, nbRepeat);
 }
 
 void SCEScene::RemoveTerrain()

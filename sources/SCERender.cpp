@@ -166,9 +166,7 @@ namespace Render
         glUseProgram(tonemap.luminanceShader);
         mGBuffer.BindForLuminancePass();
         RenderFullScreenPass(tonemap.luminanceShader, renderData.projectionMatrix, renderData.viewMatrix);
-        mGBuffer.GenerateLuminanceMimap();
-
-        mGBuffer.BlurFinal();
+        mGBuffer.GenerateLuminanceMimap();        
 
         //Tonemapping & render to back buffer
         glUseProgram(tonemap.toneMapShader);

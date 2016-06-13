@@ -22,7 +22,10 @@ namespace SCE
                                            const vec3 &center, const vec3 &dimensions,
                                       GLuint* diffuseTex, GLuint* normalTex,
                                       RenderCallback renderCallback);
-        glm::vec4 GetMappingForAgnle(float angleRad, ui16 nbAngles, bool flipX = false);
+        glm::vec4 GetMappingForAgnle(float angleRad, ui16 nbAngles);
+        glm::vec4 GetMappingForAgnle(float angleRad, ui16 nbAngles, bool flipX);
+        glm::vec4 GetMappingForAgnle(float angleRad, ui16 nbAngles, float borderRatio);
+        glm::vec4 GetMappingForAgnle(float angleRad, ui16 nbAngles, bool flipX, float borderRatio);
     }
 }
 

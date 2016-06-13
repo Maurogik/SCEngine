@@ -190,12 +190,6 @@ void SCE_GBuffer::BindForLuminancePass()
     glDrawBuffer(GL_COLOR_ATTACHMENT0 + LUM_TEXT_ATTACHMENT);
 }
 
-void SCE_GBuffer::BlurFinal()
-{
-    SCE::PostProcess::BlurTexture2D(mFinalTexture, 1920, 1080, 32);
-}
-
-
 void SCE_GBuffer::GenerateLuminanceMimap()
 {
     glBindTexture(GL_TEXTURE_2D, mLuminanceTexture);

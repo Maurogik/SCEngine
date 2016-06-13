@@ -14,6 +14,7 @@
 #include "../headers/Camera.hpp"
 #include "../headers/SCESkyRenderer.hpp"
 #include "../headers/SCETerrain.hpp"
+#include "../headers/SCEQuality.hpp"
 
 #ifdef SCE_DEBUG_ENGINE
 #include "../headers/SCEInput.hpp"
@@ -39,11 +40,6 @@ using namespace std;
 #define TERRAIN_TREES_SHADOW 1
 #define RAYMACHED_TERRAIN_SHADOW 0
 
-#if CSM_TERRAIN_SHADOW
-    #define MAX_SHADOW_DISTANCE 4500.0f
-#else
-    #define MAX_SHADOW_DISTANCE 1000.0f
-#endif
 
 SCELighting* SCELighting::s_instance = nullptr;
 
@@ -483,10 +479,7 @@ std::vector<CameraRenderData> SCELighting::computeCascadedLightFrustrums(Frustru
     float splitOverlap = c_shadowCrossFadeDist;
     float lambda    = 0.75f;//split correction strength
     float near      = cameraFrustrum.near;
-    // do computation of sub-frustrum as if the camera frustrum was shorter (MAX_SHADOW_DISTANCE)
-    // in order to keep a good shadow quality no matter how large the far distance gets.
-    // the las shadow map will still cover the frustrum until the end (at very low resolution)
-    float far       = glm::min(cameraFrustrum.far, MAX_SHADOW_DISTANCE);
+    float far       = glm::min(cameraFrustrum.far, SCE::Quality::MaxShadowDistance);
     float ratio     = far / near;
 
     //compute where the camera frustrum will be split
@@ -508,7 +501,7 @@ std::vector<CameraRenderData> SCELighting::computeCascadedLightFrustrums(Frustru
     }
     // here we set the last sub-frustrum (farthest for camera) to cover until the end of
     //the camera frustrum
-#if CSM_TERRAIN_SHADOW
+#if 0//CSM_TERRAIN_SHADOW
     // that way, even very far objects have shadows
     zSplits[cascadeCount - 1].y = cameraFrustrum.far;
 #else

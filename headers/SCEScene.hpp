@@ -42,7 +42,7 @@ namespace SCE {
 
         //Terrain
         static void                                 AddTerrain(float terrainSize, float patchSize,
-                                                               float baseHeight);
+                                                               float baseHeight, int nbRepeat = 1);
 
         static void                                 RemoveTerrain();
         static void                                 SetRootWorldspacePosition(glm::vec3 const& pos_worldspace);

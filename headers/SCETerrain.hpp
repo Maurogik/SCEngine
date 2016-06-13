@@ -16,7 +16,7 @@ namespace SCE
     namespace Terrain
     {
         void Init(float terrainSize, float patchSize, float terrainBaseHeight,
-                  float maxTessDist = 3000.0f);
+                  int nbRepeat, float maxTessDist = 3000.0f);
 
         void UpdateTerrain(const glm::mat4& projectionMatrix, const glm::mat4& viewMatrix);
 
@@ -30,6 +30,8 @@ namespace SCE
                          bool isShadowPass = false);
 
         float GetTerrainHeight(const vec3 &pos_worldspace);
+
+        glm::vec3 GetTerrainNormal(const vec3& pos_worldspace);
 
         void Cleanup();
     }
