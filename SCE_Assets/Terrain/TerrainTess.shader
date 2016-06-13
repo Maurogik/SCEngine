@@ -20,6 +20,8 @@ _{
     {
         vec4 pos_terrainspace = WorldToTerrainSpace * M * vec4(vertexPosition_modelspace, 1.0);
         VS_terrainTexCoord = pos_terrainspace.zx * 0.5 + vec2(0.5);
+//        VS_terrainTexCoord.x = mod(VS_terrainTexCoord.x, 1.0);
+//        VS_terrainTexCoord.y = mod(VS_terrainTexCoord.y, 1.0);
         gl_Position = vec4(vertexPosition_modelspace, 1.0);
     }
 _}
@@ -138,6 +140,7 @@ _{
         vec2 terrainTexCoord = mix(bottomTerrainUv, topTerrainUv, gl_TessCoord.y);
 
         vec4 normAndHeight = texture(TerrainHeightMap, terrainTexCoord);
+//        vec4 normAndHeight = vec4(0.0, 1.0, 0.0, 0.0);
         vec3 norm = normAndHeight.xyz;
 
         float height = normAndHeight.a;
@@ -299,6 +302,7 @@ _{
         vec3 norm = normAndHeight.xyz;
         oNormal = vec4(norm, colorAndRough.a);
         oColor = colorAndRough.rgb;
+//        oColor = normAndHeight.xyz;
         oPosition = Position_worldspace;
 
 #ifdef WIREFRAME
