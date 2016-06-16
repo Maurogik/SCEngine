@@ -15,6 +15,8 @@ namespace SCE
         extern float TerrainLodMultiplier;
         extern float MaxShadowDistance;
         extern float CameraFarPlane;
+        extern bool  VolumetricLightingEnabled;
+
         namespace Trees
         {
             extern float LodDistances[MAX_TREE_LOD_COUNT];
@@ -22,7 +24,7 @@ namespace SCE
             extern float NbGroupPerKm;
             extern float VisibilityUpdateDuration;
             extern float MaxDrawDistance;
-            extern bool  ImpostorShadowEnabled;
+            extern bool  ImpostorShadowEnabled;            
         }
     }
 }

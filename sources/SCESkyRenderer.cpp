@@ -9,7 +9,8 @@
 #include "../headers/SCERender.hpp"
 #include "../headers/SCEShaders.hpp"
 #include "../headers/SCE_GBuffer.hpp"
-
+#include "../headers/SCEQuality.hpp"
+#include "../headers/SCEPostProcess.hpp"
 
 #define SUN_TEXTURE_QUALITY 0.25f
 
@@ -32,6 +33,7 @@ namespace SkyRenderer
             GLint   qualityUniform;
             GLint   sunPositionUniform;
             GLint   sunColorUniform;
+            GLint   volumetricLightUniform;
         };
 
         struct SkyShaderData
@@ -109,6 +111,7 @@ namespace SkyRenderer
         sunData.qualityUniform = glGetUniformLocation(sunData.sunShaftProgram, "SizeQuality");
         sunData.sunPositionUniform = glGetUniformLocation(sunData.sunShaftProgram, "SunPosition_worldspace");
         sunData.sunColorUniform = glGetUniformLocation(sunData.sunShaftProgram, "SunColor");
+        sunData.volumetricLightUniform = glGetUniformLocation(sunData.sunShaftProgram, "VolumetricLightEnabled");
 
         skyData.sunPositionUniform = glGetUniformLocation(skyData.skyProgram, "SunPosition_worldspace");
         skyData.sunColorUniform = glGetUniformLocation(skyData.skyProgram, "SunColor");
@@ -139,6 +142,7 @@ namespace SkyRenderer
         glUniform1f(sunData.qualityUniform, SUN_TEXTURE_QUALITY);
         glUniform3f(sunData.sunPositionUniform, sunPosition.x, sunPosition.y, sunPosition.z);
         glUniform3fv(sunData.sunColorUniform, 1, &sunColor[0]);
+        glUniform1i(sunData.volumetricLightUniform, SCE::Quality::VolumetricLightingEnabled ? 1 : 0);
 
         //Render sun pass to texture
         SCE::Render::RenderFullScreenPass(sunData.sunShaftProgram, renderData.projectionMatrix,
@@ -167,6 +171,9 @@ namespace SkyRenderer
 
         glEnable(GL_DEPTH_TEST);
         glDepthMask(GL_TRUE);
+
+//        SCE::PostProcess::BlurTexture2D(commonSkyData.renderWidth, commonSkyData.renderHeight,
+//                                        128, 2, )
     }
 
     void Cleanup()

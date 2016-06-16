@@ -30,6 +30,7 @@ _{
     uniform vec2        SCE_ScreenSize;
     uniform vec3        SunPosition_worldspace;
     uniform float       SizeQuality;
+    uniform int         VolumetricLightEnabled;
     layout (location = 0) uniform sampler2D   PositionTex;
 
     uniform mat4 V;
@@ -93,17 +94,17 @@ _{
                     clamp(flare.g, 0.0, sunStrength));
     }
 
-//#define LIGHT_SHAFTS
+#define LIGHT_SHAFTS
+
 #ifdef LIGHT_SHAFTS
     float computeVolumetricLight(vec2 uv, vec2 sunUV)
     {
-        float nbSamples = 16.0;
+        float nbSamples = 32.0;
         float decay = 1.0;
-        float density = 0.15;
-        float weight = 0.005;
+        float density = 0.5;
+        float weight = 0.01;
 
-        vec2 stepToFrag = (sunUV - uv);
-        stepToFrag *= 1.0 / float(nbSamples) * density;
+        vec2 stepToFrag = (sunUV - uv)*density/float(nbSamples);
 
         float illum = 0.0;
         vec2 sampleUV = uv;
@@ -147,7 +148,10 @@ _{
             vec2 sunColor = getSunColor(ndcUv, sun_projectionspace.xyz);
             color.r = sunColor.r * notOccludedByScene * sunStrength;
 #ifdef LIGHT_SHAFTS
-            color.g = computeVolumetricLight(uv, sunUV) * sunStrength;
+            if(VolumetricLightEnabled == 1)
+            {
+                color.g = computeVolumetricLight(uv, sunUV) * sunStrength;
+            }
 #endif
             color.b = sunColor.g * pow(sunStrength, 2.0);
         }

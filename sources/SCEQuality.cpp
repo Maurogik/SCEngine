@@ -13,6 +13,7 @@
         float SCE::Quality::TerrainLodMultiplier = 2.0f;
         float SCE::Quality::MaxShadowDistance = 4500.0f;
         float SCE::Quality::CameraFarPlane = 10000.0f;
+        bool  SCE::Quality::VolumetricLightingEnabled = false;
 
         float SCE::Quality::Trees::LodDistances[MAX_TREE_LOD_COUNT] =
         {
@@ -29,6 +30,7 @@
         float SCE::Quality::TerrainLodMultiplier = 1.0f;
         float SCE::Quality::MaxShadowDistance = 16000.0f;
         float SCE::Quality::CameraFarPlane = 32000.0f;
+        bool  SCE::Quality::VolumetricLightingEnabled = true;
 
         float SCE::Quality::Trees::LodDistances[MAX_TREE_LOD_COUNT] =
         {
@@ -39,13 +41,14 @@
         float SCE::Quality::Trees::NbGroupPerKm = 8.0f;
         float SCE::Quality::Trees::VisibilityUpdateDuration = 0.3f;
         float SCE::Quality::Trees::MaxDrawDistance = 16000.0f;
-        bool  SCE::Quality::Trees::ImpostorShadowEnabled = false;
+        bool  SCE::Quality::Trees::ImpostorShadowEnabled = false;        
 
 #elif RENDER_QUALITY == 2
 
         float SCE::Quality::TerrainLodMultiplier = 0.5f;
         float SCE::Quality::MaxShadowDistance = 4500.0f;
         float SCE::Quality::CameraFarPlane = 50000.0f;
+        bool  SCE::Quality::VolumetricLightingEnabled = true;
 
         float SCE::Quality::Trees::LodDistances[MAX_TREE_LOD_COUNT] =
         {

@@ -276,8 +276,8 @@ _{
         float height = normAndHeight.a / HeightScale;
         float flatness = dot(normAndHeight.xyz, vec3(0.0, 1.0, 0.0));
 
-        float grassStr = smoothstep(0.25, 0.0, height);
-        grassStr += smoothstep(0.4, 0.1, height) * pow(flatness, 1.5);
+        float grassStr = smoothstep(0.3, 0.0, height);
+        grassStr += smoothstep(0.4, 0.2, height) * pow(flatness, 1.5);
         grassStr = clamp(grassStr, 0.0, 1.0);
 
         float snowStr = smoothstep(0.4, 0.6, height);

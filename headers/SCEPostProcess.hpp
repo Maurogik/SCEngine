@@ -12,8 +12,6 @@ namespace SCE
 {
     namespace PostProcess
     {
-        void BlurTexture2D(GLuint tex, uint width, uint height, uint kernelHalfSize);
-
         void BlurTexture2D(GLuint targetTex, ivec4 rectArea, uint kernelHalfSize, uint nbIter,
                            GLint texInternalFormat, GLenum format);
     }
