@@ -242,6 +242,7 @@ _{
     uniform sampler2D GrassTex;
     uniform sampler2D DirtTex;
     uniform sampler2D SnowTex;
+    uniform sampler2D RockTex;
     uniform mat4 M;
     uniform vec2 SCE_ScreenSize;
     uniform float HeightScale;
@@ -266,27 +267,35 @@ _{
         uv *= TextureTileScale;
 
         vec4 snowColor = vec4(1.0, 1.0, 1.0, 0.2);
-        vec4 dirtColor = vec4(0.7, 0.4, 0.2, 0.55);
-        vec4 grassColor = vec4(0.2, 0.7, 0.1, 0.65);
+        vec4 dirtColor = vec4(0.7, 0.4, 0.2, 0.75);
+        vec4 grassColor = vec4(0.2, 0.7, 0.1, 0.85);
+        vec4 rockColor = vec4(1.0, 1.0, 1.0, 0.65);
 
         grassColor.rgb = pow(texture(GrassTex, uv).rgb, vec3(2.2));
         dirtColor.rgb = pow(texture(DirtTex, uv).rgb, vec3(2.2));
         snowColor.rgb += pow(texture(SnowTex, uv).rgb, vec3(2.2));
+        rockColor.rgb = pow(texture(RockTex, uv).rgb, vec3(2.2));
 
         float height = normAndHeight.a / HeightScale;
         float flatness = dot(normAndHeight.xyz, vec3(0.0, 1.0, 0.0));
 
-        float grassStr = smoothstep(0.3, 0.0, height);
-        grassStr += smoothstep(0.4, 0.2, height) * pow(flatness, 1.5);
+        float grassStr = smoothstep(0.5, 0.2, height);
+        //grassStr += smoothstep(0.4, 0.2, height) * pow(flatness, 1.5);
         grassStr = clamp(grassStr, 0.0, 1.0);
+
+        float dirtStr = smoothstep(0.85, 0.5, flatness);
 
         float snowStr = smoothstep(0.4, 0.6, height);
         snowStr += smoothstep(0.35, 0.4, height) * pow(flatness, 8.0) * 2.0;
         snowStr = clamp(snowStr, 0.0, 1.0);
 
-        vec4 resColor = dirtColor;
+        float rockStr = smoothstep(0.75, 0.6, flatness);
+
+        vec4 resColor = rockColor;
 
         resColor = mix(resColor, grassColor, grassStr);
+        resColor = mix(resColor, dirtColor, dirtStr);
+        resColor = mix(resColor, rockColor, rockStr);
         resColor = mix(resColor, snowColor, snowStr);
 
         return resColor;
