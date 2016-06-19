@@ -17,6 +17,7 @@ namespace BillboardRender
 {
 
 #define BILLBOARD_INTERNAL_FORMAT GL_RGBA16
+#define GENERATE_MIPMAPS 1
 
 glm::vec3 GenerateTexturesFromMesh(ui16 nbAngles, ui16 texSize, float borderRatio,
                               glm::vec3 const& center, glm::vec3 const& dimensions,
@@ -41,12 +42,6 @@ glm::vec3 GenerateTexturesFromMesh(ui16 nbAngles, ui16 texSize, float borderRati
         glBindTexture(GL_TEXTURE_2D, textures[i]);
         glTexImage2D(GL_TEXTURE_2D, 0, BILLBOARD_INTERNAL_FORMAT,
                      fullSize, fullSize, 0, GL_RGBA, GL_UNSIGNED_INT, NULL);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
 
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, textures[i], 0);
     }    
@@ -143,19 +138,21 @@ glm::vec3 GenerateTexturesFromMesh(ui16 nbAngles, ui16 texSize, float borderRati
         *normalTex = textures[1];
     }
 
-    //blur if needed
-//    for(int x = 0; x < root; ++x)
-//    {
-//        for(int y = 0; y < root; ++y)
-//        {
-//            //if((x*root+y)%2 == 0)
-//            {
-//                glm::ivec4 dim(x*texSize, y*texSize, texSize, texSize);
-//                PostProcess::BlurTexture2D(*diffuseTex, dim, 128, 4, BILLBOARD_INTERNAL_FORMAT, GL_RGBA);
-//                PostProcess::BlurTexture2D(*normalTex, dim, 128, 4, BILLBOARD_INTERNAL_FORMAT, GL_RGBA);
-//            }
-//        }
-//    }
+    for(int i = 0; i < 2; ++i)
+    {
+        glBindTexture(GL_TEXTURE_2D, textures[i]);
+#if GENERATE_MIPMAPS
+        glGenerateMipmap(GL_TEXTURE_2D);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+#else
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+#endif
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    }
 
     return glm::vec3(biggestXZDim, biggestYDim, biggestXZDim);
 }
