@@ -30,13 +30,12 @@ _{
     uniform vec2        SCE_ScreenSize;
     uniform vec3        SunPosition_worldspace;
     uniform float       SizeQuality;
-    uniform int         VolumetricLightEnabled;
     layout (location = 0) uniform sampler2D   PositionTex;
 
     uniform mat4 V;
     uniform mat4 P;
 
-    out vec3 color;
+    out vec2 color;
 
     float pent(in vec2 fragCoord){
         vec2 sunToFrag = abs(fragCoord);
@@ -94,33 +93,6 @@ _{
                     clamp(flare.g, 0.0, sunStrength));
     }
 
-#define LIGHT_SHAFTS
-
-#ifdef LIGHT_SHAFTS
-    float computeVolumetricLight(vec2 uv, vec2 sunUV)
-    {
-        float nbSamples = 32.0;
-        float decay = 1.0;
-        float density = 0.5;
-        float weight = 0.01;
-
-        vec2 stepToFrag = (sunUV - uv)*density/float(nbSamples);
-
-        float illum = 0.0;
-        vec2 sampleUV = uv;
-
-        for(float i = 0; i < nbSamples; ++i)
-        {
-            sampleUV += stepToFrag;
-            vec3 Position_worldpsace = texture(PositionTex, sampleUV).xyz;
-            float sampleVal = step(dot(Position_worldpsace, Position_worldpsace), 0.0001);
-            sampleVal *= pow((nbSamples - i) / nbSamples, decay) * weight;
-            illum += sampleVal;
-        }
-
-        return illum;
-    }
-#endif
 
     void main()
     {
@@ -138,22 +110,16 @@ _{
 
         float sunSqLen = dot(sun_projectionspace.xy, sun_projectionspace.xy);
 
-        color = vec3(0.0);
+        color = vec2(0.0);
 
-        if(sunSqLen < 2.0)
+        if(sunSqLen < 3.0)
         {
-            float sunStrength = 1.1 - sunSqLen * 0.5;
+            float sunStrength = (3.0 - sunSqLen)/3.0;
             sunStrength *= step(0.0, sun_cameraspace.z);
 
             vec2 sunColor = getSunColor(ndcUv, sun_projectionspace.xyz);
             color.r = sunColor.r * notOccludedByScene * sunStrength;
-#ifdef LIGHT_SHAFTS
-            if(VolumetricLightEnabled == 1)
-            {
-                color.g = computeVolumetricLight(uv, sunUV) * sunStrength;
-            }
-#endif
-            color.b = sunColor.g * pow(sunStrength, 2.0);
+            color.g = sunColor.g * pow(sunStrength, 2.0);
         }
     }
 _}
