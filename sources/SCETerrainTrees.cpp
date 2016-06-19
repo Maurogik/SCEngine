@@ -37,6 +37,8 @@
 #define DOUBLE_SIDED_TREES 1
 #define NB_IMPOSTOR_ANGLES (6*6)
 
+#define USE_THREADED_UPDATE 1
+
 #define IMPOSTOR_FLIP_X 0
 #define IMPOSTOR_FACE_Z 0
 
@@ -71,8 +73,17 @@ void SCE::TerrainTrees::UpdateVisibilityAndLOD(mat4 viewMatrix,
                                                float maxDistFromCenter,
                                                glm::mat4 impostorScaleMat)
 {
+#if USE_THREADED_UPDATE
+
 #define DO_SLEEP 0
 #define DO_DURATION 1
+
+#else
+
+#define DO_SLEEP 0
+#define DO_DURATION 0
+
+#endif
 
 #if DO_SLEEP
     std::chrono::milliseconds waitInterval(8);
@@ -513,8 +524,9 @@ void SCE::TerrainTrees::SpawnTreeInstances(const glm::mat4& viewMatrix,
                                            const glm::mat4& worldToTerrainspaceMatrix,
                                            const glm::vec3& cameraPosition,
                                            float maxDistFromCenter)
-{    
+{
     bool isUpToDate = false;
+#if USE_THREADED_UPDATE
     mTreeInstanceLock.lock();
     isUpToDate = mInstancesUpToDate;
     mTreeInstanceLock.unlock();
@@ -524,6 +536,14 @@ void SCE::TerrainTrees::SpawnTreeInstances(const glm::mat4& viewMatrix,
         mUpdateThread->join();
         mUpdateThread.release();
     }
+#else
+    SCE::TerrainTrees::UpdateVisibilityAndLOD(
+                            viewMatrix,
+                            worldToTerrainspaceMatrix,
+                            cameraPosition,
+                            maxDistFromCenter,
+                            mImpostorScaleMat);
+#endif
 
     if(!isUpToDate)
     {
@@ -558,6 +578,7 @@ void SCE::TerrainTrees::SpawnTreeInstances(const glm::mat4& viewMatrix,
 
         mTreeInstanceLock.unlock();
 
+#if USE_THREADED_UPDATE
         mUpdateThread.reset(new std::thread(&SCE::TerrainTrees::UpdateVisibilityAndLOD,
                                             this,
                                             viewMatrix,
@@ -565,6 +586,7 @@ void SCE::TerrainTrees::SpawnTreeInstances(const glm::mat4& viewMatrix,
                                             cameraPosition,
                                             maxDistFromCenter,
                                             mImpostorScaleMat));
+#endif
     }
 }
 
