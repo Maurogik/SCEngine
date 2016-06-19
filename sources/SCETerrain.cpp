@@ -34,12 +34,14 @@
 #define GRASS_TEX_FILE "Terrain/Textures/terrainGrass"
 #define DIRT_TEX_FILE "Terrain/Textures/terrainDirt"
 #define SNOW_TEX_FILE "Terrain/Textures/terrainSnow"
+#define ROCK_TEX_FILE "Terrain/Textures/terrainGravel"
 
 #define TERRAIN_SHADER_NAME "Terrain/TerrainTess"
 #define TERRAIN_TEXTURE_UNIFORM "TerrainHeightMap"
 #define GRASS_TEXTURE_UNIFORM "GrassTex"
 #define DIRT_TEXTURE_UNIFORM "DirtTex"
 #define SNOW_TEXTURE_UNIFORM "SnowTex"
+#define ROCK_TEXTURE_UNIFORM "RockTex"
 #define TEX_TILE_SIZE_UNIFORM "TextureTileScale"
 #define MAX_TESS_DIST_UNIFORM "MaxTessDistance"
 #define WORLD_TO_TERRAIN_UNIFORM "WorldToTerrainSpace"
@@ -83,6 +85,7 @@ namespace Terrain
             GLuint  grassTexture;
             GLuint  dirtTexture;
             GLuint  snowTexture;
+            GLuint  rockTexture;
 
             GLint   terrainTextureUniform;
             GLint   maxTesselationDistanceUniform;
@@ -91,6 +94,7 @@ namespace Terrain
             GLint   grassTextureUniform;
             GLint   dirtTextureUniform;
             GLint   snowTextureUniform;
+            GLint   rockTextureUniform;
             GLint   textureTileScaleUniform;
             GLint   worldToTerrainMatUniform;
             GLint   patchSizeUniform;
@@ -172,6 +176,11 @@ namespace Terrain
             {
                 SCE::TextureUtils::DeleteTexture(terrainData->glData.snowTexture);
             }
+
+            if(terrainData->glData.rockTexture != GL_INVALID_INDEX)
+            {
+                SCE::TextureUtils::DeleteTexture(terrainData->glData.rockTexture);
+            }
         }
 
         void computeNormalsForQuad(int xCount, int zCount, glm::vec3 *normals, float* heightmap)
@@ -227,6 +236,7 @@ namespace Terrain
             float maxValue = 0.0f;
             float amplitude = 1.0f;
             float scale = 0.0f;
+            float exponentScaleFactor = 1.0f;
             float noise = 0.0f;
             float persistence = 0.3f;
 
@@ -273,12 +283,13 @@ namespace Terrain
                                                              (scale));
                         tmpNoise = SCE::Math::MapToRange(-0.5f, 0.5f, 0.0f, 1.0f, tmpNoise);
 
-                        exponent = Perlin::GetPerlinAt((x + 0.5f)*scale, (z + 0.5f)*scale,
-                                                       int(scale));
+                        float expScale = scale * exponentScaleFactor;
+                        exponent = Perlin::GetPerlinAt((x + 0.5f)*expScale, (z + 0.5f)*expScale,
+                                                       int(expScale));
                         exponent = SCE::Math::MapToRange(-0.5f, 0.5f, 0.0f, 1.0f, exponent);
 #endif
-                        exponent = SCE::Math::MapToRange(0.6f, 0.9f, 0.0f, 1.0f, exponent);
-                        float k = 1.0f;
+                        exponent = SCE::Math::MapToRange(0.5f, 1.0f, 0.0f, 1.0f, exponent);
+                        float k = 1.5f;
                         exponent = glm::exp(k*exponent - k);
                         exponent = glm::mix(exponent, 1.0f, 1.0f - pow(1.0f - (float)l/(float)nbLayers, 8.0f));
                         tmpNoise *= exponent;
@@ -386,6 +397,7 @@ namespace Terrain
             glData.grassTextureUniform = glGetUniformLocation(terrainProgram, GRASS_TEXTURE_UNIFORM);
             glData.dirtTextureUniform = glGetUniformLocation(terrainProgram, DIRT_TEXTURE_UNIFORM);
             glData.snowTextureUniform = glGetUniformLocation(terrainProgram, SNOW_TEXTURE_UNIFORM);
+            glData.rockTextureUniform = glGetUniformLocation(terrainProgram, ROCK_TEXTURE_UNIFORM);
             glData.textureTileScaleUniform = glGetUniformLocation(terrainProgram, TEX_TILE_SIZE_UNIFORM);
             glData.maxTesselationDistanceUniform =
                     glGetUniformLocation(terrainProgram, MAX_TESS_DIST_UNIFORM);
@@ -401,6 +413,7 @@ namespace Terrain
             glData.grassTexture = SCE::TextureUtils::LoadTexture(GRASS_TEX_FILE);
             glData.dirtTexture = SCE::TextureUtils::LoadTexture(DIRT_TEX_FILE);
             glData.snowTexture = SCE::TextureUtils::LoadTexture(SNOW_TEX_FILE);
+            glData.rockTexture = SCE::TextureUtils::LoadTexture(ROCK_TEX_FILE);
 
             //vertices buffer
             glGenBuffers(1, &(terrainData->quadVerticesVbo));
@@ -555,6 +568,7 @@ namespace Terrain
         SCE::TextureUtils::BindTexture(glData.grassTexture, 1, glData.grassTextureUniform);
         SCE::TextureUtils::BindTexture(glData.dirtTexture, 2, glData.dirtTextureUniform);
         SCE::TextureUtils::BindTexture(glData.snowTexture, 3, glData.snowTextureUniform);
+        SCE::TextureUtils::BindTexture(glData.rockTexture, 3, glData.rockTextureUniform);
 
         SCE::ShaderUtils::BindRootPosition(glData.terrainProgram, SCEScene::GetFrameRootPosition());
 
