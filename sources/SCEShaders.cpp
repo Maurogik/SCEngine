@@ -281,7 +281,6 @@ namespace ShaderUtils
         //shader has already been compiled
         if(shaderData.compiledPrograms.count(shaderFileName) > 0)
         {
-            Internal::Log("Shader " + shaderFileName + " already compiled, using it directly");
             return shaderData.compiledPrograms[shaderFileName];
         }
 
