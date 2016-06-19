@@ -96,7 +96,7 @@ bool SCE_GBuffer::Init(uint windowWidth, uint windowHeight)
     // final texture, is needed because we need to render the light pass
     // with the stencil test into the Framebuffer where the stencil buffer was filled (this GBuffer)
     glBindTexture(GL_TEXTURE_2D, mFinalTexture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, windowWidth, windowHeight, 0, GL_RGBA, GL_FLOAT, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, windowWidth, windowHeight, 0, GL_RGB, GL_FLOAT, NULL);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);

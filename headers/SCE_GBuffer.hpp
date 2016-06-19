@@ -41,7 +41,6 @@ namespace SCE {
         void    BindTexture(GBUFFER_TEXTURE_TYPE type, uint uniform, uint texUnit);
         void    SetupFinalTexture(uint uniform, uint sampler);
         void    SetReadBuffer(GBUFFER_TEXTURE_TYPE TextureType);        
-        void BlurFinal();
 
     private :
 
