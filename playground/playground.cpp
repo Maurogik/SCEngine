@@ -436,7 +436,7 @@ int main( void )
     //Camera
     SCEHandle<Container> cameraObject = SCEScene::CreateContainer("cameraObject");
     SCEHandle<Transform> cameraTransform = cameraObject->AddComponent<Transform>();
-    cameraObject->AddComponent<Camera>(40.0f, 16.0f/9.0f, 1.0f, 20000.0f);
+    cameraObject->AddComponent<Camera>(40.0f, 16.0f/9.0f, 1.0f, 30000.0f);
 
 
     SCEHandle<Container> eagle = SCEScene::CreateContainer("eagle");

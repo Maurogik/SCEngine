@@ -18,7 +18,7 @@ SunCycle::SunCycle(SCE::SCEHandle<Container> container, float speed, vec3 axis)
     mTransform =  container->AddComponent<Transform>();
     mLight = container->AddComponent<Light>(LightType::DIRECTIONAL_LIGHT);
 
-    glm::vec3 sunPos = glm::vec3(10.0, 0.0, -20000.0);
+    glm::vec3 sunPos = glm::vec3(10.0, 0.0, -40000.0);
     mTransform->SetScenePosition(sunPos);
     mTransform->LookAt(glm::vec3(0.0));
 
