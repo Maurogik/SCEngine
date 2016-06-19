@@ -41,6 +41,7 @@ _{
         int dstMaxX = DstRectArea.x + DstRectArea.z;
         int dstY = y + DstRectArea.y;
         int dstX = 0;
+
         vec2 srcTexSize = textureSize(TexSrc, 0);//size at lod 0
 
         if(y < DstRectArea.w)
@@ -59,7 +60,7 @@ _{
                 dstX = dstMinX + x;
 
     //            vec4 col = imageLoad(TexSrc, ivec2(x, y)); //vec4(colourSum/fKernelSize)
-                vec4 col = SAMPLE_SRC(x, y);//*vec4(1.0, 1.0, 0.0, 0.0);
+                vec4 col = vec4(colourSum/fKernelSize);////SAMPLE_SRC(x, y);//*vec4(1.0, 1.0, 0.0, 0.0);
                 imageStore(TexDst, ivec2(dstX, dstY), col);
 
                 // move window to the next

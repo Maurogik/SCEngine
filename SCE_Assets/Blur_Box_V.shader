@@ -48,7 +48,7 @@ _{
         {
             float fKernelSize = float(KernelHalfSize)*2.0;
 
-            vec4 colourSum = SAMPLE_SRC(x, 0)*fKernelSize*0.5;
+            vec4 colourSum = SAMPLE_SRC(x, 1)*fKernelSize*0.5;
 
             for( int y = 0; y <= KernelHalfSize; y++)
             {
@@ -60,7 +60,7 @@ _{
                 dstY = dstMinY + y;
 
     //            vec4 col = imageLoad(TexSrc, ivec2(x, y)); //vec4(colourSum/fKernelSize)
-                vec4 col = SAMPLE_SRC(x, y);//*vec4(1.0, 0.0, 0.0, 0.0);
+                vec4 col = vec4(colourSum/fKernelSize);//SAMPLE_SRC(x, y);//*vec4(1.0, 0.0, 0.0, 0.0);
                 imageStore(TexDst, ivec2(dstX, dstY), col);
 
                 // move window to the next
