@@ -46,9 +46,54 @@ namespace PostProcess
                     dstRectArea.x, dstRectArea.y, dstRectArea.z, dstRectArea.w);
     }
 
+    bool IsValidComputeFormat(GLint texInternalFormat)
+    {
+        return
+        texInternalFormat == GL_RGBA32F ||
+        texInternalFormat == GL_RGBA16F ||
+        texInternalFormat == GL_RG32F ||
+        texInternalFormat == GL_RG16F ||
+        texInternalFormat == GL_R11F_G11F_B10F ||
+        texInternalFormat == GL_R32F ||
+        texInternalFormat == GL_R16F ||
+        texInternalFormat == GL_RGBA32UI ||
+        texInternalFormat == GL_RGBA16UI ||
+        texInternalFormat == GL_RGB10_A2UI ||
+        texInternalFormat == GL_RGBA8UI ||
+        texInternalFormat == GL_RG32UI ||
+        texInternalFormat == GL_RG16UI ||
+        texInternalFormat == GL_RG8UI ||
+        texInternalFormat == GL_R32UI ||
+        texInternalFormat == GL_R16UI ||
+        texInternalFormat == GL_R8UI ||
+        texInternalFormat == GL_RGBA32I ||
+        texInternalFormat == GL_RGBA16I ||
+        texInternalFormat == GL_RGBA8I ||
+        texInternalFormat == GL_RG32I ||
+        texInternalFormat == GL_RG16I ||
+        texInternalFormat == GL_RG8I ||
+        texInternalFormat == GL_R32I ||
+        texInternalFormat == GL_R16I ||
+        texInternalFormat == GL_R8I ||
+        texInternalFormat == GL_RGBA16 ||
+        texInternalFormat == GL_RGB10_A2 ||
+        texInternalFormat == GL_RGBA8 ||
+        texInternalFormat == GL_RG16 ||
+        texInternalFormat == GL_RG8 ||
+        texInternalFormat == GL_R16 ||
+        texInternalFormat == GL_R8 ||
+        texInternalFormat == GL_RGBA16_SNORM ||
+        texInternalFormat == GL_RGBA8_SNORM ||
+        texInternalFormat == GL_RG16_SNORM ||
+        texInternalFormat == GL_RG8_SNORM ||
+        texInternalFormat == GL_R16_SNORM ||
+        texInternalFormat == GL_R8_SNORM;
+    }
+
     void BlurTexture2D(GLuint targetTex, glm::ivec4 rectArea, uint kernelHalfSize, uint nbIter,
                        GLint texInternalFormat, GLenum format)
     {
+        Debug::Assert(IsValidComputeFormat(texInternalFormat), "Texture format not supported by compute shader");
 //        Debug::Assert(width%COMPUTE_BLOCK_SIZE != 0, std::to_string(width) +
 //                      std::string(" is not a multiple of ") + std::to_string(COMPUTE_BLOCK_SIZE));
 //        Debug::Assert(height%COMPUTE_BLOCK_SIZE != 0, std::to_string(height) +

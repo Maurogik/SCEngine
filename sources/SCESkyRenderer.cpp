@@ -12,28 +12,31 @@
 #include "../headers/SCEQuality.hpp"
 #include "../headers/SCEPostProcess.hpp"
 
-#define SUN_TEXTURE_QUALITY 0.25f
-
 namespace SCE
 {
 
 namespace SkyRenderer
 {
 
+#define SUN_SHAFT_TEXTURE_FORMAT GL_R16F
+
     namespace
     {
         struct SunShaderData
         {
             SunShaderData()
-                : sunShaftTexture(GL_INVALID_INDEX), sunShaftProgram(GL_INVALID_INDEX)
+                : sunAndFlareTexture(GL_INVALID_INDEX),
+                  sunShaftTexture(GL_INVALID_INDEX),
+                  sunFlareProgram(GL_INVALID_INDEX),
+                  sunShaftProgram(GL_INVALID_INDEX)
             {}
 
+            GLuint  sunAndFlareTexture;
             GLuint  sunShaftTexture;
+            GLuint  sunFlareProgram;
             GLuint  sunShaftProgram;
             GLint   qualityUniform;
             GLint   sunPositionUniform;
-            GLint   sunColorUniform;
-            GLint   volumetricLightUniform;
         };
 
         struct SkyShaderData
@@ -75,7 +78,7 @@ namespace SkyRenderer
 
     void Init(uint windowWidth, uint windowHeight)
     {
-        float quality = SUN_TEXTURE_QUALITY;
+        float quality = SCE::Quality::SunTextureQuality;
 
         commonSkyData.renderWidth = uint(float(windowWidth) * quality);
         commonSkyData.renderHeight = uint(float(windowHeight) * quality);
@@ -84,15 +87,29 @@ namespace SkyRenderer
         glGenFramebuffers(1, &(commonSkyData.fboId));
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, commonSkyData.fboId);
 
-        glGenTextures(1, &(sunData.sunShaftTexture));
+
+        glGenTextures(1, &(sunData.sunAndFlareTexture));
         //texture will store additive sun color as RGB and fog strength as A
-        glBindTexture(GL_TEXTURE_2D, sunData.sunShaftTexture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, commonSkyData.renderWidth, commonSkyData.renderHeight,
-                     0, GL_RGB, GL_FLOAT, NULL);
+        glBindTexture(GL_TEXTURE_2D, sunData.sunAndFlareTexture);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RG16F, commonSkyData.renderWidth, commonSkyData.renderHeight,
+                     0, GL_RG, GL_FLOAT, NULL);
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
         glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                               GL_TEXTURE_2D, sunData.sunAndFlareTexture, 0);
+
+
+        glGenTextures(1, &(sunData.sunShaftTexture));
+        //texture will store additive sun color as RGB and fog strength as A
+        glBindTexture(GL_TEXTURE_2D, sunData.sunShaftTexture);
+        glTexImage2D(GL_TEXTURE_2D, 0, SUN_SHAFT_TEXTURE_FORMAT,
+                     commonSkyData.renderWidth, commonSkyData.renderHeight,
+                     0, GL_RED, GL_FLOAT, NULL);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+        glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT1,
                                GL_TEXTURE_2D, sunData.sunShaftTexture, 0);
 
         GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
@@ -106,12 +123,11 @@ namespace SkyRenderer
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 
         skyData.skyProgram = SCE::ShaderUtils::CreateShaderProgram("SkyShader");
-        sunData.sunShaftProgram = SCE::ShaderUtils::CreateShaderProgram("SunShader");
+        sunData.sunFlareProgram = SCE::ShaderUtils::CreateShaderProgram("SunShader");
+        sunData.sunShaftProgram = SCE::ShaderUtils::CreateShaderProgram("LightShafts");
 
-        sunData.qualityUniform = glGetUniformLocation(sunData.sunShaftProgram, "SizeQuality");
-        sunData.sunPositionUniform = glGetUniformLocation(sunData.sunShaftProgram, "SunPosition_worldspace");
-        sunData.sunColorUniform = glGetUniformLocation(sunData.sunShaftProgram, "SunColor");
-        sunData.volumetricLightUniform = glGetUniformLocation(sunData.sunShaftProgram, "VolumetricLightEnabled");
+        sunData.qualityUniform = glGetUniformLocation(sunData.sunFlareProgram, "SizeQuality");
+        sunData.sunPositionUniform = glGetUniformLocation(sunData.sunFlareProgram, "SunPosition_worldspace");
 
         skyData.sunPositionUniform = glGetUniformLocation(skyData.skyProgram, "SunPosition_worldspace");
         skyData.sunColorUniform = glGetUniformLocation(skyData.skyProgram, "SunColor");
@@ -131,33 +147,52 @@ namespace SkyRenderer
         glDepthMask(GL_FALSE);
         glDisable(GL_DEPTH_TEST);
 
-        //Renders sun shaft in smaller res
+        //Renders sun and flares
         glViewport(0, 0, commonSkyData.renderWidth, commonSkyData.renderHeight);
-        glUseProgram(sunData.sunShaftProgram);
+        glUseProgram(sunData.sunFlareProgram);
 
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, commonSkyData.fboId);
         glDrawBuffer(GL_COLOR_ATTACHMENT0);
         glClear(GL_COLOR_BUFFER_BIT);
         gBuffer.BindTexture(SCE_GBuffer::GBUFFER_TEXTURE_TYPE_POSITION, 0, 0);
-        glUniform1f(sunData.qualityUniform, SUN_TEXTURE_QUALITY);
+        glUniform1f(sunData.qualityUniform, SCE::Quality::SunTextureQuality);
         glUniform3f(sunData.sunPositionUniform, sunPosition.x, sunPosition.y, sunPosition.z);
-        glUniform3fv(sunData.sunColorUniform, 1, &sunColor[0]);
-        glUniform1i(sunData.volumetricLightUniform, SCE::Quality::VolumetricLightingEnabled ? 1 : 0);
 
-        //Render sun pass to texture
+        //Render sun flare pass to texture
+        SCE::Render::RenderFullScreenPass(sunData.sunFlareProgram, renderData.projectionMatrix,
+                                        renderData.viewMatrix);
+
+        //render sun shafts
+        glUseProgram(sunData.sunShaftProgram);
+
+        glDrawBuffer(GL_COLOR_ATTACHMENT1);
+        glClear(GL_COLOR_BUFFER_BIT);
+        gBuffer.BindTexture(SCE_GBuffer::GBUFFER_TEXTURE_TYPE_POSITION, 0, 0);
+        glUniform1f(sunData.qualityUniform, SCE::Quality::SunTextureQuality);
+        glUniform3f(sunData.sunPositionUniform, sunPosition.x, sunPosition.y, sunPosition.z);
+
+        //Render sun shaft pass to texture
         SCE::Render::RenderFullScreenPass(sunData.sunShaftProgram, renderData.projectionMatrix,
                                         renderData.viewMatrix);
         //restore viewport
         glViewport(viewportDims[0], viewportDims[1], viewportDims[2], viewportDims[3]);
 
+        //blur sun shaft texture
+        SCE::PostProcess::BlurTexture2D(sunData.sunShaftTexture,
+                                        ivec4(0, 0, commonSkyData.renderWidth, commonSkyData.renderHeight),
+                                        8*SCE::Quality::SunTextureQuality, 1, SUN_SHAFT_TEXTURE_FORMAT, GL_RGB);
+
         //Render sky
         glUseProgram(skyData.skyProgram);
-
+        //binds GBuffer and appropriate textures
         gBuffer.BindForSkyPass();
-        //bind sun texture
+        //bind sun flare and sun shaft textures
         glActiveTexture(GL_TEXTURE2);
-        glBindTexture(GL_TEXTURE_2D, sunData.sunShaftTexture);
+        glBindTexture(GL_TEXTURE_2D, sunData.sunAndFlareTexture);
         glUniform1i(2, 2);
+        glActiveTexture(GL_TEXTURE3);
+        glBindTexture(GL_TEXTURE_2D, sunData.sunShaftTexture);
+        glUniform1i(3, 3);
 
         glUniform1f(skyData.skyFadeUniform, skyData.skyFadeFactor);
         glUniform3fv(skyData.sunPositionUniform, 1, &sunPosition[0]);
@@ -171,9 +206,6 @@ namespace SkyRenderer
 
         glEnable(GL_DEPTH_TEST);
         glDepthMask(GL_TRUE);
-
-//        SCE::PostProcess::BlurTexture2D(commonSkyData.renderWidth, commonSkyData.renderHeight,
-//                                        128, 2, )
     }
 
     void Cleanup()
@@ -189,7 +221,7 @@ namespace SkyRenderer
         }
 
         SCE::ShaderUtils::DeleteShaderProgram(skyData.skyProgram);
-        SCE::ShaderUtils::DeleteShaderProgram(sunData.sunShaftProgram);
+        SCE::ShaderUtils::DeleteShaderProgram(sunData.sunFlareProgram);
     }
 
     void SetSkyColors(const vec3 &skyBottomColor, const vec3 &skyTopColor, const vec3 &fogColor)
