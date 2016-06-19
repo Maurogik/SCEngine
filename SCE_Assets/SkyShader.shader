@@ -39,6 +39,7 @@ _{
     layout (location = 0) uniform sampler2D   FinalColorTex;
     layout (location = 1) uniform sampler2D   PositionTex;
     layout (location = 2) uniform sampler2D   SunTex;
+    layout (location = 3) uniform sampler2D   LightShaftTex;
 
     uniform mat4 V;
     uniform mat4 P;
@@ -78,18 +79,18 @@ _{
         vec2 uv = gl_FragCoord.xy / SCE_ScreenSize;
         vec4 sceneColor = texture(FinalColorTex, uv);
         vec3 Position_worldspace = texture(PositionTex, uv).xyz;
-        vec4 sunData = texture(SunTex, uv);
-        vec3 coloredSun = sunData.r * SunColor.rgb * SunColor.a;
-        vec3 flareColor = sunData.b * SunColor.rgb * SunColor.a;
-        float lightScatering = sunData.g;
+        vec2 sunAndFlare = texture(SunTex, uv).rg;
+        vec3 coloredSun = sunAndFlare.r * SunColor.rgb * SunColor.a;
+        vec3 flareColor = sunAndFlare.g * SunColor.rgb * SunColor.a;
+        float lightScatering = texture(LightShaftTex, uv).r;
 
         float notOccludedByScene = step(dot(Position_worldspace, Position_worldspace), 0.0001);
 
         //compute fog strength
         float height = Position_worldspace.y;
 //        float fogStr = 0.000000002;
-        float fogStr = 0.000000002;
-        float heightDensity = 0.0003;
+        float fogStr = 0.0000000001;
+        float heightDensity = 0.0005;
         float dist = abs((V * vec4(Position_worldspace, 1.0)).z);
         dist *= dist;
         float fogAmount = (1.0 - exp( -dist * fogStr )) * exp(-height * heightDensity);
