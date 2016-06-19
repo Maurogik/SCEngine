@@ -16,6 +16,7 @@ namespace SCE
         extern float MaxShadowDistance;
         extern float CameraFarPlane;
         extern bool  VolumetricLightingEnabled;
+        extern float SunTextureQuality;
 
         namespace Trees
         {
