@@ -106,8 +106,8 @@ namespace SkyRenderer
         glTexImage2D(GL_TEXTURE_2D, 0, SUN_SHAFT_TEXTURE_FORMAT,
                      commonSkyData.renderWidth, commonSkyData.renderHeight,
                      0, GL_RED, GL_FLOAT, NULL);
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
         glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT1,
                                GL_TEXTURE_2D, sunData.sunShaftTexture, 0);

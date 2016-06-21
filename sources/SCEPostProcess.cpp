@@ -99,6 +99,15 @@ namespace PostProcess
 //        Debug::Assert(height%COMPUTE_BLOCK_SIZE != 0, std::to_string(height) +
 //                      std::string(" is not a multiple of ") + std::to_string(COMPUTE_BLOCK_SIZE));
 
+        glBindTexture(GL_TEXTURE_2D, targetTex);
+        GLint originalMagFilter, originalMinFilder;
+        glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, &originalMagFilter);
+        glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, &originalMinFilder);
+        ///filters need to be nearest
+        glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+
         glm::ivec4 tmpRectArea = glm::ivec4(0, 0, rectArea.z, rectArea.w);
         GLuint tmpTex = GL_INVALID_INDEX;
         glGenTextures(1, &tmpTex);
@@ -106,8 +115,8 @@ namespace PostProcess
         glTexImage2D(GL_TEXTURE_2D, 0, texInternalFormat, tmpRectArea.z, tmpRectArea.w, 0, format, GL_FLOAT, nullptr);
         glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
 
         uint yWorkGroupCount = (rectArea.w + COMPUTE_BLOCK_SIZE-1)/COMPUTE_BLOCK_SIZE;
@@ -122,7 +131,8 @@ namespace PostProcess
 
             //Do horizontal pass
             ShaderUtils::UseShader(blurHorizontalProgram);
-            bindBlurUniforms(blurHorizontalProgram, rectArea, tmpRectArea, kernelHalfSize, targetTex, tmpTex, texInternalFormat);
+            bindBlurUniforms(blurHorizontalProgram, rectArea, tmpRectArea, kernelHalfSize,
+                             targetTex, tmpTex, texInternalFormat);
 
             //dispatch over all y (because each compute then iterate over all x)
             glDispatchCompute(1, yWorkGroupCount, 1);
@@ -131,7 +141,8 @@ namespace PostProcess
 
             //Do vertical pass
             ShaderUtils::UseShader(blurVerticalProgram);
-            bindBlurUniforms(blurVerticalProgram, tmpRectArea, rectArea, kernelHalfSize, tmpTex, targetTex, texInternalFormat);
+            bindBlurUniforms(blurVerticalProgram, tmpRectArea, rectArea, kernelHalfSize,
+                             tmpTex, targetTex, texInternalFormat);
 
             //dispatch over all y (because each compute then terate over all x)
             glDispatchCompute(xWorkGroupCount, 1, 1);
@@ -140,6 +151,10 @@ namespace PostProcess
         }
 
         glDeleteTextures(1, &tmpTex);
+        //reset filters to the original ones
+        glBindTexture(GL_TEXTURE_2D, targetTex);
+        glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, originalMagFilter);
+        glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, originalMinFilder);
         //SCE::ShaderUtils::DeleteShaderProgram(blurProgram);
     }
 

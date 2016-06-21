@@ -59,7 +59,7 @@ _{
             {
                 dstY = dstMinY + y;
 
-    //            vec4 col = imageLoad(TexSrc, ivec2(x, y)); //vec4(colourSum/fKernelSize)
+//                vec4 col = SAMPLE_SRC(x, y); //vec4(colourSum/fKernelSize)
                 vec4 col = vec4(colourSum/fKernelSize);//SAMPLE_SRC(x, y);//*vec4(1.0, 0.0, 0.0, 0.0);
                 imageStore(TexDst, ivec2(dstX, dstY), col);
 

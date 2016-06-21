@@ -154,6 +154,12 @@ glm::vec3 GenerateTexturesFromMesh(ui16 nbAngles, ui16 texSize, float borderRati
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     }
 
+    /*SCE::PostProcess::BlurTexture2D(textures[0], ivec4(0, 0, root*texSize, root*texSize),
+            8, 1, BILLBOARD_INTERNAL_FORMAT, GL_RGBA);
+    SCE::PostProcess::BlurTexture2D(textures[1], ivec4(0, 0, root*texSize, root*texSize),
+            8, 1, BILLBOARD_INTERNAL_FORMAT, GL_RGBA);*/
+
+
     return glm::vec3(biggestXZDim, biggestYDim, biggestXZDim);
 }
 
